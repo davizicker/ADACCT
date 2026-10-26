@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/telha_albedo.png" id="1_x1ff2"]
+[ext_resource type="Texture2D" path="res://assets/textures/telha_normal.png" id="2_kqsom"]
+
+[resource]
+albedo_texture = ExtResource("1_x1ff2")
+roughness = 0.78
+normal_enabled = true
+normal_scale = 1.3
+normal_texture = ExtResource("2_kqsom")
+texture_filter = 5

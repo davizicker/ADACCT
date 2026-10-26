@@ -3,6 +3,9 @@ extends Node3D
 ##   --selftest       simula respostas certas/erradas até a morte
 ##   --selftest-walk  anda pela rua inteira até a igreja (sem gritos)
 ##   --selftest-mula=rua|refugio|refugio_aceso  testa a regra da Mula-sem-cabeça
+##   --selftest-becos sobe cada beco em escada (não pode travar)
+##   --selftest-itens pega todos os frascos e lê todos os bilhetes (interação com E)
+##   --walk-offset=<m> (com --selftest-walk) anda deslocado do centro da rua, para achar paredes invisíveis
 ##   --selftest-auto  partida completa automática (eventos ligados) por ~7 min simulados
 ##   --selftest-escape tenta sair da rua andando para os lados (a vila deve ser fechada)
 ##   --shot=<arquivo.png> [--shot-s=<m>] [--shot-stage=<n>] [--shot-yaw=<graus>] [--shot-pitch=<graus>] [--shot-lift=<m>]  salva um print e sai
@@ -21,6 +24,14 @@ var finished := false
 var menu: Menu = null
 var mode := ""
 var _shot_frames := 20
+var _walk_offset := 0.0
+var _test_state := 0
+var _test_i := 0
+var _test_t := 0.0
+var _test_fail := 0
+var _hint := ""
+var _test_seen := false
+var _test_oil0 := 0.0
 var shot_path := ""
 var _t := 0.0
 var _frames := 0
@@ -38,11 +49,18 @@ func _ready() -> void:
 		mode = "escape"
 	elif "--selftest-auto" in args:
 		mode = "auto"
+	elif "--selftest-becos" in args:
+		mode = "becos"
+	elif "--selftest-itens" in args:
+		mode = "itens"
 	var mula_case := ""
 	for a in args:
 		if a.begins_with("--selftest-mula="):
 			mode = "mula"
 			mula_case = a.substr(16)
+	for a in args:
+		if a.begins_with("--walk-offset="):
+			_walk_offset = float(a.substr(14))
 	var shot_s := 2.0
 	var shot_stage := 0
 	var shot_yaw := 0.0
@@ -134,6 +152,10 @@ func _ready() -> void:
 	elif mode == "mula":
 		Engine.time_scale = 8.0
 		_setup_mula_test(mula_case)
+	elif mode == "becos" or mode == "itens":
+		Engine.time_scale = 4.0
+		screams.enabled = false
+		_test_state = 0
 	elif mode == "auto":
 		Engine.time_scale = 6.0
 		Input.action_press("shout")   # responde a todos os gritos (segurando R)
@@ -232,6 +254,10 @@ func _process(delta: float) -> void:
 		if _t > 420.0 or finished:
 			print("[auto] fim: t=%.0f morreu=%s stage=%d" % [_t, str(finished), screams.stage])
 			get_tree().quit()
+	elif mode == "becos":
+		_test_becos(delta)
+	elif mode == "itens":
+		_test_itens(delta)
 	elif mode == "mula":
 		if _t > 40.0 or finished:
 			print("[mula-teste] fim: morreu=%s stage=%d" % [str(finished), screams.stage])
@@ -244,7 +270,8 @@ func _process(delta: float) -> void:
 ## Robô que segue a rota (testa subida, curvas e colisões).
 func _walk_bot() -> void:
 	var s_p := Route.nearest_s(player.global_position)
-	var tgt := Route.pos(minf(s_p + 3.0, Route.length()))
+	var s_t := minf(s_p + 3.0, Route.length())
+	var tgt := Route.pos(s_t) + Route.right(s_t) * clampf(_walk_offset, -Route.width(s_t) * 0.5 + 0.5, Route.width(s_t) * 0.5 - 0.5)
 	var d := tgt - player.global_position
 	d.y = 0.0
 	if d.length() > 0.05:
@@ -255,7 +282,12 @@ func _walk_bot() -> void:
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()
 	elif _t > 400.0:
-		print("[walk] TIMEOUT s=%.1f" % s_p)
+		var why := ""
+		for i in player.get_slide_collision_count():
+			var col := player.get_slide_collision(i)
+			var cn := col.get_collider() as Node
+			why += " [%s/%s em %s n=%s]" % [cn.get_parent().name if cn else "?", cn.name if cn else "?", str((cn as Node3D).global_position) if cn is Node3D else "", str(col.get_normal())]
+		print("[walk] TIMEOUT s=%.1f pos=%s%s" % [s_p, str(player.global_position), why])
 		get_tree().quit()
 
 
@@ -291,3 +323,116 @@ func _escape_test(delta: float) -> void:
 		Input.action_release("move_forward")
 		_esc_t = 0.0
 		_esc_i += 1
+
+
+## Sobe cada beco: coloca o jogador na rua, de frente para a entrada, anda 16 s e confere se chegou ao topo.
+func _test_becos(delta: float) -> void:
+	var refs := get_tree().get_nodes_in_group("refugio")
+	if _test_i >= refs.size():
+		print("[becos] testados=%d falhas=%d" % [refs.size(), _test_fail])
+		get_tree().quit()
+		return
+	var area := refs[_test_i] as Area3D
+	var beco := area.get_parent() as Node3D
+	var x_axis := beco.global_transform.basis.x      # para dentro do beco
+	if _test_t == 0.0:
+		var start := beco.global_position - x_axis * 2.2 + Vector3(0, 0.4, 0)
+		player.global_position = start
+		player.velocity = Vector3.ZERO
+		player.rotation.y = atan2(-x_axis.x, -x_axis.z)
+		player.cam.rotation.x = 0.0
+		Input.action_press("move_forward")
+		_hint = str(start.y)
+	_test_t += delta
+	if _test_t > 12.0:
+		Input.action_release("move_forward")
+		var along := (player.global_position - beco.global_position).dot(x_axis)
+		var rise := player.global_position.y - float(_hint)
+		var ok := along > 12.0 and rise > 4.0
+		var why := ""
+		for i in player.get_slide_collision_count():
+			var col := player.get_slide_collision(i)
+			var cn := col.get_collider() as Node
+			why += " [%s/%s n=%s]" % [cn.get_parent().name if cn else "?", cn.name if cn else "?", str(col.get_normal())]
+		print("[becos] %s: avançou %.1f m, subiu %.1f m -> %s%s" % [beco.name, along, rise, "OK" if ok else "TRAVOU", why if not ok else ""])
+		if not ok:
+			_test_fail += 1
+		_test_t = 0.0
+		_test_i += 1
+
+
+## Pega todos os frascos e lê todos os bilhetes pelo caminho real (raycast + tecla E).
+var _test_items: Array = []
+
+
+func _press_interact() -> void:
+	var ev := InputEventAction.new()
+	ev.action = "interact"
+	ev.pressed = true
+	Input.parse_input_event(ev)
+
+
+func _test_itens(delta: float) -> void:
+	if _test_state == 0:
+		_test_items = get_tree().get_nodes_in_group("interagivel").duplicate()
+		player.oil = 60.0
+		player.interact_hint.connect(func(t: String) -> void: _hint = t)
+		_test_state = 1
+		return
+	if _test_i >= _test_items.size():
+		print("[itens] testados=%d falhas=%d" % [_test_items.size(), _test_fail])
+		get_tree().quit()
+		return
+	var it := _test_items[_test_i] as Area3D
+	_test_t += delta
+	match _test_state:
+		1:  # em frente ao item, a 1,3 m, olhando para ele
+			var s := Route.nearest_s(it.global_position)
+			var to_street := Route.pos(s) - it.global_position
+			to_street.y = 0.0
+			var from := it.global_position + to_street.normalized() * 1.3
+			player.global_position = Vector3(from.x, it.global_position.y + 0.05, from.z)
+			player.velocity = Vector3.ZERO
+			var d := it.global_position + Vector3(0, 0.3, 0) - player.cam.global_position
+			player.rotation.y = atan2(-d.x, -d.z)
+			player.cam.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
+			_hint = ""
+			_test_t = 0.0
+			_test_state = 2
+		2:  # espera a física, confere o aviso [E] e aperta E
+			if _test_t > 0.5:
+				var expected := "Pegar" if it.get("tipo") == "oleo" else "Ler"
+				_test_seen = _hint.contains(expected)
+				_test_oil0 = player.oil
+				_press_interact()
+				_test_t = 0.0
+				_test_state = 3
+		3:  # confere o efeito
+			if _test_t > 0.3:
+				var ok := false
+				if it.get("tipo") == "oleo":
+					ok = _test_seen and (not it.visible) and player.oil > _test_oil0 + 20.0
+					print("[itens] %s: aviso=%s oleo %.0f -> %.0f visivel=%s -> %s" % [it.name, str(_test_seen), _test_oil0, player.oil, str(it.visible), "OK" if ok else "FALHOU"])
+					player.oil = 40.0
+					if not ok:
+						_test_fail += 1
+					_test_i += 1
+					_test_state = 1
+				else:
+					ok = _test_seen and player.frozen and hud.note_open()
+					print("[itens] %s: aviso=%s bilhete aberto=%s congelado=%s -> %s" % [it.name, str(_test_seen), str(hud.note_open()), str(player.frozen), "OK" if ok else "FALHOU"])
+					if not ok:
+						_test_fail += 1
+					_press_interact()      # E fecha o bilhete
+					_test_state = 4
+				_test_t = 0.0
+		4:
+			if _test_t > 0.3:
+				if hud.note_open() or player.frozen:
+					print("[itens] %s: NAO FECHOU o bilhete com E" % it.name)
+					_test_fail += 1
+					hud.hide_note()
+					player.frozen = false
+				_test_i += 1
+				_test_t = 0.0
+				_test_state = 1

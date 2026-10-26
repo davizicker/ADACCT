@@ -12,29 +12,29 @@
 [ext_resource type="Script" path="res://scripts/audio_director.gd" id="10_gqmmt"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="11_yc10j"]
 
-[node name="Main" type="Node3D" unique_id=782794229]
+[node name="Main" type="Node3D" unique_id=527038698]
 script = ExtResource("1_ya4ey")
 
-[node name="Vila" type="Node3D" parent="." unique_id=217621435 instance=ExtResource("2_eb6dy")]
+[node name="Vila" type="Node3D" parent="." unique_id=1159133351 instance=ExtResource("2_eb6dy")]
 
-[node name="Jogador" type="CharacterBody3D" parent="." unique_id=260317416 instance=ExtResource("3_trceg")]
+[node name="Jogador" type="CharacterBody3D" parent="." unique_id=318455043 instance=ExtResource("3_trceg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1443168, 0.43562964, -1.9946519)
 script = ExtResource("4_a8y0u")
 
-[node name="Bradador" type="Node3D" parent="." unique_id=761201392 instance=ExtResource("5_jkv2x")]
+[node name="Bradador" type="Node3D" parent="." unique_id=1826690512 instance=ExtResource("5_jkv2x")]
 visible = false
 
-[node name="Mula" type="Node3D" parent="." unique_id=1055887567 instance=ExtResource("6_jbj1t")]
+[node name="Mula" type="Node3D" parent="." unique_id=559472692 instance=ExtResource("6_jbj1t")]
 script = ExtResource("7_muem4")
 
-[node name="Gritos" type="Node" parent="." unique_id=1189492593]
+[node name="Gritos" type="Node" parent="." unique_id=1439671136]
 script = ExtResource("8_dp3eg")
 
-[node name="Eventos" type="Node" parent="." unique_id=1971939915]
+[node name="Eventos" type="Node" parent="." unique_id=344382260]
 script = ExtResource("9_0ld40")
 
-[node name="Audio" type="Node" parent="." unique_id=1314998419]
+[node name="Audio" type="Node" parent="." unique_id=548875233]
 script = ExtResource("10_gqmmt")
 
-[node name="Interface" type="CanvasLayer" parent="." unique_id=1726522181]
+[node name="Interface" type="CanvasLayer" parent="." unique_id=136846393]
 script = ExtResource("11_yc10j")

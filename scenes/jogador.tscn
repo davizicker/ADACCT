@@ -6,18 +6,18 @@
 radius = 0.35
 height = 1.7
 
-[node name="Jogador" type="CharacterBody3D" unique_id=260317416]
+[node name="Jogador" type="CharacterBody3D" unique_id=318455043]
 script = ExtResource("1_vwxko")
 
-[node name="Colisao" type="CollisionShape3D" parent="." unique_id=1172458902]
+[node name="Colisao" type="CollisionShape3D" parent="." unique_id=1656788556]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 shape = SubResource("CapsuleShape3D_uahlj")
 
-[node name="Camera" type="Camera3D" parent="." unique_id=2099854287]
+[node name="Camera" type="Camera3D" parent="." unique_id=1071850595]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 far = 1500.0
 
-[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=5864943]
+[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=171467890]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.35, -0.5)
 light_color = Color(1, 0.72, 0.38, 1)
 light_energy = 1.7

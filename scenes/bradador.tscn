@@ -23,24 +23,24 @@ top_radius = 0.05
 bottom_radius = 0.03
 height = 1.7
 
-[node name="Bradador" type="Node3D" unique_id=761201392]
+[node name="Bradador" type="Node3D" unique_id=1826690512]
 
-[node name="Manto" type="MeshInstance3D" parent="." unique_id=1987616179]
+[node name="Manto" type="MeshInstance3D" parent="." unique_id=519814713]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
 material_override = ExtResource("1_dak3m")
 mesh = SubResource("CylinderMesh_sjvce")
 
-[node name="Cabeca" type="MeshInstance3D" parent="." unique_id=477563750]
+[node name="Cabeca" type="MeshInstance3D" parent="." unique_id=1275322201]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0)
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("SphereMesh_kqda2")
 
-[node name="Braco_Esq" type="MeshInstance3D" parent="." unique_id=116884667]
+[node name="Braco_Esq" type="MeshInstance3D" parent="." unique_id=1098139759]
 transform = Transform3D(0.9945219, 0.104528464, 0, -0.104528464, 0.9945219, 0, 0, 0, 1, -0.34, 1.45, 0.05)
 material_override = ExtResource("1_dak3m")
 mesh = SubResource("CylinderMesh_6u1f3")
 
-[node name="Braco_Dir" type="MeshInstance3D" parent="." unique_id=609986426]
+[node name="Braco_Dir" type="MeshInstance3D" parent="." unique_id=707805211]
 transform = Transform3D(0.9945219, -0.104528464, 0, 0.104528464, 0.9945219, 0, 0, 0, 1, 0.34, 1.45, 0.05)
 material_override = ExtResource("1_dak3m")
 mesh = SubResource("CylinderMesh_4qbdl")

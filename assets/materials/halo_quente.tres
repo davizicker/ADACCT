@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/ponto_luz.png" id="1_s3a0c"]
+
+[resource]
+transparency = 1
+blend_mode = 1
+cull_mode = 2
+shading_mode = 0
+albedo_color = Color(1, 0.7, 0.32, 0.55)
+albedo_texture = ExtResource("1_s3a0c")
+disable_receive_shadows = true
+billboard_mode = 1
+billboard_keep_scale = true

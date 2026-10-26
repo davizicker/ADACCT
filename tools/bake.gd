@@ -108,6 +108,11 @@ func _leafy(mat_name: String, tex: String, tint := Color(1, 1, 1), two_sided := 
 
 func _materials() -> void:
 	_surf("pedra_chao", "pedra", Color(0.88, 0.85, 0.80), 0.3, 0.58, 1.4)   # rugosidade baixa: brilho de pedra molhada
+	var pc := load(MATS + "pedra_chao.tres") as StandardMaterial3D
+	pc.vertex_color_use_as_albedo = true      # a rua tem cor por vértice (sujeira, musgo, umidade)
+	pc.roughness_texture = _tex("pedra_rough.png")   # pedra polida brilha, junta de terra é fosca
+	pc.roughness = 1.0
+	ResourceSaver.save(pc, MATS + "pedra_chao.tres")
 	_surf("muro", "muro", Color(0.95, 0.93, 0.90), 0.35, 0.95, 1.3)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
 	_surf("reboco_branco", "reboco_velho", Color(0.97, 0.95, 0.90), 0.22)
@@ -119,6 +124,28 @@ func _materials() -> void:
 	_surf("reboco_verde", "reboco_velho", Color(0.66, 0.78, 0.64), 0.22)
 	_surf("reboco_creme", "reboco_velho", Color(0.96, 0.88, 0.68), 0.22)
 	_surf("telha", "telha", Color(1, 1, 1), 0.3, 0.8, 1.2)
+	# telhado com UV: as telhas correm no sentido do caimento (usado pelos telhados de MeshBatch.roof)
+	var tuv := StandardMaterial3D.new()
+	tuv.albedo_texture = _tex("telha_albedo.png")
+	tuv.normal_enabled = true
+	tuv.normal_texture = _tex("telha_normal.png")
+	tuv.normal_scale = 1.3
+	tuv.roughness = 0.78
+	tuv.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	ResourceSaver.save(tuv, MATS + "telha_uv.tres")
+	_flat("telha_cumeeira", Color(0.30, 0.12, 0.08), 0.8)
+	var vl := StandardMaterial3D.new()
+	vl.albedo_texture = _tex("vidro_luz.png")
+	vl.emission_enabled = true
+	vl.emission_texture = _tex("vidro_luz.png")
+	vl.emission_energy_multiplier = 1.15
+	vl.roughness = 0.3
+	ResourceSaver.save(vl, MATS + "vidro_luz.tres")
+	var vn := StandardMaterial3D.new()
+	vn.albedo_texture = _tex("vidro_noite.png")
+	vn.roughness = 0.1
+	vn.metallic_specular = 0.9
+	ResourceSaver.save(vn, MATS + "vidro_noite.tres")
 	_surf("madeira_azul", "madeira", Color(0.20, 0.38, 0.62), 0.6)
 	_surf("madeira_vermelha", "madeira", Color(0.62, 0.14, 0.10), 0.6)
 	_surf("madeira_verde", "madeira", Color(0.18, 0.40, 0.28), 0.6)
@@ -149,9 +176,38 @@ func _materials() -> void:
 	_flat("bandeira_b", Color(0.95, 0.75, 0.15), 1.0)
 	_flat("bandeira_c", Color(0.15, 0.4, 0.75), 1.0)
 	_flat("bandeira_d", Color(0.2, 0.55, 0.28), 1.0)
-	_flat("pano", Color(0.78, 0.76, 0.7), 1.0)
+	_flat("pano", Color(0.62, 0.60, 0.54), 1.0)
 	_flat("papel", Color(0.93, 0.86, 0.66), 0.9, 0.0, 0.7)
-	_flat("vidro_oleo", Color(0.95, 0.55, 0.15), 0.2, 0.0, 1.4)
+	for pl in [["placa_verde", Color(0.09, 0.25, 0.15)], ["placa_vermelha", Color(0.42, 0.09, 0.07)], ["placa_azul", Color(0.09, 0.17, 0.34)],
+			["placa_marrom", Color(0.26, 0.15, 0.07)], ["placa_preta", Color(0.05, 0.05, 0.06)]]:
+		_flat(pl[0], pl[1], 0.65)
+	_flat("ouro_velho", Color(0.72, 0.55, 0.20), 0.38, 0.75)
+	_flat("pao", Color(0.62, 0.40, 0.16), 0.85)
+	_flat("couro", Color(0.18, 0.10, 0.06), 0.8)
+	_flat("gema", Color(0.12, 0.45, 0.30), 0.2, 0.0, 0.6)
+	_flat("listra_branca", Color(0.85, 0.83, 0.78), 0.7)
+	_flat("listra_vermelha", Color(0.65, 0.10, 0.08), 0.7)
+	_flat("listra_azul", Color(0.10, 0.20, 0.50), 0.7)
+	_flat("pano_azul", Color(0.35, 0.42, 0.52), 1.0)
+	_flat("pano_rosa", Color(0.58, 0.40, 0.40), 1.0)
+	_flat("pano_cru", Color(0.60, 0.55, 0.43), 1.0)
+	for hl in [["halo_quente", Color(1.0, 0.70, 0.32, 0.55)], ["halo_vela", Color(1.0, 0.52, 0.18, 0.65)]]:
+		var hm := StandardMaterial3D.new()
+		hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		hm.albedo_texture = _tex("ponto_luz.png")
+		hm.albedo_color = hl[1]
+		hm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		hm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		hm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		hm.billboard_keep_scale = true
+		hm.cull_mode = BaseMaterial3D.CULL_DISABLED
+		hm.no_depth_test = false
+		hm.disable_receive_shadows = true
+		ResourceSaver.save(hm, MATS + hl[0] + ".tres")
+	var aq := ShaderMaterial.new()
+	aq.shader = load("res://assets/shaders/agua_queda.gdshader")
+	ResourceSaver.save(aq, MATS + "agua_queda.tres")
+	_flat("vidro_oleo", Color(0.50, 0.24, 0.06), 0.12, 0.0, 0.55)
 	_flat("mula_corpo", Color(0.045, 0.035, 0.035), 0.9)
 	var vulto := StandardMaterial3D.new()
 	vulto.albedo_texture = _tex("silhueta.png")

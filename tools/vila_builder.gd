@@ -9,7 +9,7 @@ extends RefCounted
 ##   A fachada está no plano x = 0 e "olha" para -X.
 
 const SW := Route.SIDEWALK
-const SW_H := 0.15
+const SW_H := 0.12
 const MATS := "res://assets/materials/"
 const S_END := Route.S_END     # a partir daqui começa o adro da igreja
 const CHURCH_S := Route.CHURCH_S
@@ -19,7 +19,7 @@ const WALL_WEIGHT: Array[int] = [30, 14, 18, 8, 8, 4, 6, 12]
 const WOODS: Array[String] = ["madeira_azul", "madeira_vermelha", "madeira_verde", "madeira_ocre", "madeira_natural", "madeira_branca"]
 ## becos em escada: [s, lado]
 const ALLEYS: Array = [[40.0, 1.0], [88.0, -1.0], [136.0, -1.0], [188.0, 1.0], [226.0, 1.0], [262.0, -1.0], [286.0, 1.0]]
-const FOUNTAIN := [160.0, 1.0]
+const FOUNTAIN := [Route.FOUNTAIN_S, Route.FOUNTAIN_SIDE]
 
 var _rng := RandomNumberGenerator.new()
 var _cache := {}
@@ -32,6 +32,8 @@ var _spots: Array[Vector2] = []
 var _lamp_n := 0
 var _haunted := 0
 var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos)
+var _wear: FastNoiseLite
+var _wet: FastNoiseLite
 var _hill_lights: Array[Transform3D] = []   # janelas acesas das casas distantes (viram pontos de luz)
 
 
@@ -287,40 +289,97 @@ func _save_mesh(mesh: Mesh, mesh_name: String) -> Mesh:
 
 
 # ------------------------------------------------------------------ rua
+## Triângulo com cor por vértice (orientado para `expect`).
+func _tri_c(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Color, expect: Vector3) -> void:
+	var n := -(b - a).cross(c - a)
+	if n.length() < 0.000001:
+		return
+	n = n.normalized()
+	if n.dot(expect) < 0.0:
+		var t := b
+		b = c
+		c = t
+		var tc := cb
+		cb = cc
+		cc = tc
+		n = -n
+	for pair in [[a, ca], [b, cb], [c, cc]]:
+		st.set_normal(n)
+		st.set_color(pair[1])
+		st.add_vertex(pair[0])
+
+
+## Cor do calçamento por vértice: variação de tom, sujeira e musgo junto ao meio-fio, manchas de umidade.
+func _road_color(p: Vector3, lat: float, half: float) -> Color:
+	var n := _wear.get_noise_2d(p.x, p.z) * 0.5 + 0.5
+	var w := _wet.get_noise_2d(p.x, p.z) * 0.5 + 0.5
+	var k := 0.84 + 0.32 * n
+	var edge := smoothstep(half * 0.62, half, absf(lat))
+	var col := Color(k, k, k)
+	col *= 1.0 - 0.26 * edge
+	col = col.lerp(Color(0.62, 0.74, 0.5) * k, edge * 0.40 * w)
+	if w > 0.62:
+		col *= 0.8
+	return Color(col.r, col.g, col.b, 1.0)
+
+
 func _road() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Rua"
+	_wear = FastNoiseLite.new()
+	_wear.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_wear.frequency = 0.05
+	_wear.fractal_octaves = 3
+	_wear.seed = 17
+	_wet = FastNoiseLite.new()
+	_wet.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_wet.frequency = 0.02
+	_wet.seed = 23
 	var chunk := 30.0
 	var count := int(ceil(Route.length() / chunk))
+	var bevel := SW_H                    # chanfro de 45° entre calçada e sarjeta (o jogador sobe sem travar)
+	var gutter := 0.14
 	for ci in count:
 		var s0 := ci * chunk
 		var s1 := minf(Route.length(), s0 + chunk)
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var prev: Array[Vector3] = []
+		var prev_c: Array[Color] = []
 		var s_cur := s0
 		while true:
 			var c := Route.pos(s_cur)
 			var r := Route.right(s_cur)
 			var a := Route.width(s_cur) * 0.5
-			# perfil transversal: calçada, meio-fio, sarjeta, coroa, sarjeta, meio-fio, calçada
-			var prof := [
-				Vector2(-a - SW, SW_H), Vector2(-a, SW_H), Vector2(-a, 0.0), Vector2(-a + 0.25, -0.04),
-				Vector2(0.0, 0.03), Vector2(a - 0.25, -0.04), Vector2(a, 0.0), Vector2(a, SW_H), Vector2(a + SW, SW_H),
-			]
+			# perfil transversal: calçada, chanfro, sarjeta, coroa (com pontos intermediários), sarjeta, chanfro, calçada
+			var prof: Array[Vector2] = []
+			prof.append(Vector2(-a - SW, SW_H))
+			prof.append(Vector2(-a, SW_H))
+			prof.append(Vector2(-a + bevel, 0.0))
+			prof.append(Vector2(-a + bevel + gutter, -0.035))
+			var inner := 2.0 * (a - bevel - gutter)
+			var n := 14          # SEMPRE o mesmo número de pontos: se mudasse, a faixa entre dois quadros ficaria sem chão (buraco)
+			for k in range(1, n):
+				var u := -a + bevel + gutter + inner * float(k) / n
+				var f := u / a
+				prof.append(Vector2(u, -0.035 + 0.065 * (1.0 - f * f)))
+			prof.append(Vector2(a - bevel - gutter, -0.035))
+			prof.append(Vector2(a - bevel, 0.0))
+			prof.append(Vector2(a, SW_H))
+			prof.append(Vector2(a + SW, SW_H))
 			var cur: Array[Vector3] = []
-			for p: Vector2 in prof:
-				cur.append(c + r * p.x + Vector3(0, p.y, 0))
+			var cur_c: Array[Color] = []
+			for pf in prof:
+				var wp := c + r * pf.x + Vector3(0, pf.y, 0)
+				cur.append(wp)
+				cur_c.append(_road_color(wp, pf.x, a))
 			if not prev.is_empty():
+				assert(prev.size() == cur.size(), "perfil da rua com tamanho variável")
 				for j in prof.size() - 1:
-					var expect := Vector3.UP
-					if j == 1:
-						expect = r
-					elif j == 6:
-						expect = -r
-					MeshBatch.tri(st, prev[j], prev[j + 1], cur[j + 1], expect)
-					MeshBatch.tri(st, prev[j], cur[j + 1], cur[j], expect)
+					_tri_c(st, prev[j], prev[j + 1], cur[j + 1], prev_c[j], prev_c[j + 1], cur_c[j + 1], Vector3.UP)
+					_tri_c(st, prev[j], cur[j + 1], cur[j], prev_c[j], cur_c[j + 1], cur_c[j], Vector3.UP)
 			prev = cur
+			prev_c = cur_c
 			if s_cur >= s1:
 				break
 			s_cur = minf(s_cur + 1.0, s1)
@@ -372,8 +431,11 @@ func _moon() -> DirectionalLight3D:
 	l.name = "Lua"
 	l.light_color = Color(0.55, 0.65, 0.95)
 	l.light_energy = 0.42
-	l.rotation_degrees = Vector3(-42.0, 28.0, 0.0)
+	# a lua fica no céu à frente e à direita de quem começa a subir a rua; a luz viaja no sentido oposto
+	var moon_dir := Vector3(0.50, 0.46, -0.74).normalized()
+	l.transform = Transform3D(Basis.looking_at(-moon_dir, Vector3.UP), Vector3.ZERO)
 	l.shadow_enabled = true
+	l.shadow_opacity = 0.78           # a sombra da lua deixa um pouco de luz (menos "preto chapado")
 	l.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL    # 1 passada de sombra (em vez de 4)
 	l.directional_shadow_max_distance = 60.0
 	return l
@@ -400,10 +462,18 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_serra())
 	root.add_child(_route_path())
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
-	for name in ["Casas", "MurosEQuintais", "Becos", "FundoDaRua"]:
+	for name in ["Casas", "MurosEQuintais", "Becos", "FundoDaRua", "Ponte"]:
 		var n := root.get_node_or_null(name)
 		if n:
-			_set_range(n, 170.0)
+			_set_range(n, 150.0)
+	# detalhes pequenos somem mais cedo: a neblina já os esconde e eles são muitos objetos
+	for name in ["Iluminacao", "Nichos", "Adornos", "Coletaveis"]:
+		var n := root.get_node_or_null(name)
+		if n:
+			_set_range(n, 105.0)
+	_set_label_range(root, 55.0)
+	for halo in root.find_children("Halo", "MeshInstance3D", true, false):
+		(halo as GeometryInstance3D).visibility_range_end = 75.0
 	_set_range(root.get_node("Morros/CasasDoMorro"), 360.0)
 	_set_range(root.get_node("Morros/Arvores"), 220.0)
 	return root
@@ -442,7 +512,7 @@ func _frontage(root: Node3D) -> void:
 				if a[1] == sigma and not done_alley.has(ai) and s >= a[0] - 4.0:
 					kind = "beco"
 					done_alley[ai] = true
-					w = 3.0
+					w = 3.6
 			if kind == "casa" and not done_alley.has("b") and s >= Route.BRIDGE_S - Route.BRIDGE_HALF:
 				kind = "ponte"
 				done_alley["b"] = true
@@ -486,7 +556,7 @@ func _start_wall(root: Node3D) -> void:
 	var basis := Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP))
 	var origin := Route.pos(0.0) + Vector3(0, SW_H, 0) + t * 0.0
 	var g := _group(root, "FundoDaRua", Transform3D(basis, origin))
-	var casa := make_casa(26.0, 2, "reboco_branco", "madeira_azul", 12.0, true, 0.35, true)
+	var casa := make_casa(26.0, 2, "reboco_creme", "madeira_verde", 12.0, true, 0.35, false)
 	casa.name = "Casarao"
 	g.add_child(casa)
 
@@ -499,11 +569,22 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	var haunted: bool = floors >= 2 and not narrow and _haunted < 6 and f["sm"] > 30.0 and _rng.randf() < 0.14
 	if haunted:
 		_haunted += 1
-	var casa := make_casa(f["w"], floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], _rng.randf_range(9.0, 12.0),
+	# +0,24 m de largura: as casas se encostam por dentro e não abrem frestas na parte de fora das curvas
+	# casas vizinhas a um beco ficam rasas: a curva gira a caixa da casa e ela invadiria o vão da escada
+	var near_alley := false
+	for al in ALLEYS:
+		if absf(float(f["sm"]) - float(al[0])) < 15.0:
+			near_alley = true
+	var depth := _rng.randf_range(4.8, 5.8) if near_alley else _rng.randf_range(9.0, 12.0)
+	var casa := make_casa(f["w"] + 0.24, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
 		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted)
 	casa.name = "Casa_%02d" % _n
+	# cada casa recua um pouco diferente da vizinha (como no real) e dispensa o z-fighting entre fachadas
+	var jit := (0.01 + _rng.randf() * 0.03) if _n % 2 == 0 else (0.08 + _rng.randf() * 0.03)
 	_n += 1
-	casa.transform = f["xf"]
+	var xf: Transform3D = f["xf"]
+	xf.origin += xf.basis.x * jit
+	casa.transform = xf
 	parent.add_child(casa)
 
 
@@ -517,11 +598,16 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var up := 3.4
 	var height := fh + (floors - 1) * up
 	_box(c, "Corpo", Vector3(depth, height + 4.0, w), Vector3(depth / 2.0, height / 2.0 - 2.0, 0), wall, true)
-	var rise := (depth + 1.4) * 0.27
-	var prism := PrismMesh.new()
-	prism.size = Vector3(depth + 1.4, rise, w + 0.5)
-	var roof := _mesh_node(c, "Telhado", prism, Vector3(depth / 2.0 - 0.2, height + 0.15 + rise / 2.0, 0))
-	roof.material_override = mat("telha")
+	# telhado com UV (telhas no sentido do caimento), cumeeira de capa e tábuas de beiral; inclinação varia por casa
+	var rise := (depth + 1.4) * _rng.randf_range(0.24, 0.33)
+	var rcx := depth / 2.0 - 0.2
+	var ry := height + 0.15
+	var rb := _batch()
+	rb.roof("telha_uv", wall, Vector3(depth + 1.4, rise, w + 0.5), Vector3(rcx, ry + rise / 2.0, 0), 0.0, 3.6, "madeira_escura")
+	rb.box("telha_cumeeira", Vector3(0.36, 0.22, w + 0.56), Vector3(rcx, ry + rise + 0.03, 0))
+	rb.box("madeira_escura", Vector3(0.10, 0.16, w + 0.50), Vector3(rcx - (depth + 1.4) / 2.0 + 0.04, ry - 0.05, 0))
+	rb.box("madeira_escura", Vector3(0.10, 0.16, w + 0.50), Vector3(rcx + (depth + 1.4) / 2.0 - 0.04, ry - 0.05, 0))
+	_mesh_node(c, "Telhado", rb.commit())
 
 	var b := _batch()
 	b.box("muro", Vector3(0.3, 5.1, w + 0.1), Vector3(-0.1, -1.45, 0))            # embasamento de pedra
@@ -601,29 +687,104 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	return c
 
 
-## Placa pendurada de loja (Label3D = texto em 3D, editável no Inspetor).
 func _sign(c: Node3D, b: MeshBatch, z: float) -> void:
-	var names := ["ARMAZÉM", "BOTICA", "BARBEARIA", "PADARIA", "SAPATARIA", "TECIDOS", "FERRARIA", "PENSÃO", "OURIVES", "ALFAIATE"]
-	var text: String = names[_rng.randi() % names.size()]
-	b.box("ferro", Vector3(1.15, 0.05, 0.05), Vector3(-0.58, 3.55, z))
-	for dz: float in [-0.38, 0.38]:
-		b.box("ferro", Vector3(0.02, 0.25, 0.02), Vector3(-1.0, 3.4, z + dz))
-	b.box("madeira_escura", Vector3(0.95, 0.46, 0.05), Vector3(-0.62, 3.05, z))
+	# [texto, cor da placa, emblema]
+	var defs := [
+		["ARMAZÉM", "placa_verde", ""], ["BOTICA", "placa_vermelha", "pilao"], ["BARBEARIA", "placa_azul", "barbeiro"],
+		["PADARIA", "placa_marrom", "pao"], ["SAPATARIA", "placa_preta", "bota"], ["TECIDOS", "placa_azul", "tesoura"],
+		["FERRARIA", "placa_preta", "ferradura"], ["PENSÃO", "placa_verde", ""], ["OURIVES", "placa_vermelha", "anel"],
+		["ALFAIATE", "placa_marrom", "tesoura"],
+	]
+	var d: Array = defs[_rng.randi() % defs.size()]
+	var text: String = d[0]
+	var board: String = d[1]
+	var bx := -0.82          # centro da placa (para fora da fachada)
+	var by := 3.22
+	# braço de ferro com escora e voluta, saindo da parede
+	b.box("ferro", Vector3(0.06, 0.40, 0.06), Vector3(-0.03, 3.45, z))                                    # haste na parede
+	b.box("ferro", Vector3(1.40, 0.05, 0.05), Vector3(-0.70, 3.66, z))                                    # braço
+	b.box("ferro", Vector3(0.80, 0.035, 0.035), Vector3(-0.38, 3.40, z), Vector3(0, 0, 0.60))             # escora
+	b.sphere("ferro", 0.045, Vector3(-1.40, 3.66, z), 6, 4)
+	for dx: float in [-0.30, 0.30]:
+		b.box("ferro", Vector3(0.015, 0.26, 0.015), Vector3(bx + dx, 3.52, z))                             # correntes
+	# placa com moldura dourada em relevo
+	b.box(board, Vector3(0.90, 0.46, 0.05), Vector3(bx, by, z))
+	b.box("ouro_velho", Vector3(0.94, 0.035, 0.08), Vector3(bx, by + 0.245, z))
+	b.box("ouro_velho", Vector3(0.94, 0.035, 0.08), Vector3(bx, by - 0.245, z))
+	for dx: float in [-0.455, 0.455]:
+		b.box("ouro_velho", Vector3(0.035, 0.52, 0.08), Vector3(bx + dx, by, z))
+	b.sphere("ouro_velho", 0.04, Vector3(bx - 0.455, by + 0.25, z), 5, 3)
+	b.sphere("ouro_velho", 0.04, Vector3(bx + 0.455, by + 0.25, z), 5, 3)
+	# letras em relevo, dos dois lados (Label3D: texto 3D editável no Inspetor)
 	for side: float in [1.0, -1.0]:
 		var l := Label3D.new()
 		l.name = "Texto"
 		l.text = text
-		l.pixel_size = 0.0042
-		l.font_size = 64
-		l.modulate = Color(0.96, 0.86, 0.58)
-		l.outline_size = 0
+		l.font = _sign_font()
+		l.font_size = 96
+		l.pixel_size = clampf(0.72 / (text.length() * 0.62 * 96.0), 0.0011, 0.0026)
+		l.modulate = Color(0.97, 0.84, 0.50)
+		l.outline_modulate = Color(0.06, 0.03, 0.0)
+		l.outline_size = 14
+		l.shaded = true
 		l.double_sided = false
-		l.position = Vector3(-0.62, 3.05, z + side * 0.03)
+		l.alpha_cut = Label3D.ALPHA_CUT_OPAQUE_PREPASS
+		l.position = Vector3(bx, by, z + side * 0.032)
 		l.rotation.y = 0.0 if side > 0.0 else PI
 		c.add_child(l)
+	_emblem(b, String(d[2]), bx, z)
 
 
-## Vaso de flores (terracota + folhagem + flores).
+var _font_cache: SystemFont = null
+
+func _sign_font() -> SystemFont:
+	if _font_cache == null:
+		_font_cache = SystemFont.new()
+		# fonte com serifa, se o computador tiver; senão a engine usa a fonte padrão
+		_font_cache.font_names = PackedStringArray(["Georgia", "Palatino Linotype", "Book Antiqua", "Times New Roman", "serif"])
+		_font_cache.font_weight = 700
+	return _font_cache
+
+
+## Emblema pendurado sob a placa (pão, pilão, poste de barbeiro, bota, ferradura, anel, tesoura).
+func _emblem(b: MeshBatch, kind: String, bx: float, z: float) -> void:
+	var y := 2.70
+	match kind:
+		"pao":
+			b.cylinder("pao", 0.11, 0.11, 0.34, Vector3(bx, y, z), Vector3(0, 0, PI / 2.0), 8)
+			b.sphere("pao", 0.11, Vector3(bx - 0.17, y, z), 7, 4)
+			b.sphere("pao", 0.11, Vector3(bx + 0.17, y, z), 7, 4)
+			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.17, z))
+		"pilao":
+			b.cylinder("ferro", 0.10, 0.15, 0.17, Vector3(bx, y - 0.02, z), Vector3.ZERO, 10)
+			b.box("ferro", Vector3(0.04, 0.34, 0.04), Vector3(bx + 0.05, y + 0.12, z), Vector3(0, 0, -0.5))
+			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.17, z))
+		"barbeiro":
+			for k in 6:
+				var m: String = ["listra_branca", "listra_vermelha", "listra_azul"][k % 3]
+				b.cylinder(m, 0.055, 0.055, 0.12, Vector3(bx, y + 0.18 - k * 0.12, z), Vector3.ZERO, 8)
+			b.sphere("ouro_velho", 0.065, Vector3(bx, y + 0.28, z), 6, 4)
+		"bota":
+			b.box("couro", Vector3(0.10, 0.26, 0.11), Vector3(bx - 0.04, y + 0.04, z))
+			b.box("couro", Vector3(0.24, 0.09, 0.11), Vector3(bx + 0.03, y - 0.14, z))
+			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.26, z))
+		"ferradura":
+			for k in 9:
+				var a := deg_to_rad(-50.0 + k * 37.5)
+				b.box("ferro", Vector3(0.05, 0.035, 0.05), Vector3(bx + cos(a) * 0.14, y + 0.05 + sin(a) * 0.14 * -1.0 + 0.1, z), Vector3(0, 0, a + PI / 2.0))
+			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.28, z))
+		"anel":
+			for k in 10:
+				var a := TAU * k / 10.0
+				b.box("ouro_velho", Vector3(0.045, 0.045, 0.045), Vector3(bx + cos(a) * 0.12, y + sin(a) * 0.12, z), Vector3(0, 0, a))
+			b.sphere("gema", 0.05, Vector3(bx, y + 0.14, z), 6, 4)
+			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.22, z))
+		"tesoura":
+			b.box("ferro", Vector3(0.05, 0.40, 0.03), Vector3(bx, y, z), Vector3(0, 0, 0.35))
+			b.box("ferro", Vector3(0.05, 0.40, 0.03), Vector3(bx, y, z), Vector3(0, 0, -0.35))
+			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.28, z))
+
+
 func _pot(b: MeshBatch, p: Vector3) -> void:
 	b.cylinder("vaso", 0.11, 0.08, 0.16, p + Vector3(0, 0.08, 0), Vector3.ZERO, 8)
 	b.sphere("verde_vaso", 0.17, p + Vector3(0, 0.27, 0), 7, 4)
@@ -633,7 +794,7 @@ func _pot(b: MeshBatch, p: Vector3) -> void:
 
 
 func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false) -> void:
-	var glass := "janela_acesa" if lit else "janela_escura"
+	var glass := "vidro_luz" if lit else "vidro_noite"
 	if arch:
 		# vão com verga em arco (como nos sobrados de Ouro Preto): parte reta + meio disco
 		var r := wid * 0.5
@@ -643,8 +804,8 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 		for sz: float in [-1.0, 1.0]:
 			b.box("cantaria", Vector3(0.18, hr + 0.15, 0.2), Vector3(-0.07, base_y + hr / 2.0 - 0.02, p.z + sz * (r + 0.1)))
 		b.arch("cantaria", Vector3(-0.07, spring, p.z), r + 0.1, 0.2, 0.18, 9)
-		b.quad(glass, Vector2(wid, hr), Vector3(-0.17, base_y + hr / 2.0, p.z), -PI / 2.0)
-		b.half_disc(glass, Vector3(-0.17, spring, p.z), r)
+		b.quad(glass, Vector2(wid, hr), Vector3(-0.17, base_y + hr / 2.0, p.z), -PI / 2.0, Vector2(0, r / hgt), Vector2(1, 1))
+		b.half_disc(glass, Vector3(-0.17, spring, p.z), r, 10, Vector2(r / hgt, hgt))
 		b.box(wood, Vector3(0.05, hgt, 0.05), Vector3(-0.19, p.y, p.z))
 		b.box(wood, Vector3(0.05, 0.05, wid), Vector3(-0.19, base_y + hr * 0.55, p.z))
 		if not door:
@@ -787,7 +948,8 @@ func _lot_beco(parent: Node3D, f: Dictionary) -> void:
 	ramp.rotation.z = ang
 	g.add_child(ramp)
 	for sz: float in [-1.0, 1.0]:
-		_blocker(g, "Parede_%d" % int(sz), Vector3(run_len + 2.0, total + 6.0, 0.6), Vector3(run_len / 2.0, total / 2.0, sz * (wb / 2.0 + 0.3)))
+		# a parede começa na linha da fachada (x = 0); se avançasse para a rua, nas curvas prenderia quem anda pela borda
+		_blocker(g, "Parede_%d" % int(sz), Vector3(run_len + 1.0, total + 6.0, 0.6), Vector3(run_len / 2.0 + 0.5, total / 2.0, sz * (wb / 2.0 + 0.3)))
 	var refuge := Area3D.new()
 	refuge.name = "Refugio"
 	refuge.add_to_group("refugio", true)
@@ -811,32 +973,68 @@ func _lot_beco(parent: Node3D, f: Dictionary) -> void:
 	g.add_child(lamp)
 
 
-## Chafariz de pedra encostado numa fachada, com bacia.
 func _lot_chafariz(parent: Node3D, f: Dictionary) -> void:
 	var w: float = f["w"]
 	var g := _group(parent, "Chafariz", f["xf"])
 	var b := _batch()
-	b.box("cantaria", Vector3(1.0, 4.4, w), Vector3(0.5, 0.5, 0))                           # corpo
-	b.box("cantaria", Vector3(1.3, 0.3, w + 0.3), Vector3(0.45, 2.85, 0))                    # cornija
-	b.box("cantaria", Vector3(1.0, 1.1, w * 0.5), Vector3(0.5, 3.45, 0))                     # frontão
-	b.box("cantaria", Vector3(1.0, 0.7, w * 0.25), Vector3(0.5, 4.3, 0))
-	b.box("janela_escura", Vector3(0.1, 1.6, 1.3), Vector3(-0.02, 1.9, 0))                    # nicho
-	b.box("cantaria", Vector3(0.3, 0.3, 0.3), Vector3(-0.25, 1.1, 0))                         # bica
-	b.box("ferro", Vector3(0.15, 0.1, 0.1), Vector3(-0.4, 1.0, 0))
-	b.box("cantaria", Vector3(1.9, 0.85, w - 1.0), Vector3(-1.2, 0.0, 0))                     # bacia
-	b.box("janela_escura", Vector3(1.5, 0.04, w - 1.6), Vector3(-1.2, 0.4, 0))                # água
-	b.box("cantaria", Vector3(2.4, 0.2, w), Vector3(-1.3, -0.45, 0))                          # degrau
+	# frente do paredão de pedra com pilastras, cornija, frontão e cruz
+	b.box("muro", Vector3(1.0, 4.6, w), Vector3(0.5, 0.7, 0))
+	b.box("cantaria", Vector3(1.15, 0.30, w + 0.3), Vector3(0.45, 3.15, 0))                    # cornija
+	b.box("cantaria", Vector3(1.05, 0.22, w + 0.1), Vector3(0.50, 3.00, 0))
 	for sz: float in [-1.0, 1.0]:
-		b.box("cantaria", Vector3(0.5, 0.5, 0.9), Vector3(-0.4, 0.0, sz * (w / 2.0 - 0.6)))   # bancos
+		b.box("cantaria", Vector3(0.34, 3.0, 0.55), Vector3(-0.08, 1.5, sz * 1.85))            # pilastras
+		b.box("cantaria", Vector3(0.46, 0.20, 0.70), Vector3(-0.08, 0.10, sz * 1.85))
+		b.box("cantaria", Vector3(0.46, 0.16, 0.70), Vector3(-0.08, 3.00, sz * 1.85))
+		b.sphere("cantaria", 0.16, Vector3(-0.08, 3.40, sz * 2.05), 7, 4)                      # pináculos de bola
+	b.box("cantaria", Vector3(0.70, 0.34, 4.4), Vector3(-0.02, 3.10, 0))                       # arquitrave
+	b.prism("cantaria", Vector3(0.80, 0.95, 4.2), Vector3(0.0, 3.80, 0))                       # frontão triangular
+	b.box("cantaria", Vector3(0.30, 0.55, 0.9), Vector3(-0.05, 3.55, 0))                       # brasão
+	b.box("ferro", Vector3(0.05, 0.9, 0.05), Vector3(-0.05, 4.65, 0))                          # cruz
+	b.box("ferro", Vector3(0.05, 0.05, 0.5), Vector3(-0.05, 4.85, 0))
+	# nicho em arco com carranca e bica
+	b.box("janela_escura", Vector3(0.10, 1.30, 1.50), Vector3(0.02, 1.55, 0))
+	b.half_disc("janela_escura", Vector3(0.0, 2.20, 0), 0.75, 12)
+	b.arch("cantaria", Vector3(-0.10, 2.20, 0), 0.82, 0.18, 0.20, 12)
+	b.box("cantaria", Vector3(0.20, 1.30, 0.18), Vector3(-0.10, 1.55, -0.84))
+	b.box("cantaria", Vector3(0.20, 1.30, 0.18), Vector3(-0.10, 1.55, 0.84))
+	b.sphere("cantaria", 0.20, Vector3(-0.10, 1.65, 0), 8, 5)                                  # carranca
+	b.cylinder("cantaria", 0.07, 0.07, 0.42, Vector3(-0.30, 1.38, 0), Vector3(0, 0, PI / 2.0), 8)   # bica
+	b.cylinder("ferro", 0.035, 0.035, 0.12, Vector3(-0.54, 1.36, 0), Vector3(0, 0, PI / 2.0), 6)
+	# tanque de pedra (paredes + fundo) e degraus
+	b.box("cantaria", Vector3(1.20, 0.18, 2.9), Vector3(-1.10, 0.09, 0))                       # fundo
+	b.box("cantaria", Vector3(0.16, 0.78, 2.9), Vector3(-1.62, 0.39, 0))
+	b.box("cantaria", Vector3(0.16, 0.78, 2.9), Vector3(-0.60, 0.39, 0))
+	b.box("cantaria", Vector3(1.20, 0.78, 0.16), Vector3(-1.10, 0.39, -1.37))
+	b.box("cantaria", Vector3(1.20, 0.78, 0.16), Vector3(-1.10, 0.39, 1.37))
+	b.box("cantaria", Vector3(1.32, 0.07, 3.02), Vector3(-1.10, 0.81, 0))                      # borda
+	b.box("cantaria", Vector3(1.0, 0.13, 3.3), Vector3(-2.15, 0.065, 0))                       # degraus
+	b.box("cantaria", Vector3(0.7, 0.26, 3.1), Vector3(-1.95, 0.13, 0))
+	for sz: float in [-1.0, 1.0]:
+		b.box("cantaria", Vector3(0.45, 0.46, 0.95), Vector3(-0.35, 0.23, sz * (w / 2.0 - 0.55)))   # bancos
 	_mesh_node(g, "Detalhes", b.commit())
-	_blocker(g, "Colisao", Vector3(4.2, 5.0, w), Vector3(0.5, 1.5, 0))
+	# água do tanque (shader) e fio de água caindo da bica
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(1.0, 2.7)
+	var water := _mesh_node(g, "Agua", plane, Vector3(-1.10, 0.62, 0))
+	water.material_override = mat("agua")
+	for yaw: float in [0.0, PI / 2.0]:
+		var q := QuadMesh.new()
+		q.size = Vector2(0.12, 0.78)
+		var jet := _mesh_node(g, "FioDeAgua", q, Vector3(-0.60, 1.0, 0))
+		jet.rotation.y = yaw
+		jet.material_override = mat("agua_queda")
+		jet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var lamp := _lantern_wall(Vector3(-0.20, 2.9, 2.35), PI / 2.0)
+	lamp.name = "LampiaoDoChafariz"
+	g.add_child(lamp)
+	_blocker(g, "Colisao", Vector3(1.6, 5.0, w), Vector3(0.7, 1.5, 0))
+	_blocker(g, "ColisaoTanque", Vector3(1.5, 0.9, 3.0), Vector3(-1.1, 0.45, 0))
 	_plant(g, "palmeira", Vector3(3.0, -0.5, -w * 0.3), 0.0, 1.0)
 	_plant(g, "palmeira", Vector3(4.0, -0.5, w * 0.35), 1.0, 1.15)
 
 
 # ------------------------------------------------------------------ iluminação
-
-func _lamp_light(parent: Node3D, pos: Vector3, energy := 1.6) -> void:
+func _lamp_light(parent: Node3D, pos: Vector3, energy := 1.6) -> OmniLight3D:
 	var light := OmniLight3D.new()
 	light.name = "Luz"
 	light.position = pos
@@ -850,24 +1048,39 @@ func _lamp_light(parent: Node3D, pos: Vector3, energy := 1.6) -> void:
 	light.set("forca", 0.08)
 	light.add_to_group("lampioes", true)
 	parent.add_child(light)
+	return light
 
 
+## Brilho difuso ao redor de uma fonte de luz (billboard aditivo). Some junto com a luz no apagão.
+func _halo(parent: Node3D, pos: Vector3, size: float, mat_name := "halo_quente") -> MeshInstance3D:
+	var q := QuadMesh.new()
+	q.size = Vector2(size, size)
+	var mi := _mesh_node(parent, "Halo", q, pos)
+	mi.material_override = mat(mat_name)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
 func make_poste() -> Node3D:
 	var p := Node3D.new()
 	p.name = "Poste"
 	var b := _batch()
-	b.box("ferro", Vector3(0.28, 0.5, 0.28), Vector3(0, 0.25, 0))
-	b.box("ferro", Vector3(0.1, 3.3, 0.1), Vector3(0, 1.9, 0))
-	b.box("ferro", Vector3(0.22, 0.12, 0.22), Vector3(0, 3.5, 0))
-	b.box("ferro", Vector3(0.38, 0.1, 0.38), Vector3(0, 4.06, 0))
-	b.box("ferro", Vector3(0.2, 0.14, 0.2), Vector3(0, 4.18, 0), Vector3(0, 0.78, 0))
+	# base alargada, fuste, colar, braço com voluta e lanterna de ferro
+	b.cylinder("ferro", 0.20, 0.13, 0.5, Vector3(0, 0.25, 0), Vector3.ZERO, 8)
+	b.cylinder("ferro", 0.07, 0.055, 3.0, Vector3(0, 2.0, 0), Vector3.ZERO, 8)
+	b.cylinder("ferro", 0.11, 0.11, 0.1, Vector3(0, 0.62, 0), Vector3.ZERO, 8)
+	b.cylinder("ferro", 0.11, 0.11, 0.08, Vector3(0, 3.42, 0), Vector3.ZERO, 8)
+	b.box("ferro", Vector3(0.36, 0.05, 0.36), Vector3(0, 3.5, 0))
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			b.box("ferro", Vector3(0.03, 0.46, 0.03), Vector3(sx * 0.15, 3.78, sz * 0.15))
+	b.cylinder("ferro", 0.27, 0.03, 0.18, Vector3(0, 4.12, 0), Vector3(0, PI / 4.0, 0), 4)
+	b.sphere("ferro", 0.04, Vector3(0, 4.26, 0), 6, 4)
 	_mesh_node(p, "Malha", b.commit())
-	_glass_node(p, Vector3(0.3, 0.46, 0.3), Vector3(0, 3.78, 0))
+	_glass_node(p, Vector3(0.27, 0.42, 0.27), Vector3(0, 3.78, 0))
 	_lamp_light(p, Vector3(0, 3.7, 0))
+	_halo(p, Vector3(0, 3.78, 0), 2.4)
 	return p
 
 
-## Vidro do lampião como nó próprio (com material só dele), para o apagão poder escurecê-lo.
 func _glass_node(parent: Node3D, size: Vector3, pos: Vector3) -> void:
 	var bm := BoxMesh.new()
 	bm.size = size
@@ -875,20 +1088,32 @@ func _glass_node(parent: Node3D, size: Vector3, pos: Vector3) -> void:
 	mi.material_override = (mat("vidro_lampiao") as Material).duplicate()
 
 
-## Lampião preso à parede (para ruas estreitas e becos). `yaw` aponta o braço para a parede.
 func _lantern_wall(pos: Vector3, yaw: float) -> Node3D:
 	var p := Node3D.new()
 	p.name = "LampiaoParede"
 	p.position = pos
 	p.rotation.y = yaw
 	var b := _batch()
-	b.box("ferro", Vector3(0.06, 0.06, 0.55), Vector3(0, 0, -0.27))
-	b.box("ferro", Vector3(0.06, 0.3, 0.06), Vector3(0, -0.12, -0.5))
-	b.box("ferro", Vector3(0.3, 0.07, 0.3), Vector3(0, 0.02, -0.5))
+	var c := Vector3(0, -0.2, -0.5)               # centro da lanterna
+	b.box("ferro", Vector3(0.10, 0.24, 0.03), Vector3(0, -0.04, -0.015))                       # placa na parede
+	b.box("ferro", Vector3(0.04, 0.04, 0.52), Vector3(0, 0.02, -0.28))                         # braço
+	b.box("ferro", Vector3(0.03, 0.03, 0.40), Vector3(0, -0.11, -0.19), Vector3(0.62, 0, 0))   # escora diagonal
+	b.sphere("ferro", 0.035, Vector3(0, 0.02, -0.55), 6, 4)
+	b.box("ferro", Vector3(0.025, 0.12, 0.025), Vector3(0, 0.00, -0.5))                        # gancho
+	b.box("ferro", Vector3(0.30, 0.04, 0.30), c + Vector3(0, -0.19, 0))                        # base
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			b.box("ferro", Vector3(0.025, 0.36, 0.025), c + Vector3(sx * 0.125, 0, sz * 0.125))  # colunas da gaiola
+	b.box("ferro", Vector3(0.30, 0.03, 0.30), c + Vector3(0, 0.185, 0))
+	b.cylinder("ferro", 0.21, 0.03, 0.14, c + Vector3(0, 0.26, 0), Vector3(0, PI / 4.0, 0), 4)  # topo piramidal
+	b.sphere("ferro", 0.03, c + Vector3(0, 0.345, 0), 6, 4)
 	_mesh_node(p, "Malha", b.commit())
-	_glass_node(p, Vector3(0.24, 0.36, 0.24), Vector3(0, -0.2, -0.5))
-	_lamp_light(p, Vector3(0, -0.2, -0.5), 1.5)
+	_glass_node(p, Vector3(0.22, 0.34, 0.22), c)
+	_lamp_light(p, c, 1.5)
+	_halo(p, c, 1.7)
 	return p
+
+
 func _lamps() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Iluminacao"
@@ -1005,7 +1230,7 @@ func _church_plaza() -> Node3D:
 	return root
 
 
-## Igreja barroca mineira (inspiração): fachada branca com cantaria, portal, frontão e torres cilíndricas com cúpula.
+## Igreja barroca mineira (inspiração): fachada branca com cantaria, portal em arco, óculo, frontão com volutas e torres cilíndricas.
 ## Quadro local: +X para dentro da igreja, fachada em x = 0 olhando para -X. Origem ao nível do adro.
 func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> Node3D:
 	var c := Node3D.new()
@@ -1016,81 +1241,116 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	var half := width / 2.0
 	_box(c, "Nave", Vector3(nave_len, nh + 3.0, width), Vector3(nave_len / 2.0, (nh - 3.0) / 2.0, 0), wall, collide)
 	_box(c, "Fachada", Vector3(1.6, fh + 3.0, width), Vector3(0.8, (fh - 3.0) / 2.0, 0), wall, collide)
+	# telhado da nave: telhas no sentido do caimento, cumeeira ao longo de X, forro sob o beiral
 	var rise := (width + 1.2) * 0.3
-	var prism := PrismMesh.new()
-	prism.size = Vector3(width + 1.2, rise, nave_len + 1.0)
-	# telhado da nave (cumeeira ao longo de X): o prisma é girado 90 graus
-	var roof := _mesh_node(c, "TelhadoNave", prism, Vector3(nave_len / 2.0, nh + rise / 2.0, 0))
-	roof.rotation.y = PI / 2.0
-	roof.material_override = mat("telha")
+	var rb := _batch()
+	rb.roof("telha_uv", wall, Vector3(width + 1.2, rise, nave_len + 1.0), Vector3(nave_len / 2.0, nh + rise / 2.0, 0), PI / 2.0, 3.6, "madeira_escura")
+	rb.box("telha_cumeeira", Vector3(nave_len + 1.1, 0.28, 0.42), Vector3(nave_len / 2.0, nh + rise + 0.05, 0))
+	_mesh_node(c, "TelhadoNave", rb.commit())
+
 	var b := _batch()
-	# frontão curvo (aproximado por degraus) e volutas
-	b.box("cantaria", Vector3(1.9, 0.5, width + 0.4), Vector3(-0.15, fh - 0.25, 0))
+	# pilastras e cornijas da fachada
+	for sz: float in [-1.0, 1.0]:
+		for zz: float in [half - 0.45, 3.5]:
+			b.box("cantaria", Vector3(0.30, fh - 0.4, 0.62), Vector3(-0.12, (fh - 0.4) / 2.0, sz * zz))
+			b.box("cantaria", Vector3(0.42, 0.50, 0.84), Vector3(-0.15, 0.25, sz * zz))
+			b.box("cantaria", Vector3(0.42, 0.32, 0.84), Vector3(-0.15, fh - 0.55, sz * zz))
+	b.box("cantaria", Vector3(0.60, 0.34, width + 0.5), Vector3(-0.22, fh - 0.17, 0))
+	b.box("cantaria", Vector3(0.42, 0.22, width + 0.3), Vector3(-0.15, 8.6, 0))
+	# frontão escalonado com cornijas, volutas e pináculos
 	for k in 4:
 		var wk := width * (0.62 - k * 0.14)
 		b.box(wall, Vector3(1.5, 0.9, wk), Vector3(0.0, fh + 0.45 + k * 0.9, 0))
 		b.box("cantaria", Vector3(1.7, 0.16, wk + 0.3), Vector3(-0.05, fh + 0.9 + k * 0.9, 0))
+	for sz: float in [-1.0, 1.0]:
+		b.arch("cantaria", Vector3(-0.10, fh + 0.35, sz * (width * 0.62 * 0.5 + 0.95)), 0.95, 0.28, 0.36, 9)   # voluta lateral
+		b.box("cantaria", Vector3(0.5, 0.55, 0.5), Vector3(-0.15, fh + 0.25, sz * (half - 0.3)))
+		b.sphere("cantaria", 0.34, Vector3(-0.15, fh + 0.85, sz * (half - 0.3)), 8, 5)
 	b.box("cantaria", Vector3(0.3, 2.4, 0.3), Vector3(-0.05, fh + 5.0, 0))
 	b.box("cantaria", Vector3(0.3, 0.3, 1.3), Vector3(-0.05, fh + 5.6, 0))
-	# portal de cantaria
-	b.box("cantaria", Vector3(0.5, 6.4, 4.6), Vector3(-0.3, 3.2, 0))
-	b.box("porta_igreja", Vector3(0.06, 5.2, 3.2), Vector3(-0.58, 2.6, 0))
-	b.box("madeira_natural", Vector3(0.05, 5.2, 0.12), Vector3(-0.64, 2.6, 0))               # junção das folhas
-	for hz in [-0.25, 0.25]:
-		b.box("ferro", Vector3(0.08, 0.5, 0.08), Vector3(-0.66, 2.4, hz))                  # puxadores
-	b.box("cantaria", Vector3(0.7, 0.45, 5.4), Vector3(-0.35, 6.6, 0))
-	b.box("cantaria", Vector3(0.9, 1.4, 1.6), Vector3(-0.3, 7.6, 0))
-	# medalhão e janelas
-	b.box("cantaria", Vector3(0.3, 2.2, 2.2), Vector3(-0.2, 10.5, 0))
-	b.box("janela_escura", Vector3(0.1, 1.6, 1.6), Vector3(-0.38, 10.5, 0))
-	for side: float in [-1.0, 1.0]:
-		_window(b, Vector3(0, 9.0, side * (half - 2.3)), 1.2, 2.4, "madeira_natural", false, false, false, true)
-		_window(b, Vector3(0, 3.4, side * (half - 2.3)), 0.9, 1.4, "madeira_natural", false, true)
-	for k in 3:                                                                   # degraus do adro
+	# portal em arco de cantaria com porta de madeira e leque de luz
+	var pr := 1.9
+	var py := 4.4
+	for sz: float in [-1.0, 1.0]:
+		b.box("cantaria", Vector3(0.62, py, 0.52), Vector3(-0.31, py / 2.0, sz * (pr + 0.26)))
+	b.arch("cantaria", Vector3(-0.31, py, 0), pr + 0.26, 0.52, 0.62, 14)
+	b.box("cantaria", Vector3(0.78, 0.62, 0.55), Vector3(-0.34, py + pr + 0.28, 0))                  # fecho do arco
+	b.box("cantaria", Vector3(0.50, 0.30, 2.0 * pr + 1.6), Vector3(-0.30, py + pr + 0.90, 0))          # cornija do portal
+	for sz: float in [-1.0, 1.0]:
+		b.box("madeira_natural", Vector3(0.14, py - 0.05, pr - 0.04), Vector3(-0.50, py / 2.0, sz * (pr / 2.0)))
+		for yy: float in [0.9, 2.2, 3.5]:
+			b.box("ferro", Vector3(0.05, 0.14, pr - 0.16), Vector3(-0.59, yy, sz * (pr / 2.0)))          # ferragens
+		b.box("ferro", Vector3(0.09, 0.50, 0.09), Vector3(-0.62, 2.2, sz * 0.22))                          # puxador
+	b.half_disc("porta_igreja", Vector3(-0.52, py, 0), pr - 0.04, 14)                                     # leque com a luz do interior
+	for k in 3:                                                                                           # degraus do adro
 		b.box("cantaria", Vector3(0.8, 0.14 * (3 - k), width * 0.7), Vector3(-1.4 - k * 0.8, 0.07 * (3 - k), 0))
+	# óculo com raios de pedra
+	b.cylinder("cantaria", 1.30, 1.30, 0.30, Vector3(-0.20, 11.7, 0), Vector3(0, 0, PI / 2.0), 18)
+	b.cylinder("janela_escura", 0.98, 0.98, 0.34, Vector3(-0.22, 11.7, 0), Vector3(0, 0, PI / 2.0), 18)
+	for k in 4:
+		b.box("cantaria", Vector3(0.12, 0.09, 2.0), Vector3(-0.42, 11.7, 0), Vector3(k * PI / 4.0, 0, 0))
+	# janelas laterais em arco e janelas baixas com grade
+	for side: float in [-1.0, 1.0]:
+		_window(b, Vector3(0, 8.0, side * (half - 2.5)), 1.2, 2.4, "madeira_natural", false, false, false, true)
+		_window(b, Vector3(0, 2.6, side * (half - 2.5)), 0.9, 1.4, "madeira_natural", false, true)
 	_mesh_node(c, "Detalhes", b.commit())
-	# torres cilíndricas com cúpula
+
+	# torres cilíndricas com pilastras, sineira com aberturas e cúpula
 	for side: float in [-1.0, 1.0]:
 		if not twin and side > 0.0:
 			continue
 		var tz := side * (half + 1.7)
 		var t := _group(c, "Torre_%s" % ("Esq" if side < 0 else "Dir"), Transform3D(Basis.IDENTITY, Vector3(1.0, 0, tz)))
 		var cyl := CylinderMesh.new()
-		cyl.top_radius = 2.2
-		cyl.bottom_radius = 2.3
-		cyl.height = 26.0
-		cyl.radial_segments = 20
-		var body := _mesh_node(t, "Corpo", cyl, Vector3(0, 10.0, 0))
+		cyl.top_radius = 2.12
+		cyl.bottom_radius = 2.28
+		cyl.height = 24.0
+		cyl.radial_segments = 24
+		var body := _mesh_node(t, "Corpo", cyl, Vector3(0, 8.0, 0))
 		body.material_override = mat(wall)
 		if collide:
-			_add_box_collision(body, Vector3(4.4, 26.0, 4.4))
-		var ring := CylinderMesh.new()
-		ring.top_radius = 2.7
-		ring.bottom_radius = 2.7
-		ring.height = 0.5
-		_mesh_node(t, "Cornija", ring, Vector3(0, 20.3, 0)).material_override = mat("cantaria")
-		var lantern := CylinderMesh.new()
-		lantern.top_radius = 1.3
-		lantern.bottom_radius = 1.4
-		lantern.height = 2.4
-		_mesh_node(t, "Lanterna", lantern, Vector3(0, 21.8, 0)).material_override = mat("cantaria")
+			_add_box_collision(body, Vector3(4.4, 24.0, 4.4))
+		var tb := _batch()
+		for k in 8:                                                                                         # pilastras verticais
+			var a := k * TAU / 8.0 + PI / 8.0
+			tb.box("cantaria", Vector3(0.24, 22.6, 0.50), Vector3(cos(a) * 2.20, 7.3, sin(a) * 2.20), Vector3(0, -a, 0))
+		for ry: float in [-0.2, 6.2, 12.4, 19.7]:                                                         # anéis de cornija
+			tb.cylinder("cantaria", 2.62, 2.62, 0.34, Vector3(0, ry, 0), Vector3.ZERO, 20)
+		for k in 4:                                                                                         # aberturas da sineira
+			var a := k * PI / 2.0
+			var rad := Vector3(cos(a), 0, sin(a))
+			var tan_v := Vector3(-sin(a), 0, cos(a))
+			var cen := rad * 2.12 + Vector3(0, 15.6, 0)
+			tb.box("janela_escura", Vector3(0.14, 3.2, 1.35), cen, Vector3(0, -a, 0))
+			for sg: float in [-1.0, 1.0]:
+				tb.box("cantaria", Vector3(0.24, 3.5, 0.22), cen + tan_v * sg * 0.78 + rad * 0.04, Vector3(0, -a, 0))
+			tb.box("cantaria", Vector3(0.26, 0.26, 1.80), cen + Vector3(0, 1.74, 0) + rad * 0.04, Vector3(0, -a, 0))
+			tb.box("cantaria", Vector3(0.30, 0.22, 1.9), cen + Vector3(0, -1.70, 0) + rad * 0.06, Vector3(0, -a, 0))
+		_mesh_node(t, "Detalhes", tb.commit())
 		var dome := SphereMesh.new()
 		dome.radius = 2.5
-		dome.height = 3.4
-		dome.radial_segments = 20
-		dome.rings = 8
-		_mesh_node(t, "Cupula", dome, Vector3(0, 21.0, 0)).material_override = mat("telha")
+		dome.height = 3.8
+		dome.radial_segments = 24
+		dome.rings = 10
+		_mesh_node(t, "Cupula", dome, Vector3(0, 20.6, 0)).material_override = mat("telha")
+		var lantern := CylinderMesh.new()
+		lantern.top_radius = 1.0
+		lantern.bottom_radius = 1.1
+		lantern.height = 2.0
+		_mesh_node(t, "Lanterna", lantern, Vector3(0, 22.9, 0)).material_override = mat("cantaria")
 		var dome2 := SphereMesh.new()
-		dome2.radius = 1.4
-		dome2.height = 2.4
-		_mesh_node(t, "CupulaAlta", dome2, Vector3(0, 23.6, 0)).material_override = mat("telha")
+		dome2.radius = 1.25
+		dome2.height = 2.2
+		_mesh_node(t, "CupulaAlta", dome2, Vector3(0, 24.4, 0)).material_override = mat("telha")
 		var cb := _batch()
-		cb.box("ferro", Vector3(0.16, 2.2, 0.16), Vector3(0, 26.0, 0))
-		cb.box("ferro", Vector3(1.0, 0.16, 0.16), Vector3(0, 26.5, 0))
+		cb.box("ferro", Vector3(0.16, 2.4, 0.16), Vector3(0, 26.4, 0))
+		cb.box("ferro", Vector3(1.0, 0.16, 0.16), Vector3(0, 26.9, 0))
+		cb.sphere("ouro_velho", 0.20, Vector3(0, 25.4, 0), 8, 5)
 		for k in 4:
 			var a := k * PI / 2.0 + PI / 4.0
-			cb.box("janela_escura", Vector3(0.8, 1.3, 0.06), Vector3(cos(a) * 1.38, 21.8, sin(a) * 1.38), Vector3(0, -a + PI / 2.0, 0))
+			cb.box("janela_escura", Vector3(0.7, 1.1, 0.06), Vector3(cos(a) * 1.07, 22.9, sin(a) * 1.07), Vector3(0, -a + PI / 2.0, 0))
 		_mesh_node(t, "Cruz", cb.commit())
+
 	# gatilho de vitória, na frente do portal
 	var door := Area3D.new()
 	door.name = "Porta"
@@ -1108,6 +1368,7 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	light.light_energy = 2.6
 	light.omni_range = 16.0
 	c.add_child(light)
+	_halo(c, Vector3(-1.2, 5.0, 0), 7.0, "halo_quente")
 	return c
 
 
@@ -1188,9 +1449,10 @@ func _hill_houses(root: Node3D) -> void:
 		var yaw := atan2(-x_axis.z, x_axis.x)
 		var skirt := base - lo + 1.0
 		b.box("muro", Vector3(dep + 1.0, skirt, w + 1.0), Vector3(p.x, base - skirt / 2.0 + 0.05, p.z), Vector3(0, yaw, 0))
-		b.box(_pick_wall(), Vector3(dep, hgt, w), Vector3(p.x, base + hgt / 2.0, p.z), Vector3(0, yaw, 0))
-		var rise := (dep + 1.2) * 0.27
-		b.prism("telha", Vector3(dep + 1.2, rise, w + 0.4), Vector3(p.x, base + hgt + 0.05 + rise / 2.0, p.z), yaw)
+		var hw := _pick_wall()
+		b.box(hw, Vector3(dep, hgt, w), Vector3(p.x, base + hgt / 2.0, p.z), Vector3(0, yaw, 0))
+		var rise := (dep + 1.2) * _rng.randf_range(0.24, 0.33)
+		b.roof("telha_uv", hw, Vector3(dep + 1.2, rise, w + 0.4), Vector3(p.x, base + hgt + 0.05 + rise / 2.0, p.z), yaw, 3.6, "madeira_escura")
 		var face_yaw := atan2(-x_axis.x, -x_axis.z)
 		var face := p - x_axis * (dep * 0.5 + 0.03)
 		for k in [-1, 0, 1]:
@@ -1202,7 +1464,7 @@ func _hill_houses(root: Node3D) -> void:
 						# longe: vira um ponto de luz redondo (como nas fotos das encostas)
 						_hill_lights.append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * _rng.randf_range(1.1, 1.8)), wp - x_axis * 0.4))
 					else:
-						b.quad("janela_acesa" if lit else "janela_escura", Vector2(0.9, 1.3), wp, face_yaw)
+						b.quad("vidro_luz" if lit else "vidro_noite", Vector2(0.9, 1.3), wp, face_yaw)
 		_spots.append(q)
 		placed += 1
 	for key: Vector2i in batches:
@@ -1333,6 +1595,11 @@ func _far_lights() -> MultiMeshInstance3D:
 	return mmi
 
 
+func _set_label_range(n: Node, end: float) -> void:
+	for ch in n.find_children("*", "Label3D", true, false):
+		(ch as Label3D).visibility_range_end = end
+
+
 func _set_range(n: Node, end: float) -> void:
 	for ch in n.get_children():
 		if ch is GeometryInstance3D:
@@ -1418,25 +1685,28 @@ func _serra() -> MeshInstance3D:
 
 # ------------------------------------------------------------------ ponte e riacho
 
-## Parapeito de pedra da ponte (um por lado da rua).
 func _lot_ponte(parent: Node3D, f: Dictionary, sigma: float) -> void:
 	var w: float = f["w"]
 	var g := _group(parent, "Parapeito_%02d" % _n, f["xf"])
 	_n += 1
-	# acompanha a subida da rua (o eixo Z local anda em sentido oposto ao da rua no lado +1)
+	# o muro acompanha a subida da rua; os pilares das pontas ficam verticais, em grupos separados
 	var slope := (Route.height(Route.BRIDGE_S + 1.0) - Route.height(Route.BRIDGE_S - 1.0)) / 2.0
-	g.transform = g.transform * Transform3D(Basis(Vector3.RIGHT, atan(sigma * slope)), Vector3.ZERO)
-	_box(g, "Muro", Vector3(0.5, 1.9, w + 0.1), Vector3(0.25, 0.2, 0), "muro", true)
+	var ang := atan(sigma * slope)
+	var tilted := _group(g, "Muro", Transform3D(Basis(Vector3.RIGHT, ang), Vector3.ZERO))
+	_box(tilted, "Corpo", Vector3(0.5, 1.9, w + 0.1), Vector3(0.25, 0.2, 0), "muro", true)
 	var b := _batch()
 	b.box("cantaria", Vector3(0.8, 0.12, w + 0.2), Vector3(0.25, 1.21, 0))
-	for sz: float in [-1.0, 1.0]:
-		b.box("cantaria", Vector3(0.7, 1.5, 0.55), Vector3(0.2, 0.6, sz * (w / 2.0 - 0.1)))
-		b.box("cantaria", Vector3(0.8, 0.14, 0.65), Vector3(0.2, 1.4, sz * (w / 2.0 - 0.1)))
-	_mesh_node(g, "Detalhes", b.commit())
-	_box(g, "FaceDaPonte", Vector3(0.5, 4.6, w + 0.1), Vector3(0.25, -3.05, 0), "muro")
+	_mesh_node(tilted, "Capa", b.commit())
+	_box(tilted, "FaceDaPonte", Vector3(0.5, 4.6, w + 0.1), Vector3(0.25, -3.05, 0), "muro")
+	var pb := _batch()
+	for end: float in [-1.0, 1.0]:
+		var dy: float = tan(ang) * end * (w / 2.0 - 0.1)          # altura do chão naquela ponta
+		pb.box("cantaria", Vector3(0.70, 1.55, 0.55), Vector3(0.2, 0.62 + dy, end * (w / 2.0 - 0.1)))
+		pb.box("cantaria", Vector3(0.82, 0.14, 0.67), Vector3(0.2, 1.46 + dy, end * (w / 2.0 - 0.1)))
+		pb.sphere("cantaria", 0.17, Vector3(0.2, 1.68 + dy, end * (w / 2.0 - 0.1)), 7, 4)
+	_mesh_node(g, "Pilares", pb.commit())
 
 
-## Corpo da ponte (laje de pedra), o riacho, pedras e plantas das margens.
 func _bridge(root: Node3D) -> void:
 	var s := Route.BRIDGE_S
 	var c := Route.pos(s)
@@ -1536,48 +1806,66 @@ func _adornos() -> Node3D:
 	return root
 
 
-## Varais com lençóis e bandeirinhas coloridas, esticados de fachada a fachada.
 func _lines() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Varais"
 	var b := _batch()
 	var flags := ["bandeira_a", "bandeira_b", "bandeira_c", "bandeira_d"]
+	var cloths := ["pano", "pano_azul", "pano_rosa", "pano_cru"]
 	for spec in [[58.0, "varal"], [234.0, "varal"], [190.0, "bandeirinha"], [270.0, "bandeirinha"]]:
 		var s: float = spec[0]
-		var a := facade(-1.0, s) + Vector3(0, SW_H + (4.4 if spec[1] == "varal" else 5.6), 0)
-		var c := facade(1.0, s) + Vector3(0, SW_H + (4.4 if spec[1] == "varal" else 5.6), 0)
+		var hgt := 4.4 if spec[1] == "varal" else 5.6
+		var a := facade(-1.0, s) + Vector3(0, SW_H + hgt, 0)
+		var c := facade(1.0, s) + Vector3(0, SW_H + hgt, 0)
 		var n := int(a.distance_to(c) / 0.5)
 		var prev := a
 		var dirv := (c - a)
 		dirv.y = 0
 		var lat := dirv.normalized()
-		var perp := lat.cross(Vector3.UP).normalized()
 		for k in range(1, n + 1):
 			var t := float(k) / n
 			var pt := a.lerp(c, t)
 			pt.y -= sin(t * PI) * 0.7
 			var seg := pt - prev
-			b.box("ferro", Vector3(seg.length() + 0.02, 0.012, 0.012), (pt + prev) * 0.5, Vector3(0, atan2(-seg.z, seg.x), atan2(seg.y, Vector2(seg.x, seg.z).length())))
-			if spec[1] == "bandeirinha" and k % 1 == 0:
+			b.box("ferro", Vector3(seg.length() + 0.02, 0.012, 0.012), (prev + pt) * 0.5, Vector3(0, atan2(-seg.z, seg.x), atan2(seg.y, Vector2(seg.x, seg.z).length())))
+			if spec[1] == "bandeirinha":
 				var m: String = flags[k % flags.size()]
-				b.tri2(m, prev, pt, (prev + pt) * 0.5 + Vector3(0, -0.34, 0))
+				b.tri2(m, prev, pt, (prev + pt) * 0.5 + Vector3(0, -0.30, 0))
 			prev = pt
 		if spec[1] == "varal":
+			# peças penduradas: pano largo com dobras verticais, preso por prendedores de madeira
 			for k in 4:
 				var t2 := (k + 1.0) / 5.0
 				var top := a.lerp(c, t2)
 				top.y -= sin(t2 * PI) * 0.7
-				var wdt := 1.05
-				var hh := _rng.randf_range(1.0, 1.4)
-				var p0 := top - lat * wdt * 0.5
-				var p1 := top + lat * wdt * 0.5
-				b.tri2("pano", p0, p1, p1 + Vector3(0, -hh, 0))
-				b.tri2("pano", p0, p1 + Vector3(0, -hh, 0), p0 + Vector3(0, -hh, 0))
+				var wdt := _rng.randf_range(0.9, 1.25)
+				var hh := _rng.randf_range(1.05, 1.5)
+				var m2: String = cloths[_rng.randi() % cloths.size()]
+				var cols := 8
+				var rows := 3
+				for ci in cols:
+					for ri in rows:
+						var u0 := float(ci) / cols
+						var u1 := float(ci + 1) / cols
+						var v0 := float(ri) / rows
+						var v1 := float(ri + 1) / rows
+						var fold := func(u: float, v: float) -> Vector3:
+							var x := (u - 0.5) * wdt
+							var drop := v * hh + sin(u * PI * 1.0) * 0.03 * v    # barra levemente curva
+							var depth := sin(u * TAU * 2.0 + float(k)) * 0.045 * (0.3 + v)   # dobras
+							return top + lat * x + Vector3(0, -drop, 0) + lat.cross(Vector3.UP) * depth
+						var p00: Vector3 = fold.call(u0, v0)
+						var p10: Vector3 = fold.call(u1, v0)
+						var p01: Vector3 = fold.call(u0, v1)
+						var p11: Vector3 = fold.call(u1, v1)
+						b.tri2(m2, p00, p10, p11)
+						b.tri2(m2, p00, p11, p01)
+				for ex: float in [-0.5, 0.5]:
+					b.box("madeira_natural", Vector3(0.03, 0.10, 0.03), top + lat * ex * wdt + Vector3(0, 0.0, 0))
 	_mesh_node(root, "Fios", b.commit())
 	return root
 
 
-## Nichos (oratórios) com imagem de santo e vela acesa nas junções das fachadas.
 func _nichos() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Nichos"
@@ -1594,21 +1882,29 @@ func _nichos() -> Node3D:
 		var origin := facade(sigma, s) + Vector3(0, SW_H, 0)
 		var g := _group(root, "Nicho_%03d" % int(s), Transform3D(Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP)), origin))
 		var b := _batch()
-		b.box("cantaria", Vector3(0.55, 1.2, 0.75), Vector3(0.0, 2.1, 0))
-		b.box("janela_escura", Vector3(0.06, 0.85, 0.48), Vector3(-0.29, 2.1, 0))
-		b.box("cantaria", Vector3(0.7, 0.1, 0.9), Vector3(-0.03, 2.75, 0))
-		b.box("ferro", Vector3(0.04, 0.4, 0.04), Vector3(-0.2, 3.05, 0))
-		b.box("ferro", Vector3(0.04, 0.04, 0.22), Vector3(-0.2, 3.15, 0))
-		b.box("cantaria", Vector3(0.14, 0.5, 0.16), Vector3(-0.26, 1.95, 0))       # imagem
-		b.sphere("cantaria", 0.07, Vector3(-0.26, 2.3, 0), 6, 4)
-		b.box("vela", Vector3(0.05, 0.14, 0.05), Vector3(-0.27, 1.7, 0.17))
-		b.box("chama", Vector3(0.035, 0.06, 0.035), Vector3(-0.27, 1.8, 0.17))
-		b.box("vela", Vector3(0.05, 0.1, 0.05), Vector3(-0.27, 1.68, -0.17))
-		b.box("chama", Vector3(0.035, 0.05, 0.035), Vector3(-0.27, 1.76, -0.17))
+		# oratório: mísula, corpo com arco, frontão com cruz, santo e velas
+		b.box("cantaria", Vector3(0.50, 0.16, 0.86), Vector3(-0.10, 1.50, 0))                       # mísula
+		b.box("cantaria", Vector3(0.40, 0.22, 0.74), Vector3(-0.10, 1.35, 0))
+		b.box("cantaria", Vector3(0.34, 1.50, 0.80), Vector3(-0.05, 2.30, 0))                       # corpo
+		b.box("janela_escura", Vector3(0.06, 0.95, 0.52), Vector3(-0.22, 2.12, 0))                  # vão
+		b.half_disc("janela_escura", Vector3(-0.22, 2.60, 0), 0.26, 10)
+		b.arch("cantaria", Vector3(-0.21, 2.60, 0), 0.30, 0.08, 0.10, 9)                             # arco de pedra
+		b.box("cantaria", Vector3(0.10, 0.96, 0.08), Vector3(-0.21, 2.12, -0.30))
+		b.box("cantaria", Vector3(0.10, 0.96, 0.08), Vector3(-0.21, 2.12, 0.30))
+		b.cylinder("cantaria", 0.075, 0.10, 0.50, Vector3(-0.24, 1.98, 0), Vector3.ZERO, 8)          # imagem do santo
+		b.sphere("cantaria", 0.075, Vector3(-0.24, 2.32, 0), 7, 4)
+		b.box("cantaria", Vector3(0.60, 0.12, 1.00), Vector3(-0.05, 3.10, 0))                        # cornija
+		b.prism("cantaria", Vector3(0.50, 0.30, 0.96), Vector3(-0.04, 3.31, 0))                       # frontão
+		b.box("ferro", Vector3(0.035, 0.36, 0.035), Vector3(-0.04, 3.62, 0))                         # cruz
+		b.box("ferro", Vector3(0.035, 0.035, 0.20), Vector3(-0.04, 3.70, 0))
+		b.box("ferro", Vector3(0.30, 0.03, 0.62), Vector3(-0.30, 1.62, 0))                           # grade-prateleira
+		for sz: float in [-0.20, 0.20]:
+			b.box("vela", Vector3(0.05, 0.14, 0.05), Vector3(-0.30, 1.71, sz))
+			b.box("chama", Vector3(0.035, 0.065, 0.035), Vector3(-0.30, 1.82, sz))
 		_mesh_node(g, "Malha", b.commit())
 		var l := OmniLight3D.new()
 		l.name = "LuzDaVela"
-		l.position = Vector3(-0.5, 1.9, 0)
+		l.position = Vector3(-0.55, 1.95, 0)
 		l.light_color = Color(1.0, 0.62, 0.28)
 		l.light_energy = 0.9
 		l.omni_range = 4.5
@@ -1619,13 +1915,13 @@ func _nichos() -> Node3D:
 		l.set("forca", 0.3)
 		l.set("velocidade", 9.0)
 		g.add_child(l)
+		_halo(g, Vector3(-0.34, 1.85, 0), 0.9, "halo_vela")
 		last_s = s
 		picked += 1
 	print("[vila] nichos: ", picked)
 	return root
 
 
-## Janela com luz acesa e um vulto parado; apaga quando o jogador chega perto (scripts/janela_assombrada.gd).
 func _haunted_window(parent: Node3D, pos: Vector3) -> void:
 	var g := _group(parent, "JanelaAssombrada", Transform3D(Basis.IDENTITY, pos))
 	g.set_script(load("res://scripts/janela_assombrada.gd"))
@@ -1677,10 +1973,11 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 	a.add_child(cs)
 	var b := _batch()
 	if tipo == "oleo":
-		b.cylinder("vidro_oleo", 0.07, 0.07, 0.22, Vector3(0, 0.11, 0), Vector3.ZERO, 8)
-		b.cylinder("vidro_oleo", 0.03, 0.03, 0.1, Vector3(0, 0.27, 0), Vector3.ZERO, 8)
-		b.box("madeira_natural", Vector3(0.05, 0.04, 0.05), Vector3(0, 0.34, 0))
-		_brilho(a, 0.25, 0.55)
+		b.cylinder("vidro_oleo", 0.075, 0.085, 0.20, Vector3(0, 0.10, 0), Vector3.ZERO, 10)       # bojo
+		b.sphere("vidro_oleo", 0.085, Vector3(0, 0.20, 0), 8, 4)
+		b.cylinder("vidro_oleo", 0.032, 0.032, 0.12, Vector3(0, 0.30, 0), Vector3.ZERO, 8)        # gargalo
+		b.cylinder("madeira_natural", 0.04, 0.036, 0.05, Vector3(0, 0.38, 0), Vector3.ZERO, 8)    # rolha
+		_halo(a, Vector3(0, 0.22, 0), 0.7, "halo_vela")
 	else:
 		b.box("papel", Vector3(0.3, 0.012, 0.22), Vector3(0, 0.01, 0), Vector3(0, _rng.randf_range(-0.6, 0.6), 0))
 		_brilho(a, 0.2, 0.45)

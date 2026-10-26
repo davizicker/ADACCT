@@ -50,6 +50,10 @@ godot --headless --path . --quit-after 20000 -- --selftest-mula=refugio        #
 godot --headless --path . --quit-after 20000 -- --selftest-mula=refugio_aceso  # lampião aceso no beco: penalidade
 godot --headless --path . --quit-after 60000 -- --selftest-auto   # partida automática com eventos
 godot --headless --path . --script res://tools/audio_check.gd     # confere os sons (pico, clipping)
+godot --headless --path . --quit-after 60000 -- --selftest-becos  # sobe os 7 becos em escada
+godot --headless --path . --quit-after 60000 -- --selftest-itens  # pega 7 frascos e lê 6 bilhetes (tecla E)
+godot --headless --path . --quit-after 60000 -- --selftest-walk --walk-offset=1.5   # anda pela borda da rua (também -1.5)
+godot --headless --path . --script res://tools/auditoria_geom.gd  # buracos no chão, itens/árvores dentro de casas
 ```
 Os avisos `mesh_get_surface_count` no modo headless vêm do renderizador "dummy" e são inofensivos.
 

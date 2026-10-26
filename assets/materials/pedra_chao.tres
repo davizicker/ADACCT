@@ -2,11 +2,13 @@
 
 [ext_resource type="Texture2D" path="res://assets/textures/pedra_albedo.png" id="1_asw5k"]
 [ext_resource type="Texture2D" path="res://assets/textures/pedra_normal.png" id="2_ad40f"]
+[ext_resource type="Texture2D" path="res://assets/textures/pedra_rough.png" id="3_ad40f"]
 
 [resource]
+vertex_color_use_as_albedo = true
 albedo_color = Color(0.88, 0.85, 0.8, 1)
 albedo_texture = ExtResource("1_asw5k")
-roughness = 0.58
+roughness_texture = ExtResource("3_ad40f")
 normal_enabled = true
 normal_scale = 1.4
 normal_texture = ExtResource("2_ad40f")

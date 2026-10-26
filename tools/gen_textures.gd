@@ -27,6 +27,7 @@ func _init() -> void:
 	_bananeira()
 	_ponto_luz()
 	_silhueta()
+	_janelas()
 	print("[tex] pronto")
 	quit()
 
@@ -70,34 +71,95 @@ func _h(img: Image, x: int, y: int, v: float) -> void:
 
 # ------------------------------------------------------------------ superfícies
 
-## Calçamento de pedra irregular (alvenaria poliédrica) com juntas de terra e musgo.
-func _pedra() -> void:
-	var edges := _noise(FastNoiseLite.TYPE_CELLULAR, 0.028, 3)
-	edges.cellular_return_type = FastNoiseLite.RETURN_DISTANCE2_SUB
-	var cells := _noise(FastNoiseLite.TYPE_CELLULAR, 0.028, 3)
-	cells.cellular_return_type = FastNoiseLite.RETURN_CELL_VALUE
-	var e_img := _simg(edges)
-	var c_img := _simg(cells)
-	var g_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.08, 5, 4))
-	var m_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.012, 9, 3))
-	var albedo := _new_rgb()
-	var height := _new_h()
+## Voronoi que repete sem emenda (o ruído celular da engine não repete bem). Retorna {d: (F2-F1)/2 em px, id: 0..1}.
+func _voronoi(cells: int, seed_: int, jitter: float) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_
+	var pts: Array[Vector2] = []
+	var ids: Array[float] = []
+	for j in cells:
+		for i in cells:
+			pts.append(Vector2(i + 0.5 + (rng.randf() - 0.5) * jitter, j + 0.5 + (rng.randf() - 0.5) * jitter))
+			ids.append(rng.randf())
+	var d := PackedFloat32Array()
+	d.resize(SIZE * SIZE)
+	var idv := PackedFloat32Array()
+	idv.resize(SIZE * SIZE)
+	var cs := float(SIZE) / cells
 	for y in SIZE:
 		for x in SIZE:
-			var e := e_img.get_pixel(x, y).r
-			var c := c_img.get_pixel(x, y).r
+			var px := (x + 0.5) / cs
+			var py := (y + 0.5) / cs
+			var ci := int(floor(px))
+			var cj := int(floor(py))
+			var f1 := 1e9
+			var f2 := 1e9
+			var best := 0
+			for dj in range(-1, 2):
+				for di in range(-1, 2):
+					var gi := ci + di
+					var gj := cj + dj
+					var wi := posmod(gi, cells)
+					var wj := posmod(gj, cells)
+					var pt := pts[wj * cells + wi]
+					var dx := pt.x + (gi - wi) - px
+					var dy := pt.y + (gj - wj) - py
+					var dist := sqrt(dx * dx + dy * dy)
+					if dist < f1:
+						f2 = f1
+						f1 = dist
+						best = wj * cells + wi
+					elif dist < f2:
+						f2 = dist
+			d[y * SIZE + x] = (f2 - f1) * 0.5 * cs
+			idv[y * SIZE + x] = ids[best]
+	return {"d": d, "id": idv}
+
+
+## Calçamento "pé-de-moleque": pedras de quartzito irregulares e arredondadas, juntas finas de terra com musgo,
+## cada pedra com cor, altura e brilho próprios. Gera também um mapa de rugosidade (pedra polida x junta).
+func _pedra() -> void:
+	var vor := _voronoi(19, 311, 0.9)
+	var dd: PackedFloat32Array = vor["d"]
+	var ii: PackedFloat32Array = vor["id"]
+	var g_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.09, 5, 4))
+	var sp_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.45, 6))
+	var m_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.014, 9, 3))
+	var albedo := _new_rgb()
+	var height := _new_h()
+	var rough := _new_h()
+	var palette: Array[Color] = [
+		Color(0.50, 0.47, 0.42),   # cinza quente
+		Color(0.56, 0.45, 0.34),   # ocre
+		Color(0.45, 0.44, 0.44),   # cinza frio
+		Color(0.53, 0.41, 0.35),   # rosado
+		Color(0.42, 0.42, 0.37),   # cinza esverdeado
+	]
+	for y in SIZE:
+		for x in SIZE:
+			var e := dd[y * SIZE + x]                              # distância até a borda da pedra (px)
+			var c := ii[y * SIZE + x]
 			var g := g_img.get_pixel(x, y).r
+			var sp := sp_img.get_pixel(x, y).r
 			var m := m_img.get_pixel(x, y).r
-			var top := smoothstep(0.0, 0.16, e)
-			var tone := 0.40 + c * 0.24 + (g - 0.5) * 0.28
-			var col := Color(tone * 1.0, tone * 0.94, tone * 0.85)
-			# veios ferruginosos (quartzito) em algumas pedras
-			col = col.lerp(Color(0.55, 0.36, 0.25), clampf((c - 0.7) * 1.2, 0.0, 0.3))
-			var joint := Color(0.10, 0.085, 0.06).lerp(Color(0.13, 0.19, 0.08), clampf((m - 0.5) * 2.0, 0.0, 0.7))
-			col = col.lerp(joint, 1.0 - top)
+			var joint := smoothstep(0.7, 2.0, e)                   # 0 = junta, 1 = pedra
+			var dome := smoothstep(0.8, 9.0, e)                    # arredondamento da pedra
+			var pos := c * (palette.size() - 1)
+			var i0 := int(floor(pos))
+			var base := palette[i0].lerp(palette[mini(i0 + 1, palette.size() - 1)], pos - i0)
+			var tone := 0.92 + (g - 0.5) * 0.30 + (sp - 0.5) * 0.20
+			tone *= 0.90 + 0.20 * dome                             # topo mais claro (polido pelo uso)
+			var col := base * tone
+			var ring := smoothstep(2.0, 3.2, e) * (1.0 - smoothstep(3.2, 6.5, e))
+			col += Color(0.05, 0.05, 0.045) * ring                 # borda levemente clareada
+			var soil := Color(0.10, 0.085, 0.06).lerp(Color(0.14, 0.20, 0.08), clampf((m - 0.52) * 2.5, 0.0, 0.75))
+			col = col.lerp(soil, 1.0 - joint)
 			albedo.set_pixel(x, y, col)
-			_h(height, x, y, top * 0.8 + (g - 0.5) * 0.3)
-	_save("pedra", albedo, height, 6.0)
+			_h(height, x, y, joint * (0.30 + 0.62 * dome) * (0.80 + 0.20 * c) + (g - 0.5) * 0.06)
+			_h(rough, x, y, lerpf(0.97, 0.42 + 0.30 * (1.0 - dome) + (c - 0.5) * 0.12, joint))
+	_save("pedra", albedo, height, 5.0)
+	rough.save_png(OUT + "pedra_rough.png")
+	print("[tex] pedra_rough")
 
 
 ## Muro de pedra de quartzito em fiadas irregulares, com argamassa de terra.
@@ -176,6 +238,7 @@ func _reboco_velho() -> void:
 	var fine := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.30, 72))
 	var blot := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.006, 73, 3))
 	var stain := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.03, 74, 3))
+	var streak_n := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 1.0, 75, 2)
 	var albedo := _new_rgb()
 	var height := _new_h()
 	for y in SIZE:
@@ -184,12 +247,15 @@ func _reboco_velho() -> void:
 			var f := fine.get_pixel(x, y).r
 			var bl := blot.get_pixel(x, y).r
 			var st := stain.get_pixel(x, y).r
-			var plaster := 0.80 + (bl - 0.5) * 0.30 + (f - 0.5) * 0.08
-			plaster *= 1.0 - clampf((st - 0.6) * 2.0, 0.0, 0.5) * 0.35
+			var plaster := 0.84 + (bl - 0.5) * 0.22 + (f - 0.5) * 0.06
+			plaster *= 1.0 - clampf((st - 0.6) * 2.0, 0.0, 0.5) * 0.22
+			# escorrimentos de chuva: riscos verticais escuros e suaves
+			var sk := streak_n.get_noise_2d(x * 0.045, y * 0.0022)
+			plaster *= 1.0 - clampf((sk - 0.12) * 1.6, 0.0, 0.5) * 0.28
 			var base := Color(plaster, plaster * 0.98, plaster * 0.93)
-			var peel := smoothstep(0.80, 0.85, mk + (f - 0.5) * 0.06)
+			var peel := smoothstep(0.885, 0.915, mk + (f - 0.5) * 0.05)
 			var adobe := Color(0.55, 0.43, 0.32).lerp(Color(0.46, 0.36, 0.28), f)
-			var rim := smoothstep(0.75, 0.81, mk) * (1.0 - peel)
+			var rim := smoothstep(0.84, 0.89, mk) * (1.0 - peel)
 			var col := base.lerp(adobe, peel)
 			col = col.lerp(Color(0.55, 0.52, 0.46), rim * 0.4)
 			albedo.set_pixel(x, y, col)
@@ -435,8 +501,10 @@ func _hera() -> void:
 	for i in 1100:
 		var cx := rng.randf() * s
 		var cy := rng.randf() * s
-		# denso embaixo, ralo em cima (a hera "escorre" do alto do muro)
-		var keep := 0.55 + 0.45 * smoothstep(0.0, 1.0, cy / s)
+		# denso embaixo, ralo em cima; some suavemente nas bordas (sem contorno retangular)
+		var edge_x := smoothstep(0.0, 0.22, minf(cx, s - cx) / s)
+		var edge_y := smoothstep(0.0, 0.30, minf(cy, s - cy) / s)
+		var keep := (0.50 + 0.50 * smoothstep(0.0, 1.0, cy / s)) * edge_x * maxf(edge_y, 0.0)
 		if rng.randf() > keep:
 			continue
 		_leaf(img, cx, cy, rng.randf_range(20, 30), rng.randf_range(14, 20), rng.randf() * TAU, _greens(rng, 0.55 + 0.5 * rng.randf()), false)
@@ -521,3 +589,41 @@ func _silhueta() -> void:
 			img.set_pixel(x, y, Color(0, 0, 0, a))
 	img.save_png(OUT + "silhueta.png")
 	print("[tex] silhueta")
+
+
+## Vidros de janela: "luz" (sala acesa, com cortinas e uma lâmpada) e "noite" (vidro escuro com reflexo do céu).
+func _janelas() -> void:
+	var w := 128
+	var h := 192
+	var lit := Image.create(w, h, false, Image.FORMAT_RGB8)
+	var dark := Image.create(w, h, false, Image.FORMAT_RGB8)
+	var n1 := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.05, 130, 2)
+	for y in h:
+		for x in w:
+			var u := float(x) / w
+			var v := float(y) / h
+			# --- sala acesa
+			var warm := Color(1.0, 0.80, 0.45).lerp(Color(0.62, 0.36, 0.14), pow(absf(v - 0.45) * 1.7, 1.4))
+			warm = warm.lerp(Color(0.40, 0.22, 0.09), smoothstep(0.70, 1.0, v) * 0.7)   # chão e móveis, mais escuro
+			var lamp := exp(-pow((u - 0.52) * 7.0, 2.0) - pow((v - 0.22) * 6.0, 2.0))     # lâmpada/abajur
+			warm += Color(0.5, 0.4, 0.2) * lamp
+			# cortinas laterais com dobras e amarração
+			var cw := 0.20 + 0.10 * smoothstep(0.35, 0.60, v) * 0.0
+			var curtain := 0.0
+			var tie := smoothstep(0.52, 0.62, v)
+			var edge_l := cw * (1.0 - 0.45 * tie * (1.0 - smoothstep(0.62, 0.70, v)))
+			if u < edge_l or u > 1.0 - edge_l:
+				curtain = 1.0
+			var fold := 0.5 + 0.5 * sin(u * 62.0 + n1.get_noise_2d(x, y) * 2.0)
+			var ccol := Color(0.95, 0.84, 0.62) * (0.55 + 0.45 * fold)
+			var col := warm.lerp(ccol, curtain * 0.92)
+			col *= 0.62 + 0.38 * smoothstep(0.0, 0.10, minf(u, 1.0 - u) * 4.0 + 0.2)   # sombra nas bordas
+			lit.set_pixel(x, y, col)
+			# --- vidro noturno
+			var sky := Color(0.03, 0.045, 0.08).lerp(Color(0.012, 0.016, 0.022), smoothstep(0.0, 0.8, v))
+			var streak := smoothstep(0.0, 0.04, 0.5 - absf((u + v * 0.55) - 0.78)) * 0.05    # reflexo diagonal
+			var dust := (n1.get_noise_2d(x * 1.7, y * 1.7) * 0.5 + 0.5) * 0.012
+			dark.set_pixel(x, y, sky + Color(streak, streak * 1.1, streak * 1.4) + Color(dust, dust, dust))
+	lit.save_png(OUT + "vidro_luz.png")
+	dark.save_png(OUT + "vidro_noite.png")
+	print("[tex] janelas")

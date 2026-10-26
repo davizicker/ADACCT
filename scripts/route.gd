@@ -34,6 +34,9 @@ const CHURCH_S := 338.0
 ## ponte de pedra sobre um riacho que cruza a rua em BRIDGE_S (metade do comprimento = BRIDGE_HALF)
 const BRIDGE_S := 118.0
 const BRIDGE_HALF := 4.6
+## chafariz de pedra no largo (lado +1 = direita de quem sobe)
+const FOUNTAIN_S := 160.0
+const FOUNTAIN_SIDE := 1.0
 
 static var _built := false
 static var _pts: PackedVector2Array

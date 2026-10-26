@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/agua_queda.gdshader" id="1_a51it"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_a51it")
+shader_parameter/cor = Color(0.78, 0.9, 1, 0.7)
+shader_parameter/velocidade = 2.6

@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/vidro_noite.png" id="1_i8ciy"]
+
+[resource]
+albedo_texture = ExtResource("1_i8ciy")
+metallic_specular = 0.9
+roughness = 0.1

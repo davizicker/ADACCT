@@ -28,6 +28,7 @@ var _creak: AudioStreamPlayer3D
 var _whisper: AudioStreamPlayer3D
 var _water: AudioStreamPlayer3D
 var _clink: AudioStreamPlayer
+var _fountain: AudioStreamPlayer3D
 var _dog_t := 18.0
 var _bell_t := 35.0
 
@@ -111,6 +112,9 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	_water = _player3d(Synth.water(), "Ambiente", -4.0, 14.0)
 	_water.global_position = Route.pos(Route.BRIDGE_S) + Vector3(0, -3.0, 0)
 	_water.play()
+	_fountain = _player3d(Synth.water(), "Ambiente", -2.0, 9.0)
+	_fountain.global_position = Route.pos(Route.FOUNTAIN_S) + Route.right(Route.FOUNTAIN_S) * Route.FOUNTAIN_SIDE * (Route.width(Route.FOUNTAIN_S) * 0.5 + 1.5) + Vector3(0, 1.0, 0)
+	_fountain.play()
 	player.footstep.connect(_on_step)
 	Config.apply(get_parent())
 

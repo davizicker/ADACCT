@@ -5,7 +5,7 @@ shader_type canvas_item;
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
 uniform float vignette : hint_range(0.0, 1.0) = 0.55;
 uniform float grain : hint_range(0.0, 0.2) = 0.045;
-uniform float aberration : hint_range(0.0, 0.02) = 0.0016;
+uniform float aberration : hint_range(0.0, 0.02) = 0.0006;
 uniform float fear : hint_range(0.0, 1.0) = 0.0;
 uniform float heartbeat = 1.0;
 uniform float flash : hint_range(0.0, 1.0) = 0.0;

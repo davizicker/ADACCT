@@ -38,6 +38,29 @@ static func tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, expect: Vec
 		st.add_vertex(v)
 
 
+## Triângulo com UV (a ordem dos vértices é ajustada para a face visível apontar para `expect`).
+static func tri_uv(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, ua: Vector2, ub: Vector2, uc: Vector2, expect: Vector3) -> void:
+	var n := -(b - a).cross(c - a)
+	if n.length() < 0.000001:
+		return
+	n = n.normalized()
+	if n.dot(expect) < 0.0:
+		var t := b
+		b = c
+		c = t
+		var tu := ub
+		ub = uc
+		uc = tu
+		n = -n
+	var pts := [a, b, c]
+	var uvs := [ua, ub, uc]
+	for i in 3:
+		st.set_smooth_group(-1)
+		st.set_normal(n)
+		st.set_uv(uvs[i])
+		st.add_vertex(pts[i])
+
+
 func box(mat: String, size: Vector3, pos: Vector3, rot := Vector3.ZERO) -> void:
 	var xf := Transform3D(Basis.from_euler(rot), pos)
 	var st := _tool(mat)
@@ -62,8 +85,9 @@ func box(mat: String, size: Vector3, pos: Vector3, rot := Vector3.ZERO) -> void:
 			tri(st, p0, p2, p3, en)
 
 
-## Quadro plano. Sem rotação ele "olha" para +Z. `yaw` gira em torno de Y.
-func quad(mat: String, size: Vector2, pos: Vector3, yaw := 0.0) -> void:
+## Quadro plano COM UV. Sem rotação ele "olha" para +Z. `yaw` gira em torno de Y.
+## uv0 = canto de cima à esquerda da textura, uv1 = canto de baixo à direita (para usar só um pedaço).
+func quad(mat: String, size: Vector2, pos: Vector3, yaw := 0.0, uv0 := Vector2(0, 0), uv1 := Vector2(1, 1)) -> void:
 	var xf := Transform3D(Basis(Vector3.UP, yaw), pos)
 	var st := _tool(mat)
 	var hx := size.x * 0.5
@@ -73,8 +97,44 @@ func quad(mat: String, size: Vector2, pos: Vector3, yaw := 0.0) -> void:
 	var p2 := xf * Vector3(hx, hy, 0)
 	var p3 := xf * Vector3(-hx, hy, 0)
 	var en := (xf.basis * Vector3.BACK).normalized()
-	tri(st, p0, p1, p2, en)
-	tri(st, p0, p2, p3, en)
+	tri_uv(st, p0, p1, p2, Vector2(uv0.x, uv1.y), Vector2(uv1.x, uv1.y), Vector2(uv1.x, uv0.y), en)
+	tri_uv(st, p0, p2, p3, Vector2(uv0.x, uv1.y), Vector2(uv1.x, uv0.y), Vector2(uv0.x, uv0.y), en)
+
+
+## Telhado de duas águas COM UV: as telhas correm no sentido do caimento. Cumeeira ao longo de Z local.
+## size = (vão X, altura da cumeeira Y, comprimento Z). Empenas (triângulos das pontas) usam `mat_gable`.
+func roof(mat_roof: String, mat_gable: String, size: Vector3, pos: Vector3, yaw := 0.0, tile := 3.6, mat_soffit := "") -> void:
+	var xf := Transform3D(Basis(Vector3.UP, yaw), pos)
+	var st := _tool(mat_roof)
+	var hx := size.x * 0.5
+	var hy := size.y * 0.5
+	var hz := size.z * 0.5
+	var slope := sqrt(hx * hx + size.y * size.y)
+	var a := xf * Vector3(-hx, -hy, -hz)
+	var b := xf * Vector3(hx, -hy, -hz)
+	var c := xf * Vector3(0, hy, -hz)
+	var a2 := xf * Vector3(-hx, -hy, hz)
+	var b2 := xf * Vector3(hx, -hy, hz)
+	var c2 := xf * Vector3(0, hy, hz)
+	var nl := (xf.basis * Vector3(-size.y, hx, 0)).normalized()
+	var nr := (xf.basis * Vector3(size.y, hx, 0)).normalized()
+	var uz := size.z / tile
+	var vs := slope / tile
+	# água esquerda: cumeeira (v=0) -> beiral (v=vs)
+	tri_uv(st, c, c2, a2, Vector2(0, 0), Vector2(uz, 0), Vector2(uz, vs), nl)
+	tri_uv(st, c, a2, a, Vector2(0, 0), Vector2(uz, vs), Vector2(0, vs), nl)
+	# água direita
+	tri_uv(st, c, b, b2, Vector2(0, 0), Vector2(0, vs), Vector2(uz, vs), nr)
+	tri_uv(st, c, b2, c2, Vector2(0, 0), Vector2(uz, vs), Vector2(uz, 0), nr)
+	var sg := _tool(mat_gable)
+	tri(sg, a, b, c, xf.basis * Vector3(0, 0, -1))
+	tri(sg, a2, c2, b2, xf.basis * Vector3(0, 0, 1))
+	if mat_soffit != "":
+		# forro: sem ele o beiral deixa ver o céu por baixo (o telhado é uma casca aberta)
+		var ss := _tool(mat_soffit)
+		var down := xf.basis * Vector3(0, -1, 0)
+		tri(ss, a, a2, b2, down)
+		tri(ss, a, b2, b, down)
 
 
 ## Prisma triangular (telhado de duas águas). Cumeeira ao longo de Z local.
@@ -112,12 +172,21 @@ func arch(mat: String, center: Vector3, r: float, thick: float, depth: float, se
 
 
 ## Meio disco (vidro/folha com topo em arco), no plano Y-Z, voltado para -X. `center` = meio da base.
-func half_disc(mat: String, center: Vector3, r: float, segs := 10) -> void:
+## uv = (v da base do disco, altura total da janela em m) para continuar a textura do quadro abaixo dele.
+func half_disc(mat: String, center: Vector3, r: float, segs := 10, uv := Vector2(-1, 1)) -> void:
 	var st := _tool(mat)
 	for k in segs:
 		var t0 := PI * float(k) / segs
 		var t1 := PI * float(k + 1) / segs
-		tri(st, center, center + Vector3(0, r * sin(t0), r * cos(t0)), center + Vector3(0, r * sin(t1), r * cos(t1)), Vector3(-1, 0, 0))
+		var p0 := center
+		var p1 := center + Vector3(0, r * sin(t0), r * cos(t0))
+		var p2 := center + Vector3(0, r * sin(t1), r * cos(t1))
+		if uv.x >= 0.0:
+			var f := func(p: Vector3) -> Vector2:
+				return Vector2(0.5 + (p.z - center.z) / (2.0 * r), uv.x - (p.y - center.y) / uv.y)
+			tri_uv(st, p0, p1, p2, f.call(p0), f.call(p1), f.call(p2), Vector3(-1, 0, 0))
+		else:
+			tri(st, p0, p1, p2, Vector3(-1, 0, 0))
 
 
 ## Cilindro (eixo Y local; use `rot` para deitar). Serve para barris, rodas, bueiros, colunas.
@@ -176,6 +245,8 @@ func commit() -> ArrayMesh:
 	var mesh := ArrayMesh.new()
 	for mat_name: String in _st:
 		var before := mesh.get_surface_count()
+		if mat_name.ends_with("_uv"):
+			(_st[mat_name] as SurfaceTool).generate_tangents()   # normal map precisa de tangentes
 		(_st[mat_name] as SurfaceTool).commit(mesh)
 		if mesh.get_surface_count() > before:
 			mesh.surface_set_material(before, _loader.call(mat_name))

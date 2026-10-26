@@ -83,7 +83,7 @@ Prioridade: **P1** fazer antes de mostrar a alguém · **P2** deixa o jogo muito
 
 | Item | Status | Prioridade | Observação |
 |---|---|---|---|
-| Testes automáticos (lógica, andar a rua, fuga, Mula, partida completa, áudio) | ✅ | P1 | `docs/LEIAME-do-prototipo.md` |
+| Testes automáticos (lógica, andar a rua inteira e pela borda, fuga, Mula, becos, itens, buracos no chão, áudio, partida completa) | ✅ | P1 | `docs/LEIAME-do-prototipo.md` e `docs/07` |
 | Desempenho medido | 🟡 | P1 | ~1.000–2.200 chamadas de desenho por quadro **em renderização por software**: **medir no seu PC** |
 | Oclusão (não desenhar o que está atrás das casas) | ⬜ | P2 | Pode dobrar o desempenho |
 | LOD (versões simples dos modelos distantes) | ⬜ | P2 | |

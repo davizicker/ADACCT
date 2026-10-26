@@ -12,6 +12,7 @@ desta pasta (não crie um projeto novo e copie arquivos).
 - Pesquisa sobre Ouro Preto: [`docs/04-pesquisa-ouro-preto.md`](docs/04-pesquisa-ouro-preto.md)
 - **O que falta para o jogo ficar perfeito (mapa completo): [`docs/05-mapa-do-que-adicionar.md`](docs/05-mapa-do-que-adicionar.md)**
 - **Gráficos realistas, modelos 3D por IA e prompts: [`docs/06-graficos-realistas-e-prompts.md`](docs/06-graficos-realistas-e-prompts.md)**
+- Auditoria técnica e visual (bugs achados e corrigidos, o que ainda está feio): [`docs/07-auditoria-e-correcoes.md`](docs/07-auditoria-e-correcoes.md)
 - Mercado e conceito: `docs/01…03`
 
 **F5** para jogar. O mundo está em `scenes/vila.scn` (edite no editor).
