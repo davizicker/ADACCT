@@ -28,6 +28,7 @@ func _init() -> void:
 	casa.name = "Casa"
 	_save(casa, "casa.tscn")
 	_save(b.make_poste(), "poste.tscn")
+	_save(_mula(b), "mula.tscn")
 	_main()
 	print("[bake] pronto")
 	quit()
@@ -127,6 +128,26 @@ func _materials() -> void:
 	_flat("bandeira_c", Color(0.15, 0.4, 0.75), 1.0)
 	_flat("bandeira_d", Color(0.2, 0.55, 0.28), 1.0)
 	_flat("pano", Color(0.78, 0.76, 0.7), 1.0)
+	_flat("papel", Color(0.93, 0.86, 0.66), 0.9, 0.0, 0.7)
+	_flat("vidro_oleo", Color(0.95, 0.55, 0.15), 0.2, 0.0, 1.4)
+	_flat("mula_corpo", Color(0.045, 0.035, 0.035), 0.9)
+	var vulto := StandardMaterial3D.new()
+	vulto.albedo_texture = _tex("silhueta.png")
+	vulto.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	vulto.albedo_color = Color(0, 0, 0)
+	vulto.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	vulto.alpha_scissor_threshold = 0.4
+	vulto.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ResourceSaver.save(vulto, MATS + "vulto.tres")
+	var fogo := StandardMaterial3D.new()
+	fogo.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fogo.albedo_texture = _tex("ponto_luz.png")
+	fogo.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fogo.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	fogo.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	fogo.vertex_color_use_as_albedo = true
+	fogo.disable_fog = true
+	ResourceSaver.save(fogo, MATS + "fogo.tres")
 	var agua := ShaderMaterial.new()
 	agua.shader = load("res://assets/shaders/agua.gdshader")
 	ResourceSaver.save(agua, MATS + "agua.tres")
@@ -233,6 +254,85 @@ func _bradador(b: VilaBuilder) -> Node3D:
 	return n
 
 
+## Mula-sem-cabeça: corpo escuro, quatro pernas que balançam, pescoço cotoco com fogo e luz.
+func _mula(b: VilaBuilder) -> Node3D:
+	var m := Node3D.new()
+	m.name = "Mula"
+	m.set_script(load("res://scripts/mula.gd"))
+	var mat := b.mat("mula_corpo")
+	var body := MeshInstance3D.new()
+	body.name = "Corpo"
+	var cap := CapsuleMesh.new()
+	cap.radius = 0.32
+	cap.height = 1.9
+	body.mesh = cap
+	body.material_override = mat
+	body.rotation_degrees.x = 90.0
+	body.position = Vector3(0, 1.2, 0)
+	m.add_child(body)
+	var neck := MeshInstance3D.new()
+	neck.name = "Pescoco"
+	var nc := CylinderMesh.new()
+	nc.top_radius = 0.13
+	nc.bottom_radius = 0.2
+	nc.height = 0.9
+	neck.mesh = nc
+	neck.material_override = mat
+	neck.rotation_degrees.x = -38.0
+	neck.position = Vector3(0, 1.62, -0.95)
+	m.add_child(neck)
+	var legs := [["PernaFE", -0.2, -0.65], ["PernaFD", 0.2, -0.65], ["PernaTE", -0.2, 0.65], ["PernaTD", 0.2, 0.65]]
+	for l in legs:
+		var pivot := Node3D.new()
+		pivot.name = l[0]
+		pivot.position = Vector3(l[1], 0.95, l[2])
+		var leg := MeshInstance3D.new()
+		leg.name = "Perna"
+		var lc := CylinderMesh.new()
+		lc.top_radius = 0.07
+		lc.bottom_radius = 0.045
+		lc.height = 0.95
+		leg.mesh = lc
+		leg.material_override = mat
+		leg.position = Vector3(0, -0.47, 0)
+		pivot.add_child(leg)
+		m.add_child(pivot)
+	var fire := CPUParticles3D.new()
+	fire.name = "Fogo"
+	fire.position = Vector3(0, 2.02, -1.25)
+	fire.amount = 36
+	fire.lifetime = 0.75
+	fire.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	fire.emission_sphere_radius = 0.14
+	fire.direction = Vector3(0, 1, 0)
+	fire.spread = 22.0
+	fire.initial_velocity_min = 1.0
+	fire.initial_velocity_max = 2.3
+	fire.gravity = Vector3(0, 0.6, 0)
+	fire.scale_amount_min = 0.6
+	fire.scale_amount_max = 1.1
+	var q := QuadMesh.new()
+	q.size = Vector2(0.7, 0.7)
+	q.material = load(MATS + "fogo.tres")
+	fire.mesh = q
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.0, 0.4, 1.0])
+	grad.colors = PackedColorArray([Color(1.0, 0.9, 0.5, 0.95), Color(1.0, 0.4, 0.1, 0.8), Color(0.4, 0.05, 0.0, 0.0)])
+	fire.color_ramp = grad
+	m.add_child(fire)
+	var light := OmniLight3D.new()
+	light.name = "ChamaLuz"
+	light.position = Vector3(0, 2.1, -1.3)
+	light.light_color = Color(1.0, 0.45, 0.15)
+	light.light_energy = 3.4
+	light.omni_range = 16.0
+	light.set_script(load("res://scripts/luz_tremula.gd"))
+	light.set("forca", 0.3)
+	light.set("velocidade", 11.0)
+	m.add_child(light)
+	return m
+
+
 # ------------------------------------------------------------------ cenas
 
 func _own(node: Node, owner_node: Node) -> void:
@@ -257,7 +357,7 @@ func _main() -> void:
 	var main := Node3D.new()
 	main.name = "Main"
 	main.set_script(load("res://scripts/main.gd"))
-	for part in [["Vila", "vila.scn"], ["Jogador", "jogador.tscn"], ["Bradador", "bradador.tscn"]]:
+	for part in [["Vila", "vila.scn"], ["Jogador", "jogador.tscn"], ["Bradador", "bradador.tscn"], ["Mula", "mula.tscn"]]:
 		var inst := (load(SCENES + part[1]) as PackedScene).instantiate()
 		inst.name = part[0]
 		main.add_child(inst)
@@ -270,6 +370,11 @@ func _main() -> void:
 	gritos.set_script(load("res://scripts/scream_system.gd"))
 	main.add_child(gritos)
 	gritos.owner = main
+	var ev := Node.new()
+	ev.name = "Eventos"
+	ev.set_script(load("res://scripts/event_director.gd"))
+	main.add_child(ev)
+	ev.owner = main
 	var aud := Node.new()
 	aud.name = "Audio"
 	aud.set_script(load("res://scripts/audio_director.gd"))

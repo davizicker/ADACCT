@@ -2,6 +2,8 @@ extends Node3D
 ## Liga as peças da cena principal. Argumentos de teste (depois de "--"):
 ##   --selftest       simula respostas certas/erradas até a morte
 ##   --selftest-walk  anda pela rua inteira até a igreja (sem gritos)
+##   --selftest-mula=rua|refugio|refugio_aceso  testa a regra da Mula-sem-cabeça
+##   --selftest-auto  partida completa automática (eventos ligados) por ~7 min simulados
 ##   --selftest-escape tenta sair da rua andando para os lados (a vila deve ser fechada)
 ##   --shot=<arquivo.png> [--shot-s=<m>] [--shot-stage=<n>] [--shot-yaw=<graus>] [--shot-pitch=<graus>] [--shot-lift=<m>]  salva um print e sai
 
@@ -12,6 +14,8 @@ extends Node3D
 @onready var screams: ScreamSystem = $Gritos
 @onready var bradador: Node3D = $Bradador
 @onready var audio: AudioDirector = $Audio
+@onready var mula: Mula = $Mula
+@onready var eventos: EventDirector = $Eventos
 @onready var church_door: Area3D = $Vila/Adro/Igreja/Porta
 var finished := false
 var menu: Menu = null
@@ -31,12 +35,20 @@ func _ready() -> void:
 		mode = "walk"
 	elif "--selftest-escape" in args:
 		mode = "escape"
+	elif "--selftest-auto" in args:
+		mode = "auto"
+	var mula_case := ""
+	for a in args:
+		if a.begins_with("--selftest-mula="):
+			mode = "mula"
+			mula_case = a.substr(16)
 	var shot_s := 2.0
 	var shot_stage := 0
 	var shot_yaw := 0.0
 	var shot_pitch := 0.0
 	var shot_lift := 0.0
 	var shot_day := "--shot-day" in args
+	var shot_mula := -1000.0
 	for a in args:
 		if a.begins_with("--shot="):
 			shot_path = a.substr(7)
@@ -47,6 +59,8 @@ func _ready() -> void:
 			shot_yaw = float(a.substr(11))
 		elif a.begins_with("--shot-pitch="):
 			shot_pitch = float(a.substr(13))
+		elif a.begins_with("--shot-mula="):
+			shot_mula = float(a.substr(12))
 		elif a.begins_with("--shot-lift="):
 			shot_lift = float(a.substr(12))
 		elif a.begins_with("--shot-stage="):
@@ -66,8 +80,16 @@ func _ready() -> void:
 	screams.setup(player, hud, bradador, mode == "")
 	screams.audio = audio
 	audio.setup(player, screams)
+	eventos.setup(player, screams, audio, mula, hud)
+	eventos.enabled = (mode == "" or mode == "auto")
 	hud.apply_config()
 	player.interact_hint.connect(hud.show_interact)
+	if mode == "shot" and shot_mula > -999.0:
+		mula.player = player
+		mula.s_m = shot_s + shot_mula
+		mula.dir = -1.0
+		mula.visible = true
+		mula._update_pose(0.0)
 	if mode == "shot":
 		screams.enabled = false
 		screams.stage = shot_stage
@@ -100,6 +122,12 @@ func _ready() -> void:
 	elif mode == "escape":
 		Engine.time_scale = 8.0
 		screams.enabled = false
+	elif mode == "mula":
+		Engine.time_scale = 8.0
+		_setup_mula_test(mula_case)
+	elif mode == "auto":
+		Engine.time_scale = 6.0
+		Input.action_press("shout")   # responde a todos os gritos (segurando R)
 
 
 func _setup_input() -> void:
@@ -147,6 +175,21 @@ func _on_door(body: Node3D) -> void:
 	hud.end_screen("Amanheceu.", "(por enquanto)", Color(0.9, 0.8, 0.55, 0.85))
 
 
+## Teste da Mula: "rua" (deve morrer), "refugio" (lampião apagado: salvo), "refugio_aceso" (penalidade).
+func _setup_mula_test(case_name: String) -> void:
+	screams.enabled = false
+	if case_name == "rua":
+		_place_player(100.0, 0.0, 0.0)
+		player.lantern_on = false
+	else:
+		var refuge := get_tree().get_first_node_in_group("refugio") as Area3D
+		player.global_position = refuge.global_position - Vector3(0, 1.2, 0)
+		player.lantern_on = (case_name == "refugio_aceso")
+	await get_tree().create_timer(0.5, true, false, true).timeout
+	print("[mula-teste] caso=%s jogador s=%.0f refugios=%d luz=%s" % [case_name, Route.nearest_s(player.global_position), mula.refuge_count, str(player.is_lantern_lit())])
+	eventos.start_mula(true)
+
+
 func _place_player(s: float, yaw_deg: float, pitch_deg: float) -> void:
 	var t := Route.tangent(s)
 	player.global_position = Route.pos(s) + Vector3(0, 0.25, 0)
@@ -176,6 +219,14 @@ func _process(delta: float) -> void:
 		_walk_bot()
 	elif mode == "escape":
 		_escape_test(delta)
+	elif mode == "auto":
+		if _t > 420.0 or finished:
+			print("[auto] fim: t=%.0f morreu=%s stage=%d" % [_t, str(finished), screams.stage])
+			get_tree().quit()
+	elif mode == "mula":
+		if _t > 40.0 or finished:
+			print("[mula-teste] fim: morreu=%s stage=%d" % [str(finished), screams.stage])
+			get_tree().quit()
 	elif mode == "selftest" and finished:
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()

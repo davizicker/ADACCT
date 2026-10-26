@@ -23,6 +23,7 @@ var _fear := 0.0
 
 
 func _ready() -> void:
+	add_to_group("hud")
 	layer = 5
 	_fx = ColorRect.new()
 	_fx.name = "Efeitos"
@@ -199,3 +200,10 @@ func _process(delta: float) -> void:
 		if _flash_t <= 0.0:
 			_overlay.color.a = 0.0
 			_fx_mat.set_shader_parameter("flash", 0.0)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _note_panel != null and _note_panel.visible and (event.is_action_pressed("interact") or event.is_action_pressed("ui_cancel")):
+		hide_note()
+		get_tree().call_group("jogador", "set", "frozen", false)
+		get_viewport().set_input_as_handled()

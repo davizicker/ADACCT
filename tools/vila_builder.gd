@@ -30,6 +30,7 @@ var _noise_hi: FastNoiseLite
 var _n := 0
 var _spots: Array[Vector2] = []
 var _lamp_n := 0
+var _haunted := 0
 var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos)
 var _hill_lights: Array[Transform3D] = []   # janelas acesas das casas distantes (viram pontos de luz)
 
@@ -391,6 +392,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_lamps())
 	root.add_child(_adornos())
 	root.add_child(_nichos())
+	root.add_child(_coletaveis())
 	_bridge(root)
 	root.add_child(_church_plaza())
 	root.add_child(_hillside())
@@ -493,8 +495,11 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	var floors := 2 if _rng.randf() < (0.8 if narrow else 0.6) else 1
 	if _rng.randf() < 0.07 and not narrow:
 		floors = 3
+	var haunted: bool = floors >= 2 and not narrow and _haunted < 6 and f["sm"] > 30.0 and _rng.randf() < 0.14
+	if haunted:
+		_haunted += 1
 	var casa := make_casa(f["w"], floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], _rng.randf_range(9.0, 12.0),
-		floors >= 2 and _rng.randf() < 0.55, 0.28, false)
+		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted)
 	casa.name = "Casa_%02d" % _n
 	_n += 1
 	casa.transform = f["xf"]
@@ -504,7 +509,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 # ------------------------------------------------------------------ casa colonial
 
 ## `w` largura da fachada; `floors` 1–3; `depth` profundidade; `lit_p` chance de janela acesa.
-func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool) -> Node3D:
+func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false) -> Node3D:
 	var c := Node3D.new()
 	c.name = "Casa"
 	var fh := 4.0
@@ -580,6 +585,9 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if not simple and _rng.randf() < 0.4:
 		b.box(wall, Vector3(0.7, 1.8, 0.7), Vector3(depth / 2.0 - 0.2, height + rise + 0.45, _rng.randf_range(-w * 0.3, w * 0.3)))
 		b.box("cantaria", Vector3(0.85, 0.12, 0.85), Vector3(depth / 2.0 - 0.2, height + rise + 1.4, 0))
+	if haunted and floors >= 2:
+		var hi := (door_i + 1) % cols
+		_haunted_window(c, Vector3(-0.18, fh + 1.65, col_z[hi]))
 	if not simple:
 		b.box("ferro", Vector3(0.12, 0.09, w + 0.4), Vector3(-0.92, height + 0.09, 0))               # calha do beiral
 		if _rng.randf() < 0.55:
@@ -839,6 +847,7 @@ func _lamp_light(parent: Node3D, pos: Vector3, energy := 1.6) -> void:
 	light.distance_fade_length = 15.0
 	light.set_script(load("res://scripts/luz_tremula.gd"))
 	light.set("forca", 0.08)
+	light.add_to_group("lampioes", true)
 	parent.add_child(light)
 
 
@@ -849,12 +858,20 @@ func make_poste() -> Node3D:
 	b.box("ferro", Vector3(0.28, 0.5, 0.28), Vector3(0, 0.25, 0))
 	b.box("ferro", Vector3(0.1, 3.3, 0.1), Vector3(0, 1.9, 0))
 	b.box("ferro", Vector3(0.22, 0.12, 0.22), Vector3(0, 3.5, 0))
-	b.box("vidro_lampiao", Vector3(0.3, 0.46, 0.3), Vector3(0, 3.78, 0))
 	b.box("ferro", Vector3(0.38, 0.1, 0.38), Vector3(0, 4.06, 0))
 	b.box("ferro", Vector3(0.2, 0.14, 0.2), Vector3(0, 4.18, 0), Vector3(0, 0.78, 0))
 	_mesh_node(p, "Malha", b.commit())
+	_glass_node(p, Vector3(0.3, 0.46, 0.3), Vector3(0, 3.78, 0))
 	_lamp_light(p, Vector3(0, 3.7, 0))
 	return p
+
+
+## Vidro do lampião como nó próprio (com material só dele), para o apagão poder escurecê-lo.
+func _glass_node(parent: Node3D, size: Vector3, pos: Vector3) -> void:
+	var bm := BoxMesh.new()
+	bm.size = size
+	var mi := _mesh_node(parent, "Vidro", bm, pos)
+	mi.material_override = (mat("vidro_lampiao") as Material).duplicate()
 
 
 ## Lampião preso à parede (para ruas estreitas e becos). `yaw` aponta o braço para a parede.
@@ -866,9 +883,9 @@ func _lantern_wall(pos: Vector3, yaw: float) -> Node3D:
 	var b := _batch()
 	b.box("ferro", Vector3(0.06, 0.06, 0.55), Vector3(0, 0, -0.27))
 	b.box("ferro", Vector3(0.06, 0.3, 0.06), Vector3(0, -0.12, -0.5))
-	b.box("vidro_lampiao", Vector3(0.24, 0.36, 0.24), Vector3(0, -0.2, -0.5))
 	b.box("ferro", Vector3(0.3, 0.07, 0.3), Vector3(0, 0.02, -0.5))
 	_mesh_node(p, "Malha", b.commit())
+	_glass_node(p, Vector3(0.24, 0.36, 0.24), Vector3(0, -0.2, -0.5))
 	_lamp_light(p, Vector3(0, -0.2, -0.5), 1.5)
 	return p
 func _lamps() -> Node3D:
@@ -1604,4 +1621,87 @@ func _nichos() -> Node3D:
 		last_s = s
 		picked += 1
 	print("[vila] nichos: ", picked)
+	return root
+
+
+## Janela com luz acesa e um vulto parado; apaga quando o jogador chega perto (scripts/janela_assombrada.gd).
+func _haunted_window(parent: Node3D, pos: Vector3) -> void:
+	var g := _group(parent, "JanelaAssombrada", Transform3D(Basis.IDENTITY, pos))
+	g.set_script(load("res://scripts/janela_assombrada.gd"))
+	g.add_to_group("assombradas", true)
+	var glass := QuadMesh.new()
+	glass.size = Vector2(1.0, 1.7)
+	var gm := _mesh_node(g, "Vidro", glass)
+	gm.material_override = mat("janela_acesa")
+	gm.rotation.y = -PI / 2.0
+	var fig := QuadMesh.new()
+	fig.size = Vector2(0.5, 1.0)
+	var fm := _mesh_node(g, "Vulto", fig, Vector3(-0.01, -0.28, 0))
+	fm.material_override = mat("vulto")
+	fm.rotation.y = -PI / 2.0
+	var l := OmniLight3D.new()
+	l.name = "Luz"
+	l.position = Vector3(-0.7, 0, 0)
+	l.light_color = Color(1.0, 0.7, 0.35)
+	l.light_energy = 0.8
+	l.omni_range = 6.0
+	l.distance_fade_enabled = true
+	l.distance_fade_begin = 40.0
+	l.distance_fade_length = 10.0
+	g.add_child(l)
+
+
+# ------------------------------------------------------------------ itens: óleo e bilhetes
+
+func _brilho(parent: Node3D, y: float, size: float) -> void:
+	var q := QuadMesh.new()
+	q.size = Vector2(size, size)
+	var mi := _mesh_node(parent, "Brilho", q, Vector3(0, y, 0))
+	mi.material_override = mat("luz_distante")
+
+
+func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, nota_id: int, label: String) -> void:
+	var a := Area3D.new()
+	a.name = node_name
+	a.position = pos
+	a.set_script(load("res://scripts/coletavel.gd"))
+	a.set("tipo", tipo)
+	a.set("nota_id", nota_id)
+	a.set("texto_interacao", label)
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(0.9, 1.3, 0.9)
+	cs.shape = bs
+	cs.position = Vector3(0, 0.6, 0)
+	a.add_child(cs)
+	var b := _batch()
+	if tipo == "oleo":
+		b.cylinder("vidro_oleo", 0.07, 0.07, 0.22, Vector3(0, 0.11, 0), Vector3.ZERO, 8)
+		b.cylinder("vidro_oleo", 0.03, 0.03, 0.1, Vector3(0, 0.27, 0), Vector3.ZERO, 8)
+		b.box("madeira_natural", Vector3(0.05, 0.04, 0.05), Vector3(0, 0.34, 0))
+		_brilho(a, 0.25, 0.55)
+	else:
+		b.box("papel", Vector3(0.3, 0.012, 0.22), Vector3(0, 0.01, 0), Vector3(0, _rng.randf_range(-0.6, 0.6), 0))
+		_brilho(a, 0.2, 0.45)
+	_mesh_node(a, "Malha", b.commit())
+	parent.add_child(a)
+
+
+func _coletaveis() -> Node3D:
+	var root := Node3D.new()
+	root.name = "Coletaveis"
+	var oil_pts := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [154.0, -1.0], [198.0, 1.0], [244.0, -1.0], [286.0, 1.0]]
+	var i := 0
+	for o in oil_pts:
+		var s: float = o[0]
+		var sigma: float = o[1]
+		var p := facade(sigma, s) - Route.right(s) * sigma * 0.35 + Vector3(0, SW_H, 0)
+		_coletavel(root, "Oleo_%02d" % i, p, "oleo", 0, "Pegar frasco de óleo")
+		i += 1
+	var notes := [[8.0, 1.0, 0], [76.0, -1.0, 1], [141.0, -1.0, 2], [203.0, 1.0, 3], [248.0, -1.0, 4], [301.0, 1.0, 5]]
+	for n in notes:
+		var s: float = n[0]
+		var sigma: float = n[1]
+		var p := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
+		_coletavel(root, "Bilhete_%d" % int(n[2]), p, "nota", int(n[2]), "Ler bilhete")
 	return root

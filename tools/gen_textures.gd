@@ -26,6 +26,7 @@ func _init() -> void:
 	_hera()
 	_bananeira()
 	_ponto_luz()
+	_silhueta()
 	print("[tex] pronto")
 	quit()
 
@@ -493,3 +494,30 @@ func _ponto_luz() -> void:
 			img.set_pixel(x, y, Color(1, 1, 1, a))
 	img.save_png(OUT + "ponto_luz.png")
 	print("[tex] ponto_luz")
+
+
+## Vulto humano (cabeça e ombros) em preto, para a "janela assombrada".
+func _silhueta() -> void:
+	var w := 128
+	var h := 256
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in h:
+		for x in w:
+			var a := 0.0
+			# cabeça levemente inclinada
+			var hx := (x - 64.0 - (y - 70.0) * 0.08) / 22.0
+			var hy := (y - 70.0) / 29.0
+			if hx * hx + hy * hy < 1.0:
+				a = 1.0
+			# pescoço
+			if y > 90 and y < 125 and absf(x - 64.0) < 11.0:
+				a = 1.0
+			# ombros e torso
+			var sx := (x - 64.0) / 56.0
+			var sy := (y - 170.0) / 52.0
+			if y >= 118 and (sx * sx + sy * sy < 1.0 or y > 170) and absf(x - 64.0) < 56.0:
+				a = 1.0
+			img.set_pixel(x, y, Color(0, 0, 0, a))
+	img.save_png(OUT + "silhueta.png")
+	print("[tex] silhueta")

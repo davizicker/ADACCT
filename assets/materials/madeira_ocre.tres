@@ -1,14 +1,14 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/madeira_albedo.png" id="1_71l76"]
-[ext_resource type="Texture2D" path="res://assets/textures/madeira_normal.png" id="2_06uyr"]
+[ext_resource type="Texture2D" path="res://assets/textures/madeira_albedo.png" id="1_ff1kx"]
+[ext_resource type="Texture2D" path="res://assets/textures/madeira_normal.png" id="2_37dme"]
 
 [resource]
 albedo_color = Color(0.8, 0.58, 0.18, 1)
-albedo_texture = ExtResource("1_71l76")
+albedo_texture = ExtResource("1_ff1kx")
 roughness = 0.95
 normal_enabled = true
-normal_texture = ExtResource("2_06uyr")
+normal_texture = ExtResource("2_37dme")
 uv1_scale = Vector3(0.6, 0.6, 0.6)
 uv1_triplanar = true
 uv1_world_triplanar = true

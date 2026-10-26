@@ -1,24 +1,24 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Material" path="res://assets/materials/bradador_preto.tres" id="1_80c0s"]
-[ext_resource type="Material" path="res://assets/materials/bradador_palido.tres" id="2_k34ux"]
+[ext_resource type="Material" path="res://assets/materials/bradador_preto.tres" id="1_6oi04"]
+[ext_resource type="Material" path="res://assets/materials/bradador_palido.tres" id="2_7prc2"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_utfhq"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_xqh3x"]
 top_radius = 0.14
 bottom_radius = 0.55
 height = 2.2
 radial_segments = 10
 
-[sub_resource type="SphereMesh" id="SphereMesh_hex3n"]
+[sub_resource type="SphereMesh" id="SphereMesh_i01ac"]
 radius = 0.15
 height = 0.46
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_5h2hr"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_nhe35"]
 top_radius = 0.05
 bottom_radius = 0.03
 height = 1.7
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_6kga7"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_pn6oe"]
 top_radius = 0.05
 bottom_radius = 0.03
 height = 1.7
@@ -27,20 +27,20 @@ height = 1.7
 
 [node name="Manto" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
-material_override = ExtResource("1_80c0s")
-mesh = SubResource("CylinderMesh_utfhq")
+material_override = ExtResource("1_6oi04")
+mesh = SubResource("CylinderMesh_xqh3x")
 
 [node name="Cabeca" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.45, 0)
-material_override = ExtResource("2_k34ux")
-mesh = SubResource("SphereMesh_hex3n")
+material_override = ExtResource("2_7prc2")
+mesh = SubResource("SphereMesh_i01ac")
 
 [node name="Braco_Esq" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 0, 0, 1, -0.34, 1.45, 0.05)
-material_override = ExtResource("1_80c0s")
-mesh = SubResource("CylinderMesh_5h2hr")
+material_override = ExtResource("1_6oi04")
+mesh = SubResource("CylinderMesh_nhe35")
 
 [node name="Braco_Dir" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.994522, -0.104528, 0, 0.104528, 0.994522, 0, 0, 0, 1, 0.34, 1.45, 0.05)
-material_override = ExtResource("1_80c0s")
-mesh = SubResource("CylinderMesh_6kga7")
+material_override = ExtResource("1_6oi04")
+mesh = SubResource("CylinderMesh_pn6oe")

@@ -354,3 +354,15 @@ static func sting() -> AudioStreamWAV:
 		v += _noise(rng) * exp(-t * 9.0) * 0.6
 		out[i] = v * env
 	return _to_wav(out, false)
+
+
+## Tinido de vidro (pegar um frasco).
+static func clink() -> AudioStreamWAV:
+	var n := int(RATE * 0.5)
+	var out := PackedFloat32Array()
+	out.resize(n)
+	for i in n:
+		var t := float(i) / RATE
+		var v := sin(TAU * 2350.0 * t) * 0.5 + sin(TAU * 3720.0 * t) * 0.35 + sin(TAU * 5210.0 * t) * 0.2
+		out[i] = v * exp(-t * 11.0) * 0.8
+	return _to_wav(out, false)

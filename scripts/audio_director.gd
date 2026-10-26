@@ -27,6 +27,7 @@ var _bell: AudioStreamPlayer3D
 var _creak: AudioStreamPlayer3D
 var _whisper: AudioStreamPlayer3D
 var _water: AudioStreamPlayer3D
+var _clink: AudioStreamPlayer
 var _dog_t := 18.0
 var _bell_t := 35.0
 
@@ -72,6 +73,7 @@ func _player3d(stream: AudioStream, bus: String, volume_db: float, unit := 25.0)
 
 
 func setup(p_player: Player, p_screams: ScreamSystem) -> void:
+	add_to_group("audio")
 	player = p_player
 	screams = p_screams
 	_rng.randomize()
@@ -101,6 +103,11 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	_bell = _player3d(Synth.bell(), "Ambiente", -2.0, 60.0)
 	_creak = _player3d(Synth.creak(), "Efeitos", -4.0, 12.0)
 	_whisper = _player3d(Synth.whisper(), "Efeitos", -6.0, 8.0)
+	_clink = AudioStreamPlayer.new()
+	_clink.stream = Synth.clink()
+	_clink.bus = "Efeitos"
+	_clink.volume_db = -4.0
+	add_child(_clink)
 	_water = _player3d(Synth.water(), "Ambiente", -4.0, 14.0)
 	_water.global_position = Route.pos(Route.BRIDGE_S) + Vector3(0, -3.0, 0)
 	_water.play()
@@ -133,6 +140,14 @@ func play_creak(pos: Vector3) -> void:
 
 
 ## Sussurro bem perto do jogador (o Bradador está por perto).
+func play_creak_at(pos: Vector3) -> void:
+	play_creak(pos)
+
+
+func play_clink() -> void:
+	_clink.play()
+
+
 func play_whisper() -> void:
 	var dir := Vector3(_rng.randf_range(-1, 1), 0, _rng.randf_range(-1, 1)).normalized()
 	_whisper.global_position = player.global_position + dir * 1.6 + Vector3(0, 1.6, 0)

@@ -47,6 +47,7 @@ var _t := 0.0
 
 
 func _ready() -> void:
+	add_to_group("jogador")
 	_base_energy = lantern.light_energy  # a intensidade vem da cena
 	floor_snap_length = 0.6
 	floor_max_angle = deg_to_rad(50.0)

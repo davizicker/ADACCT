@@ -17,6 +17,8 @@ const GAZE_SECONDS := 1.6
 
 var enabled := true
 var audio: AudioDirector = null
+## outros eventos (Mula) seguram os gritos enquanto acontecem
+var hold := false
 var stage := 0
 var state := State.WAIT
 var mic_threshold := Config.mic_threshold
@@ -137,14 +139,17 @@ func _process(delta: float) -> void:
 
 	match state:
 		State.WAIT:
-			_timer -= delta
+			if not hold:
+				_timer -= delta
 			if _timer <= 0.0:
 				_begin_scream()
 		State.SCREAM:
+			_check_noise(delta)
 			_scream_left -= delta
 			if _scream_left <= 0.0:
 				_begin_window()
 		State.WINDOW:
+			_check_noise(delta)
 			_window_left -= delta
 			if player.move_speed < 0.5 and is_shouting():
 				_shout_time += delta
@@ -276,3 +281,41 @@ func _kill() -> void:
 	if audio != null:
 		audio.play_sting()
 	player_died.emit()
+
+
+var _noise_t := 0.0
+
+## Correr enquanto ele grita ou espera a resposta: ele ouve os passos no chão de pedra.
+func _check_noise(delta: float) -> void:
+	if player.sprinting and player.move_speed > 2.0:
+		_noise_t += delta
+		if _noise_t >= 1.3:
+			_noise_t = 0.0
+			stage += 1
+			log_line.emit("OUVIU PASSOS -> stage=%d" % stage)
+			hud.show_prompt("Ele ouviu seus passos.", 2.5)
+			player.shake(0.06, 0.5)
+			if stage >= STAGE_DIST.size() - 1:
+				_kill()
+			else:
+				_place_bradador()
+	else:
+		_noise_t = maxf(0.0, _noise_t - delta)
+
+
+## Penalidade de outros eventos: aproxima o Bradador.
+func penalize(steps: int, reason: String) -> void:
+	stage += steps
+	log_line.emit("PENALIDADE (%s) -> stage=%d" % [reason, stage])
+	if audio != null:
+		audio.bump_fear(0.3)
+	if stage >= STAGE_DIST.size() - 1:
+		_kill()
+	else:
+		_place_bradador()
+
+
+## Morte causada por outro evento (ex.: Mula).
+func external_kill(reason: String) -> void:
+	log_line.emit("MORTE (%s)" % reason)
+	_kill()
