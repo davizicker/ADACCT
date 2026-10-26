@@ -93,7 +93,7 @@ No Godot: **Projeto → Configurações → Renderização → Renderer → Forw
 - **Neblina volumétrica** (raios de luz na neblina),
 - **SSR** (reflexos na pedra molhada e na água), **SSAO/SSIL** (sombras de contato), **TAA**.
 
-⚠️ **Eu não consegui testar o Forward+** (meu ambiente não tem Vulkan). O código só liga isso se o renderizador for Forward+; no modo Compatibilidade (o padrão do projeto) não faz nada. Se ficar lento ou estranho, volte para Compatibilidade.
+**Verificado (Godot 4.7.2, Vulkan por software):** o jogo abre e renderiza em Forward+, e o perfil "Qualidade Alta" liga a neblina volumétrica e a iluminação global sem erros (a imagem ganha névoa com luz e cor quicando nas paredes). **Não verificado:** o desempenho numa placa de vídeo real: em Alta o custo sobe bastante (~3 milhões de triângulos contra ~0,9 em Média nos meus testes). Se ficar lento, use Média ou volte para Compatibilidade. O código só liga esses efeitos se o renderizador for Forward+; em Compatibilidade (o padrão) não faz nada.
 
 Ideias a mais (futuras): chuva + poças com reflexo, **decals** (manchas de umidade, musgo, rachaduras sobre as paredes), pedra molhada (roughness baixo), fumaça/vapor saindo da água, fogo de verdade com partículas melhores.
 

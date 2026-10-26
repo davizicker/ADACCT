@@ -1,9 +1,9 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/shaders/ceu.gdshader" id="1_w7cpm"]
+[ext_resource type="Shader" path="res://assets/shaders/ceu.gdshader" id="1_xhhfw"]
 
 [resource]
-shader = ExtResource("1_w7cpm")
+shader = ExtResource("1_xhhfw")
 shader_parameter/top_color = Color(0.02, 0.045, 0.12, 1)
 shader_parameter/horizon_color = Color(0.14, 0.2, 0.34, 1)
 shader_parameter/cloud_dark = Color(0.045, 0.06, 0.11, 1)

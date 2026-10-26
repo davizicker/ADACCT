@@ -1,11 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
-[ext_resource type="ArrayMesh" path="res://assets/meshes/arvore_pequena.res" id="1_ydv4p"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/arvore_pequena.res" id="1_geu03"]
 
-[node name="ArvorePequena" type="Node3D"]
+[node name="ArvorePequena" type="Node3D" unique_id=971152862]
 
-[node name="Malha" type="MeshInstance3D" parent="."]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=1979640884]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1
-mesh = ExtResource("1_ydv4p")
+mesh = ExtResource("1_geu03")

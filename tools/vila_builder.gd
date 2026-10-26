@@ -252,8 +252,8 @@ func _terrain() -> Node3D:
 					var slope := clampf(Vector2(hr - hl, hu - hd).length() / (2.0 * step), 0.0, 1.5)
 					var g := _noise_hi.get_noise_2d(ix * 7.0, iz * 7.0) * 0.5 + 0.5
 					# plano = mato verde; íngreme = terra e pedra mais clara
-					var col := Color(0.62, 0.80, 0.50).lerp(Color(0.80, 0.74, 0.64), clampf(slope * 1.1 - 0.15, 0.0, 1.0))
-					col *= 0.75 + 0.35 * g
+					var col := Color(1.0, 1.0, 1.0)
+					col *= 0.72 + 0.4 * g
 					st.set_normal(nrm)
 					st.set_color(col)
 					st.set_uv(Vector2(x0 + ix * step, z0 + iz * step) * 0.05)
@@ -268,6 +268,7 @@ func _terrain() -> Node3D:
 					st.add_index(a + 1)
 					st.add_index(a + w + 1)
 					st.add_index(a + w)
+			st.generate_tangents()
 			var mesh := st.commit()
 			mesh.surface_set_material(0, mat("terreno"))
 			var mi := MeshInstance3D.new()
@@ -730,7 +731,7 @@ func _lot_talude(parent: Node3D, f: Dictionary) -> void:
 	_n += 1
 	var ht := _rng.randf_range(3.0, 4.6)
 	_box(g, "MuroDeArrimo", Vector3(0.8, ht + 2.0, w + 0.1), Vector3(0.4, (ht - 2.0) / 2.0, 0), "muro", true)
-	_box(g, "Terraco", Vector3(8.0, ht + 1.0, w), Vector3(4.8, (ht - 1.0) / 2.0 - 0.25, 0), "terreno")
+	_box(g, "Terraco", Vector3(8.0, ht + 1.0, w), Vector3(4.8, (ht - 1.0) / 2.0 - 0.25, 0), "terra_quintal")
 	var b := _batch()
 	b.box("cantaria", Vector3(1.0, 0.14, w + 0.2), Vector3(0.4, ht + 0.07, 0))
 	_mesh_node(g, "Detalhes", b.commit())

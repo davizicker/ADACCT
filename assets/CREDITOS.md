@@ -11,3 +11,13 @@ Sem restrições de uso.
 | Arquivo | Origem | Autor | Licença |
 |---|---|---|---|
 | assets/textures/exemplo.jpg | ambientCG | … | CC0 |
+
+## Assets de terceiros em uso
+
+| Arquivo | Origem | Autor | Licença |
+|---|---|---|---|
+| assets/textures/ambientcg/Bark014 | [ambientCG](https://ambientcg.com/view?id=Bark014) | ambientCG | CC0 1.0 |
+| assets/textures/ambientcg/Wood028 | [ambientCG](https://ambientcg.com/view?id=Wood028) | ambientCG | CC0 1.0 |
+| assets/textures/ambientcg/Wood035 | [ambientCG](https://ambientcg.com/view?id=Wood035) | ambientCG | CC0 1.0 |
+| assets/textures/ambientcg/Ground108 | [ambientCG](https://ambientcg.com/view?id=Ground108) | ambientCG | CC0 1.0 |
+| assets/textures/ambientcg/Ground028 | [ambientCG](https://ambientcg.com/view?id=Ground028) | ambientCG | CC0 1.0 |

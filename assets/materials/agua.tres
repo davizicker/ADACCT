@@ -1,10 +1,10 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/shaders/agua.gdshader" id="1_m25i3"]
+[ext_resource type="Shader" path="res://assets/shaders/agua.gdshader" id="1_7u7bd"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_m25i3")
+shader = ExtResource("1_7u7bd")
 shader_parameter/cor = Color(0.015, 0.05, 0.07, 0.88)
 shader_parameter/velocidade = 0.35
 shader_parameter/ondulacao = 0.35

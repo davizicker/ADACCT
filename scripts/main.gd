@@ -20,6 +20,7 @@ extends Node3D
 var finished := false
 var menu: Menu = null
 var mode := ""
+var _shot_frames := 20
 var shot_path := ""
 var _t := 0.0
 var _frames := 0
@@ -49,6 +50,7 @@ func _ready() -> void:
 	var shot_lift := 0.0
 	var shot_day := "--shot-day" in args
 	var shot_mula := -1000.0
+	_shot_frames = 20
 	for a in args:
 		if a.begins_with("--shot="):
 			shot_path = a.substr(7)
@@ -59,6 +61,10 @@ func _ready() -> void:
 			shot_yaw = float(a.substr(11))
 		elif a.begins_with("--shot-pitch="):
 			shot_pitch = float(a.substr(13))
+		elif a.begins_with("--quality="):
+			Config.quality = clampi(int(a.substr(10)), 0, 2)
+		elif a.begins_with("--shot-frames="):
+			_shot_frames = int(a.substr(14))
 		elif a.begins_with("--shot-mula="):
 			shot_mula = float(a.substr(12))
 		elif a.begins_with("--shot-lift="):
@@ -112,8 +118,6 @@ func _ready() -> void:
 		add_child(menu)
 		menu.options_changed.connect(_on_options)
 		menu.restart_requested.connect(_restart)
-	else:
-		Config.quality = 1
 
 	if mode == "selftest":
 		Engine.time_scale = 8.0
@@ -212,7 +216,7 @@ func _process(delta: float) -> void:
 	env.fog_density = lerpf(env.fog_density, 0.030 + 0.022 * audio.fear, clampf(delta * 2.0, 0.0, 1.0))
 	_frames += 1
 	if mode == "shot":
-		if _frames == 20:
+		if _frames == _shot_frames:
 			print("[perf] chamadas de desenho=%d objetos=%d triangulos=%d" % [
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME),

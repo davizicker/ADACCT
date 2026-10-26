@@ -1,23 +1,23 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_ek4a3"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_vwxko"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4ek06"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uahlj"]
 radius = 0.35
 height = 1.7
 
-[node name="Jogador" type="CharacterBody3D"]
-script = ExtResource("1_ek4a3")
+[node name="Jogador" type="CharacterBody3D" unique_id=260317416]
+script = ExtResource("1_vwxko")
 
-[node name="Colisao" type="CollisionShape3D" parent="."]
+[node name="Colisao" type="CollisionShape3D" parent="." unique_id=1172458902]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-shape = SubResource("CapsuleShape3D_4ek06")
+shape = SubResource("CapsuleShape3D_uahlj")
 
-[node name="Camera" type="Camera3D" parent="."]
+[node name="Camera" type="Camera3D" parent="." unique_id=2099854287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 far = 1500.0
 
-[node name="Lampiao" type="OmniLight3D" parent="Camera"]
+[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=5864943]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.35, -0.5)
 light_color = Color(1, 0.72, 0.38, 1)
 light_energy = 1.7

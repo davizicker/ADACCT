@@ -1,14 +1,26 @@
-[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/terra_albedo.png" id="1_mr853"]
-[ext_resource type="Texture2D" path="res://assets/textures/terra_normal.png" id="2_wxqaq"]
+[ext_resource type="Shader" path="res://assets/shaders/terreno.gdshader" id="1_frdgk"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/Color.jpg" id="2_p3klp"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/NormalGL.jpg" id="3_sxyku"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/Roughness.jpg" id="4_r6tlw"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/Color.jpg" id="5_l26aa"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/NormalGL.jpg" id="6_dcfho"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/Roughness.jpg" id="7_b0bqq"]
 
 [resource]
-vertex_color_use_as_albedo = true
-albedo_texture = ExtResource("1_mr853")
-normal_enabled = true
-normal_texture = ExtResource("2_wxqaq")
-uv1_scale = Vector3(0.12, 0.12, 0.12)
-uv1_triplanar = true
-uv1_world_triplanar = true
-texture_filter = 5
+render_priority = 0
+shader = ExtResource("1_frdgk")
+shader_parameter/plano_cor = ExtResource("5_l26aa")
+shader_parameter/plano_normal = ExtResource("6_dcfho")
+shader_parameter/plano_rug = ExtResource("7_b0bqq")
+shader_parameter/ingreme_cor = ExtResource("2_p3klp")
+shader_parameter/ingreme_normal = ExtResource("3_sxyku")
+shader_parameter/ingreme_rug = ExtResource("4_r6tlw")
+shader_parameter/escala_plano = 0.22
+shader_parameter/escala_ingreme = 0.16
+shader_parameter/inclinacao_ini = 0.88
+shader_parameter/inclinacao_fim = 0.62
+shader_parameter/forca_normal = 1.0
+shader_parameter/tom_verde = Color(0.8, 1, 0.7, 1)
+shader_parameter/verde = 0.35

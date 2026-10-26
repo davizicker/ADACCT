@@ -55,6 +55,28 @@ func _surf(mat_name: String, tex: String, tint: Color, scale: float, rough := 0.
 	ResourceSaver.save(m, MATS + mat_name + ".tres")
 
 
+## Material com texturas PBR reais (ambientCG, CC0) de assets/textures/ambientcg/<pasta>/.
+func _real(mat_name: String, folder: String, tint: Color, scale: float, normal_scale := 1.0, rough_mult := 1.0) -> void:
+	var dir := TEX + "ambientcg/" + folder + "/"
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = load(dir + "Color.jpg") as Texture2D
+	m.albedo_color = tint
+	m.normal_enabled = true
+	m.normal_texture = load(dir + "NormalGL.jpg") as Texture2D
+	m.normal_scale = normal_scale
+	m.roughness_texture = load(dir + "Roughness.jpg") as Texture2D
+	m.roughness = rough_mult
+	if ResourceLoader.exists(dir + "AmbientOcclusion.jpg"):
+		m.ao_enabled = true
+		m.ao_texture = load(dir + "AmbientOcclusion.jpg") as Texture2D
+		m.ao_light_affect = 0.6
+	m.uv1_triplanar = true
+	m.uv1_world_triplanar = true
+	m.uv1_scale = Vector3.ONE * scale
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	ResourceSaver.save(m, MATS + mat_name + ".tres")
+
+
 func _flat(mat_name: String, color: Color, rough := 0.9, metal := 0.0, emissive := 0.0, unshaded := false) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
@@ -101,21 +123,21 @@ func _materials() -> void:
 	_surf("madeira_vermelha", "madeira", Color(0.62, 0.14, 0.10), 0.6)
 	_surf("madeira_verde", "madeira", Color(0.18, 0.40, 0.28), 0.6)
 	_surf("madeira_ocre", "madeira", Color(0.80, 0.58, 0.18), 0.6)
-	_surf("madeira_natural", "madeira", Color(0.50, 0.34, 0.20), 0.6)
+	_real("madeira_natural", "Wood035", Color(1.0, 0.95, 0.9), 0.8)
 	_surf("madeira_branca", "madeira", Color(0.92, 0.90, 0.84), 0.6)
-	var terreno := StandardMaterial3D.new()
-	terreno.albedo_texture = _tex("terra_albedo.png")
-	terreno.normal_enabled = true
-	terreno.normal_texture = _tex("terra_normal.png")
-	terreno.vertex_color_use_as_albedo = true
-	terreno.uv1_triplanar = true
-	terreno.uv1_world_triplanar = true
-	terreno.uv1_scale = Vector3.ONE * 0.12
-	terreno.roughness = 1.0
-	terreno.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	var terreno := ShaderMaterial.new()
+	terreno.shader = load("res://assets/shaders/terreno.gdshader")
+	var gd := TEX + "ambientcg/Ground108/"
+	var gi := TEX + "ambientcg/Ground028/"
+	terreno.set_shader_parameter("plano_cor", load(gd + "Color.jpg"))
+	terreno.set_shader_parameter("plano_normal", load(gd + "NormalGL.jpg"))
+	terreno.set_shader_parameter("plano_rug", load(gd + "Roughness.jpg"))
+	terreno.set_shader_parameter("ingreme_cor", load(gi + "Color.jpg"))
+	terreno.set_shader_parameter("ingreme_normal", load(gi + "NormalGL.jpg"))
+	terreno.set_shader_parameter("ingreme_rug", load(gi + "Roughness.jpg"))
 	ResourceSaver.save(terreno, MATS + "terreno.tres")
 	_flat("ferro", Color(0.05, 0.05, 0.05), 0.55, 0.6)
-	_surf("madeira_escura", "madeira", Color(0.22, 0.14, 0.09), 0.6)
+	_real("madeira_escura", "Wood028", Color(1, 1, 1), 0.7)
 	_flat("vaso", Color(0.55, 0.26, 0.16), 0.9)
 	_flat("verde_vaso", Color(0.10, 0.28, 0.09), 1.0)
 	_flat("flor_vermelha", Color(0.75, 0.08, 0.08), 0.8)
@@ -173,8 +195,10 @@ func _materials() -> void:
 	var serra := _flat("serra", Color(0.022, 0.028, 0.048), 1.0, 0.0, 0.0, true)
 	serra.disable_fog = true
 	ResourceSaver.save(serra, MATS + "serra.tres")
-	_flat("casca", Color(0.20, 0.14, 0.10), 1.0)
-	_flat("palma_tronco", Color(0.45, 0.42, 0.38), 0.9)
+	_real("casca", "Bark014", Color(0.9, 0.88, 0.85), 1.0, 1.3)
+	_real("palma_tronco", "Bark014", Color(0.62, 0.6, 0.57), 0.9, 1.0)
+	_real("terra_quintal", "Ground108", Color(0.85, 0.9, 0.8), 0.22, 1.1)
+	_real("pele_bradador", "Bark014", Color(0.75, 0.72, 0.7), 2.0, 1.5)   # para o modelo do Bradador, se vier sem textura
 	_flat("bradador_preto", Color(0, 0, 0), 1.0, 0.0, 0.0, true)
 	_flat("bradador_palido", Color(0.78, 0.78, 0.72), 1.0, 0.0, 0.0, true)
 	_leafy("folhagem", "folhagem", Color(0.85, 0.95, 0.8))

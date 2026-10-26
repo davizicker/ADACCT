@@ -39,13 +39,13 @@ Prioridade: **P1** fazer antes de mostrar a alguém · **P2** deixa o jogo muito
 | Rua sinuosa com morros, casario, muros, becos em escada, chafariz, ponte, igreja | ✅ | P1 | 🆓 | |
 | Vegetação, serra ao fundo, céu com nuvens e estrelas, milhares de luzes | ✅ | P1 | 🆓 | |
 | Detalhes: placas, vasos, nichos com vela, varais, bandeirinhas, bueiros, barris, banco, carroça | ✅ | P2 | 🆓 | |
-| **Texturas reais (CC0) no lugar das procedurais** | ⬜ | P1 | 🆓 ⏱️ | ambientCG/Poly Haven: maior salto de realismo por menor esforço |
+| **Texturas reais (CC0) no lugar das procedurais** | 🟡 | P1 | 🆓 ⏱️ | **5 de ~12 feitas** (ambientCG): casca, 2 madeiras, 2 chãos. Faltam: pedra da rua, reboco, telha, muro de pedra, cantaria, folhagem |
 | **Modelos 3D reais** (casas, igreja, mobiliário) | ⬜ | P2 | 🆓/💰 | Sketchfab/Poly Haven (confira licença) ou artista. Guia em docs/06 |
 | **Bradador e Mula em 3D realista** (`assets/models/*.glb`) | 🟡 | P1 | 🆓 ⏱️ | O jogo já troca sozinho o modelo simples pelo seu .glb (testado com modelo de teste). Falta o modelo real |
 | Interior de uma casa e da igreja (cena final) | ⬜ | P2 | ⏱️ | Hoje a igreja é só fachada |
 | Mais "ruas" (segunda ladeira, praça, cemitério, mina) | ⬜ | P2 | ⏱️ | Mina do Chico Rei é real: tratar com respeito e consultoria |
 | Chuva e poças, neblina volumétrica, raios de luz, relâmpago | ⬜ | P2 | 🆓 | Neblina volumétrica e SDFGI exigem Forward+ (ver APRENDER.md) |
-| Reflexos reais na água/pedra molhada (SSR) | ⬜ | P3 | 🆓 | Forward+ |
+| Reflexos reais na água/pedra molhada (SSR), iluminação global, neblina volumétrica | 🟡 | P3 | 🆓 | Forward+ "Qualidade Alta": **ligado e testado em Vulkan por software**; falta medir em placa real |
 | Animais (gato nos telhados, cachorro, morcegos, corujas) | ⬜ | P3 | ⏱️ | Olhos de gato brilhando: barato e eficaz |
 | Pessoas (moradores fantasmagóricos nas janelas) | ⬜ | P3 | 👥 | Cuidado com representação: veja docs/03 |
 | Troca de dia/noite, amanhecer como vitória | ⬜ | P2 | ⏱️ | A vitória hoje é só uma tela |
@@ -88,7 +88,7 @@ Prioridade: **P1** fazer antes de mostrar a alguém · **P2** deixa o jogo muito
 | Oclusão (não desenhar o que está atrás das casas) | ⬜ | P2 | Pode dobrar o desempenho |
 | LOD (versões simples dos modelos distantes) | ⬜ | P2 | |
 | Exportar o jogo (.exe) para Windows | ⬜ | P1 | Precisa dos templates de exportação do Godot |
-| Teste em Godot 4.7 (você usa) | ⬜ | P1 | Testado só no 4.3 |
+| Teste em Godot 4.7 (você usa) | ✅ | P1 | Testado na **4.7.2** (importação, lógica, mula, fuga, imagem, Forward+) |
 | Teste com microfone real | ⬜ | P1 | |
 | Controle de versão e backup | ✅ | P1 | GitHub |
 

@@ -131,6 +131,13 @@ Nesta ordem: (1) em `Lua`, desligue **Shadow → Enabled**; (2) em `Morros → M
 (menos árvores); (3) em `Morros → Capim`, desligue (ícone do olho); (4) em `Ambiente → Environment`, desligue **Glow**.
 Em `scenes/jogador.tscn`, `Camera/Lampiao → Shadow → Enabled` liga a sombra do lampião (bonita, mas pesada).
 
+## Texturas reais já no jogo
+Cinco texturas do ambientCG (CC0) já estão ligadas: **Bark014** (casca), **Wood028** e **Wood035** (madeiras),
+**Ground108** e **Ground028** (o chão dos morros: a plana vira terra com cascalho, a íngreme vira chão pedregoso).
+Estão em `assets/textures/ambientcg/`. O terreno usa um shader próprio (`assets/shaders/terreno.gdshader`):
+no material `assets/materials/terreno.tres` você muda a escala e a inclinação em que uma textura vira a outra.
+Para ligar mais texturas, siga o passo a passo abaixo (é só arrastar os mapas para o material).
+
 ## Trocar texturas por texturas profissionais (grátis)
 As texturas atuais são geradas por código (boas para começar). Para algo mais realista:
 

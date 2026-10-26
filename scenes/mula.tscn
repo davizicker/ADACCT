@@ -1,97 +1,97 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/mula.gd" id="1_sohc2"]
-[ext_resource type="Material" path="res://assets/materials/mula_corpo.tres" id="2_hsevx"]
-[ext_resource type="Material" path="res://assets/materials/fogo.tres" id="3_rur18"]
-[ext_resource type="Script" path="res://scripts/luz_tremula.gd" id="4_j6hak"]
+[ext_resource type="Script" path="res://scripts/mula.gd" id="1_7vwmj"]
+[ext_resource type="Material" path="res://assets/materials/mula_corpo.tres" id="2_n4ewo"]
+[ext_resource type="Material" path="res://assets/materials/fogo.tres" id="3_ft8w2"]
+[ext_resource type="Script" path="res://scripts/luz_tremula.gd" id="4_cb1ph"]
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_8mrsv"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_cdrr2"]
 radius = 0.32
 height = 1.9
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_kfx1a"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_dloqh"]
 top_radius = 0.13
 bottom_radius = 0.2
 height = 0.9
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_ifywn"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_tcl1k"]
 top_radius = 0.07
 bottom_radius = 0.045
 height = 0.95
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_trlu7"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_kg7op"]
 top_radius = 0.07
 bottom_radius = 0.045
 height = 0.95
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_s7kbh"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_6ev0m"]
 top_radius = 0.07
 bottom_radius = 0.045
 height = 0.95
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_bel5g"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_hnlqv"]
 top_radius = 0.07
 bottom_radius = 0.045
 height = 0.95
 
-[sub_resource type="QuadMesh" id="QuadMesh_r7q2p"]
-material = ExtResource("3_rur18")
+[sub_resource type="QuadMesh" id="QuadMesh_y067q"]
+material = ExtResource("3_ft8w2")
 size = Vector2(0.7, 0.7)
 
-[sub_resource type="Gradient" id="Gradient_7bo5j"]
+[sub_resource type="Gradient" id="Gradient_3ltan"]
 offsets = PackedFloat32Array(0, 0.4, 1)
 colors = PackedColorArray(1, 0.9, 0.5, 0.95, 1, 0.4, 0.1, 0.8, 0.4, 0.05, 0, 0)
 
-[node name="Mula" type="Node3D"]
-script = ExtResource("1_sohc2")
+[node name="Mula" type="Node3D" unique_id=1055887567]
+script = ExtResource("1_7vwmj")
 
-[node name="Corpo" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 1.2, 0)
-material_override = ExtResource("2_hsevx")
-mesh = SubResource("CapsuleMesh_8mrsv")
+[node name="Corpo" type="MeshInstance3D" parent="." unique_id=550509647]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 1.2, 0)
+material_override = ExtResource("2_n4ewo")
+mesh = SubResource("CapsuleMesh_cdrr2")
 
-[node name="Pescoco" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.788011, 0.615662, 0, -0.615662, 0.788011, 0, 1.62, -0.95)
-material_override = ExtResource("2_hsevx")
-mesh = SubResource("CylinderMesh_kfx1a")
+[node name="Pescoco" type="MeshInstance3D" parent="." unique_id=784191628]
+transform = Transform3D(1, 0, 0, 0, 0.7880108, 0.6156615, 0, -0.6156615, 0.7880108, 0, 1.62, -0.95)
+material_override = ExtResource("2_n4ewo")
+mesh = SubResource("CylinderMesh_dloqh")
 
-[node name="PernaFE" type="Node3D" parent="."]
+[node name="PernaFE" type="Node3D" parent="." unique_id=1112196207]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.95, -0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaFE"]
+[node name="Perna" type="MeshInstance3D" parent="PernaFE" unique_id=1125937277]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
-material_override = ExtResource("2_hsevx")
-mesh = SubResource("CylinderMesh_ifywn")
+material_override = ExtResource("2_n4ewo")
+mesh = SubResource("CylinderMesh_tcl1k")
 
-[node name="PernaFD" type="Node3D" parent="."]
+[node name="PernaFD" type="Node3D" parent="." unique_id=2062619688]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.95, -0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaFD"]
+[node name="Perna" type="MeshInstance3D" parent="PernaFD" unique_id=434518608]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
-material_override = ExtResource("2_hsevx")
-mesh = SubResource("CylinderMesh_trlu7")
+material_override = ExtResource("2_n4ewo")
+mesh = SubResource("CylinderMesh_kg7op")
 
-[node name="PernaTE" type="Node3D" parent="."]
+[node name="PernaTE" type="Node3D" parent="." unique_id=634232351]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.95, 0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaTE"]
+[node name="Perna" type="MeshInstance3D" parent="PernaTE" unique_id=1258097675]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
-material_override = ExtResource("2_hsevx")
-mesh = SubResource("CylinderMesh_s7kbh")
+material_override = ExtResource("2_n4ewo")
+mesh = SubResource("CylinderMesh_6ev0m")
 
-[node name="PernaTD" type="Node3D" parent="."]
+[node name="PernaTD" type="Node3D" parent="." unique_id=457540455]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.95, 0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaTD"]
+[node name="Perna" type="MeshInstance3D" parent="PernaTD" unique_id=232837568]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
-material_override = ExtResource("2_hsevx")
-mesh = SubResource("CylinderMesh_bel5g")
+material_override = ExtResource("2_n4ewo")
+mesh = SubResource("CylinderMesh_hnlqv")
 
-[node name="Fogo" type="CPUParticles3D" parent="."]
+[node name="Fogo" type="CPUParticles3D" parent="." unique_id=484516533]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.02, -1.25)
 amount = 36
 lifetime = 0.75
-mesh = SubResource("QuadMesh_r7q2p")
+mesh = SubResource("QuadMesh_y067q")
 emission_shape = 1
 emission_sphere_radius = 0.14
 direction = Vector3(0, 1, 0)
@@ -101,13 +101,13 @@ initial_velocity_min = 1.0
 initial_velocity_max = 2.3
 scale_amount_min = 0.6
 scale_amount_max = 1.1
-color_ramp = SubResource("Gradient_7bo5j")
+color_ramp = SubResource("Gradient_3ltan")
 
-[node name="ChamaLuz" type="OmniLight3D" parent="."]
+[node name="ChamaLuz" type="OmniLight3D" parent="." unique_id=486392015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, -1.3)
 light_color = Color(1, 0.45, 0.15, 1)
 light_energy = 3.4
 omni_range = 16.0
-script = ExtResource("4_j6hak")
+script = ExtResource("4_cb1ph")
 forca = 0.3
 velocidade = 11.0

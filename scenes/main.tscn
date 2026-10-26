@@ -1,40 +1,40 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_kh6oe"]
-[ext_resource type="PackedScene" path="res://scenes/vila.scn" id="2_ax28i"]
-[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_t627n"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="4_grwuj"]
-[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_xptvf"]
-[ext_resource type="PackedScene" path="res://scenes/mula.tscn" id="6_7707v"]
-[ext_resource type="Script" path="res://scripts/mula.gd" id="7_4s483"]
-[ext_resource type="Script" path="res://scripts/scream_system.gd" id="8_vetqj"]
-[ext_resource type="Script" path="res://scripts/event_director.gd" id="9_lfl06"]
-[ext_resource type="Script" path="res://scripts/audio_director.gd" id="10_6u7k7"]
-[ext_resource type="Script" path="res://scripts/hud.gd" id="11_mk8b4"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_ya4ey"]
+[ext_resource type="PackedScene" path="res://scenes/vila.scn" id="2_eb6dy"]
+[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_trceg"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="4_a8y0u"]
+[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_jkv2x"]
+[ext_resource type="PackedScene" path="res://scenes/mula.tscn" id="6_jbj1t"]
+[ext_resource type="Script" path="res://scripts/mula.gd" id="7_muem4"]
+[ext_resource type="Script" path="res://scripts/scream_system.gd" id="8_dp3eg"]
+[ext_resource type="Script" path="res://scripts/event_director.gd" id="9_0ld40"]
+[ext_resource type="Script" path="res://scripts/audio_director.gd" id="10_gqmmt"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="11_yc10j"]
 
-[node name="Main" type="Node3D"]
-script = ExtResource("1_kh6oe")
+[node name="Main" type="Node3D" unique_id=782794229]
+script = ExtResource("1_ya4ey")
 
-[node name="Vila" type="Node3D" parent="." instance=ExtResource("2_ax28i")]
+[node name="Vila" type="Node3D" parent="." unique_id=217621435 instance=ExtResource("2_eb6dy")]
 
-[node name="Jogador" type="CharacterBody3D" parent="." instance=ExtResource("3_t627n")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.144317, 0.43563, -1.99465)
-script = ExtResource("4_grwuj")
+[node name="Jogador" type="CharacterBody3D" parent="." unique_id=260317416 instance=ExtResource("3_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1443168, 0.43562964, -1.9946519)
+script = ExtResource("4_a8y0u")
 
-[node name="Bradador" type="Node3D" parent="." instance=ExtResource("5_xptvf")]
+[node name="Bradador" type="Node3D" parent="." unique_id=761201392 instance=ExtResource("5_jkv2x")]
 visible = false
 
-[node name="Mula" type="Node3D" parent="." instance=ExtResource("6_7707v")]
-script = ExtResource("7_4s483")
+[node name="Mula" type="Node3D" parent="." unique_id=1055887567 instance=ExtResource("6_jbj1t")]
+script = ExtResource("7_muem4")
 
-[node name="Gritos" type="Node" parent="."]
-script = ExtResource("8_vetqj")
+[node name="Gritos" type="Node" parent="." unique_id=1189492593]
+script = ExtResource("8_dp3eg")
 
-[node name="Eventos" type="Node" parent="."]
-script = ExtResource("9_lfl06")
+[node name="Eventos" type="Node" parent="." unique_id=1971939915]
+script = ExtResource("9_0ld40")
 
-[node name="Audio" type="Node" parent="."]
-script = ExtResource("10_6u7k7")
+[node name="Audio" type="Node" parent="." unique_id=1314998419]
+script = ExtResource("10_gqmmt")
 
-[node name="Interface" type="CanvasLayer" parent="."]
-script = ExtResource("11_mk8b4")
+[node name="Interface" type="CanvasLayer" parent="." unique_id=1726522181]
+script = ExtResource("11_yc10j")

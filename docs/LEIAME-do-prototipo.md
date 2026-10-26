@@ -56,12 +56,12 @@ Os avisos `mesh_get_surface_count` no modo headless vêm do renderizador "dummy"
 Print de teste (precisa de display; com xvfb): `-- --shot=/caminho/img.png --shot-z=-120 --shot-stage=2`
 
 ## Estado e limitações conhecidas
-- **Verificado (Godot 4.3, renderizador Compatibilidade):** compila; regra de estágios, morte e eco;
+- **Verificado (Godot 4.7.2, renderizador Compatibilidade e também Forward+ por software):** compila; regra de estágios, morte e eco;
   o robô percorre os 343 m de rua curva até a porta da igreja; teste de fuga lateral sem vazamentos
   (15 pontos × 2 lados); capturas de tela de vários pontos.
 - **Não verificado:** captura real do microfone (sem dispositivo de áudio no ambiente de
   desenvolvimento), desempenho em hardware fraco e o "feeling" de jogo. Precisa de playtest com fones.
-  Testado no 4.3; deve funcionar em 4.4+, mas não foi testado no 4.7.
+  Testado na 4.7.2 (a mesma versão que você usa).
 - **Desempenho medido (software, só como referência):** ~0,25–0,9 milhão de triângulos e ~800–1.800
   chamadas de desenho por quadro. Se travar: desligue sombras (Lua e Lampião) e reduza `Mata`.
 - Mula-sem-cabeça, Corpo-seco em perseguição, Pisadeira e Lobisomem ainda não existem.
