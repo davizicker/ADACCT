@@ -1,0 +1,15 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/reboco_albedo.png" id="1_cu8j4"]
+[ext_resource type="Texture2D" path="res://assets/textures/reboco_normal.png" id="2_rveva"]
+
+[resource]
+albedo_color = Color(0.55, 0.68, 0.82, 1)
+albedo_texture = ExtResource("1_cu8j4")
+roughness = 0.95
+normal_enabled = true
+normal_texture = ExtResource("2_rveva")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

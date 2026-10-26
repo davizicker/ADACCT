@@ -1,13 +1,16 @@
 extends Node3D
-## Monta o jogo inteiro por código. Argumentos de teste (depois de "--"):
+## Liga as peças da cena principal. Argumentos de teste (depois de "--"):
 ##   --selftest       simula respostas certas/erradas até a morte
 ##   --selftest-walk  anda pela rua inteira até a igreja (sem gritos)
 ##   --shot=<arquivo.png> [--shot-z=<z>] [--shot-stage=<n>]  salva um print e sai
 
-var player: Player
-var hud: Hud
-var screams: ScreamSystem
-var world: World
+# Os objetos abaixo estão em scenes/main.tscn: mexa neles no editor.
+@onready var world: Node3D = $Vila
+@onready var player: Player = $Jogador
+@onready var hud: Hud = $Interface
+@onready var screams: ScreamSystem = $Gritos
+@onready var bradador: Node3D = $Bradador
+@onready var church_door: Area3D = $Vila/Igreja/Porta
 var finished := false
 var mode := ""
 var shot_path := ""
@@ -32,21 +35,10 @@ func _ready() -> void:
 			shot_z = float(a.substr(9))
 		elif a.begins_with("--shot-stage="):
 			shot_stage = int(a.substr(13))
+	if mode == "shot":
+		player.position = Vector3(0, World.ground_y(shot_z) + 0.2, shot_z)
 
-	world = World.new()
-	add_child(world)
-	world.build()
-
-	player = Player.new()
-	add_child(player)
-	player.position = Vector3(0, World.ground_y(shot_z) + 0.2, shot_z)
-
-	hud = Hud.new()
-	add_child(hud)
-
-	screams = ScreamSystem.new()
-	add_child(screams)
-	screams.setup(player, hud, mode == "")
+	screams.setup(player, hud, bradador, mode == "")
 	if mode == "shot":
 		screams.enabled = false
 		screams.stage = shot_stage
@@ -56,7 +48,7 @@ func _ready() -> void:
 	screams.player_died.connect(_on_died)
 	screams.log_line.connect(func(t: String) -> void: print("[game] ", t))
 
-	world.church_door.body_entered.connect(_on_door)
+	church_door.body_entered.connect(_on_door)
 	player.oil_changed.connect(func(v: float) -> void: hud.set_status(v, player.lantern_on))
 	hud.set_status(player.oil, true)
 

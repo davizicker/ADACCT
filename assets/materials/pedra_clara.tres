@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/pedra_albedo.png" id="1_0sfq0"]
+[ext_resource type="Texture2D" path="res://assets/textures/pedra_normal.png" id="2_p2utk"]
+
+[resource]
+albedo_color = Color(1, 0.98, 0.92, 1)
+albedo_texture = ExtResource("1_0sfq0")
+roughness = 0.9
+normal_enabled = true
+normal_scale = 1.2
+normal_texture = ExtResource("2_p2utk")
+uv1_scale = Vector3(0.4, 0.4, 0.4)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

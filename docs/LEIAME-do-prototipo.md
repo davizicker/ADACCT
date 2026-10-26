@@ -1,13 +1,13 @@
-# BRADADOR — protótipo jogável (Godot 4.3)
+# Como jogar (protótipo)
 
 Vertical slice v0: suba a ladeira de uma vila colonial fictícia até a igreja,
-enquanto o Bradador grita na névoa. Tudo é gerado por código (sem assets);
-sons e modelos são placeholders.
+enquanto o Bradador grita na névoa. O mundo é feito de cenas editáveis (`scenes/`);
+texturas são procedurais e os sons são sintetizados (placeholders).
 
 ## Como rodar
-1. Instale o [Godot 4.3](https://godotengine.org/download) (versão padrão, não .NET).
-2. Abra esta pasta (`horror-game/bradador`) no Godot e aperte F5.
-   Linha de comando: `godot --path horror-game/bradador`
+1. Instale o [Godot 4](https://godotengine.org/download) (versão padrão, não .NET).
+2. **Importar** → `project.godot` na raiz deste repositório → **Importar e Editar**.
+3. **F5**.
 
 ## Controles
 | Tecla | Ação |
@@ -44,13 +44,14 @@ Print de teste (precisa de display; com xvfb): `-- --shot=/caminho/img.png --sho
 
 ## Estado e limitações conhecidas
 - Verificado: compila, a regra de estágios/morte, o evento de eco, a subida da ladeira, a vitória
-  e a renderização (screenshots via xvfb).
+  e a renderização (screenshots via xvfb, renderizador Compatibilidade, Godot 4.3).
 - **Não verificado:** captura real do microfone (sem dispositivo de áudio no ambiente de
-  desenvolvimento) e o "feeling" de jogo. Precisa de playtest com fones.
-- Mula-sem-cabeça, Corpo-seco em perseguição, Pisadeira e Lobisomem ainda não estão implementados.
-- Visual é caixa-de-areia: falta o estilo PS1/HD-2D, texturas, shader de grão/dither.
-- Áudio é sintetizado (placeholder). O grito final deve ser gravado por atores.
+  desenvolvimento), desempenho em hardware fraco (as luzes dos postes projetam sombra) e o
+  "feeling" de jogo. Precisa de playtest com fones. Testado no 4.3; deve funcionar em 4.4+.
+- Mula-sem-cabeça, Corpo-seco em perseguição, Pisadeira e Lobisomem ainda não existem.
+- O Bradador é feito de formas simples; falta modelo e animação.
+- Áudio sintetizado (placeholder). O grito final deve ser gravado por atores.
 
 ## Estrutura
-`main.gd` monta tudo · `world.gd` vila/rua/igreja · `player.gd` jogador e lampião ·
-`scream_system.gd` regra do grito, microfone, Bradador, eventos · `hud.gd` interface · `synth.gd` sons.
+`scenes/` main, vila, jogador, bradador, casa, poste · `scripts/` regras do jogo ·
+`assets/materials` e `assets/textures` · `tools/` geradores (só use se souber o que faz) · `docs/`.

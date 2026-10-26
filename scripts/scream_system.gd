@@ -47,12 +47,11 @@ var _echo_player: AudioStreamPlayer3D
 var _rng := RandomNumberGenerator.new()
 
 
-func setup(p_player: Player, p_hud: Hud, use_mic: bool) -> void:
+func setup(p_player: Player, p_hud: Hud, p_bradador: Node3D, use_mic: bool) -> void:
 	player = p_player
 	hud = p_hud
 	_rng.randomize()
-	bradador = _make_bradador()
-	add_child(bradador)
+	bradador = p_bradador
 	bradador.visible = false
 	_scream_player = _make_3d_player(6.0)
 	_echo_player = _make_3d_player(4.0)
@@ -68,33 +67,6 @@ func _make_3d_player(gain_db: float) -> AudioStreamPlayer3D:
 	ap.max_distance = 0.0
 	add_child(ap)
 	return ap
-
-
-func _make_bradador() -> Node3D:
-	var root := Node3D.new()
-	var black := StandardMaterial3D.new()
-	black.albedo_color = Color(0.0, 0.0, 0.0)
-	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	var body := MeshInstance3D.new()
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.28
-	cap.height = 2.5
-	body.mesh = cap
-	body.material_override = black
-	body.position.y = 1.25
-	root.add_child(body)
-	var pale := StandardMaterial3D.new()
-	pale.albedo_color = Color(0.75, 0.75, 0.7)
-	pale.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	var head := MeshInstance3D.new()
-	var sph := SphereMesh.new()
-	sph.radius = 0.16
-	sph.height = 0.36
-	head.mesh = sph
-	head.material_override = pale
-	head.position.y = 2.45
-	root.add_child(head)
-	return root
 
 
 func _setup_mic() -> bool:

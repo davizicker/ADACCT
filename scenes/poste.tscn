@@ -1,0 +1,42 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="1_ccpws"]
+[ext_resource type="Material" path="res://assets/materials/vidro_lampiao.tres" id="2_g6h48"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_oaub0"]
+top_radius = 0.05
+bottom_radius = 0.08
+height = 3.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_vv1h2"]
+size = Vector3(0.35, 0.5, 0.35)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_f1183"]
+top_radius = 0.0
+bottom_radius = 0.3
+height = 0.25
+radial_segments = 4
+
+[node name="Poste" type="Node3D"]
+
+[node name="Haste" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+material_override = ExtResource("1_ccpws")
+mesh = SubResource("CylinderMesh_oaub0")
+
+[node name="Lanterna" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, 0)
+material_override = ExtResource("2_g6h48")
+mesh = SubResource("BoxMesh_vv1h2")
+
+[node name="Cupula" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.98, 0)
+material_override = ExtResource("1_ccpws")
+mesh = SubResource("CylinderMesh_f1183")
+
+[node name="Luz" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+light_color = Color(1, 0.72, 0.35, 1)
+light_energy = 1.3
+shadow_enabled = true
+omni_range = 11.0

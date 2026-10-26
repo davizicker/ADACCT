@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_hg1gj"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fkhm2"]
+radius = 0.35
+height = 1.7
+
+[node name="Jogador" type="CharacterBody3D"]
+script = ExtResource("1_hg1gj")
+
+[node name="Colisao" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+shape = SubResource("CapsuleShape3D_fkhm2")
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+far = 250.0
+
+[node name="Lampiao" type="OmniLight3D" parent="Camera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.35, -0.5)
+light_color = Color(1, 0.72, 0.38, 1)
+light_energy = 1.7
+shadow_enabled = true
+omni_range = 9.0

@@ -8,10 +8,7 @@ const WALK_SPEED := 2.8
 const GRAVITY := 20.0
 const MOUSE_SENS := 0.0025
 const OIL_MAX := 180.0
-const LANTERN_ENERGY := 1.7
 
-var cam: Camera3D
-var lantern: OmniLight3D
 var oil := OIL_MAX
 var lantern_on := true
 var frozen := false
@@ -21,30 +18,15 @@ var move_speed := 0.0
 var _blackout_t := 0.0
 var _shake_t := 0.0
 var _shake_amp := 0.0
+var _base_energy := 1.7
+
+# Os nós abaixo existem em scenes/player.tscn: edite-os no editor (FOV, luz, cápsula...).
+@onready var cam: Camera3D = $Camera
+@onready var lantern: OmniLight3D = $Camera/Lampiao
 
 
 func _ready() -> void:
-	var shape := CollisionShape3D.new()
-	var cap := CapsuleShape3D.new()
-	cap.radius = 0.35
-	cap.height = 1.7
-	shape.shape = cap
-	shape.position.y = 0.85
-	add_child(shape)
-
-	cam = Camera3D.new()
-	cam.position = Vector3(0, 1.6, 0)
-	cam.fov = 75.0
-	cam.far = 250.0
-	add_child(cam)
-
-	lantern = OmniLight3D.new()
-	lantern.position = Vector3(0.25, -0.35, -0.5)
-	lantern.light_color = Color(1.0, 0.72, 0.38)
-	lantern.light_energy = LANTERN_ENERGY
-	lantern.omni_range = 9.0
-	cam.add_child(lantern)
-
+	_base_energy = lantern.light_energy  # a intensidade vem da cena
 	floor_snap_length = 0.6
 	floor_max_angle = deg_to_rad(50.0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -95,7 +77,7 @@ func _process(delta: float) -> void:
 		var low_oil := clampf(oil / 25.0, 0.0, 1.0)
 		if low_oil < 1.0 and randf() < 0.08:
 			flicker *= 0.3
-		lantern.light_energy = LANTERN_ENERGY * flicker * (0.4 + 0.6 * low_oil)
+		lantern.light_energy = _base_energy * flicker * (0.4 + 0.6 * low_oil)
 	else:
 		lantern.light_energy = 0.0
 	if _shake_t > 0.0:

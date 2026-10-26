@@ -1,0 +1,27 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_yk6wc"]
+[ext_resource type="PackedScene" path="res://scenes/vila.tscn" id="2_t0us7"]
+[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_5otdl"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="4_tkpy8"]
+[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_mkfl7"]
+[ext_resource type="Script" path="res://scripts/scream_system.gd" id="6_wn6q1"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="7_tkexp"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_yk6wc")
+
+[node name="Vila" type="Node3D" parent="." instance=ExtResource("2_t0us7")]
+
+[node name="Jogador" type="CharacterBody3D" parent="." instance=ExtResource("3_5otdl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.445569, -2)
+script = ExtResource("4_tkpy8")
+
+[node name="Bradador" type="Node3D" parent="." instance=ExtResource("5_mkfl7")]
+visible = false
+
+[node name="Gritos" type="Node" parent="."]
+script = ExtResource("6_wn6q1")
+
+[node name="Interface" type="CanvasLayer" parent="."]
+script = ExtResource("7_tkexp")
