@@ -2,7 +2,8 @@ extends Node3D
 ## Liga as peças da cena principal. Argumentos de teste (depois de "--"):
 ##   --selftest       simula respostas certas/erradas até a morte
 ##   --selftest-walk  anda pela rua inteira até a igreja (sem gritos)
-##   --shot=<arquivo.png> [--shot-z=<z>] [--shot-stage=<n>]  salva um print e sai
+##   --selftest-escape tenta sair da rua andando para os lados (a vila deve ser fechada)
+##   --shot=<arquivo.png> [--shot-s=<m>] [--shot-stage=<n>] [--shot-yaw=<graus>] [--shot-pitch=<graus>] [--shot-lift=<m>]  salva um print e sai
 
 # Os objetos abaixo estão em scenes/main.tscn: mexa neles no editor.
 @onready var world: Node3D = $Vila
@@ -10,7 +11,7 @@ extends Node3D
 @onready var hud: Hud = $Interface
 @onready var screams: ScreamSystem = $Gritos
 @onready var bradador: Node3D = $Bradador
-@onready var church_door: Area3D = $Vila/Igreja/Porta
+@onready var church_door: Area3D = $Vila/Adro/Igreja/Porta
 var finished := false
 var mode := ""
 var shot_path := ""
@@ -25,26 +26,46 @@ func _ready() -> void:
 		mode = "selftest"
 	elif "--selftest-walk" in args:
 		mode = "walk"
-	var shot_z := -2.0
+	elif "--selftest-escape" in args:
+		mode = "escape"
+	var shot_s := 2.0
 	var shot_stage := 0
+	var shot_yaw := 0.0
+	var shot_pitch := 0.0
+	var shot_lift := 0.0
+	var shot_day := "--shot-day" in args
 	for a in args:
 		if a.begins_with("--shot="):
 			shot_path = a.substr(7)
 			mode = "shot"
-		elif a.begins_with("--shot-z="):
-			shot_z = float(a.substr(9))
+		elif a.begins_with("--shot-s="):
+			shot_s = float(a.substr(9))
+		elif a.begins_with("--shot-yaw="):
+			shot_yaw = float(a.substr(11))
+		elif a.begins_with("--shot-pitch="):
+			shot_pitch = float(a.substr(13))
+		elif a.begins_with("--shot-lift="):
+			shot_lift = float(a.substr(12))
 		elif a.begins_with("--shot-stage="):
 			shot_stage = int(a.substr(13))
-	if mode == "shot":
-		player.position = Vector3(0, World.ground_y(shot_z) + 0.2, shot_z)
+	if mode == "shot" or mode == "escape":
+		_place_player(shot_s, shot_yaw, shot_pitch)
+		if shot_lift > 0.0:
+			player.global_position.y += shot_lift
+			player.set_physics_process(false)
 
+	if shot_day:   # só para inspecionar a geometria de dia
+		var env := ($Vila/Ambiente as WorldEnvironment).environment
+		env.ambient_light_energy = 2.2
+		env.ambient_light_color = Color(0.8, 0.85, 1.0)
+		env.fog_density = 0.003
+		($Vila/Lua as DirectionalLight3D).light_energy = 1.4
 	screams.setup(player, hud, bradador, mode == "")
 	if mode == "shot":
 		screams.enabled = false
 		screams.stage = shot_stage
-		screams._axis = -1.0
+		screams._axis = 1.0
 		screams._place_bradador()
-		player.rotation.y = 0.0
 	screams.player_died.connect(_on_died)
 	screams.log_line.connect(func(t: String) -> void: print("[game] ", t))
 
@@ -63,6 +84,9 @@ func _ready() -> void:
 		Engine.time_scale = 8.0
 		screams.enabled = false
 		Input.action_press("move_forward")
+	elif mode == "escape":
+		Engine.time_scale = 8.0
+		screams.enabled = false
 
 
 func _setup_input() -> void:
@@ -87,7 +111,7 @@ func _add_ambience() -> void:
 	wind.play()
 	var bell := AudioStreamPlayer3D.new()
 	bell.stream = Synth.bell()
-	bell.position = Vector3(0, 40, -World.STREET_LEN)
+	bell.position = Route.pos(Route.CHURCH_S) + Vector3(0, 26, 0)
 	bell.unit_size = 40.0
 	bell.volume_db = -4.0
 	bell.name = "Bell"
@@ -107,8 +131,15 @@ func _on_door(body: Node3D) -> void:
 	finished = true
 	screams.enabled = false
 	player.frozen = true
-	print("[game] WIN at z=%.1f y=%.2f (ground %.2f)" % [player.global_position.z, player.global_position.y, World.ground_y(player.global_position.z)])
+	print("[game] WIN at z=%.1f y=%.2f (rua %.2f)" % [player.global_position.z, player.global_position.y, Route.ground_near(player.global_position)])
 	hud.end_screen("Amanheceu.", "(por enquanto)", Color(0.9, 0.8, 0.55, 0.85))
+
+
+func _place_player(s: float, yaw_deg: float, pitch_deg: float) -> void:
+	var t := Route.tangent(s)
+	player.global_position = Route.pos(s) + Vector3(0, 0.25, 0)
+	player.rotation.y = atan2(-t.x, -t.z) + deg_to_rad(yaw_deg)
+	player.cam.rotation.x = deg_to_rad(pitch_deg)
 
 
 func _process(delta: float) -> void:
@@ -121,17 +152,71 @@ func _process(delta: float) -> void:
 		Engine.time_scale = 1.0
 		get_tree().reload_current_scene()
 	_frames += 1
-	if mode == "shot" and _frames == 15:
-		get_viewport().get_texture().get_image().save_png(shot_path)
-		print("[shot] saved ", shot_path)
+	if mode == "shot":
+		if _frames == 20:
+			print("[perf] chamadas de desenho=%d objetos=%d triangulos=%d" % [
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME),
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)])
+			get_viewport().get_texture().get_image().save_png(shot_path)
+			print("[shot] saved ", shot_path)
+			get_tree().quit()
+	elif mode == "walk":
+		_walk_bot()
+	elif mode == "escape":
+		_escape_test(delta)
+	elif mode == "selftest" and finished:
+		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()
-	elif mode != "" and mode != "shot":
-		_selftest_tick()
 
 
-func _selftest_tick() -> void:
-	if mode == "walk" and int(_t) != int(_t - get_process_delta_time()) and int(_t) % 3 == 0:
-		print("[walk] t=%.0f z=%.1f y=%.2f ground=%.2f" % [_t, player.global_position.z, player.global_position.y, World.ground_y(player.global_position.z)])
+## Robô que segue a rota (testa subida, curvas e colisões).
+func _walk_bot() -> void:
+	var s_p := Route.nearest_s(player.global_position)
+	var tgt := Route.pos(minf(s_p + 3.0, Route.length()))
+	var d := tgt - player.global_position
+	d.y = 0.0
+	if d.length() > 0.05:
+		player.rotation.y = atan2(-d.x, -d.z)
+	if int(_t) != int(_t - get_process_delta_time()) and int(_t) % 10 == 0:
+		print("[walk] t=%.0f s=%.1f desvio=%.2f y=%.2f rua=%.2f" % [_t, s_p, Route.dist_to_center(player.global_position), player.global_position.y, Route.ground_near(player.global_position)])
 	if finished:
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()
+	elif _t > 400.0:
+		print("[walk] TIMEOUT s=%.1f" % s_p)
+		get_tree().quit()
+
+
+var _esc_i := 0
+var _esc_t := 0.0
+var _esc_worst := 0.0
+var _esc_leaks: Array[String] = []
+
+## Para cada ponto da rua, anda para a esquerda e para a direita; não pode sair do corredor.
+func _escape_test(delta: float) -> void:
+	var points: Array[float] = [12.0, 30.0, 50.0, 70.0, 95.0, 120.0, 150.0, 165.0, 200.0, 225.0, 250.0, 275.0, 290.0, 310.0, 330.0]
+	var total := points.size() * 2
+	if _esc_i >= total:
+		print("[escape] pior distancia=%.1f m | vazamentos=%d %s" % [_esc_worst, _esc_leaks.size(), str(_esc_leaks)])
+		get_tree().quit()
+		return
+	var s := points[_esc_i / 2]
+	var sigma := -1.0 if _esc_i % 2 == 0 else 1.0
+	if _esc_t == 0.0:
+		var r := Route.right(s)
+		player.global_position = Route.pos(s) + Vector3(0, 0.3, 0)
+		player.velocity = Vector3.ZERO
+		var dirv := r * sigma
+		player.rotation.y = atan2(-dirv.x, -dirv.z)
+		player.cam.rotation.x = 0.0
+		Input.action_press("move_forward")
+	_esc_t += delta
+	if _esc_t > 5.0:
+		var dist := Route.dist_to_center(player.global_position)
+		_esc_worst = maxf(_esc_worst, dist)
+		if dist > 23.0:
+			_esc_leaks.append("s=%.0f lado=%d dist=%.1f" % [s, int(sigma), dist])
+		Input.action_release("move_forward")
+		_esc_t = 0.0
+		_esc_i += 1

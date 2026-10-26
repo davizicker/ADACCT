@@ -37,7 +37,8 @@ var _scream_left := 0.0
 var _window_left := 0.0
 var _shout_time := 0.0
 var _screams_heard := 0
-var _axis := -1.0
+## +1 = o Bradador fica à frente (rua acima), -1 = atrás (rua abaixo)
+var _axis := 1.0
 var _echo_t := -1.0
 var _gaze_t := 0.0
 var _gaze_warned := false
@@ -157,15 +158,24 @@ func _process(delta: float) -> void:
 
 func _place_bradador() -> void:
 	var dist := STAGE_DIST[stage]
-	var z := clampf(player.global_position.z + _axis * dist, -(World.STREET_LEN + 1.0), 1.5)
-	bradador.global_position = Vector3(player.global_position.x * 0.0, World.ground_y(z), z)
-	bradador.look_at(Vector3(player.global_position.x, bradador.global_position.y, player.global_position.z), Vector3.UP)
+	var s_p := Route.nearest_s(player.global_position)
+	var s_b := s_p + _axis * dist
+	# se a rua acabar antes da distância pedida (começo ou igreja), ele vem pelo outro lado
+	if s_b < 0.0 or s_b > Route.length() - 6.0:
+		_axis = -_axis
+		s_b = s_p + _axis * dist
+	s_b = clampf(s_b, 0.0, Route.length() - 6.0)
+	var p := Route.pos(s_b)
+	bradador.global_position = Vector3(p.x, p.y + 0.03, p.z)
+	var look := Vector3(player.global_position.x, bradador.global_position.y, player.global_position.z)
+	if look.distance_to(bradador.global_position) > 0.1:
+		bradador.look_at(look, Vector3.UP)
 	bradador.visible = stage >= 1
 
 
 func _begin_scream() -> void:
 	_screams_heard += 1
-	_axis = -1.0 if _rng.randf() < 0.55 else 1.0
+	_axis = 1.0 if _rng.randf() < 0.55 else -1.0
 	_place_bradador()
 	_scream_player.global_position = bradador.global_position + Vector3(0, 1.8, 0)
 	_scream_player.play()

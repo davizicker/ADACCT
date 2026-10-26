@@ -25,17 +25,42 @@ lugar onde ela é usada.
 para zoom; **W** mover, **E** girar, **R** escalar o objeto selecionado; **Ctrl+D** duplicar;
 **Ctrl+Z** desfazer; **Ctrl+S** salvar.
 
+## Como o mundo é organizado (leia antes dos exercícios)
+Abra `scenes/vila.scn` e veja a árvore **Cena**:
+
+| Nó | O que é |
+|---|---|
+| `Ambiente`, `Lua` | Céu, névoa, brilho, luz da lua (**Environment** e **Light**) |
+| `Terreno` | Os morros, em ladrilhos (`Trecho_000`…). Gerados por código: não se esculpe aqui |
+| `Rua` | O calçamento e as calçadas, em trechos de 30 m, com colisão |
+| `Casas` | As casas da rua, uma por nó (`Casa_00`…). Cada casa tem `Corpo`, `Telhado`, `Detalhes` |
+| `MurosEQuintais` | Muros de pedra, quintais e arrimos com plantas |
+| `Becos` | Escadarias que sobem entre as casas |
+| `Iluminacao` | Lampiões, postes e o `FiosDeLuz` |
+| `Adro` | A igreja, as muretas e o cruzeiro (a porta da vitória é `Adro/Igreja/Porta`) |
+| `Morros` | Casas das encostas (fundidas em blocos), `Arvores`, `Mata`, `Capim`, luzes distantes |
+| `Serra` | A silhueta das montanhas ao fundo |
+| `RotaReferencia` | Uma linha que mostra por onde a rua passa (só referência) |
+
+**Por que `Detalhes` é um nó só?** Cada casa tem ~60 peças pequenas (molduras, janelas, grades…).
+Se fossem 60 nós, o jogo teria milhares de objetos e ficaria pesado. Elas foram **fundidas** numa malha por casa.
+Para mudar um detalhe, edite o **material** dele (assets/materials) ou apague o `Detalhes` e ponha o seu modelo.
+
+**A forma da rua** (curvas, subidas, larguras) vem de `scripts/route.gd` (listas de pontos no começo do arquivo).
+Mudar a rua exige recriar o mundo com `tools/bake.gd`, o que **apaga suas edições** (veja o aviso abaixo).
+Para experimentar sem medo: faça uma cópia do projeto antes.
+
 ## Exercícios (na ordem)
 
 ### 1. Jogar
 **F5**. Se perguntar a cena, escolha `scenes/main.tscn`. Controles em `LEIAME-do-prototipo.md`.
 
 ### 2. Passear pela vila no editor
-Abra `scenes/vila.tscn` (duplo clique). Voe pela rua (botão direito + WASD). Você está vendo
+Abra `scenes/vila.scn` (duplo clique; `.scn` é o mesmo que `.tscn`, só que binário e mais leve). Voe pela rua (botão direito + WASD). Você está vendo
 o mundo real do jogo, sem precisar apertar F5.
 
 ### 3. Mover uma casa
-Na árvore **Cena**, abra `Casas` e clique em `Casa_03`. Aperte **W** e arraste uma seta.
+Na árvore **Cena**, abra `Casas` e clique em `Casa_00`. Aperte **W** e arraste uma seta.
 Gire com **E**. Aperte **F5** para ver. (Dica: **Ctrl+Z** desfaz qualquer coisa.)
 
 ### 4. Mudar a cor de uma parede
@@ -44,8 +69,9 @@ mude **Albedo → Color**. Todas as casas ocres mudam de uma vez. É assim que s
 materiais.
 
 ### 5. Mudar uma luz
-`Postes → Poste_02 → Luz`. No Inspetor, **Light → Energy** (força) e **Color**. Teste
+`Iluminacao → LampiaoParede_02 → Luz`. No Inspetor, **Light → Energy** (força) e **Color**. Teste
 `Shadow → Enabled` ligado e desligado: sombras deixam mais realista, mas custam desempenho.
+Os lampiões de parede alternam os lados da rua; os postes só ficam nos largos.
 
 ### 6. Mudar a neblina e o clima
 `Ambiente` → no Inspetor, clique em **Environment**. Mexa em **Fog → Density**, em
@@ -67,11 +93,17 @@ Abra `scripts/scream_system.gd` (aba **Script** no topo). No começo estão cons
 É assim que se "balanceia" um jogo: mudar números e testar.
 
 ### 10. Seu primeiro objeto novo
-Duplique `Poste_02` (Ctrl+D), mova para uma esquina e mude a cor da luz para vermelho-escuro.
+Duplique `Iluminacao/LampiaoParede_02` (Ctrl+D), mova para uma esquina e mude a cor da luz para vermelho-escuro.
 Você acabou de fazer level design.
 
 > **Aviso importante:** `tools/bake.gd` recria TODAS as cenas do zero e **apaga suas edições**.
 > Não rode depois que começar a editar a vila no editor. Ele existe só como gerador inicial.
+> (Ele também precisa de um renderizador real: não rode em modo `--headless`, que descarta os dados de MultiMesh.)
+
+## Se o jogo ficar pesado
+Nesta ordem: (1) em `Lua`, desligue **Shadow → Enabled**; (2) em `Morros → Mata`, apague alguns dos 4 nós
+(menos árvores); (3) em `Morros → Capim`, desligue (ícone do olho); (4) em `Ambiente → Environment`, desligue **Glow**.
+Em `scenes/jogador.tscn`, `Camera/Lampiao → Shadow → Enabled` liga a sombra do lampião (bonita, mas pesada).
 
 ## Trocar texturas por texturas profissionais (grátis)
 As texturas atuais são geradas por código (boas para começar). Para algo mais realista:

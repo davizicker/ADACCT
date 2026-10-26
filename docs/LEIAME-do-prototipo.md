@@ -43,15 +43,20 @@ Os avisos `mesh_get_surface_count` no modo headless vêm do renderizador "dummy"
 Print de teste (precisa de display; com xvfb): `-- --shot=/caminho/img.png --shot-z=-120 --shot-stage=2`
 
 ## Estado e limitações conhecidas
-- Verificado: compila, a regra de estágios/morte, o evento de eco, a subida da ladeira, a vitória
-  e a renderização (screenshots via xvfb, renderizador Compatibilidade, Godot 4.3).
+- **Verificado (Godot 4.3, renderizador Compatibilidade):** compila; regra de estágios, morte e eco;
+  o robô percorre os 343 m de rua curva até a porta da igreja; teste de fuga lateral sem vazamentos
+  (15 pontos × 2 lados); capturas de tela de vários pontos.
 - **Não verificado:** captura real do microfone (sem dispositivo de áudio no ambiente de
-  desenvolvimento), desempenho em hardware fraco (as luzes dos postes projetam sombra) e o
-  "feeling" de jogo. Precisa de playtest com fones. Testado no 4.3; deve funcionar em 4.4+.
+  desenvolvimento), desempenho em hardware fraco e o "feeling" de jogo. Precisa de playtest com fones.
+  Testado no 4.3; deve funcionar em 4.4+, mas não foi testado no 4.7.
+- **Desempenho medido (software, só como referência):** ~0,25–0,9 milhão de triângulos e ~800–1.800
+  chamadas de desenho por quadro. Se travar: desligue sombras (Lua e Lampião) e reduza `Mata`.
 - Mula-sem-cabeça, Corpo-seco em perseguição, Pisadeira e Lobisomem ainda não existem.
 - O Bradador é feito de formas simples; falta modelo e animação.
 - Áudio sintetizado (placeholder). O grito final deve ser gravado por atores.
+- Texturas são procedurais; troque por texturas CC0 reais (veja APRENDER.md).
 
 ## Estrutura
-`scenes/` main, vila, jogador, bradador, casa, poste · `scripts/` regras do jogo ·
-`assets/materials` e `assets/textures` · `tools/` geradores (só use se souber o que faz) · `docs/`.
+`scenes/` main, vila (`vila.scn`), jogador, bradador, casa, poste, `veg/` (plantas) ·
+`scripts/` regras do jogo (`route.gd` define a rua) · `assets/` materiais, texturas, malhas, shader do céu ·
+`tools/` geradores (só use se souber o que faz) · `docs/`.

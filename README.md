@@ -1,13 +1,15 @@
 # BRADADOR
 
-Jogo de terror indie em Godot 4: uma vila colonial mineira à noite, neblina, lampiões
-âmbar e o Bradador gritando nas encostas. Você precisa parar e **responder ao grito**.
+Jogo de terror indie em Godot 4: uma vila colonial mineira (inspirada em Ouro Preto) à noite, com ladeiras
+sinuosas de pedra, casario colonial, lampiões, neblina e o Bradador gritando nas encostas.
+Você precisa parar e **responder ao grito** enquanto sobe até a igreja.
 
 **Este repositório É o projeto Godot.** Abra o Godot → **Importar** → escolha o `project.godot`
 desta pasta (não crie um projeto novo e copie arquivos).
 
-- Quer aprender a mexer no jogo? → [`docs/APRENDER.md`](docs/APRENDER.md)
-- Como jogar e regras → [`docs/LEIAME-do-prototipo.md`](docs/LEIAME-do-prototipo.md)
-- Pesquisa e conceito → `docs/01…03`
+- Aprender a mexer no jogo: [`docs/APRENDER.md`](docs/APRENDER.md)
+- Como jogar e regras: [`docs/LEIAME-do-prototipo.md`](docs/LEIAME-do-prototipo.md)
+- Pesquisa sobre Ouro Preto: [`docs/04-pesquisa-ouro-preto.md`](docs/04-pesquisa-ouro-preto.md)
+- Mercado e conceito: `docs/01…03`
 
-Atalho: **F5** para jogar. Mundo editável em `scenes/vila.tscn`.
+**F5** para jogar. O mundo está em `scenes/vila.scn` (edite no editor).

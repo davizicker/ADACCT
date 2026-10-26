@@ -1,13 +1,14 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/telha_albedo.png" id="1_kmw4j"]
-[ext_resource type="Texture2D" path="res://assets/textures/telha_normal.png" id="2_beict"]
+[ext_resource type="Texture2D" path="res://assets/textures/telha_albedo.png" id="1_xwhs0"]
+[ext_resource type="Texture2D" path="res://assets/textures/telha_normal.png" id="2_a1wql"]
 
 [resource]
-albedo_texture = ExtResource("1_kmw4j")
+albedo_texture = ExtResource("1_xwhs0")
 roughness = 0.8
 normal_enabled = true
-normal_texture = ExtResource("2_beict")
+normal_scale = 1.2
+normal_texture = ExtResource("2_a1wql")
 uv1_scale = Vector3(0.3, 0.3, 0.3)
 uv1_triplanar = true
 uv1_world_triplanar = true

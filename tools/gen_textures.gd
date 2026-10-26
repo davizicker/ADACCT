@@ -1,8 +1,10 @@
 extends SceneTree
-## Gera texturas procedurais (albedo + normal) em res://assets/textures/.
+## Gera texturas procedurais em res://assets/textures/ (todas originais, sem licença a cumprir).
+##  - superfícies: <nome>_albedo.png + <nome>_normal.png
+##  - vegetação (com transparência): <nome>.png
 ## Uso: godot --headless --path . --script res://tools/gen_textures.gd
-## Depois rode `godot --headless --path . --import` e `tools/bake.gd`.
-## Para usar texturas profissionais, veja docs/APRENDER.md (seção "Trocar texturas").
+## Depois: godot --headless --path . --import   e   tools/bake.gd
+## Para texturas profissionais gratuitas (CC0), veja docs/APRENDER.md.
 
 const SIZE := 512
 const OUT := "res://assets/textures/"
@@ -10,11 +12,38 @@ const OUT := "res://assets/textures/"
 
 func _init() -> void:
 	_pedra()
+	_muro()
 	_reboco()
+	_reboco_velho()
 	_telha()
 	_madeira()
+	_cantaria()
+	_terra()
+	_folhagem()
+	_arbusto()
+	_samambaia()
+	_capim()
+	_hera()
+	_bananeira()
+	_ponto_luz()
 	print("[tex] pronto")
 	quit()
+
+
+# ------------------------------------------------------------------ utilidades
+
+func _noise(type: int, freq: float, seed_: int, octaves := 1) -> FastNoiseLite:
+	var n := FastNoiseLite.new()
+	n.noise_type = type
+	n.frequency = freq
+	n.seed = seed_
+	n.fractal_octaves = octaves
+	n.fractal_type = FastNoiseLite.FRACTAL_FBM if octaves > 1 else FastNoiseLite.FRACTAL_NONE
+	return n
+
+
+func _simg(n: FastNoiseLite) -> Image:
+	return n.get_seamless_image(SIZE, SIZE)
 
 
 func _save(name: String, albedo: Image, height: Image, bump: float) -> void:
@@ -26,125 +55,441 @@ func _save(name: String, albedo: Image, height: Image, bump: float) -> void:
 	print("[tex] ", name)
 
 
-func _noise(type: int, freq: float, seed_: int, octaves := 1) -> FastNoiseLite:
-	var n := FastNoiseLite.new()
-	n.noise_type = type
-	n.frequency = freq
-	n.seed = seed_
-	n.fractal_octaves = octaves
-	if octaves > 1:
-		n.fractal_type = FastNoiseLite.FRACTAL_FBM
-	else:
-		n.fractal_type = FastNoiseLite.FRACTAL_NONE
-	return n
+func _new_rgb() -> Image:
+	return Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
 
 
-## Paralelepípedos de pedra irregulares com juntas escuras.
+func _new_h() -> Image:
+	return Image.create(SIZE, SIZE, false, Image.FORMAT_L8)
+
+
+func _h(img: Image, x: int, y: int, v: float) -> void:
+	img.set_pixel(x, y, Color(v, v, v))
+
+
+# ------------------------------------------------------------------ superfícies
+
+## Calçamento de pedra irregular (alvenaria poliédrica) com juntas de terra e musgo.
 func _pedra() -> void:
 	var edges := _noise(FastNoiseLite.TYPE_CELLULAR, 0.028, 3)
 	edges.cellular_return_type = FastNoiseLite.RETURN_DISTANCE2_SUB
 	var cells := _noise(FastNoiseLite.TYPE_CELLULAR, 0.028, 3)
 	cells.cellular_return_type = FastNoiseLite.RETURN_CELL_VALUE
-	var grain := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.08, 5, 4)
-	var moss := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.012, 9, 3)
-	var e_img := edges.get_seamless_image(SIZE, SIZE)
-	var c_img := cells.get_seamless_image(SIZE, SIZE)
-	var g_img := grain.get_seamless_image(SIZE, SIZE)
-	var m_img := moss.get_seamless_image(SIZE, SIZE)
-	var albedo := Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	var height := Image.create(SIZE, SIZE, false, Image.FORMAT_L8)
+	var e_img := _simg(edges)
+	var c_img := _simg(cells)
+	var g_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.08, 5, 4))
+	var m_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.012, 9, 3))
+	var albedo := _new_rgb()
+	var height := _new_h()
 	for y in SIZE:
 		for x in SIZE:
 			var e := e_img.get_pixel(x, y).r
 			var c := c_img.get_pixel(x, y).r
 			var g := g_img.get_pixel(x, y).r
 			var m := m_img.get_pixel(x, y).r
-			var top := smoothstep(0.0, 0.18, e)  # 0 = junta, 1 = topo da pedra
-			var tone := 0.42 + c * 0.22 + (g - 0.5) * 0.25
-			var col := Color(tone * 1.0, tone * 0.95, tone * 0.86)
-			col = col.lerp(Color(0.22, 0.27, 0.18), clampf((m - 0.55) * 1.6, 0.0, 0.45) * (1.0 - top * 0.4))
-			col = col.lerp(Color(0.05, 0.045, 0.04), 1.0 - top)
+			var top := smoothstep(0.0, 0.16, e)
+			var tone := 0.40 + c * 0.24 + (g - 0.5) * 0.28
+			var col := Color(tone * 1.0, tone * 0.94, tone * 0.85)
+			# veios ferruginosos (quartzito) em algumas pedras
+			col = col.lerp(Color(0.55, 0.36, 0.25), clampf((c - 0.7) * 1.2, 0.0, 0.3))
+			var joint := Color(0.10, 0.085, 0.06).lerp(Color(0.13, 0.19, 0.08), clampf((m - 0.5) * 2.0, 0.0, 0.7))
+			col = col.lerp(joint, 1.0 - top)
 			albedo.set_pixel(x, y, col)
-			var h := top * 0.8 + (g - 0.5) * 0.25
-			height.set_pixel(x, y, Color(h, h, h))
+			_h(height, x, y, top * 0.8 + (g - 0.5) * 0.3)
 	_save("pedra", albedo, height, 6.0)
 
 
-## Reboco de cal com manchas, umidade e granulação. Cor base clara: a cor final vem do material.
+## Muro de pedra de quartzito em fiadas irregulares, com argamassa de terra.
+func _muro() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 77
+	var rows := _split(SIZE, 36, 96, rng)
+	var albedo := _new_rgb()
+	var height := _new_h()
+	var wob := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.09, 61, 2))
+	var grain := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.07, 62, 4))
+	var moss := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.011, 63, 3))
+	var y0 := 0
+	for r in rows.size():
+		var rh: int = rows[r]
+		var blocks := _split(SIZE, 50, 210, rng)
+		var x0 := 0
+		for b in blocks.size():
+			var bw: int = blocks[b]
+			var tone := rng.randf_range(0.30, 0.55)
+			var warm := rng.randf_range(0.0, 0.10)
+			for y in range(y0, y0 + rh):
+				for x in range(x0, x0 + bw):
+					var d := minf(minf(x - x0, x0 + bw - 1 - x), minf(y - y0, y0 + rh - 1 - y))
+					d += (wob.get_pixel(x % SIZE, y % SIZE).r - 0.5) * 9.0
+					var top := smoothstep(0.0, 9.0, d)
+					var gr := grain.get_pixel(x % SIZE, y % SIZE).r
+					var t := tone + (gr - 0.5) * 0.3
+					var col := Color(t * (1.0 + warm * 0.4), t * (0.95 + warm * 0.1), t * (0.85 - warm * 0.2))
+					var mortar := Color(0.30, 0.25, 0.19)
+					var ms := moss.get_pixel(x % SIZE, y % SIZE).r
+					col = col.lerp(Color(0.2, 0.28, 0.13), clampf((ms - 0.58) * 2.0, 0.0, 0.5) * (0.5 + 0.5 * top))
+					col = col.lerp(mortar, 1.0 - top)
+					albedo.set_pixel(x % SIZE, y % SIZE, col)
+					_h(height, x % SIZE, y % SIZE, top * 0.85 + (gr - 0.5) * 0.25)
+			x0 += bw
+		y0 += rh
+	_save("muro", albedo, height, 7.0)
+
+
+## Divide `total` em pedaços de tamanho entre lo e hi que somam exatamente `total`.
+func _split(total: int, lo: int, hi: int, rng: RandomNumberGenerator) -> Array[int]:
+	var out: Array[int] = []
+	var left := total
+	while left > 0:
+		var v := rng.randi_range(lo, hi)
+		if left - v < lo:
+			v = left
+		out.append(v)
+		left -= v
+	return out
+
+
+## Reboco de cal limpo, com manchas suaves. A cor final vem do material (tint).
 func _reboco() -> void:
-	var blotch := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.006, 21, 4)
-	var fine := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.35, 22)
-	var mid := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.04, 23, 3)
-	var b_img := blotch.get_seamless_image(SIZE, SIZE)
-	var f_img := fine.get_seamless_image(SIZE, SIZE)
-	var m_img := mid.get_seamless_image(SIZE, SIZE)
-	var albedo := Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	var height := Image.create(SIZE, SIZE, false, Image.FORMAT_L8)
+	var b_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.006, 21, 4))
+	var f_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.35, 22))
+	var m_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.04, 23, 3))
+	var albedo := _new_rgb()
+	var height := _new_h()
 	for y in SIZE:
 		for x in SIZE:
 			var b := b_img.get_pixel(x, y).r
 			var f := f_img.get_pixel(x, y).r
 			var m := m_img.get_pixel(x, y).r
-			var tone := 0.80 + (b - 0.5) * 0.35 + (f - 0.5) * 0.10
-			var stain := clampf((m - 0.62) * 2.2, 0.0, 0.5)
-			tone *= 1.0 - stain * 0.3
+			var tone := 0.82 + (b - 0.5) * 0.30 + (f - 0.5) * 0.08
+			tone *= 1.0 - clampf((m - 0.62) * 2.0, 0.0, 0.5) * 0.25
 			albedo.set_pixel(x, y, Color(tone, tone * 0.98, tone * 0.93))
-			var h := 0.5 + (m - 0.5) * 0.5 + (f - 0.5) * 0.35
-			height.set_pixel(x, y, Color(h, h, h))
-	_save("reboco", albedo, height, 3.0)
+			_h(height, x, y, 0.5 + (m - 0.5) * 0.4 + (f - 0.5) * 0.3)
+	_save("reboco", albedo, height, 2.5)
 
 
-## Telhas de barro sobrepostas, com variação por telha.
-func _telha() -> void:
-	var tw := 64
-	var th := 52
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 5
-	var wear := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.03, 31, 3)
-	var w_img := wear.get_seamless_image(SIZE, SIZE)
-	var albedo := Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	var height := Image.create(SIZE, SIZE, false, Image.FORMAT_L8)
-	var variation: Array[float] = []
-	for i in 400:
-		variation.append(rng.randf())
+## Reboco antigo: caiação descascada deixando ver a taipa (barro) e a pedra por baixo.
+func _reboco_velho() -> void:
+	var mask := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.018, 71, 4))
+	var fine := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.30, 72))
+	var blot := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.006, 73, 3))
+	var stain := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.03, 74, 3))
+	var albedo := _new_rgb()
+	var height := _new_h()
 	for y in SIZE:
-		var row := y / th
-		var off := (row % 2) * (tw / 2)
 		for x in SIZE:
-			var xx := (x + off) % SIZE
-			var col_i := xx / tw
-			var u := float(xx % tw) / tw
-			var v := float(y % th) / th
-			var vari := variation[(row * 13 + col_i) % 400]
-			var curve := sin(u * PI)
-			var h := curve * 0.55 + v * 0.45
-			var shade := 0.55 + 0.45 * curve
-			shade *= 0.6 + 0.4 * smoothstep(0.0, 0.25, 1.0 - v) + 0.0
-			var base := Color(0.55, 0.22, 0.14).lerp(Color(0.42, 0.18, 0.13), vari)
-			var w := w_img.get_pixel(x, y).r
-			base = base.lerp(Color(0.25, 0.27, 0.2), clampf((w - 0.6) * 1.5, 0.0, 0.5))
-			var edge := 1.0
-			if u < 0.05 or u > 0.95 or v > 0.93:
-				edge = 0.25
-			albedo.set_pixel(x, y, base * shade * edge * 1.4)
-			height.set_pixel(x, y, Color(h, h, h))
+			var mk := mask.get_pixel(x, y).r
+			var f := fine.get_pixel(x, y).r
+			var bl := blot.get_pixel(x, y).r
+			var st := stain.get_pixel(x, y).r
+			var plaster := 0.80 + (bl - 0.5) * 0.30 + (f - 0.5) * 0.08
+			plaster *= 1.0 - clampf((st - 0.6) * 2.0, 0.0, 0.5) * 0.35
+			var base := Color(plaster, plaster * 0.98, plaster * 0.93)
+			var peel := smoothstep(0.80, 0.85, mk + (f - 0.5) * 0.06)
+			var adobe := Color(0.55, 0.43, 0.32).lerp(Color(0.46, 0.36, 0.28), f)
+			var rim := smoothstep(0.75, 0.81, mk) * (1.0 - peel)
+			var col := base.lerp(adobe, peel)
+			col = col.lerp(Color(0.55, 0.52, 0.46), rim * 0.4)
+			albedo.set_pixel(x, y, col)
+			_h(height, x, y, (0.55 + (f - 0.5) * 0.3) - peel * 0.25 + rim * 0.08)
+	_save("reboco_velho", albedo, height, 4.0)
+
+
+## Telha de barro capa-e-canal: fileiras alternadas de canais e capas, cada telha sobreposta.
+func _telha() -> void:
+	var period := 32   # largura de um par canal+capa (px)
+	var tile_len := 64  # comprimento de uma telha (px)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9
+	var tones: Array[float] = []
+	for i in 64:
+		tones.append(rng.randf())
+	var patina := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.03, 31, 3))
+	var soot := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.012, 32, 2))
+	var fine := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.4, 33))
+	var albedo := _new_rgb()
+	var height := _new_h()
+	for y in SIZE:
+		var row := y / tile_len
+		var v := float(y % tile_len) / tile_len
+		for x in SIZE:
+			var col_i := x / period
+			var u := float(x % period) / period
+			var prof := 0.5 + 0.5 * cos(u * TAU)       # 1 = capa (convexa), 0 = canal (côncavo)
+			var tone := tones[(row * 7 + col_i * 3 + (row * col_i) % 5) % 64]
+			var base := Color(0.55, 0.22, 0.13).lerp(Color(0.38, 0.15, 0.10), tone)
+			# sombra sob a borda da telha de cima (sobreposição) e junta
+			var shade := 0.55 + 0.45 * smoothstep(0.0, 0.22, v)
+			shade *= 0.75 + 0.25 * prof
+			if v < 0.03:
+				shade *= 0.35
+			var p := patina.get_pixel(x, y).r
+			var s := soot.get_pixel(x, y).r
+			var c := base * shade * 1.35
+			c = c.lerp(Color(0.24, 0.27, 0.19), clampf((p - 0.68) * 2.0, 0.0, 0.5) * (0.4 + 0.6 * (1.0 - prof)))
+			c = c.lerp(Color(0.06, 0.05, 0.05), clampf((s - 0.62) * 2.0, 0.0, 0.5))
+			c = c * (0.94 + fine.get_pixel(x, y).r * 0.12)
+			albedo.set_pixel(x, y, c)
+			_h(height, x, y, prof * 0.6 + smoothstep(0.0, 0.25, v) * 0.3)
 	_save("telha", albedo, height, 5.0)
 
 
-## Tábuas de madeira envelhecida, veio vertical.
+## Madeira de esquadria: tábuas verticais, tom neutro claro para receber tinta (tint do material).
 func _madeira() -> void:
 	var grain := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 1.0, 41, 3)
-	var albedo := Image.create(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	var height := Image.create(SIZE, SIZE, false, Image.FORMAT_L8)
+	var wear := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.02, 42, 3))
+	var albedo := _new_rgb()
+	var height := _new_h()
 	var plank := 64
 	for y in SIZE:
 		for x in SIZE:
 			var p := x / plank
 			var along := grain.get_noise_2d(x * 0.12 + p * 40.0, y * 0.004)
 			var rings := grain.get_noise_2d(x * 0.5 + p * 17.0, y * 0.02)
-			var tone := 0.30 + along * 0.08 + rings * 0.05
-			var gap := 0.35 if (x % plank) < 2 else 1.0
-			albedo.set_pixel(x, y, Color(tone * 1.05, tone * 0.78, tone * 0.52) * gap)
-			var h := 0.5 + rings * 0.18 - (0.35 if (x % plank) < 2 else 0.0)
-			height.set_pixel(x, y, Color(h, h, h))
+			var w := wear.get_pixel(x, y).r
+			var tone := 0.68 + along * 0.10 + rings * 0.06 - clampf((w - 0.6) * 1.5, 0.0, 0.4) * 0.35
+			var gap := 0.30 if (x % plank) < 2 else 1.0
+			albedo.set_pixel(x, y, Color(tone, tone * 0.97, tone * 0.92) * gap)
+			_h(height, x, y, 0.5 + rings * 0.15 - (0.35 if (x % plank) < 2 else 0.0))
 	_save("madeira", albedo, height, 3.0)
+
+
+## Cantaria (pedra-sabão/quartzito aparelhado): cinza-esverdeada, lisa, com veios finos e desgaste.
+func _cantaria() -> void:
+	var b := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.01, 81, 4))
+	var vein := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.035, 82, 2))
+	var pit := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.4, 83))
+	var albedo := _new_rgb()
+	var height := _new_h()
+	for y in SIZE:
+		for x in SIZE:
+			var bb := b.get_pixel(x, y).r
+			var vv := absf(vein.get_pixel(x, y).r - 0.5)
+			var pp := pit.get_pixel(x, y).r
+			var tone := 0.56 + (bb - 0.5) * 0.25
+			var col := Color(tone * 0.92, tone * 0.97, tone * 0.90)
+			if vv < 0.025:
+				col = col.lerp(Color(0.32, 0.36, 0.33), 0.5)
+			col *= 0.94 + pp * 0.1
+			albedo.set_pixel(x, y, col)
+			_h(height, x, y, 0.5 + (pp - 0.5) * 0.18 + (bb - 0.5) * 0.2)
+	_save("cantaria", albedo, height, 1.5)
+
+
+## Terra batida com tufos de grama: chão dos quintais e dos morros.
+func _terra() -> void:
+	var patch := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.012, 91, 4))
+	var detail := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.25, 92, 2))
+	var rock := _simg(_noise(FastNoiseLite.TYPE_CELLULAR, 0.03, 93))
+	var albedo := _new_rgb()
+	var height := _new_h()
+	for y in SIZE:
+		for x in SIZE:
+			var p := patch.get_pixel(x, y).r
+			var d := detail.get_pixel(x, y).r
+			var r := rock.get_pixel(x, y).r
+			var grass := smoothstep(0.42, 0.58, p + (d - 0.5) * 0.25)
+			var dirt := Color(0.30, 0.22, 0.15).lerp(Color(0.40, 0.30, 0.20), d)
+			var green := Color(0.16, 0.23, 0.10).lerp(Color(0.26, 0.33, 0.14), d)
+			var col := dirt.lerp(green, grass)
+			col = col.lerp(Color(0.38, 0.35, 0.31), clampf((r - 0.8) * 3.0, 0.0, 0.5) * (1.0 - grass))
+			albedo.set_pixel(x, y, col)
+			_h(height, x, y, 0.5 + (d - 0.5) * 0.5 + grass * 0.15)
+	_save("terra", albedo, height, 3.0)
+
+
+# ------------------------------------------------------------------ vegetação (com alpha)
+
+func _blank(size: int, base: Color) -> Image:
+	# RGB dos pixels transparentes = verde médio, para não aparecer halo escuro nas bordas
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(Color(base.r, base.g, base.b, 0.0))
+	return img
+
+
+## Folha elíptica com nervura central. (cx,cy) centro, len comprimento, wid largura, ang ângulo (rad).
+func _leaf(img: Image, cx: float, cy: float, len: float, wid: float, ang: float, col: Color, rib := true) -> void:
+	var cs := cos(ang)
+	var sn := sin(ang)
+	var r := int(len * 0.55) + 2
+	for py in range(int(cy) - r, int(cy) + r + 1):
+		for px in range(int(cx) - r, int(cx) + r + 1):
+			var dx := px - cx
+			var dy := py - cy
+			var u := (dx * cs + dy * sn) / len + 0.5      # 0..1 ao longo da folha
+			var v := (-dx * sn + dy * cs)                  # lateral (px)
+			if u < 0.0 or u > 1.0:
+				continue
+			var half := wid * 0.5 * pow(sin(u * PI), 0.75)
+			if absf(v) > half:
+				continue
+			var shade := 0.75 + 0.25 * (1.0 - absf(v) / maxf(half, 0.001))
+			var c := col * shade
+			if rib and absf(v) < 0.7:
+				c = c.lerp(Color(0.55, 0.65, 0.35), 0.45)
+			if px < 0 or py < 0 or px >= img.get_width() or py >= img.get_height():
+				continue
+			img.set_pixel(px, py, Color(c.r, c.g, c.b, 1.0))
+
+
+func _greens(rng: RandomNumberGenerator, dark: float) -> Color:
+	var t := rng.randf()
+	var c := Color(0.08, 0.20, 0.06).lerp(Color(0.26, 0.42, 0.12), t)
+	return c * dark
+
+
+func _save_alpha(name: String, img: Image) -> void:
+	img.generate_mipmaps()
+	img.save_png(OUT + name + ".png")
+	print("[tex] ", name)
+
+
+## Aglomerado de folhas de copa de árvore (cartão para copas).
+func _folhagem() -> void:
+	var s := 256
+	var img := _blank(s, Color(0.14, 0.28, 0.08))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 101
+	for i in 190:
+		var a := rng.randf() * TAU
+		var d := sqrt(rng.randf()) * s * 0.42
+		var cx := s * 0.5 + cos(a) * d
+		var cy := s * 0.5 + sin(a) * d
+		var dark := 0.55 + 0.6 * (1.0 - cy / s)    # parte de cima mais clara
+		_leaf(img, cx, cy, rng.randf_range(26, 40), rng.randf_range(11, 17), rng.randf() * TAU, _greens(rng, dark))
+	_save_alpha("folhagem", img)
+
+
+## Arbusto denso de folhas pequenas.
+func _arbusto() -> void:
+	var s := 256
+	var img := _blank(s, Color(0.12, 0.26, 0.08))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 102
+	for i in 260:
+		var a := rng.randf() * TAU
+		var d := sqrt(rng.randf()) * s * 0.40
+		var cx := s * 0.5 + cos(a) * d
+		var cy := s * 0.55 + sin(a) * d * 0.85
+		_leaf(img, cx, cy, rng.randf_range(16, 26), rng.randf_range(8, 12), rng.randf() * TAU, _greens(rng, 0.5 + 0.7 * (1.0 - cy / s)))
+	_save_alpha("arbusto", img)
+
+
+## Samambaia: frondes arqueadas com folíolos.
+func _samambaia() -> void:
+	var s := 256
+	var img := _blank(s, Color(0.12, 0.30, 0.10))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 103
+	var fronds := 7
+	for f in fronds:
+		var ang0 := lerpf(-1.25, 1.25, float(f) / (fronds - 1)) + rng.randf_range(-0.1, 0.1)
+		var length := rng.randf_range(100.0, 125.0)
+		var pos := Vector2(s * 0.5, s * 0.96)
+		var dir_ang := -PI / 2.0 + ang0
+		var steps := 22
+		for k in steps:
+			var t := float(k) / steps
+			dir_ang += 0.045 * ang0 + 0.01   # arqueia para o lado
+			pos += Vector2(cos(dir_ang), sin(dir_ang)) * (length / steps)
+			var leaflet := (1.0 - t) * 22.0 + 4.0
+			for side in [-1.0, 1.0]:
+				var la: float = dir_ang + side * 1.15
+				_leaf(img, pos.x + cos(la) * leaflet * 0.5, pos.y + sin(la) * leaflet * 0.5, leaflet, 4.5, la, _greens(rng, 0.9), false)
+			_leaf(img, pos.x, pos.y, length / steps * 1.6, 2.2, dir_ang, Color(0.18, 0.32, 0.12), false)
+	_save_alpha("samambaia", img)
+
+
+## Tufo de capim: lâminas finas que saem da base.
+func _capim() -> void:
+	var s := 256
+	var img := _blank(s, Color(0.30, 0.38, 0.12))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 104
+	for i in 70:
+		var bx := s * 0.5 + rng.randf_range(-s * 0.32, s * 0.32)
+		var h := rng.randf_range(s * 0.35, s * 0.9)
+		var lean := rng.randf_range(-0.5, 0.5) * (bx - s * 0.5) / (s * 0.3) + rng.randf_range(-0.15, 0.15)
+		var col := Color(0.20, 0.32, 0.08).lerp(Color(0.52, 0.55, 0.20), rng.randf() * rng.randf())
+		var steps := int(h)
+		for k in steps:
+			var t := float(k) / steps
+			var x := bx + lean * t * t * h * 0.6
+			var y := s - 1.0 - t * h
+			var w := lerpf(3.2, 0.4, t)
+			for dx in range(-int(w) - 1, int(w) + 2):
+				var px := int(x) + dx
+				if absf(dx) <= w and px >= 0 and px < s and y >= 0:
+					img.set_pixel(px, int(y), Color(col.r * (0.7 + 0.4 * t), col.g * (0.7 + 0.4 * t), col.b, 1.0))
+	_save_alpha("capim", img)
+
+
+## Hera/trepadeira: folhas em coração sobrepostas, cobrindo o cartão (para muros).
+func _hera() -> void:
+	var s := 256
+	var img := _blank(s, Color(0.10, 0.24, 0.07))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 105
+	for i in 1100:
+		var cx := rng.randf() * s
+		var cy := rng.randf() * s
+		# denso embaixo, ralo em cima (a hera "escorre" do alto do muro)
+		var keep := 0.55 + 0.45 * smoothstep(0.0, 1.0, cy / s)
+		if rng.randf() > keep:
+			continue
+		_leaf(img, cx, cy, rng.randf_range(20, 30), rng.randf_range(14, 20), rng.randf() * TAU, _greens(rng, 0.55 + 0.5 * rng.randf()), false)
+	_save_alpha("hera", img)
+
+
+## Bananeira: folhas grandes, longas, arqueadas.
+func _bananeira() -> void:
+	var s := 512
+	var img := _blank(s, Color(0.14, 0.34, 0.10))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 106
+	var leaves := 6
+	for i in leaves:
+		var ang := lerpf(-1.1, 1.1, float(i) / (leaves - 1)) + rng.randf_range(-0.12, 0.12)
+		var length := rng.randf_range(300.0, 380.0)
+		var width := rng.randf_range(80.0, 100.0)
+		var dir_a := -PI / 2.0 + ang
+		var steps := int(length * 1.6)
+		var pos := Vector2(s * 0.5, s * 0.97)
+		var tone := rng.randf()
+		for k in steps:
+			var t := float(k) / steps
+			dir_a += 0.0035 * ang + 0.0022
+			pos += Vector2(cos(dir_a), sin(dir_a)) * (length / steps)
+			var half := width * 0.5 * pow(sin(minf(t * 1.1, 1.0) * PI), 0.7) * (1.0 if t > 0.12 else t / 0.12)
+			var nrm := Vector2(-sin(dir_a), cos(dir_a))
+			var shade := 0.75 + 0.3 * (1.0 - t * 0.5)
+			var base_c := Color(0.10, 0.30, 0.08).lerp(Color(0.20, 0.42, 0.12), tone * 0.6) * shade
+			var j := -half
+			while j <= half:
+				# folha rasgada: entalhes laterais
+				var tear := absf(sin(j * 0.45 + float(i) * 1.7 + t * 6.0)) < 0.06 and absf(j) > half * 0.45
+				if not tear:
+					var p := pos + nrm * j
+					var px := int(p.x)
+					var py := int(p.y)
+					if px >= 0 and px < s and py >= 0 and py < s:
+						var c := base_c * (0.88 + 0.12 * cos(j * 0.35))
+						if absf(j) < 1.6:
+							c = Color(0.50, 0.58, 0.28)
+						img.set_pixel(px, py, Color(c.r, c.g, c.b, 1.0))
+				j += 0.5
+	_save_alpha("bananeira", img)
+
+
+## Ponto de luz suave (círculo com borda difusa) para as luzes distantes das encostas.
+func _ponto_luz() -> void:
+	var n := 64
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	for y in n:
+		for x in n:
+			var d := Vector2(x - n / 2.0 + 0.5, y - n / 2.0 + 0.5).length() / (n / 2.0)
+			var a := pow(clampf(1.0 - d, 0.0, 1.0), 1.6)
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	img.save_png(OUT + "ponto_luz.png")
+	print("[tex] ponto_luz")
