@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="ArrayMesh" path="res://assets/meshes/arvore_0.res" id="1_plpv6"]
+[ext_resource type="ArrayMesh" path="res://assets/meshes/arvore_0.res" id="1_axd25"]
 
 [node name="Arvore_0" type="Node3D"]
 
@@ -8,4 +8,4 @@
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1
-mesh = ExtResource("1_plpv6")
+mesh = ExtResource("1_axd25")

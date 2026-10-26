@@ -120,6 +120,53 @@ func half_disc(mat: String, center: Vector3, r: float, segs := 10) -> void:
 		tri(st, center, center + Vector3(0, r * sin(t0), r * cos(t0)), center + Vector3(0, r * sin(t1), r * cos(t1)), Vector3(-1, 0, 0))
 
 
+## Cilindro (eixo Y local; use `rot` para deitar). Serve para barris, rodas, bueiros, colunas.
+func cylinder(mat: String, r_bottom: float, r_top: float, h: float, pos: Vector3, rot := Vector3.ZERO, segs := 10) -> void:
+	var xf := Transform3D(Basis.from_euler(rot), pos)
+	var st := _tool(mat)
+	var hh := h * 0.5
+	for k in segs:
+		var a0 := TAU * float(k) / segs
+		var a1 := TAU * float(k + 1) / segs
+		var b0 := xf * Vector3(cos(a0) * r_bottom, -hh, sin(a0) * r_bottom)
+		var b1 := xf * Vector3(cos(a1) * r_bottom, -hh, sin(a1) * r_bottom)
+		var t0 := xf * Vector3(cos(a0) * r_top, hh, sin(a0) * r_top)
+		var t1 := xf * Vector3(cos(a1) * r_top, hh, sin(a1) * r_top)
+		var am := (a0 + a1) * 0.5
+		var out := (xf.basis * Vector3(cos(am), 0, sin(am))).normalized()
+		tri(st, b0, t0, t1, out)
+		tri(st, b0, t1, b1, out)
+		var up := (xf.basis * Vector3.UP).normalized()
+		tri(st, xf * Vector3(0, hh, 0), t1, t0, up)
+		tri(st, xf * Vector3(0, -hh, 0), b0, b1, -up)
+
+
+## Esfera de baixa resolução (folhagem de vaso, flores, bolas de pedra).
+func sphere(mat: String, r: float, pos: Vector3, segs := 8, rings := 5) -> void:
+	var st := _tool(mat)
+	for j in rings:
+		var p0 := PI * float(j) / rings
+		var p1 := PI * float(j + 1) / rings
+		for k in segs:
+			var a0 := TAU * float(k) / segs
+			var a1 := TAU * float(k + 1) / segs
+			var v00 := pos + Vector3(sin(p0) * cos(a0), cos(p0), sin(p0) * sin(a0)) * r
+			var v01 := pos + Vector3(sin(p0) * cos(a1), cos(p0), sin(p0) * sin(a1)) * r
+			var v10 := pos + Vector3(sin(p1) * cos(a0), cos(p1), sin(p1) * sin(a0)) * r
+			var v11 := pos + Vector3(sin(p1) * cos(a1), cos(p1), sin(p1) * sin(a1)) * r
+			var c := (v00 + v01 + v10 + v11) * 0.25 - pos
+			tri(st, v00, v01, v11, c)
+			tri(st, v00, v11, v10, c)
+
+
+## Triângulo visível dos dois lados (bandeirinhas, panos no varal).
+func tri2(mat: String, a: Vector3, b: Vector3, c: Vector3) -> void:
+	var st := _tool(mat)
+	var n := (b - a).cross(c - a).normalized()
+	tri(st, a, b, c, n)
+	tri(st, a, b, c, -n)
+
+
 func is_empty() -> bool:
 	return _st.is_empty()
 

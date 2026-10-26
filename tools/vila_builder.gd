@@ -18,7 +18,7 @@ const WALLS: Array[String] = ["reboco_branco", "reboco_ocre", "reboco_amarelo", 
 const WALL_WEIGHT: Array[int] = [30, 14, 18, 8, 8, 4, 6, 12]
 const WOODS: Array[String] = ["madeira_azul", "madeira_vermelha", "madeira_verde", "madeira_ocre", "madeira_natural", "madeira_branca"]
 ## becos em escada: [s, lado]
-const ALLEYS: Array = [[88.0, -1.0], [188.0, 1.0], [262.0, -1.0]]
+const ALLEYS: Array = [[40.0, 1.0], [88.0, -1.0], [136.0, -1.0], [188.0, 1.0], [226.0, 1.0], [262.0, -1.0], [286.0, 1.0]]
 const FOUNTAIN := [160.0, 1.0]
 
 var _rng := RandomNumberGenerator.new()
@@ -30,6 +30,7 @@ var _noise_hi: FastNoiseLite
 var _n := 0
 var _spots: Array[Vector2] = []
 var _lamp_n := 0
+var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos)
 var _hill_lights: Array[Transform3D] = []   # janelas acesas das casas distantes (viram pontos de luz)
 
 
@@ -214,7 +215,9 @@ func terrain_h(x: float, z: float) -> float:
 	var t := maxf(0.0, q.y - dc)
 	var rise := 0.30 * t + 0.0030 * t * t
 	var n := _noise_lo.get_noise_2d(x, z) * 16.0 + _noise_hi.get_noise_2d(x, z) * 3.0
-	return base + rise + n * smoothstep(0.0, 25.0, t)
+	# leito do riacho que passa sob a ponte (cruza a rua; some longe, nas encostas)
+	var carve := 3.6 * (1.0 - smoothstep(3.0, 6.8, absf(q.x - Route.BRIDGE_S))) * (1.0 - smoothstep(55.0, 85.0, q.y))
+	return base + rise + n * smoothstep(0.0, 25.0, t) - carve
 func _terrain() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Terreno"
@@ -386,6 +389,9 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_road())
 	_frontage(root)
 	root.add_child(_lamps())
+	root.add_child(_adornos())
+	root.add_child(_nichos())
+	_bridge(root)
 	root.add_child(_church_plaza())
 	root.add_child(_hillside())
 	root.add_child(_serra())
@@ -434,6 +440,10 @@ func _frontage(root: Node3D) -> void:
 					kind = "beco"
 					done_alley[ai] = true
 					w = 3.0
+			if kind == "casa" and not done_alley.has("b") and s >= Route.BRIDGE_S - Route.BRIDGE_HALF:
+				kind = "ponte"
+				done_alley["b"] = true
+				w = Route.BRIDGE_HALF * 2.0
 			if kind == "casa" and FOUNTAIN[1] == sigma and s >= FOUNTAIN[0] and not done_alley.has("f"):
 				kind = "chafariz"
 				done_alley["f"] = true
@@ -458,6 +468,10 @@ func _frontage(root: Node3D) -> void:
 					_lot_beco(becos, f)
 				"chafariz":
 					_lot_chafariz(muros, f)
+				"ponte":
+					_lot_ponte(muros, f, sigma)
+			if kind == "casa" or kind == "quintal" or kind == "talude":
+				_joints.append({"sigma": sigma, "s": s})
 			prev_special = kind != "casa"
 			s = s2
 
@@ -566,8 +580,49 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if not simple and _rng.randf() < 0.4:
 		b.box(wall, Vector3(0.7, 1.8, 0.7), Vector3(depth / 2.0 - 0.2, height + rise + 0.45, _rng.randf_range(-w * 0.3, w * 0.3)))
 		b.box("cantaria", Vector3(0.85, 0.12, 0.85), Vector3(depth / 2.0 - 0.2, height + rise + 1.4, 0))
+	if not simple:
+		b.box("ferro", Vector3(0.12, 0.09, w + 0.4), Vector3(-0.92, height + 0.09, 0))               # calha do beiral
+		if _rng.randf() < 0.55:
+			var dz2 := (w / 2.0 - 0.05) * (1.0 if _rng.randf() < 0.5 else -1.0)
+			b.box("ferro", Vector3(0.8, 0.09, 0.09), Vector3(-0.52, height + 0.05, dz2))
+			b.box("ferro", Vector3(0.09, height + 0.3, 0.09), Vector3(-0.12, height / 2.0 - 0.1, dz2))   # tubo de queda
+		if _rng.randf() < 0.22:
+			_sign(c, b, col_z[(door_i + 1) % cols])
 	_mesh_node(c, "Detalhes", b.commit())
 	return c
+
+
+## Placa pendurada de loja (Label3D = texto em 3D, editável no Inspetor).
+func _sign(c: Node3D, b: MeshBatch, z: float) -> void:
+	var names := ["ARMAZÉM", "BOTICA", "BARBEARIA", "PADARIA", "SAPATARIA", "TECIDOS", "FERRARIA", "PENSÃO", "OURIVES", "ALFAIATE"]
+	var text: String = names[_rng.randi() % names.size()]
+	b.box("ferro", Vector3(1.15, 0.05, 0.05), Vector3(-0.58, 3.55, z))
+	for dz: float in [-0.38, 0.38]:
+		b.box("ferro", Vector3(0.02, 0.25, 0.02), Vector3(-1.0, 3.4, z + dz))
+	b.box("madeira_escura", Vector3(0.95, 0.46, 0.05), Vector3(-0.62, 3.05, z))
+	for side: float in [1.0, -1.0]:
+		var l := Label3D.new()
+		l.name = "Texto"
+		l.text = text
+		l.pixel_size = 0.0042
+		l.font_size = 64
+		l.modulate = Color(0.96, 0.86, 0.58)
+		l.outline_size = 0
+		l.double_sided = false
+		l.position = Vector3(-0.62, 3.05, z + side * 0.03)
+		l.rotation.y = 0.0 if side > 0.0 else PI
+		c.add_child(l)
+
+
+## Vaso de flores (terracota + folhagem + flores).
+func _pot(b: MeshBatch, p: Vector3) -> void:
+	b.cylinder("vaso", 0.11, 0.08, 0.16, p + Vector3(0, 0.08, 0), Vector3.ZERO, 8)
+	b.sphere("verde_vaso", 0.17, p + Vector3(0, 0.27, 0), 7, 4)
+	var fl: String = ["flor_vermelha", "flor_rosa", "flor_amarela"][_rng.randi() % 3]
+	for k in 3:
+		b.sphere(fl, 0.045, p + Vector3(_rng.randf_range(-0.12, 0.12), 0.3 + _rng.randf_range(0.0, 0.1), _rng.randf_range(-0.12, 0.12)), 5, 3)
+
+
 func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false) -> void:
 	var glass := "janela_acesa" if lit else "janela_escura"
 	if arch:
@@ -593,6 +648,8 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 	if not door:
 		b.box(wood, Vector3(0.05, 0.05, wid), Vector3(-0.19, p.y - hgt * 0.28, p.z))
 		b.box("cantaria", Vector3(0.34, 0.1, wid + 0.5), Vector3(-0.17, p.y - hgt / 2.0 - 0.25, p.z))   # peitoril
+		if _rng.randf() < 0.16:
+			_pot(b, Vector3(-0.3, p.y - hgt / 2.0 - 0.2, p.z))
 	if grate:
 		for k in 5:
 			b.box("ferro", Vector3(0.03, hgt, 0.03), Vector3(-0.26, p.y, p.z - wid / 2.0 + wid * k / 4.0))
@@ -610,6 +667,9 @@ func _balcony(b: MeshBatch, z0: float, z1: float, floor_y: float, wood: String) 
 	b.box(rail, Vector3(0.05, 0.05, bw), Vector3(-1.2, floor_y + 0.12, bz))
 	for z in [z0, z1]:
 		b.box(rail, Vector3(1.2, 0.05, 0.05), Vector3(-0.6, floor_y + 1.0, z))
+	if _rng.randf() < 0.6:
+		for k in maxi(1, int(bw / 1.5)):
+			_pot(b, Vector3(-0.95, floor_y, z0 + bw * (k + 0.5) / maxi(1, int(bw / 1.5))))
 	var posts := int(bw / (0.16 if iron else 0.22))
 	for k in posts + 1:
 		b.box(rail, Vector3(0.025 if iron else 0.045, 0.88, 0.025 if iron else 0.045), Vector3(-1.2, floor_y + 0.56, z0 + bw * k / posts))
@@ -719,6 +779,16 @@ func _lot_beco(parent: Node3D, f: Dictionary) -> void:
 	g.add_child(ramp)
 	for sz: float in [-1.0, 1.0]:
 		_blocker(g, "Parede_%d" % int(sz), Vector3(run_len + 2.0, total + 6.0, 0.6), Vector3(run_len / 2.0, total / 2.0, sz * (wb / 2.0 + 0.3)))
+	var refuge := Area3D.new()
+	refuge.name = "Refugio"
+	refuge.add_to_group("refugio", true)
+	var rcs := CollisionShape3D.new()
+	var rbs := BoxShape3D.new()
+	rbs.size = Vector3(6.0, 3.4, wb)
+	rcs.shape = rbs
+	refuge.add_child(rcs)
+	refuge.position = Vector3(3.2, 2.2, 0)
+	g.add_child(refuge)
 	# portão no alto + árvore e luz
 	_blocker(g, "Fundo", Vector3(0.6, 8.0, wb + 1.2), Vector3(run_len + 0.6, total + 3.0, 0))
 	var gate := _batch()
@@ -767,6 +837,8 @@ func _lamp_light(parent: Node3D, pos: Vector3, energy := 1.6) -> void:
 	light.distance_fade_enabled = true
 	light.distance_fade_begin = 50.0
 	light.distance_fade_length = 15.0
+	light.set_script(load("res://scripts/luz_tremula.gd"))
+	light.set("forca", 0.08)
 	parent.add_child(light)
 
 
@@ -1062,6 +1134,8 @@ func _hill_houses(root: Node3D) -> void:
 		tries += 1
 		var sc := clampf(_rng.randf_range(0.0, Route.length() + 15.0), 0.0, Route.length())
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
+		if absf(sc - Route.BRIDGE_S) < 11.0:
+			continue
 		var d := _rng.randf_range(Route.width(sc) * 0.5 + 21.0, 150.0)
 		var p := Route.pos(sc) + Route.right(sc) * sigma * d
 		var q := Vector2(p.x, p.z)
@@ -1127,6 +1201,8 @@ func _near_trees(root: Node3D) -> void:
 		tries += 1
 		var s := clampf(_rng.randf_range(-10.0, Route.length() + 30.0), 0.0, Route.length())
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
+		if absf(s - Route.BRIDGE_S) < 6.0:
+			continue
 		var d := _rng.randf_range(Route.width(s) * 0.5 + 14.0, 60.0)
 		var p := Route.pos(s) + Route.right(s) * sigma * d
 		var q := Vector2(p.x, p.z)
@@ -1173,7 +1249,7 @@ func _forest() -> Node3D:
 		var x := _rng.randf_range(-290.0, 260.0)
 		var z := _rng.randf_range(-540.0, 120.0)
 		var nr := _nearest(x, z)
-		if nr.y < Route.width(nr.x) * 0.5 + 20.0:
+		if nr.y < Route.width(nr.x) * 0.5 + 20.0 or absf(nr.x - Route.BRIDGE_S) < 5.0:
 			continue
 		var q := Vector2(x, z)
 		var blocked := false
@@ -1320,3 +1396,212 @@ func _serra() -> MeshInstance3D:
 	mi.name = "Serra"
 	mi.mesh = _save_mesh(mesh, "serra")
 	return mi
+
+
+# ------------------------------------------------------------------ ponte e riacho
+
+## Parapeito de pedra da ponte (um por lado da rua).
+func _lot_ponte(parent: Node3D, f: Dictionary, sigma: float) -> void:
+	var w: float = f["w"]
+	var g := _group(parent, "Parapeito_%02d" % _n, f["xf"])
+	_n += 1
+	# acompanha a subida da rua (o eixo Z local anda em sentido oposto ao da rua no lado +1)
+	var slope := (Route.height(Route.BRIDGE_S + 1.0) - Route.height(Route.BRIDGE_S - 1.0)) / 2.0
+	g.transform = g.transform * Transform3D(Basis(Vector3.RIGHT, atan(sigma * slope)), Vector3.ZERO)
+	_box(g, "Muro", Vector3(0.5, 1.9, w + 0.1), Vector3(0.25, 0.2, 0), "muro", true)
+	var b := _batch()
+	b.box("cantaria", Vector3(0.8, 0.12, w + 0.2), Vector3(0.25, 1.21, 0))
+	for sz: float in [-1.0, 1.0]:
+		b.box("cantaria", Vector3(0.7, 1.5, 0.55), Vector3(0.2, 0.6, sz * (w / 2.0 - 0.1)))
+		b.box("cantaria", Vector3(0.8, 0.14, 0.65), Vector3(0.2, 1.4, sz * (w / 2.0 - 0.1)))
+	_mesh_node(g, "Detalhes", b.commit())
+	_box(g, "FaceDaPonte", Vector3(0.5, 4.6, w + 0.1), Vector3(0.25, -3.05, 0), "muro")
+
+
+## Corpo da ponte (laje de pedra), o riacho, pedras e plantas das margens.
+func _bridge(root: Node3D) -> void:
+	var s := Route.BRIDGE_S
+	var c := Route.pos(s)
+	var r := Route.right(s)
+	var g := _group(root, "Ponte", Transform3D(Basis(r, Vector3.UP, r.cross(Vector3.UP)), c))
+	var width := Route.width(s) + 2.0 * SW
+	var slope := (Route.height(s + 1.0) - Route.height(s - 1.0)) / 2.0
+	var laje := _box(g, "Laje", Vector3(width + 0.4, 1.0, Route.BRIDGE_HALF * 2.0 + 0.6), Vector3(0, -0.85, 0), "muro")
+	laje.rotation.x = atan(slope)
+	# riacho: plano d'água com shader (ondulação e reflexo), cruzando a rua
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(150.0, 5.2)
+	var water := _mesh_node(g, "Riacho", plane, Vector3(0, -3.0, 0))
+	water.material_override = mat("agua")
+	var b := _batch()
+	for k in 14:
+		var u := _rng.randf_range(-30.0, 30.0)
+		if absf(u) < width * 0.5 + 0.5:
+			continue
+		b.sphere("pedra_chao", _rng.randf_range(0.5, 1.3), Vector3(u, -3.5, _rng.randf_range(-2.0, 2.0)), 6, 4)
+	_mesh_node(g, "PedrasDoLeito", b.commit())
+	var keys := ["samambaia", "arbusto", "arvore_pequena", "bananeira", "arvore_1"]
+	for k in 22:
+		var u := _rng.randf_range(8.0, 46.0) * (1.0 if k % 2 == 0 else -1.0)
+		var zo := _rng.randf_range(-5.5, 5.5)
+		var wp := c + r * u - Route.tangent(s) * zo
+		var y := terrain_h(wp.x, wp.z)
+		_plant(g, keys[_rng.randi() % keys.size()], Vector3(u, y - c.y - 0.2, zo), _rng.randf() * TAU, _rng.randf_range(0.9, 1.6))
+
+
+# ------------------------------------------------------------------ adornos de rua e nichos
+
+func _street_point(sigma: float, s: float, inset: float) -> Vector3:
+	return Route.pos(s) + Route.right(s) * sigma * (Route.width(s) * 0.5 - inset) + Vector3(0, 0.03, 0)
+
+
+## Bueiros, barris, caixotes, bancos, carroça, varais e bandeirinhas.
+func _adornos() -> Node3D:
+	var root := Node3D.new()
+	root.name = "Adornos"
+	var b := _batch()
+	for s: float in [14.0, 62.0, 128.0, 170.0, 210.0, 246.0, 284.0]:
+		var p := _street_point(1.0 if int(s) % 2 == 0 else -1.0, s, 1.4)
+		b.cylinder("cantaria", 0.46, 0.46, 0.04, p + Vector3(0, 0.0, 0), Vector3.ZERO, 14)
+		b.cylinder("ferro", 0.36, 0.36, 0.05, p + Vector3(0, 0.02, 0), Vector3.ZERO, 14)
+		for k in 4:
+			b.box("cantaria", Vector3(0.5, 0.02, 0.03), p + Vector3(0, 0.05, 0), Vector3(0, k * PI / 4.0, 0))
+	# barris e caixotes junto às paredes
+	var count := 0
+	var tries := 0
+	while count < 16 and tries < 100:
+		tries += 1
+		var s := _rng.randf_range(10.0, 290.0)
+		if absf(s - Route.BRIDGE_S) < 8.0 or Route.width(s) < 3.8:
+			continue
+		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
+		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
+		var out := -Route.right(s) * sigma
+		var p := base + out * 0.45
+		if _rng.randf() < 0.6:
+			b.cylinder("madeira_natural", 0.33, 0.33, 0.8, p + Vector3(0, 0.4, 0), Vector3.ZERO, 10)
+			b.cylinder("ferro", 0.345, 0.345, 0.04, p + Vector3(0, 0.2, 0), Vector3.ZERO, 10)
+			b.cylinder("ferro", 0.345, 0.345, 0.04, p + Vector3(0, 0.62, 0), Vector3.ZERO, 10)
+		else:
+			var yaw := atan2(out.x, out.z)
+			b.box("madeira_natural", Vector3(0.6, 0.5, 0.6), p + Vector3(0, 0.25, 0), Vector3(0, yaw, 0))
+			if _rng.randf() < 0.5:
+				b.box("madeira_natural", Vector3(0.5, 0.45, 0.5), p + Vector3(0, 0.72, 0), Vector3(0, yaw + 0.4, 0))
+		count += 1
+	# bancos no largo
+	for bs: float in [146.0, 156.0, 170.0]:
+		var sg := -1.0
+		var bp := facade(sg, bs) - Route.right(bs) * sg * 0.0 + Route.right(bs) * sg * 0.0
+		var out := -Route.right(bs) * sg
+		var pos := bp + out * 0.5 + Vector3(0, SW_H, 0)
+		var yaw := atan2(-out.z, out.x) + PI / 2.0
+		var basis := Basis(Vector3.UP, yaw)
+		b.box("madeira_natural", Vector3(1.7, 0.07, 0.45), pos + basis * Vector3(0, 0.46, 0), Vector3(0, yaw, 0))
+		b.box("madeira_natural", Vector3(1.7, 0.4, 0.06), pos + basis * Vector3(0, 0.72, 0.2), Vector3(0, yaw, 0))
+		for lx: float in [-0.7, 0.7]:
+			b.box("cantaria", Vector3(0.12, 0.44, 0.4), pos + basis * Vector3(lx, 0.22, 0), Vector3(0, yaw, 0))
+	# carroça de mão
+	var cs := 174.0
+	var cp := facade(-1.0, cs) + Route.right(cs) * 0.9 + Vector3(0, SW_H, 0)
+	var ct := Route.tangent(cs)
+	var cyaw := atan2(-ct.z, ct.x)
+	var cb := Basis(Vector3.UP, cyaw)
+	b.box("madeira_natural", Vector3(1.6, 0.08, 0.95), cp + cb * Vector3(0, 0.62, 0), Vector3(0, cyaw, 0))
+	for sz: float in [-1.0, 1.0]:
+		b.box("madeira_natural", Vector3(1.6, 0.3, 0.05), cp + cb * Vector3(0, 0.8, sz * 0.47), Vector3(0, cyaw, 0))
+		b.cylinder("madeira_natural", 0.38, 0.38, 0.07, cp + cb * Vector3(0, 0.38, sz * 0.52), Vector3(PI / 2.0, cyaw, 0), 12)
+		b.cylinder("ferro", 0.39, 0.39, 0.05, cp + cb * Vector3(0, 0.38, sz * 0.52), Vector3(PI / 2.0, cyaw, 0), 12)
+	b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, 0.3), Vector3(0, cyaw, 0))
+	b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, -0.3), Vector3(0, cyaw, 0))
+	_mesh_node(root, "Pecas", b.commit())
+	root.add_child(_lines())
+	return root
+
+
+## Varais com lençóis e bandeirinhas coloridas, esticados de fachada a fachada.
+func _lines() -> Node3D:
+	var root := Node3D.new()
+	root.name = "Varais"
+	var b := _batch()
+	var flags := ["bandeira_a", "bandeira_b", "bandeira_c", "bandeira_d"]
+	for spec in [[58.0, "varal"], [234.0, "varal"], [190.0, "bandeirinha"], [270.0, "bandeirinha"]]:
+		var s: float = spec[0]
+		var a := facade(-1.0, s) + Vector3(0, SW_H + (4.4 if spec[1] == "varal" else 5.6), 0)
+		var c := facade(1.0, s) + Vector3(0, SW_H + (4.4 if spec[1] == "varal" else 5.6), 0)
+		var n := int(a.distance_to(c) / 0.5)
+		var prev := a
+		var dirv := (c - a)
+		dirv.y = 0
+		var lat := dirv.normalized()
+		var perp := lat.cross(Vector3.UP).normalized()
+		for k in range(1, n + 1):
+			var t := float(k) / n
+			var pt := a.lerp(c, t)
+			pt.y -= sin(t * PI) * 0.7
+			var seg := pt - prev
+			b.box("ferro", Vector3(seg.length() + 0.02, 0.012, 0.012), (pt + prev) * 0.5, Vector3(0, atan2(-seg.z, seg.x), atan2(seg.y, Vector2(seg.x, seg.z).length())))
+			if spec[1] == "bandeirinha" and k % 1 == 0:
+				var m: String = flags[k % flags.size()]
+				b.tri2(m, prev, pt, (prev + pt) * 0.5 + Vector3(0, -0.34, 0))
+			prev = pt
+		if spec[1] == "varal":
+			for k in 4:
+				var t2 := (k + 1.0) / 5.0
+				var top := a.lerp(c, t2)
+				top.y -= sin(t2 * PI) * 0.7
+				var wdt := 1.05
+				var hh := _rng.randf_range(1.0, 1.4)
+				var p0 := top - lat * wdt * 0.5
+				var p1 := top + lat * wdt * 0.5
+				b.tri2("pano", p0, p1, p1 + Vector3(0, -hh, 0))
+				b.tri2("pano", p0, p1 + Vector3(0, -hh, 0), p0 + Vector3(0, -hh, 0))
+	_mesh_node(root, "Fios", b.commit())
+	return root
+
+
+## Nichos (oratórios) com imagem de santo e vela acesa nas junções das fachadas.
+func _nichos() -> Node3D:
+	var root := Node3D.new()
+	root.name = "Nichos"
+	var picked := 0
+	var last_s := -100.0
+	for j in _joints:
+		var s: float = j["s"]
+		if s < 20.0 or s > S_END - 10.0 or s - last_s < 38.0:
+			continue
+		if absf(s - Route.BRIDGE_S) < 12.0:
+			continue
+		var sigma: float = j["sigma"]
+		var x_axis := Route.right(s) * sigma
+		var origin := facade(sigma, s) + Vector3(0, SW_H, 0)
+		var g := _group(root, "Nicho_%03d" % int(s), Transform3D(Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP)), origin))
+		var b := _batch()
+		b.box("cantaria", Vector3(0.55, 1.2, 0.75), Vector3(0.0, 2.1, 0))
+		b.box("janela_escura", Vector3(0.06, 0.85, 0.48), Vector3(-0.29, 2.1, 0))
+		b.box("cantaria", Vector3(0.7, 0.1, 0.9), Vector3(-0.03, 2.75, 0))
+		b.box("ferro", Vector3(0.04, 0.4, 0.04), Vector3(-0.2, 3.05, 0))
+		b.box("ferro", Vector3(0.04, 0.04, 0.22), Vector3(-0.2, 3.15, 0))
+		b.box("cantaria", Vector3(0.14, 0.5, 0.16), Vector3(-0.26, 1.95, 0))       # imagem
+		b.sphere("cantaria", 0.07, Vector3(-0.26, 2.3, 0), 6, 4)
+		b.box("vela", Vector3(0.05, 0.14, 0.05), Vector3(-0.27, 1.7, 0.17))
+		b.box("chama", Vector3(0.035, 0.06, 0.035), Vector3(-0.27, 1.8, 0.17))
+		b.box("vela", Vector3(0.05, 0.1, 0.05), Vector3(-0.27, 1.68, -0.17))
+		b.box("chama", Vector3(0.035, 0.05, 0.035), Vector3(-0.27, 1.76, -0.17))
+		_mesh_node(g, "Malha", b.commit())
+		var l := OmniLight3D.new()
+		l.name = "LuzDaVela"
+		l.position = Vector3(-0.5, 1.9, 0)
+		l.light_color = Color(1.0, 0.62, 0.28)
+		l.light_energy = 0.9
+		l.omni_range = 4.5
+		l.distance_fade_enabled = true
+		l.distance_fade_begin = 35.0
+		l.distance_fade_length = 10.0
+		l.set_script(load("res://scripts/luz_tremula.gd"))
+		l.set("forca", 0.3)
+		l.set("velocidade", 9.0)
+		g.add_child(l)
+		last_s = s
+		picked += 1
+	print("[vila] nichos: ", picked)
+	return root

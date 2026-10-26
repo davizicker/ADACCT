@@ -1,13 +1,14 @@
-[gd_scene load_steps=4 format=4]
+[gd_scene load_steps=5 format=4]
 
-[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="1_821v8"]
-[ext_resource type="Material" path="res://assets/materials/vidro_lampiao.tres" id="2_bkyo3"]
+[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="1_ilfb1"]
+[ext_resource type="Material" path="res://assets/materials/vidro_lampiao.tres" id="2_2jpvo"]
+[ext_resource type="Script" path="res://scripts/luz_tremula.gd" id="3_21nnv"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_iuevp"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_obbx8"]
 _surfaces = [{
 "aabb": AABB(-0.19, 0, -0.19, 0.38, 4.25, 0.38),
 "format": 34359738375,
-"material": ExtResource("1_821v8"),
+"material": ExtResource("1_ilfb1"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 180,
@@ -15,7 +16,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-0.15, 3.55, -0.15, 0.3, 0.46, 0.3),
 "format": 34359738375,
-"material": ExtResource("2_bkyo3"),
+"material": ExtResource("2_2jpvo"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 36,
@@ -25,7 +26,7 @@ _surfaces = [{
 [node name="Poste" type="Node3D"]
 
 [node name="Malha" type="MeshInstance3D" parent="."]
-mesh = SubResource("ArrayMesh_iuevp")
+mesh = SubResource("ArrayMesh_obbx8")
 
 [node name="Luz" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7, 0)
@@ -35,3 +36,6 @@ distance_fade_enabled = true
 distance_fade_begin = 50.0
 distance_fade_length = 15.0
 omni_range = 10.0
+script = ExtResource("3_21nnv")
+forca = 0.08
+velocidade = 7.0

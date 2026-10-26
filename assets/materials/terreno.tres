@@ -1,13 +1,13 @@
 [gd_resource type="StandardMaterial3D" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/terra_albedo.png" id="1_73tcx"]
-[ext_resource type="Texture2D" path="res://assets/textures/terra_normal.png" id="2_n7x5i"]
+[ext_resource type="Texture2D" path="res://assets/textures/terra_albedo.png" id="1_tfnyt"]
+[ext_resource type="Texture2D" path="res://assets/textures/terra_normal.png" id="2_o18uk"]
 
 [resource]
 vertex_color_use_as_albedo = true
-albedo_texture = ExtResource("1_73tcx")
+albedo_texture = ExtResource("1_tfnyt")
 normal_enabled = true
-normal_texture = ExtResource("2_n7x5i")
+normal_texture = ExtResource("2_o18uk")
 uv1_scale = Vector3(0.12, 0.12, 0.12)
 uv1_triplanar = true
 uv1_world_triplanar = true

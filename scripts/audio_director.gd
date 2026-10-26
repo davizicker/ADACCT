@@ -26,6 +26,7 @@ var _dog: AudioStreamPlayer3D
 var _bell: AudioStreamPlayer3D
 var _creak: AudioStreamPlayer3D
 var _whisper: AudioStreamPlayer3D
+var _water: AudioStreamPlayer3D
 var _dog_t := 18.0
 var _bell_t := 35.0
 
@@ -100,6 +101,9 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	_bell = _player3d(Synth.bell(), "Ambiente", -2.0, 60.0)
 	_creak = _player3d(Synth.creak(), "Efeitos", -4.0, 12.0)
 	_whisper = _player3d(Synth.whisper(), "Efeitos", -6.0, 8.0)
+	_water = _player3d(Synth.water(), "Ambiente", -4.0, 14.0)
+	_water.global_position = Route.pos(Route.BRIDGE_S) + Vector3(0, -3.0, 0)
+	_water.play()
 	player.footstep.connect(_on_step)
 	Config.apply(get_parent())
 

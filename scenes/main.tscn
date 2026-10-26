@@ -1,31 +1,31 @@
 [gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_0h0oq"]
-[ext_resource type="PackedScene" path="res://scenes/vila.scn" id="2_71xtm"]
-[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_rf63l"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="4_nhbv5"]
-[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_ir0xa"]
-[ext_resource type="Script" path="res://scripts/scream_system.gd" id="6_wj68a"]
-[ext_resource type="Script" path="res://scripts/audio_director.gd" id="7_hkg1n"]
-[ext_resource type="Script" path="res://scripts/hud.gd" id="8_4js4o"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_5bds1"]
+[ext_resource type="PackedScene" path="res://scenes/vila.scn" id="2_crfwp"]
+[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_t0hny"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="4_w18cy"]
+[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_76rct"]
+[ext_resource type="Script" path="res://scripts/scream_system.gd" id="6_21hf3"]
+[ext_resource type="Script" path="res://scripts/audio_director.gd" id="7_mycyl"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="8_ddx45"]
 
 [node name="Main" type="Node3D"]
-script = ExtResource("1_0h0oq")
+script = ExtResource("1_5bds1")
 
-[node name="Vila" type="Node3D" parent="." instance=ExtResource("2_71xtm")]
+[node name="Vila" type="Node3D" parent="." instance=ExtResource("2_crfwp")]
 
-[node name="Jogador" type="CharacterBody3D" parent="." instance=ExtResource("3_rf63l")]
+[node name="Jogador" type="CharacterBody3D" parent="." instance=ExtResource("3_t0hny")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.144317, 0.43563, -1.99465)
-script = ExtResource("4_nhbv5")
+script = ExtResource("4_w18cy")
 
-[node name="Bradador" type="Node3D" parent="." instance=ExtResource("5_ir0xa")]
+[node name="Bradador" type="Node3D" parent="." instance=ExtResource("5_76rct")]
 visible = false
 
 [node name="Gritos" type="Node" parent="."]
-script = ExtResource("6_wj68a")
+script = ExtResource("6_21hf3")
 
 [node name="Audio" type="Node" parent="."]
-script = ExtResource("7_hkg1n")
+script = ExtResource("7_mycyl")
 
 [node name="Interface" type="CanvasLayer" parent="."]
-script = ExtResource("8_4js4o")
+script = ExtResource("8_ddx45")

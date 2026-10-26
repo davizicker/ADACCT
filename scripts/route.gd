@@ -31,6 +31,9 @@ const SIDEWALK := 0.7
 ## s onde termina o casario e começa o adro da igreja, e s da fachada da igreja.
 const S_END := 296.0
 const CHURCH_S := 338.0
+## ponte de pedra sobre um riacho que cruza a rua em BRIDGE_S (metade do comprimento = BRIDGE_HALF)
+const BRIDGE_S := 118.0
+const BRIDGE_HALF := 4.6
 
 static var _built := false
 static var _pts: PackedVector2Array
