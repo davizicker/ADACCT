@@ -13,19 +13,26 @@ texturas são procedurais e os sons são sintetizados (placeholders).
 | Tecla | Ação |
 |---|---|
 | WASD / mouse | andar / olhar |
+| Shift | correr (gasta fôlego e **faz barulho**) |
+| Ctrl ou C | agachar (silencioso) |
 | F | acender/apagar o lampião (o óleo acaba) |
+| E | pegar frasco de óleo / ler bilhete |
 | R (segurar) | gritar sem microfone |
 | `[` / `]` | diminuir/aumentar o limiar do microfone |
+| Esc | pausa e opções |
 | Enter | recomeçar (depois de morrer ou vencer) |
-| Esc | soltar o mouse |
 
 ## Regras do jogo
-- De tempos em tempos o Bradador **grita**. Quando o grito acabar, você tem 3 s
-  para **parar de andar e gritar** (microfone ou R) por ~0,5 s.
-- Respondeu certo: ele recua um estágio. Silêncio, andar durante a janela: ele avança.
-- **Não olhe para ele** (fica visível na névoa a partir do estágio 1): olhar por ~1,6 s o aproxima.
-- Estágio final = ele te alcança. Chegar à porta da igreja = vitória.
-- Evento de susto #1: depois da 2ª resposta certa, o grito volta **de trás de você** com o lampião apagando.
+- **Objetivo:** subir até a porta da igreja antes que algo te alcance.
+- **O Bradador grita de longe.** Quando o grito acabar, você tem 3 s para **parar de andar e gritar** (microfone ou R) por ~0,5 s.
+  Respondeu certo: ele recua. Silêncio, andar durante a janela, ou **correr enquanto ele grita**: ele avança.
+- **Nunca olhe para ele** (silhueta na névoa): olhar por ~1,6 s o aproxima.
+- **A Mula-sem-cabeça** vem galopando pela rua (você ouve o galope e vê a luz do fogo). Ela corre atrás da **luz**:
+  **apague o lampião [F] e entre num beco** (escadaria entre as casas). Na rua, ela te mata. Num beco com a luz acesa, te entrega ao Bradador.
+- **Apagão:** os lampiões à frente se apagam em onda. Fique atento.
+- **Janelas assombradas:** uma janela acesa com um vulto. Ao chegar perto, a luz se apaga.
+- **Frascos de óleo** (brilho âmbar) recarregam o lampião; **bilhetes** (brilho de papel) contam a história.
+- Estágio final do Bradador = ele te alcança. Porta da igreja = vitória.
 
 ## Microfone
 Mede só o **volume** (RMS) do microfone, sem reconhecimento de fala. A barra `mic |||`
@@ -36,7 +43,13 @@ Se o sistema não der acesso ao microfone, use R.
 ```
 godot --headless --path . --import
 godot --headless --path . --quit-after 3000 -- --selftest        # respostas certas/erradas até a morte
-godot --headless --path . --quit-after 20000 -- --selftest-walk  # anda a rua toda até a igreja
+godot --headless --path . --quit-after 40000 -- --selftest-walk  # anda a rua toda até a igreja
+godot --headless --path . --quit-after 40000 -- --selftest-escape # tenta sair da vila pelos lados (não pode)
+godot --headless --path . --quit-after 20000 -- --selftest-mula=rua            # deve morrer
+godot --headless --path . --quit-after 20000 -- --selftest-mula=refugio        # lampião apagado no beco: salvo
+godot --headless --path . --quit-after 20000 -- --selftest-mula=refugio_aceso  # lampião aceso no beco: penalidade
+godot --headless --path . --quit-after 60000 -- --selftest-auto   # partida automática com eventos
+godot --headless --path . --script res://tools/audio_check.gd     # confere os sons (pico, clipping)
 ```
 Os avisos `mesh_get_surface_count` no modo headless vêm do renderizador "dummy" e são inofensivos.
 

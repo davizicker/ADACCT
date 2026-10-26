@@ -37,6 +37,8 @@ Abra `scenes/vila.scn` e veja a árvore **Cena**:
 | `MurosEQuintais` | Muros de pedra, quintais e arrimos com plantas |
 | `Becos` | Escadarias que sobem entre as casas |
 | `Iluminacao` | Lampiões, postes e o `FiosDeLuz` |
+| `Adornos`, `Nichos`, `Coletaveis` | Barris, bancos, carroça, varais; oratórios com vela; frascos de óleo e bilhetes |
+| `Ponte` | A ponte de pedra com o riacho (shader de água em `assets/shaders/agua.gdshader`) |
 | `Adro` | A igreja, as muretas e o cruzeiro (a porta da vitória é `Adro/Igreja/Porta`) |
 | `Morros` | Casas das encostas (fundidas em blocos), `Arvores`, `Mata`, `Capim`, luzes distantes |
 | `Serra` | A silhueta das montanhas ao fundo |
@@ -49,6 +51,26 @@ Para mudar um detalhe, edite o **material** dele (assets/materials) ou apague o 
 **A forma da rua** (curvas, subidas, larguras) vem de `scripts/route.gd` (listas de pontos no começo do arquivo).
 Mudar a rua exige recriar o mundo com `tools/bake.gd`, o que **apaga suas edições** (veja o aviso abaixo).
 Para experimentar sem medo: faça uma cópia do projeto antes.
+
+## Onde mexer em cada coisa do jogo (cola rápida)
+| Quero mudar... | Onde |
+|---|---|
+| Tempo para responder ao grito, quantos gritos | `scripts/scream_system.gd` (constantes no topo) |
+| Quando a Mula e o apagão acontecem | `scripts/event_director.gd` (`_t_mula`, `_t_blackout`) |
+| Velocidade da Mula | `scripts/mula.gd` (`SPEED`) |
+| Velocidade de andar/correr, fôlego | `scripts/player.gd` (constantes no topo) |
+| Textos dos bilhetes | `scripts/notas.gd` |
+| Sons (grito, passos, sino...) | `scripts/synth.gd` (ou troque por arquivos .wav/.ogg: veja abaixo) |
+| Volumes e eventos de áudio | `scripts/audio_director.gd` |
+| Efeitos de câmera (vinheta, granulado, medo) | `assets/shaders/efeitos.gdshader` |
+| Cor do céu, nuvens e estrelas | `assets/materials/ceu.tres` (Inspetor → Shader Parameters) |
+| Água do riacho | `assets/materials/agua.tres` |
+| Menu e opções | `scripts/menu.gd` |
+| Salvar opções | `scripts/config.gd` (arquivo salvo em `user://bradador.cfg`) |
+
+**Como trocar um som sintético por uma gravação real:** em `scripts/audio_director.gd`, onde aparece
+`Synth.sino()`, `Synth.dog()`, etc., troque por `load("res://assets/audio/arquivo.ogg")` (coloque o arquivo em `assets/audio/`
+e registre a origem em `assets/CREDITOS.md`).
 
 ## Exercícios (na ordem)
 
@@ -91,6 +113,10 @@ Abra `scripts/scream_system.gd` (aba **Script** no topo). No começo estão cons
 `WINDOW_SECONDS` (tempo para responder), `SHOUT_NEEDED`, `GAZE_SECONDS`. Mude
 `WINDOW_SECONDS` de 3.0 para 5.0 e jogue. Depois mude `interval_range` (intervalo entre gritos).
 É assim que se "balanceia" um jogo: mudar números e testar.
+
+### 9b. Faça a Mula mais rápida (e mais assustadora)
+Em `scripts/mula.gd`, mude `SPEED` de 15.0 para 22.0. Em `scripts/event_director.gd`, mude `_t_mula := 110.0` para `30.0` para ela aparecer cedo.
+Jogue: dá tempo de apagar a luz e achar um beco? Esse é o equilíbrio que você ajusta jogando.
 
 ### 10. Seu primeiro objeto novo
 Duplique `Iluminacao/LampiaoParede_02` (Ctrl+D), mova para uma esquina e mude a cor da luz para vermelho-escuro.
