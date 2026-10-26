@@ -11,8 +11,10 @@ extends Node3D
 @onready var hud: Hud = $Interface
 @onready var screams: ScreamSystem = $Gritos
 @onready var bradador: Node3D = $Bradador
+@onready var audio: AudioDirector = $Audio
 @onready var church_door: Area3D = $Vila/Adro/Igreja/Porta
 var finished := false
+var menu: Menu = null
 var mode := ""
 var shot_path := ""
 var _t := 0.0
@@ -20,6 +22,7 @@ var _frames := 0
 
 
 func _ready() -> void:
+	Config.load_all()
 	_setup_input()
 	var args := OS.get_cmdline_user_args()
 	if "--selftest" in args:
@@ -61,6 +64,10 @@ func _ready() -> void:
 		env.fog_density = 0.003
 		($Vila/Lua as DirectionalLight3D).light_energy = 1.4
 	screams.setup(player, hud, bradador, mode == "")
+	screams.audio = audio
+	audio.setup(player, screams)
+	hud.apply_config()
+	player.interact_hint.connect(hud.show_interact)
 	if mode == "shot":
 		screams.enabled = false
 		screams.stage = shot_stage
@@ -73,7 +80,13 @@ func _ready() -> void:
 	player.oil_changed.connect(func(v: float) -> void: hud.set_status(v, player.lantern_on))
 	hud.set_status(player.oil, true)
 
-	_add_ambience()
+	if mode == "":
+		menu = Menu.new()
+		add_child(menu)
+		menu.options_changed.connect(_on_options)
+		menu.restart_requested.connect(_restart)
+	else:
+		Config.quality = 1
 
 	if mode == "selftest":
 		Engine.time_scale = 8.0
@@ -91,31 +104,30 @@ func _ready() -> void:
 
 func _setup_input() -> void:
 	var map := {
-		"move_forward": KEY_W, "move_back": KEY_S, "move_left": KEY_A, "move_right": KEY_D,
-		"lantern": KEY_F, "shout": KEY_R, "threshold_down": KEY_BRACKETLEFT,
-		"threshold_up": KEY_BRACKETRIGHT, "restart": KEY_ENTER,
+		"move_forward": [KEY_W], "move_back": [KEY_S], "move_left": [KEY_A], "move_right": [KEY_D],
+		"lantern": [KEY_F], "shout": [KEY_R], "threshold_down": [KEY_BRACKETLEFT],
+		"threshold_up": [KEY_BRACKETRIGHT], "restart": [KEY_ENTER],
+		"sprint": [KEY_SHIFT], "crouch": [KEY_CTRL, KEY_C], "interact": [KEY_E],
 	}
 	for action: String in map:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
-		var ev := InputEventKey.new()
-		ev.physical_keycode = map[action]
-		InputMap.action_add_event(action, ev)
+			for key: int in map[action]:
+				var ev := InputEventKey.new()
+				ev.physical_keycode = key as Key
+				InputMap.action_add_event(action, ev)
 
 
-func _add_ambience() -> void:
-	var wind := AudioStreamPlayer.new()
-	wind.stream = Synth.wind()
-	wind.volume_db = -14.0
-	add_child(wind)
-	wind.play()
-	var bell := AudioStreamPlayer3D.new()
-	bell.stream = Synth.bell()
-	bell.position = Route.pos(Route.CHURCH_S) + Vector3(0, 26, 0)
-	bell.unit_size = 40.0
-	bell.volume_db = -4.0
-	bell.name = "Bell"
-	add_child(bell)
+func _on_options() -> void:
+	Config.apply(self)
+	hud.apply_config()
+	screams.mic_threshold = Config.mic_threshold
+
+
+func _restart() -> void:
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	get_tree().reload_current_scene()
 
 
 func _on_died() -> void:
@@ -144,13 +156,12 @@ func _place_player(s: float, yaw_deg: float, pitch_deg: float) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	if int(_t) != int(_t - delta) and int(_t) % 30 == 15:
-		var bell := get_node_or_null("Bell") as AudioStreamPlayer3D
-		if bell:
-			bell.play()
 	if finished and Input.is_action_just_pressed("restart"):
-		Engine.time_scale = 1.0
-		get_tree().reload_current_scene()
+		_restart()
+	hud.set_fear(audio.fear, audio.get_bpm())
+	hud.set_stamina(player.stamina / Player.STAMINA_MAX, player.exhausted)
+	var env := ($Vila/Ambiente as WorldEnvironment).environment
+	env.fog_density = lerpf(env.fog_density, 0.030 + 0.022 * audio.fear, clampf(delta * 2.0, 0.0, 1.0))
 	_frames += 1
 	if mode == "shot":
 		if _frames == 20:

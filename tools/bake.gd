@@ -254,6 +254,11 @@ func _main() -> void:
 	gritos.set_script(load("res://scripts/scream_system.gd"))
 	main.add_child(gritos)
 	gritos.owner = main
+	var aud := Node.new()
+	aud.name = "Audio"
+	aud.set_script(load("res://scripts/audio_director.gd"))
+	main.add_child(aud)
+	aud.owner = main
 	var ui := CanvasLayer.new()
 	ui.name = "Interface"
 	ui.set_script(load("res://scripts/hud.gd"))

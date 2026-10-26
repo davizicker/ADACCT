@@ -16,9 +16,10 @@ const SHOUT_NEEDED := 0.5
 const GAZE_SECONDS := 1.6
 
 var enabled := true
+var audio: AudioDirector = null
 var stage := 0
 var state := State.WAIT
-var mic_threshold := 0.07
+var mic_threshold := Config.mic_threshold
 var has_mic := false
 var mic_level := 0.0
 ## teste automatizado: resultados forçados em ordem (true = respondeu certo)
@@ -119,8 +120,12 @@ func _process(delta: float) -> void:
 	_read_mic(delta)
 	if Input.is_action_just_pressed("threshold_down"):
 		mic_threshold = maxf(0.01, mic_threshold - 0.01)
+		Config.mic_threshold = mic_threshold
+		Config.save_all()
 	if Input.is_action_just_pressed("threshold_up"):
 		mic_threshold = minf(0.5, mic_threshold + 0.01)
+		Config.mic_threshold = mic_threshold
+		Config.save_all()
 	hud.set_mic(mic_level, mic_threshold, has_mic)
 
 	if _echo_t > 0.0:
@@ -183,6 +188,8 @@ func _begin_scream() -> void:
 	state = State.SCREAM
 	if _screams_heard == 1:
 		hud.show_prompt("Algo grita na névoa.\nQuando parar: PARE e RESPONDA (grite ou segure R).", 6.0)
+	if audio != null and stage >= 2:
+		audio.play_whisper()
 	log_line.emit("scream #%d stage=%d axis=%d" % [_screams_heard, stage, int(_axis)])
 
 
@@ -206,6 +213,8 @@ func _resolve(success: bool) -> void:
 	else:
 		stage += 1
 		player.shake(0.06, 0.6)
+		if audio != null:
+			audio.bump_fear(0.25)
 		log_line.emit("FALHOU -> stage=%d" % stage)
 	if stage >= STAGE_DIST.size() - 1:
 		_kill()
@@ -223,6 +232,8 @@ func _play_echo_behind() -> void:
 	_echo_player.play()
 	player.shake(0.12, 1.2)
 	player.blackout(1.4)
+	if audio != null:
+		audio.play_sting()
 	hud.flash(Color(1, 1, 1, 0.55), 0.12)
 	log_line.emit("ECHO atrás do jogador")
 
@@ -262,4 +273,6 @@ func _kill() -> void:
 	_scream_player.volume_db = 12.0
 	_scream_player.play()
 	player.shake(0.2, 1.0)
+	if audio != null:
+		audio.play_sting()
 	player_died.emit()

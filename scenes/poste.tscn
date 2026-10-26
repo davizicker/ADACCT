@@ -1,13 +1,13 @@
 [gd_scene load_steps=4 format=4]
 
-[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="1_gl7pr"]
-[ext_resource type="Material" path="res://assets/materials/vidro_lampiao.tres" id="2_8i2im"]
+[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="1_821v8"]
+[ext_resource type="Material" path="res://assets/materials/vidro_lampiao.tres" id="2_bkyo3"]
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_jx0xv"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_iuevp"]
 _surfaces = [{
 "aabb": AABB(-0.19, 0, -0.19, 0.38, 4.25, 0.38),
 "format": 34359738375,
-"material": ExtResource("1_gl7pr"),
+"material": ExtResource("1_821v8"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 180,
@@ -15,7 +15,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-0.15, 3.55, -0.15, 0.3, 0.46, 0.3),
 "format": 34359738375,
-"material": ExtResource("2_8i2im"),
+"material": ExtResource("2_bkyo3"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 36,
@@ -25,7 +25,7 @@ _surfaces = [{
 [node name="Poste" type="Node3D"]
 
 [node name="Malha" type="MeshInstance3D" parent="."]
-mesh = SubResource("ArrayMesh_jx0xv")
+mesh = SubResource("ArrayMesh_iuevp")
 
 [node name="Luz" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7, 0)

@@ -1,27 +1,31 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_e2cmp"]
-[ext_resource type="PackedScene" path="res://scenes/vila.scn" id="2_a2flv"]
-[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_dxswn"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="4_0rmcp"]
-[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_v5qm2"]
-[ext_resource type="Script" path="res://scripts/scream_system.gd" id="6_kj6rl"]
-[ext_resource type="Script" path="res://scripts/hud.gd" id="7_8vrxl"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_0h0oq"]
+[ext_resource type="PackedScene" path="res://scenes/vila.scn" id="2_71xtm"]
+[ext_resource type="PackedScene" path="res://scenes/jogador.tscn" id="3_rf63l"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="4_nhbv5"]
+[ext_resource type="PackedScene" path="res://scenes/bradador.tscn" id="5_ir0xa"]
+[ext_resource type="Script" path="res://scripts/scream_system.gd" id="6_wj68a"]
+[ext_resource type="Script" path="res://scripts/audio_director.gd" id="7_hkg1n"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="8_4js4o"]
 
 [node name="Main" type="Node3D"]
-script = ExtResource("1_e2cmp")
+script = ExtResource("1_0h0oq")
 
-[node name="Vila" type="Node3D" parent="." instance=ExtResource("2_a2flv")]
+[node name="Vila" type="Node3D" parent="." instance=ExtResource("2_71xtm")]
 
-[node name="Jogador" type="CharacterBody3D" parent="." instance=ExtResource("3_dxswn")]
+[node name="Jogador" type="CharacterBody3D" parent="." instance=ExtResource("3_rf63l")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.144317, 0.43563, -1.99465)
-script = ExtResource("4_0rmcp")
+script = ExtResource("4_nhbv5")
 
-[node name="Bradador" type="Node3D" parent="." instance=ExtResource("5_v5qm2")]
+[node name="Bradador" type="Node3D" parent="." instance=ExtResource("5_ir0xa")]
 visible = false
 
 [node name="Gritos" type="Node" parent="."]
-script = ExtResource("6_kj6rl")
+script = ExtResource("6_wj68a")
+
+[node name="Audio" type="Node" parent="."]
+script = ExtResource("7_hkg1n")
 
 [node name="Interface" type="CanvasLayer" parent="."]
-script = ExtResource("7_8vrxl")
+script = ExtResource("8_4js4o")

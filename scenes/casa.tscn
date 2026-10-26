@@ -1,28 +1,28 @@
 [gd_scene load_steps=13 format=4]
 
-[ext_resource type="Material" path="res://assets/materials/reboco_branco.tres" id="1_vbo7t"]
-[ext_resource type="Material" path="res://assets/materials/telha.tres" id="2_wx5fi"]
-[ext_resource type="Material" path="res://assets/materials/muro.tres" id="3_apcn2"]
-[ext_resource type="Material" path="res://assets/materials/cantaria.tres" id="4_d7td6"]
-[ext_resource type="Material" path="res://assets/materials/madeira_natural.tres" id="5_hpvby"]
-[ext_resource type="Material" path="res://assets/materials/madeira_azul.tres" id="6_18aoy"]
-[ext_resource type="Material" path="res://assets/materials/janela_escura.tres" id="7_7o4rk"]
-[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="8_5igh8"]
+[ext_resource type="Material" path="res://assets/materials/reboco_branco.tres" id="1_rqws8"]
+[ext_resource type="Material" path="res://assets/materials/telha.tres" id="2_rmx6o"]
+[ext_resource type="Material" path="res://assets/materials/muro.tres" id="3_lsqud"]
+[ext_resource type="Material" path="res://assets/materials/cantaria.tres" id="4_6df5m"]
+[ext_resource type="Material" path="res://assets/materials/madeira_natural.tres" id="5_kpi3f"]
+[ext_resource type="Material" path="res://assets/materials/madeira_azul.tres" id="6_m7c1t"]
+[ext_resource type="Material" path="res://assets/materials/janela_escura.tres" id="7_2fc8b"]
+[ext_resource type="Material" path="res://assets/materials/ferro.tres" id="8_vpvpp"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_vlnre"]
+[sub_resource type="BoxMesh" id="BoxMesh_u5i1f"]
 size = Vector3(10, 11.4, 9)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_mwjwi"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_3qfv2"]
 size = Vector3(10, 11.4, 9)
 
-[sub_resource type="PrismMesh" id="PrismMesh_3l6wq"]
+[sub_resource type="PrismMesh" id="PrismMesh_0pxud"]
 size = Vector3(11.4, 3.078, 9.5)
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_buk1j"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_uifew"]
 _surfaces = [{
 "aabb": AABB(-0.25, -4, -4.55, 0.3, 5.1, 9.1),
 "format": 34359738375,
-"material": ExtResource("3_apcn2"),
+"material": ExtResource("3_lsqud"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 36,
@@ -30,7 +30,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-1.245, -0.105, -4.6, 6.47, 12.043, 9.2),
 "format": 34359738375,
-"material": ExtResource("4_d7td6"),
+"material": ExtResource("4_6df5m"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 612,
@@ -38,7 +38,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-0.8, 0.425, -4.07, 0.8, 7.075, 8.24),
 "format": 34359738375,
-"material": ExtResource("5_hpvby"),
+"material": ExtResource("5_kpi3f"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 504,
@@ -46,7 +46,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-0.22, 0, -3.5, 0.08, 6.5, 7.2),
 "format": 34359738375,
-"material": ExtResource("6_18aoy"),
+"material": ExtResource("6_m7c1t"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 504,
@@ -54,7 +54,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-0.225, 1.25, -3.5, 0.055, 5.25, 7.15),
 "format": 34359738375,
-"material": ExtResource("7_7o4rk"),
+"material": ExtResource("7_2fc8b"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 66,
@@ -62,7 +62,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(-1.23, 4.095, -0.975, 1.23, 0.935, 4.95),
 "format": 34359738375,
-"material": ExtResource("8_5igh8"),
+"material": ExtResource("8_vpvpp"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 1260,
@@ -70,7 +70,7 @@ _surfaces = [{
 }, {
 "aabb": AABB(4.45, 10.028, 0.435315, 0.7, 1.8, 0.7),
 "format": 34359738375,
-"material": ExtResource("1_vbo7t"),
+"material": ExtResource("1_rqws8"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 36,
@@ -81,18 +81,18 @@ _surfaces = [{
 
 [node name="Corpo" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.7, 0)
-material_override = ExtResource("1_vbo7t")
-mesh = SubResource("BoxMesh_vlnre")
+material_override = ExtResource("1_rqws8")
+mesh = SubResource("BoxMesh_u5i1f")
 
 [node name="Colisao" type="StaticBody3D" parent="Corpo"]
 
 [node name="@CollisionShape3D@140" type="CollisionShape3D" parent="Corpo/Colisao"]
-shape = SubResource("BoxShape3D_mwjwi")
+shape = SubResource("BoxShape3D_3qfv2")
 
 [node name="Telhado" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 9.089, 0)
-material_override = ExtResource("2_wx5fi")
-mesh = SubResource("PrismMesh_3l6wq")
+material_override = ExtResource("2_rmx6o")
+mesh = SubResource("PrismMesh_0pxud")
 
 [node name="Detalhes" type="MeshInstance3D" parent="."]
-mesh = SubResource("ArrayMesh_buk1j")
+mesh = SubResource("ArrayMesh_uifew")
