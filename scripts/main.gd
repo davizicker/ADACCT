@@ -77,6 +77,11 @@ func _ready() -> void:
 		env.ambient_light_color = Color(0.8, 0.85, 1.0)
 		env.fog_density = 0.003
 		($Vila/Lua as DirectionalLight3D).light_energy = 1.4
+	# modelos 3D reais (assets/models/*.glb), se existirem, substituem os modelos simples
+	if Modelos.aplicar(bradador, Modelos.BRADADOR):
+		print("[modelos] bradador.glb carregado")
+	if Modelos.aplicar(mula, Modelos.MULA):
+		print("[modelos] mula.glb carregada")
 	screams.setup(player, hud, bradador, mode == "")
 	screams.audio = audio
 	audio.setup(player, screams)

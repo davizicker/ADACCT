@@ -40,7 +40,8 @@ Prioridade: **P1** fazer antes de mostrar a alguém · **P2** deixa o jogo muito
 | Vegetação, serra ao fundo, céu com nuvens e estrelas, milhares de luzes | ✅ | P1 | 🆓 | |
 | Detalhes: placas, vasos, nichos com vela, varais, bandeirinhas, bueiros, barris, banco, carroça | ✅ | P2 | 🆓 | |
 | **Texturas reais (CC0) no lugar das procedurais** | ⬜ | P1 | 🆓 ⏱️ | ambientCG/Poly Haven: maior salto de realismo por menor esforço |
-| **Modelos 3D reais** (casas, igreja, mobiliário) | ⬜ | P2 | 🆓/💰 | Sketchfab/Poly Haven (confira licença) ou artista |
+| **Modelos 3D reais** (casas, igreja, mobiliário) | ⬜ | P2 | 🆓/💰 | Sketchfab/Poly Haven (confira licença) ou artista. Guia em docs/06 |
+| **Bradador e Mula em 3D realista** (`assets/models/*.glb`) | 🟡 | P1 | 🆓 ⏱️ | O jogo já troca sozinho o modelo simples pelo seu .glb (testado com modelo de teste). Falta o modelo real |
 | Interior de uma casa e da igreja (cena final) | ⬜ | P2 | ⏱️ | Hoje a igreja é só fachada |
 | Mais "ruas" (segunda ladeira, praça, cemitério, mina) | ⬜ | P2 | ⏱️ | Mina do Chico Rei é real: tratar com respeito e consultoria |
 | Chuva e poças, neblina volumétrica, raios de luz, relâmpago | ⬜ | P2 | 🆓 | Neblina volumétrica e SDFGI exigem Forward+ (ver APRENDER.md) |
