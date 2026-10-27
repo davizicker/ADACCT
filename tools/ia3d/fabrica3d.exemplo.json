@@ -1,0 +1,6 @@
+{
+  "triposr_dir": "C:/ia/TripoSR",
+  "python_triposr": "C:/ia/TripoSR/venv/Scripts/python.exe",
+  "python_bpy": "python",
+  "modelo_texto2img": "stabilityai/stable-diffusion-xl-base-1.0"
+}

@@ -52,3 +52,10 @@ pip install bpy
 python tools/ia3d/pos_processar.py saida/0/mesh.obj bradador.glb --tris 30000 --altura 2.7
 ```
 Para modelos já limpos (como os do Poly Haven) use `--solto 0` para não remover peças pequenas de propósito.
+
+## Fábrica 3D (um comando)
+`tools/ia3d/fabrica3d.py` junta tudo: prompt → imagem → remover fundo → TripoSR → limpeza → .glb no projeto.
+1. Copie `fabrica3d.exemplo.json` para `fabrica3d.json` e ajuste os caminhos.
+2. `python tools/ia3d/fabrica3d.py "estátua gótica de pedra" --nome estatua --altura 1.7`
+3. Ou com sua imagem: `python tools/ia3d/fabrica3d.py --imagem bradador.png --nome bradador --altura 2.7 --destino assets/models/bradador.glb`
+**Testado:** a etapa de limpeza e a orquestração (`--simular arquivo.glb`). **Não testado:** texto→imagem, remover fundo e TripoSR (sem GPU aqui).
