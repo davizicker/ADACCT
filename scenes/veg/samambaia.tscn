@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/samambaia.res" id="1_eru8s"]
 
-[node name="Samambaia" type="Node3D" unique_id=1237798263]
+[node name="Samambaia" type="Node3D" unique_id=154251121]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=1963637920]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=1792743376]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1

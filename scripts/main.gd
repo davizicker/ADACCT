@@ -22,6 +22,7 @@ extends Node3D
 @onready var missao: Missao = $Missao
 @onready var church_door: Area3D = $Vila/Adro/Igreja/Porta
 var finished := false
+var _morreu := false
 var menu: Menu = null
 var mode := ""
 var _shot_frames := 20
@@ -56,6 +57,8 @@ func _ready() -> void:
 		mode = "itens"
 	elif "--selftest-casas" in args:
 		mode = "casas"
+	elif "--selftest-save" in args:
+		mode = "save"
 	var mula_case := ""
 	for a in args:
 		if a.begins_with("--selftest-mula="):
@@ -114,6 +117,10 @@ func _ready() -> void:
 	audio.setup(player, screams)
 	eventos.setup(player, screams, audio, mula, hud)
 	add_to_group("jogo")
+	var chuva := Chuva.new()
+	chuva.name = "Chuva"
+	chuva.player = player
+	add_child(chuva)
 	missao.modo_teste = mode != "" and mode != "casas"
 	missao.setup(player, hud, screams, eventos, ($Vila/Ambiente as WorldEnvironment).environment, mode == "")
 	eventos.enabled = (mode == "" or mode == "auto")
@@ -142,6 +149,11 @@ func _ready() -> void:
 		add_child(menu)
 		menu.options_changed.connect(_on_options)
 		menu.restart_requested.connect(_restart)
+		menu.continue_requested.connect(func() -> void:
+			SaveGame.carregar_ao_iniciar = true
+			_restart())
+		if SaveGame.carregar_ao_iniciar:
+			menu.call_deferred("close")
 
 	if mode == "selftest":
 		Engine.time_scale = 8.0
@@ -158,6 +170,9 @@ func _ready() -> void:
 	elif mode == "mula":
 		Engine.time_scale = 8.0
 		_setup_mula_test(mula_case)
+	elif mode == "save":
+		screams.enabled = false
+		_test_save()
 	elif mode == "casas":
 		Engine.time_scale = 1.0
 		screams.enabled = false
@@ -176,7 +191,7 @@ func _setup_input() -> void:
 		"move_forward": [KEY_W], "move_back": [KEY_S], "move_left": [KEY_A], "move_right": [KEY_D],
 		"lantern": [KEY_F], "shout": [KEY_R], "threshold_down": [KEY_BRACKETLEFT],
 		"threshold_up": [KEY_BRACKETRIGHT], "restart": [KEY_ENTER],
-		"sprint": [KEY_SHIFT], "crouch": [KEY_CTRL, KEY_C], "interact": [KEY_E],
+		"sprint": [KEY_SHIFT], "crouch": [KEY_CTRL, KEY_C], "interact": [KEY_E], "diario": [KEY_J], "fps": [KEY_F3],
 	}
 	for action: String in map:
 		if not InputMap.has_action(action):
@@ -194,6 +209,8 @@ func _on_options() -> void:
 
 
 func _restart() -> void:
+	if _morreu and SaveGame.existe():
+		SaveGame.carregar_ao_iniciar = true       # morreu: volta ao último ponto salvo
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	get_tree().reload_current_scene()
@@ -201,6 +218,7 @@ func _restart() -> void:
 
 func _on_died() -> void:
 	finished = true
+	_morreu = true
 	print("[game] DEAD")
 	await get_tree().create_timer(1.4, true, false, true).timeout
 	hud.end_screen("O Bradador te achou.", "Ele não ouviu a resposta.", Color(0.05, 0, 0, 0.92))
@@ -219,6 +237,8 @@ func vitoria() -> void:
 	if finished:
 		return
 	finished = true
+	if not missao.modo_teste:
+		SaveGame.apagar()
 	screams.enabled = false
 	player.frozen = true
 	print("[game] WIN at z=%.1f y=%.2f (rua %.2f)" % [player.global_position.z, player.global_position.y, Route.ground_near(player.global_position)])
@@ -285,6 +305,30 @@ func _process(delta: float) -> void:
 	elif mode == "selftest" and finished:
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()
+
+
+## Teste de salvar/continuar: grava, bagunça o estado, carrega e confere.
+func _test_save() -> void:
+	await get_tree().create_timer(0.5, true, false, true).timeout
+	missao.modo_teste = false
+	SaveGame.apagar()
+	_place_player(120.0, 10.0, 0.0)
+	missao.inv["chave_igreja"] = true
+	missao.inv["terco"] = true
+	missao.terco_usado = true
+	player.oil = 77.0
+	var antes := player.global_position
+	missao.salvar()
+	var existe := SaveGame.existe()
+	missao.inv.clear()
+	missao.terco_usado = false
+	player.oil = 5.0
+	_place_player(10.0, 0.0, 0.0)
+	missao.aplicar_save(SaveGame.ler())
+	var ok := existe and missao.tem("chave_igreja") and missao.tem("terco") and missao.terco_usado and absf(player.oil - 77.0) < 0.01 and player.global_position.distance_to(antes + Vector3(0, 0.1, 0)) < 0.2 and not missao.tem("livro")
+	SaveGame.apagar()
+	print("[save] existe=%s itens=%s oleo=%.0f -> %s" % [str(existe), str(missao.inv.keys()), player.oil, "OK" if ok else "FALHOU"])
+	get_tree().quit()
 
 
 ## Teste das casas: entra em cada porta, confere o chão, pega os itens, sai, cumpre a trama e vence na igreja.

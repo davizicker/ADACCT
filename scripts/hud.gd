@@ -6,6 +6,7 @@ var _prompt: Label
 var _status: Label
 var _mic: Label
 var _objetivo: Label
+var _fps_on := false
 var _debug: Label
 var _interact: Label
 var _stamina: ColorRect
@@ -199,6 +200,8 @@ func end_screen(title: String, subtitle: String, color: Color) -> void:
 
 
 func _process(delta: float) -> void:
+	if _fps_on:
+		_debug.text = "%d fps | %d desenhos | %d MB" % [Engine.get_frames_per_second(), RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME), int(OS.get_static_memory_usage() / 1048576)]
 	if _prompt_t > 0.0:
 		_prompt_t -= delta
 		if _prompt_t <= 0.0:
@@ -214,6 +217,10 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("fps"):
+		_fps_on = not _fps_on
+		if not _fps_on:
+			_debug.text = ""
 	if _note_panel != null and _note_panel.visible and (event.is_action_pressed("interact") or event.is_action_pressed("ui_cancel")):
 		hide_note()
 		get_tree().call_group("jogador", "set", "frozen", false)

@@ -72,6 +72,30 @@ static func wind() -> AudioStreamWAV:
 	return _to_wav(out, true)
 
 
+## Chuva constante em telhas e pedra (loop 4 s): ruído filtrado com gotas mais fortes esparsas.
+static func rain() -> AudioStreamWAV:
+	var n := RATE * 4
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 23
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var lp := 0.0
+	var lp2 := 0.0
+	for i in n:
+		var w := rng.randf_range(-1.0, 1.0)
+		lp = lp * 0.55 + w * 0.45
+		lp2 = lp2 * 0.95 + w * 0.05
+		var drop := 0.0
+		if rng.randf() < 0.0025:
+			drop = rng.randf_range(0.3, 0.9)
+		out[i] = lp * 0.35 + lp2 * 0.9 + drop * w
+	var fade := 2000
+	for i in fade:
+		var k := float(i) / fade
+		out[i] = lerpf(out[n - fade + i], out[i], k)
+	return _to_wav(out, true)
+
+
 ## Sino distante (~6 s).
 static func bell() -> AudioStreamWAV:
 	var n := RATE * 6

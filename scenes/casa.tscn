@@ -159,22 +159,22 @@ _surfaces = [{
 "vertex_data": PackedByteArray("SOF6v3A97kBmZpbASOF6v7ge8UBmZpbASOF6v7ge8UBmZpZASOF6v3A97kBmZpbASOF6v7ge8UBmZpZASOF6v3A97kBmZpZA9ihcv3A97kBmZpbA9ihcv7ge8UBmZpZA9ihcv7ge8UBmZpbA9ihcv3A97kBmZpbA9ihcv3A97kBmZpZA9ihcv7ge8UBmZpZASOF6v3A97kBmZpbASOF6v3A97kBmZpZA9ihcv3A97kBmZpZASOF6v3A97kBmZpbA9ihcv3A97kBmZpZA9ihcv3A97kBmZpbASOF6v7ge8UBmZpbA9ihcv7ge8UBmZpZASOF6v7ge8UBmZpZASOF6v7ge8UBmZpbA9ihcv7ge8UBmZpbA9ihcv7ge8UBmZpZASOF6v3A97kBmZpbA9ihcv3A97kBmZpbA9ihcv7ge8UBmZpbASOF6v3A97kBmZpbA9ihcv7ge8UBmZpbASOF6v7ge8UBmZpbASOF6v3A97kBmZpZA9ihcv7ge8UBmZpZA9ihcv3A97kBmZpZASOF6v3A97kBmZpZASOF6v7ge8UBmZpZA9ihcv7ge8UBmZpZAHoVrv8L17EAK14/AHoVrvwrX70AK14/AHoVrvwrX70DC9YzAHoVrv8L17EAK14/AHoVrvwrX70DC9YzAHoVrv8L17EDC9YzAjML1vcL17EAK14/AjML1vQrX70DC9YzAjML1vQrX70AK14/AjML1vcL17EAK14/AjML1vcL17EDC9YzAjML1vQrX70DC9YzAHoVrv8L17EAK14/AHoVrv8L17EDC9YzAjML1vcL17EDC9YzAHoVrv8L17EAK14/AjML1vcL17EDC9YzAjML1vcL17EAK14/AHoVrvwrX70AK14/AjML1vQrX70DC9YzAHoVrvwrX70DC9YzAHoVrvwrX70AK14/AjML1vQrX70AK14/AjML1vQrX70DC9YzAHoVrv8L17EAK14/AjML1vcL17EAK14/AjML1vQrX70AK14/AHoVrv8L17EAK14/AjML1vQrX70AK14/AHoVrvwrX70AK14/AHoVrv8L17EDC9YzAjML1vQrX70DC9YzAjML1vcL17EDC9YzAHoVrv8L17EDC9YzAHoVrvwrX70DC9YzAjML1vQrX70DC9YzAwvUovgAAgL4K14/AwvUovmZm7kAK14/AwvUovmZm7kDC9YzAwvUovgAAgL4K14/AwvUovmZm7kDC9YzAwvUovgAAgL7C9YzAmZmZvQAAgL4K14/AmZmZvWZm7kDC9YzAmZmZvWZm7kAK14/AmZmZvQAAgL4K14/AmZmZvQAAgL7C9YzAmZmZvWZm7kDC9YzAwvUovgAAgL4K14/AwvUovgAAgL7C9YzAmZmZvQAAgL7C9YzAwvUovgAAgL4K14/AmZmZvQAAgL7C9YzAmZmZvQAAgL4K14/AwvUovmZm7kAK14/AmZmZvWZm7kDC9YzAwvUovmZm7kDC9YzAwvUovmZm7kAK14/AmZmZvWZm7kAK14/AmZmZvWZm7kDC9YzAwvUovgAAgL4K14/AmZmZvQAAgL4K14/AmZmZvWZm7kAK14/AwvUovgAAgL4K14/AmZmZvWZm7kAK14/AwvUovmZm7kAK14/AwvUovgAAgL7C9YzAmZmZvWZm7kDC9YzAmZmZvQAAgL7C9YzAwvUovgAAgL7C9YzAwvUovmZm7kDC9YzAmZmZvWZm7kDC9YzAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//3///wAA/7//f///AAD/v/9///8AAP+//3///wAA/7//f///AAD/v/9///8AAP+///////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//3///wAA/7//f///AAD/v/9///8AAP+//3///wAA/7//f///AAD/v/9///8AAP+///////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//3///wAA/7//f///AAD/v/9///8AAP+//3///wAA/7//f///AAD/v/9///8AAP+///////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA")
 }]
 
-[node name="Casa" type="Node3D" unique_id=1059750545]
+[node name="Casa" type="Node3D" unique_id=909958330]
 metadata/door_z = -3.0
 metadata/altura = 7.4
 
-[node name="Corpo" type="MeshInstance3D" parent="." unique_id=635581277]
+[node name="Corpo" type="MeshInstance3D" parent="." unique_id=208361606]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.7, 0)
 material_override = ExtResource("1_dgbb3")
 mesh = SubResource("BoxMesh_sf32j")
 
-[node name="Colisao" type="StaticBody3D" parent="Corpo" unique_id=1718634760]
+[node name="Colisao" type="StaticBody3D" parent="Corpo" unique_id=1881462264]
 
-[node name="@CollisionShape3D@399" type="CollisionShape3D" parent="Corpo/Colisao" unique_id=144011809]
+[node name="@CollisionShape3D@399" type="CollisionShape3D" parent="Corpo/Colisao" unique_id=1079723435]
 shape = SubResource("BoxShape3D_gueh2")
 
-[node name="Telhado" type="MeshInstance3D" parent="." unique_id=1655867976]
+[node name="Telhado" type="MeshInstance3D" parent="." unique_id=550880074]
 mesh = SubResource("ArrayMesh_sgvlb")
 
-[node name="Detalhes" type="MeshInstance3D" parent="." unique_id=588346246]
+[node name="Detalhes" type="MeshInstance3D" parent="." unique_id=531794520]
 mesh = SubResource("ArrayMesh_dcuoi")

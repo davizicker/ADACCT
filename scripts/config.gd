@@ -13,6 +13,7 @@ static var quality := 2         # 0 baixa, 1 média, 2 alta (2 liga os efeitos d
 static var grito_ativo := false # opção antiga: responder gritando (microfone ou R). Padrão: ficar parado e agachado
 static var camera_fx := true    # vinheta, granulado, aberração
 static var head_bob := true
+static var chuva := false
 static var loaded := false
 
 
@@ -32,6 +33,7 @@ static func load_all() -> void:
 	camera_fx = cf.get_value("video", "camera_fx", camera_fx)
 	head_bob = cf.get_value("video", "head_bob", head_bob)
 	grito_ativo = cf.get_value("controles", "grito_ativo", grito_ativo)
+	chuva = cf.get_value("video", "chuva", chuva)
 
 
 static func save_all() -> void:
@@ -45,6 +47,7 @@ static func save_all() -> void:
 	cf.set_value("video", "camera_fx", camera_fx)
 	cf.set_value("video", "head_bob", head_bob)
 	cf.set_value("controles", "grito_ativo", grito_ativo)
+	cf.set_value("video", "chuva", chuva)
 	cf.save(PATH)
 
 

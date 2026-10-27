@@ -16,38 +16,38 @@ height = 0.05
 [sub_resource type="QuadMesh" id="QuadMesh_jl1eh"]
 size = Vector2(0.3, 0.3)
 
-[node name="Jogador" type="CharacterBody3D" unique_id=1369698082]
+[node name="Jogador" type="CharacterBody3D" unique_id=1893591913]
 script = ExtResource("1_qcln2")
 
-[node name="Colisao" type="CollisionShape3D" parent="." unique_id=1645190246]
+[node name="Colisao" type="CollisionShape3D" parent="." unique_id=867395508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
 shape = SubResource("CapsuleShape3D_a7p4t")
 
-[node name="Camera" type="Camera3D" parent="." unique_id=561095973]
+[node name="Camera" type="Camera3D" parent="." unique_id=442030738]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 far = 1500.0
 
-[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=1839144913]
+[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=810181704]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31, -0.29999998, -0.6)
 light_color = Color(1, 0.72, 0.38, 1)
 light_energy = 1.7
 omni_range = 11.0
 
-[node name="LanternaModelo" type="Node3D" parent="Camera" unique_id=1389538913]
+[node name="LanternaModelo" type="Node3D" parent="Camera" unique_id=567834779]
 transform = Transform3D(0.90630776, 0, -0.42261827, 0, 1, 0, 0.42261827, 0, 0.90630776, 0.31, -0.42, -0.62)
 metadata/bb = AABB(-0.053724743, 0, -0.042631865, 0.10744949, 0.25885543, 0.08526373)
 
-[node name="Modelo" type="Node3D" parent="Camera/LanternaModelo" unique_id=1544655687]
+[node name="Modelo" type="Node3D" parent="Camera/LanternaModelo" unique_id=2115456491]
 
 [node name="Lantern_012" type="Node3D" parent="Camera/LanternaModelo/Modelo" unique_id=964890594 instance=ExtResource("2_s760d")]
 transform = Transform3D(0.88, 0, 0, 0, 0.88, 0, 0, 0, 0.88, -2.6177615e-05, -1.3543415e-05, 1.4644116e-05)
 
-[node name="Chama" type="MeshInstance3D" parent="Camera/LanternaModelo" unique_id=2066845825]
+[node name="Chama" type="MeshInstance3D" parent="Camera/LanternaModelo" unique_id=670845522]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 material_override = ExtResource("3_32758")
 mesh = SubResource("SphereMesh_8gwte")
 
-[node name="Halo" type="MeshInstance3D" parent="Camera/LanternaModelo" unique_id=1287048947]
+[node name="Halo" type="MeshInstance3D" parent="Camera/LanternaModelo" unique_id=1861653815]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 material_override = ExtResource("4_lj65x")
 mesh = SubResource("QuadMesh_jl1eh")

@@ -4,6 +4,7 @@ extends CanvasLayer
 
 signal options_changed
 signal restart_requested
+signal continue_requested
 
 var started := false
 var _dim: ColorRect
@@ -47,7 +48,14 @@ func _ready() -> void:
 
 	_main_box = VBoxContainer.new()
 	stack.add_child(_main_box)
-	_play_btn = _btn("Jogar", close)
+	if SaveGame.existe():
+		_main_box.add_child(_btn("Continuar", func() -> void: continue_requested.emit()))
+	_play_btn = _btn("Novo jogo" if SaveGame.existe() else "Jogar", func() -> void:
+		if SaveGame.existe():
+			SaveGame.apagar()
+			restart_requested.emit()
+		else:
+			close())
 	_main_box.add_child(_play_btn)
 	_main_box.add_child(_btn("Opções", _show_options))
 	_restart_btn = _btn("Recomeçar", func() -> void: restart_requested.emit())
@@ -120,6 +128,13 @@ func _build_options() -> void:
 		options_changed.emit())
 	row.add_child(ob)
 	_opts_box.add_child(row)
+	var cr := CheckBox.new()
+	cr.text = "Chuva"
+	cr.button_pressed = Config.chuva
+	cr.toggled.connect(func(on: bool) -> void:
+		Config.chuva = on
+		options_changed.emit())
+	_opts_box.add_child(cr)
 	var cg := CheckBox.new()
 	cg.text = "Responder o grito gritando (microfone ou tecla R) em vez de agachar"
 	cg.button_pressed = Config.grito_ativo

@@ -31,6 +31,9 @@ var _ret_rot := 0.0
 var _env: Environment
 var _eventos_antes := true
 var _cooldown := 0.0
+var _auto_t := 0.0
+var lidas: Array[int] = []        # notas já lidas (tecla J reabre)
+var _diario_i := 0
 
 
 func _ready() -> void:
@@ -44,8 +47,31 @@ func setup(p_player: Player, p_hud: Hud, p_screams: ScreamSystem, p_eventos: Eve
 	eventos = p_eventos
 	_env = p_env
 	atualizar_hud()
+	if SaveGame.carregar_ao_iniciar and SaveGame.existe():
+		SaveGame.carregar_ao_iniciar = false
+		aplicar_save(SaveGame.ler())
+		intro = false
 	if intro:
 		hud.show_note(Notas.TEXTOS[11][0], Notas.TEXTOS[11][1])
+		player.frozen = true
+
+
+func registrar_nota(id: int) -> void:
+	if not lidas.has(id):
+		lidas.append(id)
+
+
+## Tecla J: reabre as cartas já lidas, uma por vez.
+func _unhandled_input(event: InputEvent) -> void:
+	if hud == null or player == null or modo_teste:
+		return
+	if event.is_action_pressed("diario") and not hud.note_open() and not player.frozen:
+		if lidas.is_empty():
+			hud.show_prompt("Você ainda não leu nenhum papel.", 3.0)
+			return
+		_diario_i = (_diario_i + 1) % lidas.size()
+		var n: Array = Notas.TEXTOS[lidas[_diario_i]]
+		hud.show_note("%s  (%d/%d)" % [str(n[0]), _diario_i + 1, lidas.size()], str(n[1]))
 		player.frozen = true
 
 
@@ -98,6 +124,7 @@ func dar_item(id: String) -> void:
 	get_tree().call_group("audio", "play_clink")
 	hud.show_prompt("Você pegou: %s" % str(d[0]), 4.0)
 	atualizar_hud()
+	salvar()
 	item_obtido.emit(id)
 	if id == "livro":
 		# o livro desperta o Bradador: susto da noite
@@ -167,6 +194,7 @@ func sair() -> void:
 	player.rotation.y = _ret_rot + PI
 	player.cam.rotation.x = 0.0
 	dentro = ""
+	salvar()
 	hud.flash(Color(0, 0, 0, 1), 0.7)
 	get_tree().call_group("audio", "play_creak", player.global_position)
 	if screams != null:
@@ -191,7 +219,49 @@ func finalizar() -> void:
 	get_tree().call_group("jogo", "vitoria")
 
 
+## Estado atual como dicionário (posição de RUA: dentro de uma casa, vale onde o jogador entrou).
+func estado() -> Dictionary:
+	var pos := _ret_pos if dentro != "" else player.global_position
+	var rot := _ret_rot if dentro != "" else player.rotation.y
+	return {
+		"itens": ",".join(PackedStringArray(inv.keys())),
+		"terco_usado": terco_usado,
+		"lidas": ",".join(PackedStringArray(lidas.map(func(i: int) -> String: return str(i)))),
+		"oleo": player.oil,
+		"x": pos.x, "y": pos.y, "z": pos.z, "rot": rot,
+	}
+
+
+func salvar() -> void:
+	if modo_teste or player == null:
+		return
+	SaveGame.gravar(estado())
+
+
+func aplicar_save(d: Dictionary) -> void:
+	if d.is_empty():
+		return
+	inv.clear()
+	for id in str(d.get("itens", "")).split(",", false):
+		if ITENS.has(id):
+			inv[id] = true
+	terco_usado = bool(d.get("terco_usado", false))
+	lidas.clear()
+	for t in str(d.get("lidas", "")).split(",", false):
+		lidas.append(int(t))
+	player.oil = float(d.get("oleo", Player.OIL_MAX))
+	player.global_position = Vector3(float(d.get("x", 0)), float(d.get("y", 0)) + 0.1, float(d.get("z", 0)))
+	player.velocity = Vector3.ZERO
+	player.rotation.y = float(d.get("rot", 0))
+	dentro = ""
+	atualizar_hud()
+
+
 func _process(delta: float) -> void:
+	_auto_t += delta
+	if _auto_t > 60.0 and dentro == "" and not player.frozen:
+		_auto_t = 0.0
+		salvar()
 	_cooldown = maxf(0.0, _cooldown - delta)
 	if _env == null:
 		return

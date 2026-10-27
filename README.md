@@ -23,3 +23,4 @@ desta pasta (não crie um projeto novo e copie arquivos).
 - O grito agora é: agache (C) e fique quieto. Gritar com microfone virou opção.
 - Roteiro do jogo de 2 horas: `docs/10-roteiro-do-jogo-de-2-horas.md`. Prompts para IA: `docs/11-prompts-para-ia.md`.
 - Testes novos: `--selftest-casas`, `tools/auditoria_pecas.gd`, `tools/foto_interiores.gd`.
+- Novos: salvar/continuar automático, tecla J (reler cartas), F3 (FPS), chuva nas opções. Mapa geral em `docs/12`, prompt de detalhes e realismo em `docs/13`.
