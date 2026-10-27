@@ -44,3 +44,11 @@ A textura você pinta/gera depois (Blender, ou a versão online do Hunyuan3D).
 - Esses geradores erram **mãos, rosto e costas** e deixam a malha "derretida". É normal: limpe no Blender ou gere vários e escolha o melhor.
 - Para **casas e igrejas** funciona pior (muitos detalhes retos). Casas continuam melhores vindo de modelos prontos (Fab/Sketchfab/Poly Haven).
 - Respeite a licença de cada projeto para uso comercial.
+
+## Limpeza automática (testada)
+`tools/ia3d/pos_processar.py` faz a limpeza sozinho: junta malhas, remove pedaços soltos, reduz triângulos, põe os pés no chão, escala para a altura e exporta .glb. **Testei com um modelo do Poly Haven** (7.480 → 3.999 triângulos).
+```
+pip install bpy
+python tools/ia3d/pos_processar.py saida/0/mesh.obj bradador.glb --tris 30000 --altura 2.7
+```
+Para modelos já limpos (como os do Poly Haven) use `--solto 0` para não remover peças pequenas de propósito.
