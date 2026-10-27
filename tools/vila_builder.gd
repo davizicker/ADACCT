@@ -481,6 +481,9 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_serra())
 	root.add_child(_route_path())
 	root.add_child(Interiores.new().construir(self))
+	var det := Detalhes.new()
+	root.add_child(det.construir(self))
+	print("[vila] detalhes: ", det.contagem)
 	print("[vila] entradas: ", _entradas_feitas)
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
 	for name in ["Casas", "MurosEQuintais", "Becos", "FundoDaRua", "Ponte"]:
@@ -731,6 +734,10 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 				b.box("madeira_natural", Vector3(0.03, 0.75, 0.5), Vector3(-0.235, py, dz + pz))
 		b.box("janela_escura", Vector3(0.05, 0.32, 1.3), Vector3(-0.2, 2.9, dz))
 	b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                         # soleira
+	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.19, 2.45, dz + 0.78))              # número da casa
+	b.box("ferro", Vector3(0.03, 0.14, 0.09), Vector3(-0.255, 1.3, dz - 0.5))                     # aldrava
+	b.cylinder("ferro", 0.045, 0.045, 0.015, Vector3(-0.27, 1.2, dz - 0.5), Vector3(0, 0, PI / 2.0), 8)
+	b.box("cantaria", Vector3(0.75, 0.1, 2.3), Vector3(-0.42, -0.08, dz))                         # degrau
 	if not entrada.is_empty():
 		_porta_entrada(c, entrada, dz)
 
@@ -779,6 +786,19 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
 	# a projeção do Decal desce pelo -Y local; giramos para ela entrar na parede (+X local da casa).
 	var basis := Basis(Vector3(0, 0, -1), Vector3(-1, 0, 0), Vector3(0, 1, 0))
+	for caido in _rng.randi_range(0, 2) if _rng.randf() < 0.5 else 0:
+		var dc := Decal.new()
+		dc.name = "RebocoCaido_%d" % caido
+		dc.texture_albedo = load("res://assets/textures/reboco_caido.png")
+		var cw := _rng.randf_range(1.0, 2.4)
+		var ch := _rng.randf_range(0.9, 1.8)
+		dc.size = Vector3(cw, 0.8, ch)
+		dc.transform = Transform3D(basis, Vector3(0.1, _rng.randf_range(0.6, maxf(0.7, altura - 1.6)), _rng.randf_range(-w * 0.4, w * 0.4)))
+		dc.distance_fade_enabled = true
+		dc.distance_fade_begin = 40.0
+		dc.distance_fade_length = 12.0
+		dc.cull_mask = 1
+		casa.add_child(dc)
 	for k in 2:
 		if k == 1 and _rng.randf() > 0.6:
 			continue
@@ -949,11 +969,43 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 	if not door:
 		b.box(wood, Vector3(0.05, 0.05, wid), Vector3(-0.19, p.y - hgt * 0.28, p.z))
 		b.box("cantaria", Vector3(0.34, 0.1, wid + 0.5), Vector3(-0.17, p.y - hgt / 2.0 - 0.25, p.z))   # peitoril
-		if _rng.randf() < 0.16:
+		var sorteio := _rng.randf()
+		if sorteio < 0.16:
 			_pot(b, Vector3(-0.3, p.y - hgt / 2.0 - 0.2, p.z))
+		elif sorteio < 0.30:
+			_jardineira(b, Vector3(-0.34, p.y - hgt / 2.0 - 0.2, p.z), wid)
+		if _rng.randf() < 0.55:
+			_venezianas(b, p, wid, hgt, wood)
 	if grate:
 		for k in 5:
 			b.box("ferro", Vector3(0.03, hgt, 0.03), Vector3(-0.26, p.y, p.z - wid / 2.0 + wid * k / 4.0))
+
+
+## Venezianas de madeira abertas em ângulo (cada folha gira na dobradiça, na lateral do vão).
+func _venezianas(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String) -> void:
+	var theta := _rng.randf_range(0.8, 1.35)
+	var lw := wid * 0.5 + 0.02
+	for side: float in [-1.0, 1.0]:
+		var theta_i := theta * _rng.randf_range(0.85, 1.1)
+		var hinge := Vector3(-0.2, p.y, p.z + side * (wid * 0.5 + 0.2))
+		var dir := Vector3(-sin(theta_i), 0.0, -side * cos(theta_i))
+		var c := hinge + dir * lw * 0.5
+		var yaw := atan2(dir.x, dir.z)
+		b.box(wood, Vector3(0.035, hgt + 0.1, lw), c, Vector3(0, yaw, 0))
+		for k in 3:                                   # travessas horizontais
+			b.box("madeira_escura", Vector3(0.045, 0.05, lw * 0.96), c + Vector3(0, -hgt * 0.4 + k * hgt * 0.4, 0), Vector3(0, yaw, 0))
+		b.box("ferro", Vector3(0.05, 0.05, 0.05), hinge + Vector3(0, hgt * 0.4, 0))
+		b.box("ferro", Vector3(0.05, 0.05, 0.05), hinge + Vector3(0, -hgt * 0.4, 0))
+
+
+## Jardineira de madeira sob a janela, com folhagem e flores.
+func _jardineira(b: MeshBatch, p: Vector3, wid: float) -> void:
+	b.box("madeira_escura", Vector3(0.26, 0.16, wid * 0.9), p + Vector3(0, 0.08, 0))
+	for k in int(wid * 4.0):
+		var z := p.z - wid * 0.4 + k * 0.25
+		b.sphere("verde_vaso", 0.11, Vector3(p.x, p.y + 0.24, z), 6, 4)
+		if _rng.randf() < 0.7:
+			b.sphere(["flor_vermelha", "flor_rosa", "flor_amarela"][_rng.randi() % 3], 0.045, Vector3(p.x - 0.03, p.y + 0.33, z + _rng.randf_range(-0.05, 0.05)), 5, 3)
 
 
 func _balcony(b: MeshBatch, z0: float, z1: float, floor_y: float, wood: String) -> void:
@@ -1715,7 +1767,7 @@ func _grass_tufts() -> MultiMeshInstance3D:
 	var s := 2.0
 	while s < Route.length() - 2.0:
 		for sigma: float in [-1.0, 1.0]:
-			if _rng.randf() < 0.6:
+			if _rng.randf() < 0.8:
 				var w := Route.width(s)
 				var p := Route.pos(s) + Route.right(s) * sigma * (w * 0.5 + SW - _rng.randf_range(0.05, 0.25)) + Vector3(0, SW_H - 0.04, 0)
 				xforms.append(Transform3D(Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * _rng.randf_range(0.6, 1.2)), p))
@@ -1723,7 +1775,7 @@ func _grass_tufts() -> MultiMeshInstance3D:
 	# 2) encostas
 	var tries := 0
 	var count := 0
-	while count < 900 and tries < 3000:
+	while count < 2400 and tries < 6000:
 		tries += 1
 		var ss := _rng.randf_range(0.0, Route.length())
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
@@ -1850,6 +1902,10 @@ func _adornos() -> Node3D:
 		b.cylinder("ferro", 0.36, 0.36, 0.05, p + Vector3(0, 0.02, 0), Vector3.ZERO, 14)
 		for k in 4:
 			b.box("cantaria", Vector3(0.5, 0.02, 0.03), p + Vector3(0, 0.05, 0), Vector3(0, k * PI / 4.0, 0))
+	# lugares dos carros cobertos (colocados depois, em _props_rua): nada se sobrepõe a eles
+	for cfg in [[153.0, -1.0], [318.0, 1.0]]:
+		var cs0: float = cfg[0]
+		_reservar(Route.pos(cs0) + Route.right(cs0) * float(cfg[1]) * (Route.width(cs0) * 0.5 - 1.25), 3.0)
 	# barris e caixotes junto às paredes
 	var count := 0
 	var tries := 0

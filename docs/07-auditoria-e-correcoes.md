@@ -98,3 +98,9 @@ Casas que se atravessavam nas curvas (6 pares, com telhados cruzados): agora cad
 - **6 casas visitáveis + igreja por dentro**, com lampião aceso na porta; itens (chaves, livro, terço), cartas e querosene; objetivo e inventário na tela; o Casarão fica trancado até achar a chave; a igreja só abre com a chave e o livro. `--selftest-casas` entra em cada porta, confere o chão, pega os itens (nenhum dentro de móvel), sai, cumpre a trama e vence no altar.
 - **Forward+ por padrão** (com fallback para OpenGL) e Qualidade Alta ligada: reflexos na pedra molhada, iluminação global, neblina volumétrica, oclusão ambiente. Decalques de sujeira/umidade nas fachadas. Estimativa em placa real não medida.
 - Roteiro de 2 horas em `docs/10` e prompts prontos em `docs/11`.
+
+## 9. Detalhes de casas, natureza e solo (v10)
+- **Casas:** venezianas abertas em ângulo (~55% das janelas), jardineiras com flores, degrau, número e aldrava nas portas, decalques de reboco caído mostrando tijolo e pedra.
+- **Natureza e solo:** 780 pedras facetadas nas encostas, 1.281 seixos na beira da rua, 467 tufos de flores, 4.802 folhas secas, 29 poças reflexivas, capim 3x mais denso (`tools/detalhes.gd`).
+- O bake pegou 25 "peças soltas" (a plaquinha do número da casa estava afastada da parede): corrigido, 0. A auditoria de peças achou barris atravessando o carro coberto: agora o lugar dos carros é reservado. Tudo em 0.
+- Catálogo completo: `docs/14-mapeamento-de-detalhes.md`.

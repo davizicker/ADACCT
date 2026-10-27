@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/capim.res" id="1_mg2vg"]
 
-[node name="Capim" type="Node3D" unique_id=382858515]
+[node name="Capim" type="Node3D" unique_id=1280736562]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=812537904]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=122305654]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1

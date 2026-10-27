@@ -26,6 +26,8 @@ func _init() -> void:
 	_hera()
 	_bananeira()
 	_decals()
+	_folha_seca()
+	_reboco_caido()
 	_ponto_luz()
 	_silhueta()
 	_janelas()
@@ -61,6 +63,61 @@ func _decals() -> void:
 			m.set_pixel(x, y, Color(mcol.r, mcol.g, mcol.b, mk * edge * 0.7))
 	a.save_png(OUT + "sujeira_base.png")
 	m.save_png(OUT + "mancha.png")
+
+
+## folha_seca.png: folha caída (silhueta pontuda, nervura central e nervuras laterais), com alfa.
+func _folha_seca() -> void:
+	var img := Image.create(128, 128, false, Image.FORMAT_RGBA8)
+	var nz := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.08, 91, 2)
+	for y in 128:
+		for x in 128:
+			var u := (float(x) - 64.0) / 64.0
+			var v := (float(y) - 64.0) / 64.0
+			var half := 0.62 * pow(maxf(0.0, 1.0 - absf(u) ** 1.7), 0.8)              # contorno em losango arredondado
+			var inside := absf(v) < half * (0.92 + nz.get_noise_2d(x, y) * 0.2)
+			if not inside:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+				continue
+			var rib := absf(v) < 0.03
+			var vein := fmod(absf(u) * 9.0 + absf(v) * 4.0, 1.0) < 0.1
+			var k := 0.5 + nz.get_noise_2d(x * 2.0, y * 2.0) * 0.4
+			var c := Color(0.55, 0.34, 0.12).lerp(Color(0.40, 0.22, 0.08), k)
+			if rib or vein:
+				c = c.darkened(0.3)
+			img.set_pixel(x, y, Color(c.r, c.g, c.b, 1.0))
+	img.generate_mipmaps()
+	img.save_png(OUT + "folha_seca.png")
+
+
+## reboco_caido.png: pedaço de reboco que caiu e mostra tijolo e pedra por baixo, com borda irregular e sombra.
+func _reboco_caido() -> void:
+	var img := Image.create(512, 512, false, Image.FORMAT_RGBA8)
+	var blot := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.012, 95, 4)
+	var fine := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.2, 96)
+	for y in 512:
+		for x in 512:
+			var u := (float(x) - 256.0) / 256.0
+			var v := (float(y) - 256.0) / 256.0
+			var d := sqrt(u * u * 0.8 + v * v * 1.1)
+			var m := blot.get_noise_2d(x, y) * 0.5 + 0.5 - d * 0.75 + 0.25
+			if m <= 0.0:
+				img.set_pixel(x, y, Color(0, 0, 0, 0))
+				continue
+			var row := int(y / 38)
+			var off := 0 if row % 2 == 0 else 34
+			var bx := (x + off) % 68
+			var by := y % 38
+			var mortar := bx < 5 or by < 5
+			var f := fine.get_noise_2d(x, y) * 0.5 + 0.5
+			var col := Color(0.52, 0.27, 0.18).lerp(Color(0.36, 0.2, 0.15), f)              # tijolo
+			if int(x / 128 + y / 160) % 3 == 0:
+				col = Color(0.40, 0.36, 0.30).lerp(Color(0.30, 0.28, 0.24), f)             # pedra
+			if mortar:
+				col = Color(0.50, 0.46, 0.40)
+			var edge := smoothstep(0.0, 0.06, m)
+			col = col.lerp(Color(0.06, 0.05, 0.04), (1.0 - edge) * 0.8)                    # sombra na borda
+			img.set_pixel(x, y, Color(col.r, col.g, col.b, clampf(m * 12.0, 0.0, 1.0)))
+	img.save_png(OUT + "reboco_caido.png")
 
 
 # ------------------------------------------------------------------ utilidades

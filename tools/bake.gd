@@ -288,6 +288,26 @@ func _materials() -> void:
 	serra.disable_fog = true
 	ResourceSaver.save(serra, MATS + "serra.tres")
 	_real("casca", "Bark014", Color(0.9, 0.88, 0.85), 1.0, 1.3)
+	_real("rocha", "Ground028", Color(0.66, 0.66, 0.68), 0.45, 1.3)          # pedras soltas das encostas e da beira da rua
+	var poca := StandardMaterial3D.new()
+	poca.albedo_color = Color(0.05, 0.065, 0.09, 0.55)
+	poca.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	poca.roughness = 0.03
+	poca.metallic = 0.0
+	poca.metallic_specular = 1.0
+	ResourceSaver.save(poca, MATS + "poca.tres")
+	var folha := StandardMaterial3D.new()
+	folha.albedo_texture = load(TEX + "folha_seca.png") as Texture2D
+	folha.vertex_color_use_as_albedo = true
+	folha.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	folha.alpha_scissor_threshold = 0.5
+	folha.cull_mode = BaseMaterial3D.CULL_DISABLED
+	folha.roughness = 0.9
+	ResourceSaver.save(folha, MATS + "folha_seca.tres")
+	var flor := StandardMaterial3D.new()
+	flor.vertex_color_use_as_albedo = true
+	flor.roughness = 0.8
+	ResourceSaver.save(flor, MATS + "flor_mix.tres")
 	_real("palma_tronco", "Bark014", Color(0.62, 0.6, 0.57), 0.9, 1.0)
 	_real("terra_quintal", "Ground054", Color(0.95, 0.68, 0.55), 0.3, 1.0)       # barro vermelho de Minas (Ground054 tingido)
 	_real("pele_bradador", "Bark014", Color(0.75, 0.72, 0.7), 2.0, 1.5)   # para o modelo do Bradador, se vier sem textura
