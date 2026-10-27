@@ -20,6 +20,8 @@ const BASE_FOV := 75.0
 var oil := OIL_MAX
 var lantern_on := true
 var frozen := false
+## escondido num Esconderijo: lanterna apagada, parado, invisível para o Bradador
+var hidden := false
 ## velocidade horizontal real (m/s): usada pela regra "pare e responda"
 var move_speed := 0.0
 var stamina := STAMINA_MAX

@@ -121,3 +121,16 @@ Os números vêm do bake (`[vila] detalhes:`) e das ferramentas de teste; se mud
 1. Em `tools/detalhes.gd`: crie a malha e o espalhamento (use `_mmi`, `_ponto`, `b.terrain_h`, `b._livre`).
 2. Material em `tools/bake.gd`; textura (se precisar) em `tools/gen_textures.gd`.
 3. Rode `bash rebuild` (gen_textures → import → bake → import), depois `--selftest-walk`, `auditoria_geom`, `auditoria_pecas` e fotografe.
+
+## 11. Atualização v11 (ruas, becos, assets novos)
+| Detalhe | Hoje | Status |
+|---|---|---|
+| Rua mais longa e curva (392 m, raio mínimo ~21 m, subida até 11° no máx.) | ✅ | ✅ |
+| 17 becos: 12 que sobem até a porta do alto + **5 becos sem saída** (portão de ferro trancado, casa com porta na lateral, querosene, esconderijo) | ✅ | ✅ |
+| 13 casas visitáveis + igreja (14 interiores): carpintaria, escola, ferraria, casa abandonada, pensão, costureira, depósito, e as 7 antigas ampliadas | ✅ | ✅ |
+| Móveis reais nos interiores: armário gótico, mesa de centro, divã, mesa redonda, cama velha, estante de metal, lousa | ✅ | ✅ |
+| Ferramentas e utilidades reais: escadas encostadas, machados, regadores, serrote, plaina, binóculo, cigarros, latas, papelaria | ✅ | ✅ |
+| Plantas reais: 7 variantes (vinca, erva, tufos de capim) em ~4.300 instâncias | ✅ | ✅ |
+| Portão de ferro nos quintais (50%) | ✅ | ✅ |
+| Esconderijos: 2 carros + 5 becos sem saída | ✅ | ✅ |
+| Musgo (moss_01) | recebido, falta método (fios finos) | ⬜ |

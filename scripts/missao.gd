@@ -32,6 +32,10 @@ var _env: Environment
 var _eventos_antes := true
 var _cooldown := 0.0
 var _auto_t := 0.0
+var _oculto_t := 0.0
+var _esc_pos := Vector3.ZERO
+var _esc_rot := 0.0
+var _lanterna_antes := true
 var lidas: Array[int] = []        # notas já lidas (tecla J reabre)
 var _diario_i := 0
 
@@ -56,6 +60,39 @@ func setup(p_player: Player, p_hud: Hud, p_screams: ScreamSystem, p_eventos: Eve
 		player.frozen = true
 
 
+## Entra/sai de um Esconderijo.
+func esconder(spot: Node) -> void:
+	if player.hidden or dentro != "" or _cooldown > 0.0:
+		return
+	_cooldown = 0.6
+	_esc_pos = player.global_position
+	_esc_rot = player.rotation.y
+	_lanterna_antes = player.lantern_on
+	player.global_position = spot.get("pos_oculto")
+	player.velocity = Vector3.ZERO
+	player.rotation.y = float(spot.get("yaw_oculto"))
+	player.cam.rotation.x = 0.0
+	player.lantern_on = false
+	player.hidden = true
+	player.frozen = true
+	_oculto_t = 0.0
+	hud.show_prompt("Escondido. Prenda a respiração. [E] sai.", 4.0)
+	hud.flash(Color(0, 0, 0, 0.6), 0.4)
+
+
+func sair_esconderijo() -> void:
+	if not player.hidden:
+		return
+	player.hidden = false
+	player.frozen = false
+	player.lantern_on = _lanterna_antes
+	player.global_position = _esc_pos
+	player.velocity = Vector3.ZERO
+	player.rotation.y = _esc_rot
+	_cooldown = 0.6
+	hud.flash(Color(0, 0, 0, 0.5), 0.3)
+
+
 func registrar_nota(id: int) -> void:
 	if not lidas.has(id):
 		lidas.append(id)
@@ -63,7 +100,13 @@ func registrar_nota(id: int) -> void:
 
 ## Tecla J: reabre as cartas já lidas, uma por vez.
 func _unhandled_input(event: InputEvent) -> void:
-	if hud == null or player == null or modo_teste:
+	if hud == null or player == null:
+		return
+	if player.hidden and event.is_action_pressed("interact"):
+		sair_esconderijo()
+		get_viewport().set_input_as_handled()
+		return
+	if modo_teste:
 		return
 	if event.is_action_pressed("diario") and not hud.note_open() and not player.frozen:
 		if lidas.is_empty():
@@ -258,8 +301,17 @@ func aplicar_save(d: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	if player != null and player.hidden:
+		_oculto_t += delta
+		if _oculto_t > 20.0 and _oculto_t - delta <= 20.0:
+			hud.show_prompt("Algo respira do outro lado...", 3.0)
+		if _oculto_t > 25.0:
+			sair_esconderijo()
+			if screams != null:
+				screams.penalize(1, "farejou o esconderijo")
+			hud.show_prompt("Ele farejou você!", 3.0)
 	_auto_t += delta
-	if _auto_t > 60.0 and dentro == "" and not player.frozen:
+	if _auto_t > 60.0 and dentro == "" and not player.frozen and not player.hidden:
 		_auto_t = 0.0
 		salvar()
 	_cooldown = maxf(0.0, _cooldown - delta)

@@ -59,6 +59,8 @@ func _ready() -> void:
 		mode = "casas"
 	elif "--selftest-save" in args:
 		mode = "save"
+	elif "--selftest-esconder" in args:
+		mode = "esconder"
 	var mula_case := ""
 	for a in args:
 		if a.begins_with("--selftest-mula="):
@@ -173,6 +175,9 @@ func _ready() -> void:
 	elif mode == "save":
 		screams.enabled = false
 		_test_save()
+	elif mode == "esconder":
+		screams.enabled = false
+		_test_esconder()
 	elif mode == "casas":
 		Engine.time_scale = 1.0
 		screams.enabled = false
@@ -305,6 +310,60 @@ func _process(delta: float) -> void:
 	elif mode == "selftest" and finished:
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()
+
+
+## Teste dos esconderijos: entra, confere que o grito não penaliza, sai e volta ao lugar.
+func _test_esconder() -> void:
+	eventos.enabled = false
+	await get_tree().create_timer(0.6, true, false, true).timeout
+	var falhas := 0
+	var spots := get_tree().get_nodes_in_group("esconderijos")
+	print("[esconder] esconderijos: %d" % spots.size())
+	var space := get_viewport().world_3d.direct_space_state
+	for sp: Esconderijo in spots:
+		# o jogador fica a 1,3 m do gatilho, no chão, olhando para ele
+		var rp := sp.global_position
+		var q := PhysicsRayQueryParameters3D.create(rp + Vector3(1.6, 3.0, 0), rp + Vector3(1.6, -3.0, 0))
+		q.collide_with_areas = false
+		var h := space.intersect_ray(q)
+		var base := sp.pos_oculto
+		var from := Vector3(sp.global_position.x, sp.pos_oculto.y, sp.global_position.z) + (sp.global_position - sp.pos_oculto).normalized() * 0.0
+		player.global_position = sp.pos_oculto + Vector3(0, 0.0, 0)
+		var antes := player.global_position
+		_hint = ""
+		missao.esconder(sp)
+		await get_tree().create_timer(0.3, true, false, true).timeout
+		var ok1 := player.hidden and player.frozen and not player.lantern_on
+		if str(sp.name).begins_with("EsconderijoCarro"):
+			# o raio de interação (com áreas) precisa chegar ao gatilho antes da colisão do carro
+			var dir := (sp.global_position - sp.pos_oculto)
+			dir.y = 0.0
+			dir = dir.normalized()
+			var o := sp.global_position + dir * 3.2 + Vector3(0, 0.4, 0)
+			var rq := PhysicsRayQueryParameters3D.create(o, sp.global_position + Vector3(0, 0.4, 0))
+			rq.collide_with_areas = true
+			var rh := space.intersect_ray(rq)
+			var alcanca: bool = (not rh.is_empty()) and rh["collider"] == sp
+			print("[esconder] %s: raio alcança o gatilho antes do carro: %s" % [sp.name, str(alcanca)])
+			ok1 = ok1 and alcanca
+		# grito com o jogador escondido: não pode aproximar o Bradador
+		screams.enabled = true
+		screams.stage = 0
+		screams.hold = false
+		screams._timer = 0.1
+		await get_tree().create_timer(14.0, true, false, true).timeout
+		var ok2 := screams.stage == 0 and player.hidden
+		screams.enabled = false
+		screams.state = ScreamSystem.State.WAIT
+		missao._cooldown = 0.0
+		missao.sair_esconderijo()
+		var ok3 := (not player.hidden) and (not player.frozen)
+		print("[esconder] %s: escondeu=%s sem penalidade=%s saiu=%s -> %s" % [sp.name, str(ok1), str(ok2), str(ok3), "OK" if (ok1 and ok2 and ok3) else "FALHOU"])
+		if not (ok1 and ok2 and ok3):
+			falhas += 1
+		await get_tree().create_timer(0.7, true, false, true).timeout
+	print("[esconder] RESULTADO: falhas=%d" % falhas)
+	get_tree().quit()
 
 
 ## Teste de salvar/continuar: grava, bagunça o estado, carrega e confere.

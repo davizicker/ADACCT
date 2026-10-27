@@ -100,7 +100,7 @@ func _process(delta: float) -> void:
 
 
 func _judge() -> void:
-	var in_refuge := refuge_count > 0
+	var in_refuge := refuge_count > 0 or player.hidden
 	print("[mula] julgamento: refugio=%s luz=%s" % [str(in_refuge), str(player.is_lantern_lit())])
 	if in_refuge and not player.is_lantern_lit():
 		get_tree().call_group("hud", "show_prompt", "Ela passou. O escuro te escondeu.", 3.0)

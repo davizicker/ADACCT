@@ -114,14 +114,15 @@ func _build_options() -> void:
 	_slider("Efeitos e ambiente", Config.effects, 0.0, 1.0, func(v: float) -> void: Config.effects = v)
 	_slider("Sensibilidade do mouse", Config.mouse_sens, 0.0008, 0.006, func(v: float) -> void: Config.mouse_sens = v)
 	_slider("Limiar do microfone", Config.mic_threshold, 0.01, 0.3, func(v: float) -> void: Config.mic_threshold = v)
+	_slider("Resolução de renderização (FSR)", Config.escala_3d, 0.5, 1.0, func(v: float) -> void: Config.escala_3d = v)
 	var row := HBoxContainer.new()
 	var l := _lbl("Qualidade gráfica", 18, Color(0.85, 0.85, 0.9))
 	l.custom_minimum_size = Vector2(230, 0)
 	row.add_child(l)
 	var ob := OptionButton.new()
 	ob.add_item("Baixa (PC fraco)")
-	ob.add_item("Média")
-	ob.add_item("Alta")
+	ob.add_item("Média (recomendada)")
+	ob.add_item("Alta (placa forte)")
 	ob.select(Config.quality)
 	ob.item_selected.connect(func(i: int) -> void:
 		Config.quality = i

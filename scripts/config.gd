@@ -9,7 +9,8 @@ static var music := 0.7
 static var effects := 1.0
 static var mouse_sens := 0.0025
 static var mic_threshold := 0.07
-static var quality := 2         # 0 baixa, 1 média, 2 alta (2 liga os efeitos do Forward+: AO, reflexos, névoa volumétrica)
+static var quality := 1         # 0 baixa, 1 média (recomendada), 2 alta (liga GI, reflexos e TAA: placa forte)
+static var escala_3d := 1.0     # resolução de renderização (0.5 a 1.0); abaixo de 1 usa FSR 2 no Forward+ (mais FPS)
 static var grito_ativo := false # opção antiga: responder gritando (microfone ou R). Padrão: ficar parado e agachado
 static var camera_fx := true    # vinheta, granulado, aberração
 static var head_bob := true
@@ -30,6 +31,7 @@ static func load_all() -> void:
 	mouse_sens = cf.get_value("controles", "mouse_sens", mouse_sens)
 	mic_threshold = cf.get_value("controles", "mic_threshold", mic_threshold)
 	quality = cf.get_value("video", "quality", quality)
+	escala_3d = cf.get_value("video", "escala_3d", escala_3d)
 	camera_fx = cf.get_value("video", "camera_fx", camera_fx)
 	head_bob = cf.get_value("video", "head_bob", head_bob)
 	grito_ativo = cf.get_value("controles", "grito_ativo", grito_ativo)
@@ -44,6 +46,7 @@ static func save_all() -> void:
 	cf.set_value("controles", "mouse_sens", mouse_sens)
 	cf.set_value("controles", "mic_threshold", mic_threshold)
 	cf.set_value("video", "quality", quality)
+	cf.set_value("video", "escala_3d", escala_3d)
 	cf.set_value("video", "camera_fx", camera_fx)
 	cf.set_value("video", "head_bob", head_bob)
 	cf.set_value("controles", "grito_ativo", grito_ativo)
@@ -54,9 +57,15 @@ static func save_all() -> void:
 ## Aplica as opções de vídeo/áudio à cena do jogo. `main` = nó raiz (scenes/main.tscn).
 static func apply(main: Node) -> void:
 	var vp := main.get_viewport()
-	var scale: float = [0.75, 1.0, 1.0][quality]
+	var forward := RenderingServer.get_rendering_device() != null and str(ProjectSettings.get_setting("rendering/renderer/rendering_method")) == "forward_plus"
+	var scale: float = clampf(escala_3d * [0.8, 1.0, 1.0][quality], 0.4, 1.0)
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR2 if (forward and scale < 0.99) else Viewport.SCALING_3D_MODE_BILINEAR
 	vp.scaling_3d_scale = scale
-	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
+	if forward:       # no Forward+ o serrilhado sai por FXAA (Média) ou TAA (Alta, em _apply_high_end): bem mais barato que MSAA
+		vp.msaa_3d = Viewport.MSAA_DISABLED
+		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if quality == 1 else Viewport.SCREEN_SPACE_AA_DISABLED
+	else:
+		vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][quality]
 	var vila := main.get_node_or_null("Vila")
 	if vila:
 		var lua := vila.get_node_or_null("Lua") as DirectionalLight3D
@@ -103,9 +112,12 @@ static func _apply_high_end(main: Node) -> void:
 	e.ssil_enabled = hi
 	e.ssr_enabled = hi            # reflexos na pedra molhada e na água
 	e.sdfgi_enabled = hi          # iluminação global (luz que "quica" nas paredes)
-	e.volumetric_fog_enabled = hi # raios de luz na neblina
+	e.volumetric_fog_enabled = quality >= 1   # raios de luz na neblina (resolução reduzida em project.godot)
+	e.volumetric_fog_density = 0.02
+	e.volumetric_fog_albedo = Color(0.55, 0.62, 0.8)
 	if hi:
-		e.volumetric_fog_density = 0.02
-		e.volumetric_fog_albedo = Color(0.55, 0.62, 0.8)
+		e.sdfgi_cascades = 3
+		e.sdfgi_min_cell_size = 0.5
 		e.sdfgi_use_occlusion = true
+	RenderingServer.environment_set_ssao_quality(RenderingServer.ENV_SSAO_QUALITY_LOW if quality == 1 else RenderingServer.ENV_SSAO_QUALITY_MEDIUM, true, 0.5, 2, 50.0, 300.0)
 	main.get_viewport().use_taa = hi

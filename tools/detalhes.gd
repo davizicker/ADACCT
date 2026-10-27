@@ -20,6 +20,7 @@ func construir(builder: VilaBuilder) -> Node3D:
 	root.add_child(_flores())
 	root.add_child(_folhas())
 	root.add_child(_pocas())
+	root.add_child(_plantas_reais())
 	return root
 
 
@@ -131,6 +132,7 @@ func _mmi(nome: String, mesh: Mesh, xf: Array[Transform3D], cores := [], fim := 
 	mi.multimesh = mm
 	mi.visibility_range_end = fim
 	mi.visibility_range_end_margin = 10.0
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if fim < 100.0 else GeometryInstance3D.SHADOW_CASTING_SETTING_ON    # detalhes pequenos não projetam sombra (economiza uma passada inteira)
 	contagem[nome] = xf.size()
 	return mi
 
@@ -289,4 +291,72 @@ func _pocas() -> Node3D:
 		g.add_child(mi)
 		n += 1
 	contagem["Pocas"] = n
+	return g
+
+
+# ------------------------------------------------------------------ plantas reais (Poly Haven, CC0)
+
+## Malha de um .glb de planta + transformação relativa (a malha pode ter deslocamento próprio); folhas viram "alpha scissor"
+## para não haver ordenação de transparência (MultiMesh com milhares de instâncias).
+func _planta(key: String) -> Dictionary:
+	var h := PropKit.make(key, 1.0)
+	var mi: MeshInstance3D = h.find_children("*", "MeshInstance3D", true, false)[0]
+	var rel := Transform3D.IDENTITY
+	var n: Node = mi
+	while n != h and n != null:
+		rel = (n as Node3D).transform * rel
+		n = n.get_parent()
+	var mesh := mi.mesh.duplicate() as Mesh
+	for i in mesh.get_surface_count():
+		var m := mesh.surface_get_material(i)
+		if m is BaseMaterial3D:
+			var d := m.duplicate() as BaseMaterial3D
+			d.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			d.alpha_scissor_threshold = 0.45
+			d.cull_mode = BaseMaterial3D.CULL_DISABLED
+			mesh.surface_set_material(i, d)
+	h.free()
+	return {"mesh": mesh, "rel": rel}
+
+
+func _espalha(nome: String, key: String, n: int, modo: String, esc: Vector2, fim: float) -> MultiMeshInstance3D:
+	var pl := _planta(key)
+	var rel: Transform3D = pl["rel"]
+	var xf: Array[Transform3D] = []
+	var tries := 0
+	while xf.size() < n and tries < n * 6:
+		tries += 1
+		var s := b._rng.randf_range(2.0, Route.length() - 8.0)
+		var sig := -1.0 if b._rng.randf() < 0.5 else 1.0
+		var w := Route.width(s)
+		var p := Vector3.ZERO
+		match modo:
+			"calcada":                    # pé das paredes, em cima da calçada
+				p = _ponto(s, sig * (w * 0.5 + SW - b._rng.randf_range(0.04, 0.28)), SW_H - 0.03)
+				if not b._livre(p, 0.35):
+					continue
+			"rua":                        # frestas do calçamento nas beiradas
+				p = _ponto(s, sig * (w * 0.5 - b._rng.randf_range(0.0, 0.5)), 0.0)
+			_:                            # encostas
+				var d := b._rng.randf_range(w * 0.5 + 11.0, 65.0)
+				var q := Route.pos(s) + Route.right(s) * sig * d
+				p = Vector3(q.x, b.terrain_h(q.x, q.z) - 0.04, q.z)
+		var sc := b._rng.randf_range(esc.x, esc.y)
+		var bas := Basis(Vector3.UP, b._rng.randf() * TAU).scaled(Vector3.ONE * sc)
+		xf.append(Transform3D(bas, p) * rel)
+	return _mmi(nome, pl["mesh"], xf, [], fim)
+
+
+func _plantas_reais() -> Node3D:
+	var g := Node3D.new()
+	g.name = "PlantasReais"
+	g.add_child(_espalha("Tufo_a", "grass_tuft_a", 700, "calcada", Vector2(1.8, 3.2), 60.0))
+	g.add_child(_espalha("Tufo_b", "grass_tuft_b", 700, "calcada", Vector2(1.6, 2.8), 60.0))
+	g.add_child(_espalha("Tufo_c", "grass_tuft_a", 900, "encosta", Vector2(2.5, 4.5), 90.0))
+	g.add_child(_espalha("Tufo_d", "grass_tuft_b", 900, "encosta", Vector2(2.2, 4.0), 90.0))
+	g.add_child(_espalha("Erva_a", "weed_a", 260, "rua", Vector2(1.3, 2.4), 45.0))
+	g.add_child(_espalha("Erva_b", "weed_b", 260, "calcada", Vector2(1.3, 2.4), 45.0))
+	g.add_child(_espalha("Vinca_a", "periwinkle_a", 150, "calcada", Vector2(1.5, 2.6), 40.0))
+	g.add_child(_espalha("Vinca_b", "periwinkle_b", 150, "calcada", Vector2(1.5, 2.6), 40.0))
+	g.add_child(_espalha("Vinca_c", "periwinkle_c", 120, "encosta", Vector2(2.0, 3.5), 55.0))
 	return g

@@ -104,3 +104,9 @@ Casas que se atravessavam nas curvas (6 pares, com telhados cruzados): agora cad
 - **Natureza e solo:** 780 pedras facetadas nas encostas, 1.281 seixos na beira da rua, 467 tufos de flores, 4.802 folhas secas, 29 poças reflexivas, capim 3x mais denso (`tools/detalhes.gd`).
 - O bake pegou 25 "peças soltas" (a plaquinha do número da casa estava afastada da parede): corrigido, 0. A auditoria de peças achou barris atravessando o carro coberto: agora o lugar dos carros é reservado. Tudo em 0.
 - Catálogo completo: `docs/14-mapeamento-de-detalhes.md`.
+
+## 10. Ruas, becos, assets novos, desempenho e jogabilidade (v11)
+- **Rua** mais longa (343 → 392 m) e com mais curvas; as constantes de adro, igreja e larguras foram reescaladas. Raio mínimo 21 m na parte com casas.
+- **17 becos** (12 sobem até a porta, 5 sem saída). O teste dos becos achou um bug real: uma casa vizinha invadia o beco (o jogador parava a 4,8 m). Corrigido (casas perto de becos ficam rasas e as casas seguintes respeitam a "pegada" do beco).
+- **14 interiores**, 21 modelos novos integrados, plantas reais no solo, esconderijos (`--selftest-esconder`).
+- **Desempenho (Forward+, Qualidade Média, mesmo ponto de vista no software):** chamadas de desenho **2.515 → 1.935** (-23%) e triângulos **3,6 M → 1,6 M**, por: oclusão por casa (OccluderInstance3D), alcances de visibilidade ajustados à neblina, detalhes sem sombra, FXAA no lugar de MSAA, GI/SSIL/SSR/TAA só na Alta, névoa volumétrica em resolução menor, resolução de renderização com FSR 2. **Padrão agora é Média**; F3 mostra FPS.

@@ -155,7 +155,7 @@ func _process(delta: float) -> void:
 			if Config.grito_ativo:
 				if player.move_speed < 0.5 and is_shouting():
 					_shout_time += delta
-			elif player.crouching and player.move_speed < 0.5:
+			elif (player.crouching and player.move_speed < 0.5) or player.hidden:
 				_shout_time += delta
 			if forced_results.size() > 0:
 				_resolve(forced_results.pop_front())
@@ -257,6 +257,9 @@ func _play_echo_behind() -> void:
 
 
 func _update_gaze(delta: float) -> void:
+	if player.hidden:
+		_gaze_t = 0.0
+		return
 	if stage < 1 or not bradador.visible:
 		_gaze_t = 0.0
 		return
@@ -300,6 +303,8 @@ var _noise_t := 0.0
 
 ## Correr enquanto ele grita ou espera a resposta: ele ouve os passos no chão de pedra.
 func _check_noise(delta: float) -> void:
+	if player.hidden:
+		return
 	if player.sprinting and player.move_speed > 2.0:
 		_noise_t += delta
 		if _noise_t >= 1.3:

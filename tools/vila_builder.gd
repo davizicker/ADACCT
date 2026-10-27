@@ -497,19 +497,26 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	print("[vila] detalhes: ", det.contagem)
 	print("[vila] entradas: ", _entradas_feitas)
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
-	for name in ["Casas", "MurosEQuintais", "Becos", "FundoDaRua", "Ponte"]:
+	# a neblina (densidade 0,03) já apaga tudo a ~100 m: não desenhar além disso economiza centenas de chamadas
+	for name in ["Casas", "MurosEQuintais", "FundoDaRua", "Ponte"]:
 		var n := root.get_node_or_null(name)
 		if n:
-			_set_range(n, 150.0)
+			_set_range(n, 125.0)
+	var nb := root.get_node_or_null("Becos")
+	if nb:
+		_set_range(nb, 100.0)
 	# detalhes pequenos somem mais cedo: a neblina já os esconde e eles são muitos objetos
 	for name in ["Iluminacao", "Nichos", "Adornos", "Coletaveis", "Props"]:
 		var n := root.get_node_or_null(name)
 		if n:
-			_set_range(n, 105.0)
+			_set_range(n, 85.0)
+	var npe := root.get_node_or_null("PropsEncosta")
+	if npe:
+		_set_range(npe, 130.0)
 	_set_label_range(root, 55.0)
 	for halo in root.find_children("Halo", "MeshInstance3D", true, false):
 		(halo as GeometryInstance3D).visibility_range_end = 75.0
-	_set_range(root.get_node("Morros/CasasDoMorro"), 360.0)
+	_set_range(root.get_node("Morros/CasasDoMorro"), 280.0)
 	_set_range(root.get_node("Morros/Arvores"), 220.0)
 	print("[vila] pecas soltas (flutuando): %d" % _flutuando.size())
 	for f in _flutuando.slice(0, 40):
@@ -695,6 +702,14 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var up := 3.4
 	var height := fh + (floors - 1) * up
 	_box(c, "Corpo", Vector3(depth, height + 4.0, w), Vector3(depth / 2.0, height / 2.0 - 2.0, 0), wall, true)
+	# oclusão: o corpo da casa esconde o que está atrás (só Forward+/Mobile; ligado em project.godot)
+	var occ := OccluderInstance3D.new()
+	occ.name = "Oclusor"
+	var bo := BoxOccluder3D.new()
+	bo.size = Vector3(maxf(depth - 0.6, 0.5), height + 2.0, maxf(w - 0.6, 0.5))
+	occ.occluder = bo
+	occ.position = Vector3(depth / 2.0, height / 2.0 - 1.0, 0)
+	c.add_child(occ)
 	# telhado com UV (telhas no sentido do caimento), cumeeira de capa e tábuas de beiral; inclinação varia por casa
 	var rise := (depth + 1.4) * _rng.randf_range(0.24, 0.33)
 	var rcx := depth / 2.0 - 0.2
@@ -793,7 +808,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		AABB(Vector3(rcx - (depth + 1.4) / 2.0, ry - 0.05, -(w + 0.5) / 2.0), Vector3(depth + 1.4, rise + 0.1, w + 0.5))]
 	for fl in b.floating(solidos):
 		_flutuando.append("casa w=%.1f: %s" % [w, fl])
-	_mesh_node(c, "Detalhes", b.commit())
+	var det := _mesh_node(c, "Detalhes", b.commit())
+	det.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # molduras e grades não precisam de sombra (menos uma passada por casa)
 	return c
 
 
@@ -1069,8 +1085,12 @@ func _lot_quintal(parent: Node3D, f: Dictionary) -> void:
 	for sz: float in [-1.0, 1.0]:
 		b.box("cantaria", Vector3(0.7, wall_h + 0.6, 0.45), Vector3(0.0, (wall_h + 0.6) / 2.0 - 0.3, gz + sz * 0.95))   # pilares do portão
 		b.box("cantaria", Vector3(0.8, 0.2, 0.6), Vector3(0.0, wall_h + 0.36, gz + sz * 0.95))
-	b.box("madeira_natural", Vector3(0.1, wall_h - 0.2, 1.5), Vector3(-0.1, (wall_h - 0.2) / 2.0, gz))
-	b.box("ferro", Vector3(0.12, 0.05, 1.5), Vector3(-0.17, wall_h * 0.55, gz))
+	if _rng.randf() < 0.5:
+		var pg := _prop(g, "large_iron_gate", Vector3(-0.12, 0, gz), -PI / 2.0, 1.55 / 2.95)      # portão de ferro (Poly Haven) entre os pilares
+		pg.name = "PortaoDeFerro"
+	else:
+		b.box("madeira_natural", Vector3(0.1, wall_h - 0.2, 1.5), Vector3(-0.1, (wall_h - 0.2) / 2.0, gz))
+		b.box("ferro", Vector3(0.12, 0.05, 1.5), Vector3(-0.17, wall_h * 0.55, gz))
 	for fl in b.floating([AABB(Vector3(0.0, -1.5, -w / 2.0), Vector3(0.5, wall_h + 1.5, w))]):
 		_flutuando.append("quintal w=%.1f: %s" % [w, fl])
 	_mesh_node(g, "Detalhes", b.commit())
@@ -1261,6 +1281,23 @@ func _lamp_light(parent: Node3D, pos: Vector3, energy := 0.9) -> OmniLight3D:
 	return light
 
 
+## Esconderijo: gatilho (Area) um pouco maior que o objeto, para o raio de interação o alcançar antes da colisão.
+func _esconderijo(parent: Node, nome: String, pos: Vector3, size: Vector3, oculto: Vector3, yaw: float) -> Area3D:
+	var a := Area3D.new()
+	a.name = nome
+	a.position = pos
+	a.set_script(load("res://scripts/esconderijo.gd"))
+	a.set("pos_oculto", oculto)
+	a.set("yaw_oculto", yaw)
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = size
+	cs.shape = bs
+	a.add_child(cs)
+	parent.add_child(a)
+	return a
+
+
 ## Beco SEM SAÍDA: o portão de ferro trancado fecha o alto da escada (dá para ver o quintal atrás) e há uma casa com porta na parede lateral.
 func _beco_cego(g: Node3D, wb: float, run_len: float, total: float, run: float, rise: float, cego_id: String) -> void:
 	g.set_meta("cego", true)
@@ -1294,6 +1331,9 @@ func _beco_cego(g: Node3D, wb: float, run_len: float, total: float, run: float, 
 	a.add_child(cs)
 	g.add_child(a)
 	_coletavel(g, "Oleo_beco_%d" % _n, Vector3(run_len - 0.5, total, -sz * 0.7), "oleo", 0, "Pegar querosene")
+	# esconderijo: agachado no canto do alto da escada, atrás do portão (os positions são locais ao beco; convertidos no bake)
+	var bx := g.transform.basis.x
+	_esconderijo(g, "Esconderijo", Vector3(run_len - 0.9, total + 0.8, sz * 0.95), Vector3(1.0, 1.6, 0.9), g.transform * Vector3(run_len - 1.3, total + 0.1, sz * 0.9), atan2(-bx.x, -bx.z))
 	_lamp_light(g, Vector3(dx, base_y + 3.0, sz * (wb / 2.0 - 0.6)), 0.7)
 
 
@@ -2283,6 +2323,9 @@ func _props_rua() -> Node3D:
 		var carro := _prop(root, "covered_car", c, _yaw_to(Route.tangent(s)) + (0.0 if sg < 0 else PI), 1.0)
 		carro.position.y = c.y + 0.02
 		_prop_collision(carro, "caixa", Vector3(1.9, 1.4, 4.4), Vector3(0, 0.7, 0))
+		# esconderijo atrás do carro, do lado da parede
+		var toward_wall := Route.right(s) * sg
+		var ec := _esconderijo(root, "EsconderijoCarro_%d" % int(s), c + toward_wall * 0.2 + Vector3(0, 0.9, 0), Vector3(3.0, 1.8, 5.2), c + toward_wall * 1.45 + Vector3(0, 0.05, 0), _yaw_to(toward_wall))
 	# --- banquinhos e baldes junto às portas, com um lampião de querosene esquecido em um deles
 	for cfg in [[30.0, 1.0], [96.0, -1.0], [212.0, 1.0], [264.0, -1.0], [304.0, 1.0]]:
 		var sp := _spot(cfg[1], cfg[0], 0.55)
@@ -2309,6 +2352,43 @@ func _props_rua() -> Node3D:
 		aro.rotation.x = -0.20      # inclinado, encostado na parede
 	var bola := _prop(root, "football", _spot(1.0, 157.0, 2.6)["pos"], _rng.randf() * TAU, 1.0)
 	bola.name = "BolaEsquecida"
+	# --- ferramentas e utilidades de 1961 encostadas nas paredes: escadas, machados, regadores, lousas de cardápio
+	for cfg in [[48.0, 1.0], [110.0, -1.0], [190.0, 1.0], [240.0, 1.0], [298.0, -1.0], [348.0, 1.0]]:
+		var sl := _spot(cfg[1], cfg[0], 0.55)
+		if not _livre(sl["pos"], 0.7):
+			continue
+		_reservar(sl["pos"], 0.7)
+		var esc := _prop(root, "wooden_ladder", sl["pos"], _yaw_to(sl["out"]), 1.6)
+		esc.rotation.x = -0.2
+		_prop_collision(esc, "caixa", (esc.get_meta("bb") as AABB).size, (esc.get_meta("bb") as AABB).get_center())
+	for cfg in [[36.0, 1.0], [101.0, 1.0], [186.0, -1.0], [276.0, 1.0]]:
+		var sa2 := _spot(cfg[1], cfg[0], 0.3)
+		if not _livre(sa2["pos"], 0.4):
+			continue
+		_reservar(sa2["pos"], 0.4)
+		var machado := _prop(root, "wooden_axe_02", sa2["pos"], _yaw_to(sa2["out"]) + _rng.randf_range(-0.4, 0.4), 1.0)
+		machado.rotation.x = -0.28
+	for cfg in [[22.0, -1.0], [66.0, -1.0], [131.0, 1.0], [199.0, 1.0], [256.0, -1.0], [312.0, 1.0]]:
+		var sr := _spot(cfg[1], cfg[0], 0.5)
+		if not _livre(sr["pos"], 0.4):
+			continue
+		_reservar(sr["pos"], 0.4)
+		var regador := _prop(root, "watering_can_metal_01", sr["pos"], _rng.randf() * TAU, 1.0)
+		_prop_collision(regador, "cil", Vector3(0.35, 0.35, 0.35), Vector3(0, 0.17, 0))
+	for id in ["venda", "padaria", "escola", "carpintaria"]:
+		if not _entradas_feitas.has(id):
+			continue
+		var ent: Dictionary = {}
+		for e in ENTRADAS:
+			if e["id"] == id:
+				ent = e
+		var sl2 := _spot(ent["sigma"], float(_entradas_feitas[id]) - 1.4, 0.9)
+		if not _livre(sl2["pos"], 0.7):
+			continue
+		_reservar(sl2["pos"], 0.7)
+		var lousa := _prop(root, "standing_chalkboard_01", sl2["pos"], _yaw_to(sl2["out"]) + _rng.randf_range(-0.3, 0.3), 1.0)
+		lousa.name = "Lousa_%s" % id
+		_prop_collision(lousa, "caixa", (lousa.get_meta("bb") as AABB).size, (lousa.get_meta("bb") as AABB).get_center())
 	# --- estátua sobre pedestal no adro, voltada para a porta da igreja
 	var sa := Route.pos(360.0) + Route.right(360.0) * (-5.4)
 	var base := _group(root, "Pedestal", Transform3D(Basis(Vector3.UP, _yaw_to(Route.tangent(360.0))), sa))
