@@ -89,3 +89,5 @@ Ferramentas novas (rodam sozinhas e acusam o problema):
 - `tools/preview_criaturas.gd`: fotografa Bradador e Mula de perto.
 
 Bradador e Mula foram refeitos (malhas por código: manto esfarrapado, rosto, braços longos e dedos; corpo, pescoço em brasa, pernas articuladas, cauda). Continuam **placeholders**: os modelos reais são o item 1 e 3 de `docs/09-mapa-de-assets-realismo-extremo.md`.
+
+Casas que se atravessavam nas curvas (6 pares, com telhados cruzados): agora cada casa **encurta a profundidade** até a planta não invadir a vizinha (`_casa_atravessa`). `auditoria_geom.gd`: **0 casas se atravessando** (antes 6).

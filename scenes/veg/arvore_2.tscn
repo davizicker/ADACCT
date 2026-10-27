@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/arvore_2.res" id="1_pfd20"]
 
-[node name="Arvore_2" type="Node3D" unique_id=1626177498]
+[node name="Arvore_2" type="Node3D" unique_id=186015968]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=1786120090]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=600945067]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1

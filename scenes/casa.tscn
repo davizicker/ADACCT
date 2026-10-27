@@ -168,20 +168,20 @@ _surfaces = [{
 "vertex_data": PackedByteArray("Z2aOQLn5F0FFhrM/Z2aOQO0sO0FFhrM/Z2aOQO0sO0HvjwZAZ2aOQLn5F0FFhrM/Z2aOQO0sO0HvjwZAZ2aOQLn5F0HvjwZAzcykQLn5F0FFhrM/zcykQO0sO0HvjwZAzcykQO0sO0FFhrM/zcykQLn5F0FFhrM/zcykQLn5F0HvjwZAzcykQO0sO0HvjwZAZ2aOQLn5F0FFhrM/Z2aOQLn5F0HvjwZAzcykQLn5F0HvjwZAZ2aOQLn5F0FFhrM/zcykQLn5F0HvjwZAzcykQLn5F0FFhrM/Z2aOQO0sO0FFhrM/zcykQO0sO0HvjwZAZ2aOQO0sO0HvjwZAZ2aOQO0sO0FFhrM/zcykQO0sO0FFhrM/zcykQO0sO0HvjwZAZ2aOQLn5F0FFhrM/zcykQLn5F0FFhrM/zcykQO0sO0FFhrM/Z2aOQLn5F0FFhrM/zcykQO0sO0FFhrM/Z2aOQO0sO0FFhrM/Z2aOQLn5F0HvjwZAzcykQO0sO0HvjwZAzcykQLn5F0HvjwZAZ2aOQLn5F0HvjwZAZ2aOQO0sO0HvjwZAzcykQO0sO0HvjwZAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//3///wAA/7//f///AAD/v/9///8AAP+//3///wAA/7//f///AAD/v/9///8AAP+///////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA")
 }]
 
-[node name="Casa" type="Node3D" unique_id=1332743928]
+[node name="Casa" type="Node3D" unique_id=417185861]
 
-[node name="Corpo" type="MeshInstance3D" parent="." unique_id=749658079]
+[node name="Corpo" type="MeshInstance3D" parent="." unique_id=1348649698]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.7, 0)
 material_override = ExtResource("1_mhns3")
 mesh = SubResource("BoxMesh_sgvlb")
 
-[node name="Colisao" type="StaticBody3D" parent="Corpo" unique_id=1368613796]
+[node name="Colisao" type="StaticBody3D" parent="Corpo" unique_id=1642718800]
 
-[node name="@CollisionShape3D@224" type="CollisionShape3D" parent="Corpo/Colisao" unique_id=2105207731]
+[node name="@CollisionShape3D@224" type="CollisionShape3D" parent="Corpo/Colisao" unique_id=975477154]
 shape = SubResource("BoxShape3D_dcuoi")
 
-[node name="Telhado" type="MeshInstance3D" parent="." unique_id=520555315]
+[node name="Telhado" type="MeshInstance3D" parent="." unique_id=1770217249]
 mesh = SubResource("ArrayMesh_vu1hf")
 
-[node name="Detalhes" type="MeshInstance3D" parent="." unique_id=553864901]
+[node name="Detalhes" type="MeshInstance3D" parent="." unique_id=1078364060]
 mesh = SubResource("ArrayMesh_ml6ug")

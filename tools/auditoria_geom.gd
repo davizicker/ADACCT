@@ -83,6 +83,7 @@ func _init() -> void:
 			for pt in pts:
 				if dentro.call(pt, corpos[j], 0.2):
 					overlaps += 1
+					print("[geom] casas se atravessam: %s e %s em %s" % [a_mi.get_parent().name, corpos[j].get_parent().name, str(a_mi.global_position)])
 					break
 	print("[geom] casas=%d (casas com interpenetracao real: %d) plantas individuais=%d problemas=%d" % [corpos.size(), overlaps, plantas, problems])
 	# ---------- buracos no chão: dispara raios de cima para baixo em toda a rua (a cada 0,5 m, em 7 posições laterais)

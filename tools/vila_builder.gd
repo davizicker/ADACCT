@@ -28,6 +28,7 @@ var _rs := PackedVector2Array()
 var _noise_lo: FastNoiseLite
 var _noise_hi: FastNoiseLite
 var _n := 0
+var _casas_postas: Array[Dictionary] = []   # {xf, depth, w} das casas já colocadas (para não se atravessarem nas curvas)
 var _flutuando: Array[String] = []   # peças que não encostam em nada (auditoria feita no bake)
 var _spots: Array[Vector2] = []
 var _lamp_n := 0
@@ -583,6 +584,12 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		if absf(float(f["sm"]) - float(al[0])) < 15.0:
 			near_alley = true
 	var depth := _rng.randf_range(4.8, 5.8) if near_alley else _rng.randf_range(9.0, 12.0)
+	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
+	var xf0: Transform3D = f["xf"]
+	xf0.origin += xf0.basis.x * 0.05
+	while depth > 2.6 and _casa_atravessa(xf0, depth, float(f["w"]) + 0.24):
+		depth -= 0.3
+	_casas_postas.append({"xf": xf0, "depth": depth, "w": float(f["w"]) + 0.24})
 	var casa := make_casa(f["w"] + 0.24, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
 		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted)
 	casa.name = "Casa_%02d" % _n
@@ -593,6 +600,27 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	xf.origin += xf.basis.x * jit
 	casa.transform = xf
 	parent.add_child(casa)
+
+
+## true se a pegada (planta) da casa em `xf` com `depth` x `w` invade a de alguma casa já colocada.
+func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
+	for o in _casas_postas:
+		var oxf: Transform3D = o["xf"]
+		if oxf.origin.distance_to(xf.origin) > depth + float(o["depth"]) + w + float(o["w"]):
+			continue
+		for ix in 6:
+			for iz in 4:
+				var p: Vector3 = xf * Vector3(0.25 + (depth - 0.5) * ix / 5.0, 0.0, -w / 2.0 + 0.15 + (w - 0.3) * iz / 3.0)
+				var q: Vector3 = oxf.affine_inverse() * p
+				if q.x > -0.15 and q.x < float(o["depth"]) + 0.15 and absf(q.z) < float(o["w"]) / 2.0 + 0.15:
+					return true
+		for ix in 6:
+			for iz in 4:
+				var p2: Vector3 = oxf * Vector3(0.25 + (float(o["depth"]) - 0.5) * ix / 5.0, 0.0, -float(o["w"]) / 2.0 + 0.15 + (float(o["w"]) - 0.3) * iz / 3.0)
+				var q2: Vector3 = xf.affine_inverse() * p2
+				if q2.x > -0.15 and q2.x < depth + 0.15 and absf(q2.z) < w / 2.0 + 0.15:
+					return true
+	return false
 
 
 # ------------------------------------------------------------------ casa colonial
