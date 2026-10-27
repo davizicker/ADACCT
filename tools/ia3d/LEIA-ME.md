@@ -59,3 +59,12 @@ Para modelos já limpos (como os do Poly Haven) use `--solto 0` para não remove
 2. `python tools/ia3d/fabrica3d.py "estátua gótica de pedra" --nome estatua --altura 1.7`
 3. Ou com sua imagem: `python tools/ia3d/fabrica3d.py --imagem bradador.png --nome bradador --altura 2.7 --destino assets/models/bradador.glb`
 **Testado:** a etapa de limpeza e a orquestração (`--simular arquivo.glb`). **Não testado:** texto→imagem, remover fundo e TripoSR (sem GPU aqui).
+
+## Site pessoal (tipo Meshy)
+```
+pip install flask
+python tools/ia3d/site/app.py            # depois abra http://127.0.0.1:5000
+python tools/ia3d/site/app.py --demo assets/models/poly/GothicCabinet_01.glb   # teste sem IA
+```
+Tem campo de prompt, envio de imagem, nome/altura/triângulos, andamento ao vivo, galeria com prévia 3D girando, botão **Baixar** e **Enviar ao jogo** (copia para `assets/models/gerados/`).
+**Testado:** o site e o fluxo completo em modo demonstração (gerar, acompanhar, listar, baixar, enviar). **Não testado:** a IA de verdade (precisa do TripoSR instalado e GPU). A prévia 3D usa um componente do Google carregado da internet.
