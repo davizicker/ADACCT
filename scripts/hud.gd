@@ -128,7 +128,7 @@ func show_prompt(text: String, seconds: float) -> void:
 
 
 func set_status(oil: float, lantern_on: bool) -> void:
-	_status.text = "Lampião [F]: %s   óleo: %d" % ["aceso" if lantern_on else "apagado", int(oil)]
+	_status.text = "Lanterna [F]: %s   querosene: %d" % ["acesa" if lantern_on else "apagada", int(oil)]
 
 
 func set_mic(level: float, threshold: float, has_mic: bool) -> void:

@@ -455,10 +455,12 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_lamps())
 	root.add_child(_adornos())
 	root.add_child(_nichos())
+	root.add_child(_props_rua())
 	root.add_child(_coletaveis())
 	_bridge(root)
 	root.add_child(_church_plaza())
 	root.add_child(_hillside())
+	root.add_child(_props_encosta())
 	root.add_child(_serra())
 	root.add_child(_route_path())
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
@@ -467,7 +469,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 		if n:
 			_set_range(n, 150.0)
 	# detalhes pequenos somem mais cedo: a neblina já os esconde e eles são muitos objetos
-	for name in ["Iluminacao", "Nichos", "Adornos", "Coletaveis"]:
+	for name in ["Iluminacao", "Nichos", "Adornos", "Coletaveis", "Props"]:
 		var n := root.get_node_or_null(name)
 		if n:
 			_set_range(n, 105.0)
@@ -964,12 +966,14 @@ func _lot_beco(parent: Node3D, f: Dictionary) -> void:
 	_blocker(g, "Fundo", Vector3(0.6, 8.0, wb + 1.2), Vector3(run_len + 0.6, total + 3.0, 0))
 	var gate := _batch()
 	gate.box("cantaria", Vector3(0.5, 3.0, wb + 1.0), Vector3(run_len + 0.35, total + 1.5, 0))
-	gate.box("madeira_natural", Vector3(0.12, 2.3, wb - 0.6), Vector3(run_len + 0.0, total + 1.15, 0))
 	_mesh_node(g, "Portao", gate.commit())
+	# porta de madeira com ferragens (Poly Haven large_castle_door, CC0), voltada para a escada
+	var door := _prop(g, "large_castle_door", Vector3(run_len + 0.12, total, 0), -PI / 2.0, 1.0)
+	door.name = "PortaDoBeco"
 	_plant(g, "arvore_%d" % _rng.randi_range(0, 2), Vector3(run_len + 3.0, total - 0.6, 0.5), _rng.randf() * TAU, 1.2)
 	_plant(g, "bananeira", Vector3(run_len + 1.5, total - 0.3, -wb), _rng.randf() * TAU, 1.0)
 	_plant(g, "samambaia", Vector3(run_len * 0.5, total * 0.5 + 2.7, wb / 2.0 + 0.6), 0.0, 1.2)
-	var lamp := _lantern_wall(Vector3(run_len * 0.4, total * 0.4 + 2.4, wb / 2.0 - 0.55), PI)
+	var lamp := _lantern_wall(Vector3(run_len * 0.4, total * 0.4 + 2.3, wb / 2.0), PI)
 	g.add_child(lamp)
 
 
@@ -1024,7 +1028,7 @@ func _lot_chafariz(parent: Node3D, f: Dictionary) -> void:
 		jet.rotation.y = yaw
 		jet.material_override = mat("agua_queda")
 		jet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var lamp := _lantern_wall(Vector3(-0.20, 2.9, 2.35), PI / 2.0)
+	var lamp := _lantern_wall(Vector3(-0.26, 2.55, 1.85), -PI / 2.0)
 	lamp.name = "LampiaoDoChafariz"
 	g.add_child(lamp)
 	_blocker(g, "Colisao", Vector3(1.6, 5.0, w), Vector3(0.7, 1.5, 0))
@@ -1060,25 +1064,15 @@ func _halo(parent: Node3D, pos: Vector3, size: float, mat_name := "halo_quente")
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi
 func make_poste() -> Node3D:
-	var p := Node3D.new()
-	p.name = "Poste"
-	var b := _batch()
-	# base alargada, fuste, colar, braço com voluta e lanterna de ferro
-	b.cylinder("ferro", 0.20, 0.13, 0.5, Vector3(0, 0.25, 0), Vector3.ZERO, 8)
-	b.cylinder("ferro", 0.07, 0.055, 3.0, Vector3(0, 2.0, 0), Vector3.ZERO, 8)
-	b.cylinder("ferro", 0.11, 0.11, 0.1, Vector3(0, 0.62, 0), Vector3.ZERO, 8)
-	b.cylinder("ferro", 0.11, 0.11, 0.08, Vector3(0, 3.42, 0), Vector3.ZERO, 8)
-	b.box("ferro", Vector3(0.36, 0.05, 0.36), Vector3(0, 3.5, 0))
-	for sx: float in [-1.0, 1.0]:
-		for sz: float in [-1.0, 1.0]:
-			b.box("ferro", Vector3(0.03, 0.46, 0.03), Vector3(sx * 0.15, 3.78, sz * 0.15))
-	b.cylinder("ferro", 0.27, 0.03, 0.18, Vector3(0, 4.12, 0), Vector3(0, PI / 4.0, 0), 4)
-	b.sphere("ferro", 0.04, Vector3(0, 4.26, 0), 6, 4)
-	_mesh_node(p, "Malha", b.commit())
-	_glass_node(p, Vector3(0.27, 0.42, 0.27), Vector3(0, 3.78, 0))
-	_lamp_light(p, Vector3(0, 3.7, 0))
-	_halo(p, Vector3(0, 3.78, 0), 2.4)
-	return p
+	# poste de ferro fundido (Poly Haven street_lamp_01, CC0) com a lâmpada emissiva; a luz sai do bulbo
+	var m := PropKit.make("street_lamp_01", 1.0)
+	m.name = "Poste"
+	PropKit.setup_bulb(m, Color(1.0, 0.82, 0.52), 3.4)
+	var bpos: Vector3 = m.get_meta("bulb_pos", Vector3(0, 3.5, 0))
+	_lamp_light(m, bpos, 1.7)
+	_halo(m, bpos, 2.6)
+	_prop_collision(m, "cil", Vector3(0.22, 3.9, 0.22), Vector3(0, 1.95, 0))
+	return m
 
 
 func _glass_node(parent: Node3D, size: Vector3, pos: Vector3) -> void:
@@ -1086,32 +1080,17 @@ func _glass_node(parent: Node3D, size: Vector3, pos: Vector3) -> void:
 	bm.size = size
 	var mi := _mesh_node(parent, "Vidro", bm, pos)
 	mi.material_override = (mat("vidro_lampiao") as Material).duplicate()
-
-
 func _lantern_wall(pos: Vector3, yaw: float) -> Node3D:
-	var p := Node3D.new()
-	p.name = "LampiaoParede"
-	p.position = pos
-	p.rotation.y = yaw
-	var b := _batch()
-	var c := Vector3(0, -0.2, -0.5)               # centro da lanterna
-	b.box("ferro", Vector3(0.10, 0.24, 0.03), Vector3(0, -0.04, -0.015))                       # placa na parede
-	b.box("ferro", Vector3(0.04, 0.04, 0.52), Vector3(0, 0.02, -0.28))                         # braço
-	b.box("ferro", Vector3(0.03, 0.03, 0.40), Vector3(0, -0.11, -0.19), Vector3(0.62, 0, 0))   # escora diagonal
-	b.sphere("ferro", 0.035, Vector3(0, 0.02, -0.55), 6, 4)
-	b.box("ferro", Vector3(0.025, 0.12, 0.025), Vector3(0, 0.00, -0.5))                        # gancho
-	b.box("ferro", Vector3(0.30, 0.04, 0.30), c + Vector3(0, -0.19, 0))                        # base
-	for sx: float in [-1.0, 1.0]:
-		for sz: float in [-1.0, 1.0]:
-			b.box("ferro", Vector3(0.025, 0.36, 0.025), c + Vector3(sx * 0.125, 0, sz * 0.125))  # colunas da gaiola
-	b.box("ferro", Vector3(0.30, 0.03, 0.30), c + Vector3(0, 0.185, 0))
-	b.cylinder("ferro", 0.21, 0.03, 0.14, c + Vector3(0, 0.26, 0), Vector3(0, PI / 4.0, 0), 4)  # topo piramidal
-	b.sphere("ferro", 0.03, c + Vector3(0, 0.345, 0), 6, 4)
-	_mesh_node(p, "Malha", b.commit())
-	_glass_node(p, Vector3(0.22, 0.34, 0.22), c)
-	_lamp_light(p, c, 1.5)
-	_halo(p, c, 1.7)
-	return p
+	# lampião com suporte de ferro (Poly Haven street_lamp_02, CC0). `pos` = ponto NA PAREDE; `yaw` aponta o braço (+Z local) para a rua.
+	var m := PropKit.make("street_lamp_02", 0.62, "parede")
+	m.name = "LampiaoParede"
+	m.position = pos
+	m.rotation.y = yaw
+	PropKit.setup_bulb(m, Color(1.0, 0.80, 0.48), 3.0)
+	var bpos: Vector3 = m.get_meta("bulb_pos", Vector3(0, 0.8, 0.3))
+	_lamp_light(m, bpos, 1.5)
+	_halo(m, bpos, 1.8)
+	return m
 
 
 func _lamps() -> Node3D:
@@ -1123,7 +1102,7 @@ func _lamps() -> Node3D:
 	while s < S_END + 24.0:
 		var sigma := -1.0 if i % 2 == 0 else 1.0
 		var out := -Route.right(s) * sigma     # da fachada para a rua
-		var wall_pt := facade(sigma, s) + out * 0.55 + Vector3(0, SW_H + 3.3, 0)
+		var wall_pt := facade(sigma, s) + Vector3(0, SW_H + 2.75, 0)
 		var lamp := _lantern_wall(wall_pt, atan2(out.x, out.z))
 		lamp.name = "LampiaoParede_%02d" % i
 		root.add_child(lamp)
@@ -1767,9 +1746,8 @@ func _adornos() -> Node3D:
 		var out := -Route.right(s) * sigma
 		var p := base + out * 0.45
 		if _rng.randf() < 0.6:
-			b.cylinder("madeira_natural", 0.33, 0.33, 0.8, p + Vector3(0, 0.4, 0), Vector3.ZERO, 10)
-			b.cylinder("ferro", 0.345, 0.345, 0.04, p + Vector3(0, 0.2, 0), Vector3.ZERO, 10)
-			b.cylinder("ferro", 0.345, 0.345, 0.04, p + Vector3(0, 0.62, 0), Vector3.ZERO, 10)
+			var barril := _prop(root, "wine_barrel_01", p, _rng.randf() * TAU, _rng.randf_range(0.95, 1.1))
+			_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
 		else:
 			var yaw := atan2(out.x, out.z)
 			b.box("madeira_natural", Vector3(0.6, 0.5, 0.6), p + Vector3(0, 0.25, 0), Vector3(0, yaw, 0))
@@ -1802,7 +1780,6 @@ func _adornos() -> Node3D:
 	b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, 0.3), Vector3(0, cyaw, 0))
 	b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, -0.3), Vector3(0, cyaw, 0))
 	_mesh_node(root, "Pecas", b.commit())
-	root.add_child(_lines())
 	return root
 
 
@@ -1979,7 +1956,8 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 		b.cylinder("madeira_natural", 0.04, 0.036, 0.05, Vector3(0, 0.38, 0), Vector3.ZERO, 8)    # rolha
 		_halo(a, Vector3(0, 0.22, 0), 0.7, "halo_vela")
 	else:
-		b.box("papel", Vector3(0.3, 0.012, 0.22), Vector3(0, 0.01, 0), Vector3(0, _rng.randf_range(-0.6, 0.6), 0))
+		var dia := _prop(a, "binder_notebook", Vector3.ZERO, _rng.randf_range(-0.8, 0.8), 0.85)
+		dia.name = "Diario"
 		_brilho(a, 0.2, 0.45)
 	_mesh_node(a, "Malha", b.commit())
 	parent.add_child(a)
@@ -1994,12 +1972,180 @@ func _coletaveis() -> Node3D:
 		var s: float = o[0]
 		var sigma: float = o[1]
 		var p := facade(sigma, s) - Route.right(s) * sigma * 0.35 + Vector3(0, SW_H, 0)
-		_coletavel(root, "Oleo_%02d" % i, p, "oleo", 0, "Pegar frasco de óleo")
+		_coletavel(root, "Oleo_%02d" % i, p, "oleo", 0, "Pegar querosene")
 		i += 1
 	var notes := [[8.0, 1.0, 0], [76.0, -1.0, 1], [141.0, -1.0, 2], [203.0, 1.0, 3], [248.0, -1.0, 4], [301.0, 1.0, 5]]
 	for n in notes:
 		var s: float = n[0]
 		var sigma: float = n[1]
 		var p := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
-		_coletavel(root, "Bilhete_%d" % int(n[2]), p, "nota", int(n[2]), "Ler bilhete")
+		_coletavel(root, "Bilhete_%d" % int(n[2]), p, "nota", int(n[2]), "Ler diário")
 	return root
+
+
+# ------------------------------------------------------------------ modelos reais (Poly Haven, CC0)
+
+## Instancia um modelo .glb em `pos` (pés no chão), girado para a frente (+Z do modelo) apontar para `yaw`.
+func _prop(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0, align := "chao") -> Node3D:
+	var p := PropKit.make(key, scale, align)
+	p.name = "%s_%03d" % [key, _n]
+	_n += 1
+	p.position = pos
+	p.rotation.y = yaw
+	parent.add_child(p)
+	return p
+
+
+## Colisão simples para um prop: "cil" (cilindro: size.x = diâmetro, size.y = altura) ou "caixa".
+func _prop_collision(p: Node3D, kind: String, size: Vector3, off := Vector3.ZERO) -> void:
+	var body := StaticBody3D.new()
+	body.name = "Colisao"
+	body.position = off
+	var cs := CollisionShape3D.new()
+	if kind == "cil":
+		var cy := CylinderShape3D.new()
+		cy.radius = size.x * 0.5
+		cy.height = size.y
+		cs.shape = cy
+	else:
+		var bs := BoxShape3D.new()
+		bs.size = size
+		cs.shape = bs
+	body.add_child(cs)
+	p.add_child(body)
+
+
+## Ponto na calçada a `d` m da fachada (para a rua) e a direção "para fora" e ao longo da rua.
+func _spot(sigma: float, s: float, d: float) -> Dictionary:
+	var out := -Route.right(s) * sigma
+	return {"pos": facade(sigma, s) + out * d + Vector3(0, SW_H, 0), "out": out, "tan": Route.tangent(s)}
+
+
+func _yaw_to(dir: Vector3) -> float:
+	return atan2(dir.x, dir.z)
+
+
+## Objetos de rua de 1961: um bar com TV ligada, carros cobertos, banquinhos, baldes, aros de roda, bola, estátua.
+func _props_rua() -> Node3D:
+	var root := Node3D.new()
+	root.name = "Props"
+	# --- bar com a TV ligada na calçada do largo (as pessoas se juntavam para ver TV nos bares): barril, TV, banquinhos
+	var bar := _spot(-1.0, 148.5, 0.55)
+	var barril := _prop(root, "wine_barrel_01", bar["pos"], 0.0, 1.0)
+	_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
+	_tv(root, bar["pos"] + Vector3(0, 0.86, 0), _yaw_to(bar["out"]))
+	for k in 2:
+		var sb := _spot(-1.0, 147.0 + k * 3.0, 0.9)
+		var banco := _prop(root, "wooden_stool_01", sb["pos"], _rng.randf() * TAU, 1.0)
+		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
+	# --- carros cobertos com lona, estacionados na borda do largo e do adro
+	for cfg in [[153.0, -1.0], [318.0, 1.0]]:
+		var s: float = cfg[0]
+		var sg: float = cfg[1]
+		var c := Route.pos(s) + Route.right(s) * sg * (Route.width(s) * 0.5 - 1.25)
+		var carro := _prop(root, "covered_car", c, _yaw_to(Route.tangent(s)) + (0.0 if sg < 0 else PI), 1.0)
+		carro.position.y = c.y + 0.02
+		_prop_collision(carro, "caixa", Vector3(1.9, 1.4, 4.4), Vector3(0, 0.7, 0))
+	# --- banquinhos e baldes junto às portas, com um lampião de querosene esquecido em um deles
+	for cfg in [[30.0, 1.0], [96.0, -1.0], [205.0, 1.0], [247.0, -1.0], [276.0, 1.0]]:
+		var sp := _spot(cfg[1], cfg[0], 0.55)
+		var banco := _prop(root, "wooden_stool_01", sp["pos"], _rng.randf() * TAU, 1.0)
+		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
+		if int(cfg[0]) == 96 or int(cfg[0]) == 247:
+			var lan := _prop(root, "Lantern_01", sp["pos"] + Vector3(0, 0.44, 0), _rng.randf() * TAU, 1.0)
+			_lamp_light(lan, Vector3(0, 0.13, 0), 0.9).omni_range = 5.0
+			_halo(lan, Vector3(0, 0.13, 0), 0.9, "halo_vela")
+	for cfg in [[64.0, 1.0], [122.0, -1.0], [231.0, -1.0], [164.0, 1.0]]:
+		var sp := _spot(cfg[1], cfg[0], 0.45)
+		var balde := _prop(root, "wooden_bucket_01", sp["pos"], _rng.randf() * TAU, 1.0)
+		_prop_collision(balde, "cil", Vector3(0.38, 0.3, 0.38), Vector3(0, 0.15, 0))
+	# --- ferro-velho de 1961: aros de roda encostados na parede (a ferraria) e uma bola de futebol esquecida
+	for cfg in [[141.0, -1.0], [141.8, -1.0], [255.0, 1.0]]:
+		var sp := _spot(cfg[1], cfg[0], 0.22)
+		var aro := _prop(root, "rusted_wheel_rim_02", sp["pos"], _yaw_to(sp["out"]) + _rng.randf_range(-0.25, 0.25), 1.0)
+		aro.rotation.x = -0.20      # inclinado, encostado na parede
+	var bola := _prop(root, "football", _spot(1.0, 157.0, 2.6)["pos"], _rng.randf() * TAU, 1.0)
+	bola.name = "BolaEsquecida"
+	# --- estátua sobre pedestal no adro, voltada para a porta da igreja
+	var sa := Route.pos(318.0) + Route.right(318.0) * (-5.4)
+	var base := _group(root, "Pedestal", Transform3D(Basis(Vector3.UP, _yaw_to(Route.tangent(318.0))), sa))
+	var pb := _batch()
+	pb.box("cantaria", Vector3(1.5, 0.28, 1.5), Vector3(0, 0.14, 0))
+	pb.box("cantaria", Vector3(1.2, 0.7, 1.2), Vector3(0, 0.63, 0))
+	pb.box("cantaria", Vector3(1.38, 0.16, 1.38), Vector3(0, 1.06, 0))
+	_mesh_node(base, "Malha", pb.commit())
+	_prop_collision(base, "cil", Vector3(1.4, 1.2, 1.4), Vector3(0, 0.6, 0))
+	var estatua := _prop(base, "gothic_statue", Vector3(0, 1.14, 0), PI, 1.0)
+	estatua.name = "Estatua"
+	root.add_child(_lines())
+	return root
+
+
+## TV de tubo ligada: tela de estática, luz azulada que pisca e som de chuvisco (scripts/televisao.gd).
+func _tv(parent: Node, pos: Vector3, yaw: float) -> void:
+	var tv := _prop(parent, "Television_01", pos, yaw, 1.0)
+	tv.name = "Televisao"
+	tv.set_script(load("res://scripts/televisao.gd"))
+	var bb: AABB = tv.get_meta("bb")
+	var front := bb.position.z + bb.size.z
+	# tela: retângulo sobre o vidro (a frente do modelo olha para +Z); medidas ajustadas olhando as capturas
+	var q := QuadMesh.new()
+	q.size = Vector2(bb.size.x * 0.56, bb.size.y * 0.60)
+	var tela := _mesh_node(tv, "Tela", q, Vector3(bb.position.x + bb.size.x * 0.40, bb.position.y + bb.size.y * 0.54, front + 0.004))
+	tela.set_surface_override_material(0, mat("tv_tela"))
+	tela.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var l := OmniLight3D.new()
+	l.name = "Luz"
+	l.position = Vector3(bb.position.x + bb.size.x * 0.4, bb.position.y + bb.size.y * 0.55, front + 0.5)
+	l.light_color = Color(0.62, 0.78, 1.0)
+	l.light_energy = 1.3
+	l.omni_range = 6.5
+	l.distance_fade_enabled = true
+	l.distance_fade_begin = 40.0
+	l.distance_fade_length = 10.0
+	tv.add_child(l)
+	_halo(tv, l.position, 1.2, "halo_tv")
+	_prop_collision(tv, "caixa", bb.size, bb.get_center())
+
+
+## Toras de árvore caídas e arbustos nas encostas.
+func _props_encosta() -> Node3D:
+	var root := Node3D.new()
+	root.name = "PropsEncosta"
+	var placed := 0
+	var tries := 0
+	while placed < 7 and tries < 400:
+		tries += 1
+		var sc := _rng.randf_range(10.0, Route.length() - 10.0)
+		var sg := -1.0 if _rng.randf() < 0.5 else 1.0
+		var d := _rng.randf_range(Route.width(sc) * 0.5 + 16.0, 55.0)
+		var p := Route.pos(sc) + Route.right(sc) * sg * d
+		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 9.0):
+			continue
+		var tora := _prop(root, "dead_tree_trunk", Vector3(p.x, terrain_h(p.x, p.z) - 0.05, p.z), _rng.randf() * TAU, _rng.randf_range(0.9, 1.3))
+		tora.name = "Tora_%02d" % placed
+		_spots.append(Vector2(p.x, p.z))
+		placed += 1
+	placed = 0
+	tries = 0
+	while placed < 26 and tries < 800:
+		tries += 1
+		var sc := _rng.randf_range(4.0, Route.length() - 4.0)
+		var sg := -1.0 if _rng.randf() < 0.5 else 1.0
+		var d := _rng.randf_range(Route.width(sc) * 0.5 + 15.0, 62.0)
+		var p := Route.pos(sc) + Route.right(sc) * sg * d
+		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 6.5):
+			continue
+		var arb := _prop(root, "wild_rooibos_bush", Vector3(p.x, terrain_h(p.x, p.z) - 0.04, p.z), _rng.randf() * TAU, _rng.randf_range(1.0, 1.7))
+		arb.name = "Arbusto_%02d" % placed
+		_spots.append(Vector2(p.x, p.z))
+		placed += 1
+	_set_range(root, 160.0)
+	return root
+
+
+func _near_spot(q: Vector2, r: float) -> bool:
+	for o in _spots:
+		if o.distance_to(q) < r:
+			return true
+	return false

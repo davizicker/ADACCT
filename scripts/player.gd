@@ -35,6 +35,9 @@ var _blackout_t := 0.0
 var _shake_t := 0.0
 var _shake_amp := 0.0
 var _base_energy := 1.7
+var _lantern_home := Vector3.ZERO
+var _lantern_glass: StandardMaterial3D = null
+var _lantern_rot := Vector3.ZERO
 var _bob_phase := 0.0
 var _last_step_sign := 1.0
 var _target: Node = null
@@ -44,11 +47,16 @@ var _t := 0.0
 @onready var cam: Camera3D = $Camera
 @onready var lantern: OmniLight3D = $Camera/Lampiao
 @onready var body_shape: CollisionShape3D = $Colisao
+@onready var lantern_model: Node3D = get_node_or_null("Camera/LanternaModelo") as Node3D
 
 
 func _ready() -> void:
 	add_to_group("jogador")
 	_base_energy = lantern.light_energy  # a intensidade vem da cena
+	if lantern_model != null:
+		_lantern_home = lantern_model.position
+		_lantern_rot = lantern_model.rotation
+		cam.near = 0.03     # a lanterna fica colada na câmera: não pode ser cortada
 	floor_snap_length = 0.6
 	floor_max_angle = deg_to_rad(50.0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -170,6 +178,7 @@ func _process(delta: float) -> void:
 		lantern.light_energy = _base_energy * flicker * (0.4 + 0.6 * low_oil)
 	else:
 		lantern.light_energy = 0.0
+	_update_lantern_model(delta, is_lantern_lit())
 	if _shake_t > 0.0:
 		_shake_t -= delta
 		var a := _shake_amp * clampf(_shake_t, 0.0, 1.0)
@@ -178,3 +187,26 @@ func _process(delta: float) -> void:
 	else:
 		cam.h_offset = 0.0
 		cam.v_offset = 0.0
+
+
+## Lanterna na mão: balança com a caminhada (mais forte ao correr), a chama tremula, apaga com F ou sem querosene.
+func _update_lantern_model(delta: float, lit: bool) -> void:
+	if lantern_model == null:
+		return
+	var sway := 0.012 if move_speed > 0.3 else 0.003
+	if sprinting:
+		sway = 0.028
+	var tt := _t * (7.5 if sprinting else 5.0 if move_speed > 0.3 else 1.4)
+	var target := _lantern_home + Vector3(cos(tt * 0.5) * sway * 0.6, sin(tt) * sway, 0.0)
+	if crouching:
+		target.y -= 0.03
+	lantern_model.position = lantern_model.position.lerp(target, clampf(delta * 8.0, 0.0, 1.0))
+	lantern_model.rotation = _lantern_rot + Vector3(sin(tt * 0.7) * sway * 1.5, 0.0, cos(tt * 0.5) * sway * 2.0)
+	var chama := lantern_model.get_node_or_null("Chama") as Node3D
+	var halo := lantern_model.get_node_or_null("Halo") as Node3D
+	if chama != null:
+		chama.visible = lit
+		chama.scale = Vector3(1.0, 0.85 + 0.35 * randf(), 1.0)
+	if halo != null:
+		halo.visible = lit
+		halo.scale = Vector3.ONE * (0.9 + 0.2 * randf()) * (0.5 + 0.5 * clampf(oil / 25.0, 0.0, 1.0))

@@ -67,3 +67,7 @@ godot --headless --path . --quit-after 60000 -- --selftest-becos
 godot --headless --path . --quit-after 60000 -- --selftest-itens
 godot --headless --path . --quit-after 60000 -- --selftest-walk --walk-offset=1.5                 # (e -1.5) anda pela borda da rua
 ```
+
+## 6. Atualização: assets reais (v6)
+- 15 modelos 3D do Poly Haven e 10 texturas CC0 (ambientCG e Poly Haven) integrados: postes e lampiões de parede, lanterna na mão, TV com tela animada, carros cobertos, estátua, porta de beco, barris, banquinhos, baldes, árvores mortas, arbustos, bola, aros de roda, diário. Créditos em `assets/CREDITOS.md`; contexto em `docs/08-ambientacao-1961.md`.
+- Regressão na Godot 4.7.2 depois da integração: selftest, walk (centro, +1,5 e -1,5), escape, Mula (3 casos), becos 7/7, itens, auditoria: **0 buracos, 0 problemas**.

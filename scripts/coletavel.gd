@@ -23,7 +23,7 @@ func interagir(player: Player) -> void:
 		player.oil = minf(Player.OIL_MAX, player.oil + 70.0)
 		player.oil_changed.emit(player.oil)
 		get_tree().call_group("audio", "play_clink")
-		get_tree().call_group("hud", "show_prompt", "Você pegou um frasco de óleo.", 3.0)
+		get_tree().call_group("hud", "show_prompt", "Você pegou querosene.", 3.0)
 		visible = false
 		set_deferred("monitorable", false)
 		remove_from_group("interagivel")

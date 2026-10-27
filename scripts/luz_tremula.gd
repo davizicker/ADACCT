@@ -16,6 +16,11 @@ var _halo: MeshInstance3D = null
 var _glass_base := 2.0
 
 
+var _bulb_mi: MeshInstance3D = null
+var _bulb_idx := -1
+var _bulb_base := 3.2
+
+
 func _ready() -> void:
 	_base = light_energy
 	_seed = randf() * 100.0
@@ -23,6 +28,14 @@ func _ready() -> void:
 	if parent != null:
 		_glass = parent.get_node_or_null("Vidro") as MeshInstance3D
 		_halo = parent.get_node_or_null("Halo") as MeshInstance3D
+		# lâmpada de um modelo real (.glb): superfície emissiva guardada em metadados pelo construtor
+		if parent.has_meta("bulb_mi"):
+			_bulb_mi = parent.get_node_or_null(parent.get_meta("bulb_mi")) as MeshInstance3D
+			_bulb_idx = int(parent.get_meta("bulb_idx"))
+			if _bulb_mi != null:
+				var bm := _bulb_mi.get_surface_override_material(_bulb_idx) as StandardMaterial3D
+				if bm != null:
+					_bulb_base = bm.emission_energy_multiplier
 		if _glass != null and _glass.material_override is StandardMaterial3D:
 			_glass_base = (_glass.material_override as StandardMaterial3D).emission_energy_multiplier
 
@@ -37,3 +50,7 @@ func _process(delta: float) -> void:
 		_halo.scale = Vector3.ONE * (0.25 + 0.75 * _fade) * (1.0 + n * forca * 0.5)
 	if _glass != null and _glass.material_override is StandardMaterial3D:
 		(_glass.material_override as StandardMaterial3D).emission_energy_multiplier = _glass_base * (0.04 + 0.96 * _fade)
+	if _bulb_mi != null:
+		var bm2 := _bulb_mi.get_surface_override_material(_bulb_idx) as StandardMaterial3D
+		if bm2 != null:
+			bm2.emission_energy_multiplier = _bulb_base * (0.03 + 0.97 * _fade) * (1.0 + n * forca * 0.3)

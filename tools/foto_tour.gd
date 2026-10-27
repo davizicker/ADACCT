@@ -21,6 +21,17 @@ const ALVOS := [
 ]
 
 
+const PROPS := [
+	# (yaw positivo = olhar para a ESQUERDA da subida; negativo = DIREITA)
+	[142, 41, -5, 0, 0], [145, 58, -6, -2.6, 0],            # TV do bar, barril e banquinhos (esquerda, s=148)
+	[147, 24, 1, -1, 0], [157, -38, 3, 0, 0],               # carro coberto (esquerda); chafariz, balde e bola (direita)
+	[311, 48, 8, 0, 0], [326, -28, 6, 3, 0],                # estátua no adro (esquerda); carro do adro (direita)
+	[27, -34, 6, 0, 0], [61, -34, 6, 0, 0],                 # banquinho e balde junto às portas (direita)
+	[3, -26, 30, 0, 0], [38, -90, 12, 0.6, 0.8],            # diário (bilhete); portão do beco com a porta real
+	[93, 38, 6, 0, 0], [138, 30, 4, -1, 0],                 # lanterna esquecida no banquinho; aros de roda
+	[60, 0, -28, 0, 45],                                    # vista de cima: tora e arbustos nas encostas
+]
+
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	var out: String = args[0] if args.size() > 0 else "/tmp"
@@ -47,6 +58,8 @@ func _init() -> void:
 		list += RUA
 	if which == "alvos" or which == "tudo":
 		list += ALVOS
+	if which == "props":
+		list += PROPS
 	var n := 0
 	for it in list:
 		var s: float = it[0]

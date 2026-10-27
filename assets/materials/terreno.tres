@@ -1,26 +1,41 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/shaders/terreno.gdshader" id="1_frdgk"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/Color.jpg" id="2_p3klp"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/NormalGL.jpg" id="3_sxyku"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/Roughness.jpg" id="4_r6tlw"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/Color.jpg" id="5_l26aa"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/NormalGL.jpg" id="6_dcfho"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/Roughness.jpg" id="7_b0bqq"]
+[ext_resource type="Shader" path="res://assets/shaders/terreno.gdshader" id="1_b0bqq"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/Color.jpg" id="2_ky1bw"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/NormalGL.jpg" id="3_4qxp1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/Roughness.jpg" id="4_elxgr"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground037/Color.jpg" id="5_kw1ag"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground037/NormalGL.jpg" id="6_mln53"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground037/Roughness.jpg" id="7_sv5u0"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/Color.jpg" id="8_etj1t"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/NormalGL.jpg" id="9_arh16"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground028/Roughness.jpg" id="10_84gdw"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/Color.jpg" id="11_clqbq"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/NormalGL.jpg" id="12_6tv7y"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground108/Roughness.jpg" id="13_382pp"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_frdgk")
-shader_parameter/plano_cor = ExtResource("5_l26aa")
-shader_parameter/plano_normal = ExtResource("6_dcfho")
-shader_parameter/plano_rug = ExtResource("7_b0bqq")
-shader_parameter/ingreme_cor = ExtResource("2_p3klp")
-shader_parameter/ingreme_normal = ExtResource("3_sxyku")
-shader_parameter/ingreme_rug = ExtResource("4_r6tlw")
+shader = ExtResource("1_b0bqq")
+shader_parameter/plano_cor = ExtResource("11_clqbq")
+shader_parameter/plano_normal = ExtResource("12_6tv7y")
+shader_parameter/plano_rug = ExtResource("13_382pp")
+shader_parameter/ingreme_cor = ExtResource("8_etj1t")
+shader_parameter/ingreme_normal = ExtResource("9_arh16")
+shader_parameter/ingreme_rug = ExtResource("10_84gdw")
+shader_parameter/grama_cor = ExtResource("5_kw1ag")
+shader_parameter/grama_normal = ExtResource("6_mln53")
+shader_parameter/grama_rug = ExtResource("7_sv5u0")
+shader_parameter/barro_cor = ExtResource("2_ky1bw")
+shader_parameter/barro_normal = ExtResource("3_4qxp1")
+shader_parameter/barro_rug = ExtResource("4_elxgr")
 shader_parameter/escala_plano = 0.22
 shader_parameter/escala_ingreme = 0.16
-shader_parameter/inclinacao_ini = 0.88
-shader_parameter/inclinacao_fim = 0.62
+shader_parameter/escala_grama = 0.2
+shader_parameter/escala_barro = 0.24
+shader_parameter/inclinacao_ini = 0.9
+shader_parameter/inclinacao_fim = 0.66
 shader_parameter/forca_normal = 1.0
-shader_parameter/tom_verde = Color(0.8, 1, 0.7, 1)
-shader_parameter/verde = 0.35
+shader_parameter/tom_barro = Color(1, 0.62, 0.48, 1)
+shader_parameter/quanto_mato = 0.65
+shader_parameter/quanto_barro = 0.3

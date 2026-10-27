@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/tv_estatica.gdshader" id="1_3cx7b"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_3cx7b")
+shader_parameter/tom = Color(0.72, 0.86, 1, 1)
+shader_parameter/brilho = 1.35
+shader_parameter/tremor = 0.0

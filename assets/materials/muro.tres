@@ -1,16 +1,17 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/muro_albedo.png" id="1_goovn"]
-[ext_resource type="Texture2D" path="res://assets/textures/muro_normal.png" id="2_we5ae"]
+[ext_resource type="Texture2D" path="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_diff_1k.jpg" id="1_we5ae"]
+[ext_resource type="Texture2D" path="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_nor_gl_1k.jpg" id="2_wfekp"]
+[ext_resource type="Texture2D" path="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_rough_1k.jpg" id="3_fv3ve"]
 
 [resource]
 albedo_color = Color(0.95, 0.93, 0.9, 1)
-albedo_texture = ExtResource("1_goovn")
-roughness = 0.95
+albedo_texture = ExtResource("1_we5ae")
+roughness_texture = ExtResource("3_fv3ve")
 normal_enabled = true
-normal_scale = 1.3
-normal_texture = ExtResource("2_we5ae")
-uv1_scale = Vector3(0.35, 0.35, 0.35)
+normal_scale = 1.2
+normal_texture = ExtResource("2_wfekp")
+uv1_scale = Vector3(0.34, 0.34, 0.34)
 uv1_triplanar = true
 uv1_world_triplanar = true
 texture_filter = 5

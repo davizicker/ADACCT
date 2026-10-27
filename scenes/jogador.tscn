@@ -1,24 +1,53 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_vwxko"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_qcln2"]
+[ext_resource type="PackedScene" path="res://assets/models/poly/Lantern_01.glb" id="2_s760d"]
+[ext_resource type="Material" path="res://assets/materials/chama.tres" id="3_32758"]
+[ext_resource type="Material" path="res://assets/materials/halo_vela.tres" id="4_lj65x"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uahlj"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_a7p4t"]
 radius = 0.35
 height = 1.7
 
-[node name="Jogador" type="CharacterBody3D" unique_id=318455043]
-script = ExtResource("1_vwxko")
+[sub_resource type="SphereMesh" id="SphereMesh_8gwte"]
+radius = 0.016
+height = 0.05
 
-[node name="Colisao" type="CollisionShape3D" parent="." unique_id=1656788556]
+[sub_resource type="QuadMesh" id="QuadMesh_jl1eh"]
+size = Vector2(0.3, 0.3)
+
+[node name="Jogador" type="CharacterBody3D" unique_id=591620567]
+script = ExtResource("1_qcln2")
+
+[node name="Colisao" type="CollisionShape3D" parent="." unique_id=1704586730]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
-shape = SubResource("CapsuleShape3D_uahlj")
+shape = SubResource("CapsuleShape3D_a7p4t")
 
-[node name="Camera" type="Camera3D" parent="." unique_id=1071850595]
+[node name="Camera" type="Camera3D" parent="." unique_id=1592762532]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 far = 1500.0
 
-[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=171467890]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, -0.35, -0.5)
+[node name="Lampiao" type="OmniLight3D" parent="Camera" unique_id=665871490]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31, -0.29999998, -0.6)
 light_color = Color(1, 0.72, 0.38, 1)
 light_energy = 1.7
-omni_range = 9.0
+omni_range = 11.0
+
+[node name="LanternaModelo" type="Node3D" parent="Camera" unique_id=1871761705]
+transform = Transform3D(0.90630776, 0, -0.42261827, 0, 1, 0, 0.42261827, 0, 0.90630776, 0.31, -0.42, -0.62)
+metadata/bb = AABB(-0.053724743, 0, -0.042631865, 0.10744949, 0.25885543, 0.08526373)
+
+[node name="Modelo" type="Node3D" parent="Camera/LanternaModelo" unique_id=1272777123]
+
+[node name="Lantern_012" type="Node3D" parent="Camera/LanternaModelo/Modelo" unique_id=964890594 instance=ExtResource("2_s760d")]
+transform = Transform3D(0.88, 0, 0, 0, 0.88, 0, 0, 0, 0.88, -2.6177615e-05, -1.3543415e-05, 1.4644116e-05)
+
+[node name="Chama" type="MeshInstance3D" parent="Camera/LanternaModelo" unique_id=2073463514]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+material_override = ExtResource("3_32758")
+mesh = SubResource("SphereMesh_8gwte")
+
+[node name="Halo" type="MeshInstance3D" parent="Camera/LanternaModelo" unique_id=2116094547]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+material_override = ExtResource("4_lj65x")
+mesh = SubResource("QuadMesh_jl1eh")

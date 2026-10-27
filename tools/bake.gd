@@ -56,6 +56,24 @@ func _surf(mat_name: String, tex: String, tint: Color, scale: float, rough := 0.
 
 
 ## Material com texturas PBR reais (ambientCG, CC0) de assets/textures/ambientcg/<pasta>/.
+## Material do Poly Haven (CC0) a partir de assets/textures/polyhaven/<pasta>/<pasta>_{diff,nor_gl,rough}_1k.jpg.
+func _poly(mat_name: String, folder: String, tint: Color, scale: float, normal_scale := 1.0, rough_mult := 1.0) -> void:
+	var dir := TEX + "polyhaven/" + folder + "/" + folder
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = load(dir + "_diff_1k.jpg") as Texture2D
+	m.albedo_color = tint
+	m.normal_enabled = true
+	m.normal_texture = load(dir + "_nor_gl_1k.jpg") as Texture2D
+	m.normal_scale = normal_scale
+	m.roughness_texture = load(dir + "_rough_1k.jpg") as Texture2D
+	m.roughness = rough_mult
+	m.uv1_triplanar = true
+	m.uv1_world_triplanar = true
+	m.uv1_scale = Vector3.ONE * scale
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	ResourceSaver.save(m, MATS + mat_name + ".tres")
+
+
 func _real(mat_name: String, folder: String, tint: Color, scale: float, normal_scale := 1.0, rough_mult := 1.0) -> void:
 	var dir := TEX + "ambientcg/" + folder + "/"
 	var m := StandardMaterial3D.new()
@@ -70,6 +88,9 @@ func _real(mat_name: String, folder: String, tint: Color, scale: float, normal_s
 		m.ao_enabled = true
 		m.ao_texture = load(dir + "AmbientOcclusion.jpg") as Texture2D
 		m.ao_light_affect = 0.6
+	if ResourceLoader.exists(dir + "Metalness.jpg"):
+		m.metallic = 1.0
+		m.metallic_texture = load(dir + "Metalness.jpg") as Texture2D
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = true
 	m.uv1_scale = Vector3.ONE * scale
@@ -113,7 +134,7 @@ func _materials() -> void:
 	pc.roughness_texture = _tex("pedra_rough.png")   # pedra polida brilha, junta de terra é fosca
 	pc.roughness = 1.0
 	ResourceSaver.save(pc, MATS + "pedra_chao.tres")
-	_surf("muro", "muro", Color(0.95, 0.93, 0.90), 0.35, 0.95, 1.3)
+	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.34, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
 	_surf("reboco_branco", "reboco_velho", Color(0.97, 0.95, 0.90), 0.22)
 	_surf("reboco_branco_novo", "reboco", Color(0.98, 0.97, 0.93), 0.22)
@@ -156,14 +177,17 @@ func _materials() -> void:
 	terreno.shader = load("res://assets/shaders/terreno.gdshader")
 	var gd := TEX + "ambientcg/Ground108/"
 	var gi := TEX + "ambientcg/Ground028/"
-	terreno.set_shader_parameter("plano_cor", load(gd + "Color.jpg"))
-	terreno.set_shader_parameter("plano_normal", load(gd + "NormalGL.jpg"))
-	terreno.set_shader_parameter("plano_rug", load(gd + "Roughness.jpg"))
-	terreno.set_shader_parameter("ingreme_cor", load(gi + "Color.jpg"))
-	terreno.set_shader_parameter("ingreme_normal", load(gi + "NormalGL.jpg"))
-	terreno.set_shader_parameter("ingreme_rug", load(gi + "Roughness.jpg"))
+	var gg := TEX + "ambientcg/Ground037/"      # grama com musgo
+	var gc := TEX + "ambientcg/Ground054/"      # barro seco
+	for pair in [["plano", gd], ["ingreme", gi], ["grama", gg], ["barro", gc]]:
+		var pre: String = pair[0]
+		var dd: String = pair[1]
+		terreno.set_shader_parameter(pre + "_cor", load(dd + "Color.jpg"))
+		terreno.set_shader_parameter(pre + "_normal", load(dd + "NormalGL.jpg"))
+		terreno.set_shader_parameter(pre + "_rug", load(dd + "Roughness.jpg"))
 	ResourceSaver.save(terreno, MATS + "terreno.tres")
-	_flat("ferro", Color(0.05, 0.05, 0.05), 0.55, 0.6)
+	_real("ferro", "Metal047B", Color(0.28, 0.26, 0.25), 0.9, 1.0, 1.0)            # ferro escuro corroído (grades, braços, ferragens)
+	_real("ferro_ferrugem", "Metal053C", Color(0.9, 0.85, 0.8), 0.7, 1.0, 1.0)     # chapa com tinta descascando e ferrugem (calhas, tubos)
 	_real("madeira_escura", "Wood028", Color(1, 1, 1), 0.7)
 	_flat("vaso", Color(0.55, 0.26, 0.16), 0.9)
 	_flat("verde_vaso", Color(0.10, 0.28, 0.09), 1.0)
@@ -178,6 +202,18 @@ func _materials() -> void:
 	_flat("bandeira_d", Color(0.2, 0.55, 0.28), 1.0)
 	_flat("pano", Color(0.62, 0.60, 0.54), 1.0)
 	_flat("papel", Color(0.93, 0.86, 0.66), 0.9, 0.0, 0.7)
+	var tvm := ShaderMaterial.new()
+	tvm.shader = load("res://assets/shaders/tv_estatica.gdshader")
+	ResourceSaver.save(tvm, MATS + "tv_tela.tres")
+	var htv := StandardMaterial3D.new()
+	htv.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	htv.albedo_texture = _tex("ponto_luz.png")
+	htv.albedo_color = Color(0.55, 0.75, 1.0, 0.40)
+	htv.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	htv.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	htv.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	htv.disable_receive_shadows = true
+	ResourceSaver.save(htv, MATS + "halo_tv.tres")
 	for pl in [["placa_verde", Color(0.09, 0.25, 0.15)], ["placa_vermelha", Color(0.42, 0.09, 0.07)], ["placa_azul", Color(0.09, 0.17, 0.34)],
 			["placa_marrom", Color(0.26, 0.15, 0.07)], ["placa_preta", Color(0.05, 0.05, 0.06)]]:
 		_flat(pl[0], pl[1], 0.65)
@@ -253,7 +289,7 @@ func _materials() -> void:
 	ResourceSaver.save(serra, MATS + "serra.tres")
 	_real("casca", "Bark014", Color(0.9, 0.88, 0.85), 1.0, 1.3)
 	_real("palma_tronco", "Bark014", Color(0.62, 0.6, 0.57), 0.9, 1.0)
-	_real("terra_quintal", "Ground108", Color(0.85, 0.9, 0.8), 0.22, 1.1)
+	_real("terra_quintal", "Ground054", Color(0.95, 0.68, 0.55), 0.3, 1.0)       # barro vermelho de Minas (Ground054 tingido)
 	_real("pele_bradador", "Bark014", Color(0.75, 0.72, 0.7), 2.0, 1.5)   # para o modelo do Bradador, se vier sem textura
 	_flat("bradador_preto", Color(0, 0, 0), 1.0, 0.0, 0.0, true)
 	_flat("bradador_palido", Color(0.78, 0.78, 0.72), 1.0, 0.0, 0.0, true)
@@ -293,6 +329,31 @@ func _player() -> CharacterBody3D:
 	lantern.omni_range = 9.0
 	lantern.shadow_enabled = false   # ligue no editor (Shadow > Enabled) se seu PC aguentar
 	cam.add_child(lantern)
+	# lanterna de querosene na mão (Poly Haven Lantern_01, CC0): a chama e o vidro acendem/apagam com a tecla F
+	var lm := PropKit.make("Lantern_01", 0.88)
+	lm.name = "LanternaModelo"
+	lm.position = Vector3(0.31, -0.42, -0.62)
+	lm.rotation_degrees = Vector3(0, -25, 0)
+	cam.add_child(lm)
+	var chama := MeshInstance3D.new()
+	chama.name = "Chama"
+	var sph := SphereMesh.new()
+	sph.radius = 0.016
+	sph.height = 0.05
+	chama.mesh = sph
+	chama.material_override = load(MATS + "chama.tres")
+	chama.position = Vector3(0, 0.10, 0)
+	lm.add_child(chama)
+	var brilho := MeshInstance3D.new()
+	brilho.name = "Halo"
+	var hq := QuadMesh.new()
+	hq.size = Vector2(0.30, 0.30)
+	brilho.mesh = hq
+	brilho.material_override = load(MATS + "halo_vela.tres")
+	brilho.position = Vector3(0, 0.10, 0)
+	lm.add_child(brilho)
+	lantern.position = lm.position + Vector3(0, 0.12, 0.02)
+	lantern.omni_range = 11.0
 	return p
 
 

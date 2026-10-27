@@ -70,7 +70,7 @@ func start_mula(from_above := true) -> void:
 	_t_mula = _rng.randf_range(85.0, 140.0)
 	if not _mula_hint_shown:
 		_mula_hint_shown = true
-		hud.show_prompt("Galope no calçamento!\nApague o lampião [F] e entre num beco.", 7.0)
+		hud.show_prompt("Galope no calçamento!\nApague a lanterna [F] e entre num beco.", 7.0)
 	if log_enabled:
 		print("[evento] MULA de s=%.0f direcao=%d (jogador s=%.0f)" % [start, int(direction), s_p])
 

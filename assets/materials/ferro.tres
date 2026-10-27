@@ -1,6 +1,19 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Metal047B/Color.jpg" id="1_bd134"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Metal047B/Metalness.jpg" id="2_5oe4g"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Metal047B/NormalGL.jpg" id="3_ldtp4"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Metal047B/Roughness.jpg" id="4_b0q6m"]
+
 [resource]
-albedo_color = Color(0.05, 0.05, 0.05, 1)
-metallic = 0.6
-roughness = 0.55
+albedo_color = Color(0.28, 0.26, 0.25, 1)
+albedo_texture = ExtResource("1_bd134")
+metallic = 1.0
+metallic_texture = ExtResource("2_5oe4g")
+roughness_texture = ExtResource("4_b0q6m")
+normal_enabled = true
+normal_texture = ExtResource("3_ldtp4")
+uv1_scale = Vector3(0.9, 0.9, 0.9)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

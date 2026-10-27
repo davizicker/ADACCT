@@ -366,3 +366,22 @@ static func clink() -> AudioStreamWAV:
 		var v := sin(TAU * 2350.0 * t) * 0.5 + sin(TAU * 3720.0 * t) * 0.35 + sin(TAU * 5210.0 * t) * 0.2
 		out[i] = v * exp(-t * 11.0) * 0.8
 	return _to_wav(out, false)
+
+
+## Chuvisco de TV sem sinal + zumbido de 60 Hz (loop de 2 s, sem emenda: 120 Hz = 240 ciclos exatos).
+static func tv_static() -> AudioStreamWAV:
+	var n := RATE * 2
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 211
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var lp := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		lp += 0.55 * (_noise(rng) - lp)
+		var crackle := _noise(rng) * (0.12 + 0.10 * sin(TAU * 7.0 * t))
+		out[i] = lp * 0.20 + crackle * 0.10 + sin(TAU * 60.0 * t) * 0.05 + sin(TAU * 120.0 * t) * 0.03
+	var fade := 1500
+	for i in fade:
+		out[i] = lerpf(out[n - fade + i], out[i], float(i) / fade)
+	return _to_wav(out, true)

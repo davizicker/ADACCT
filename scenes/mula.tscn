@@ -42,52 +42,52 @@ size = Vector2(0.7, 0.7)
 offsets = PackedFloat32Array(0, 0.4, 1)
 colors = PackedColorArray(1, 0.9, 0.5, 0.95, 1, 0.4, 0.1, 0.8, 0.4, 0.05, 0, 0)
 
-[node name="Mula" type="Node3D" unique_id=559472692]
+[node name="Mula" type="Node3D" unique_id=1801705011]
 script = ExtResource("1_7vwmj")
 
-[node name="Corpo" type="MeshInstance3D" parent="." unique_id=1605328791]
+[node name="Corpo" type="MeshInstance3D" parent="." unique_id=1017366064]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 1.2, 0)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("CapsuleMesh_cdrr2")
 
-[node name="Pescoco" type="MeshInstance3D" parent="." unique_id=14517621]
+[node name="Pescoco" type="MeshInstance3D" parent="." unique_id=1579693838]
 transform = Transform3D(1, 0, 0, 0, 0.7880108, 0.6156615, 0, -0.6156615, 0.7880108, 0, 1.62, -0.95)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("CylinderMesh_dloqh")
 
-[node name="PernaFE" type="Node3D" parent="." unique_id=375774213]
+[node name="PernaFE" type="Node3D" parent="." unique_id=1195592566]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.95, -0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaFE" unique_id=430592249]
+[node name="Perna" type="MeshInstance3D" parent="PernaFE" unique_id=1477693775]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("CylinderMesh_tcl1k")
 
-[node name="PernaFD" type="Node3D" parent="." unique_id=1252533745]
+[node name="PernaFD" type="Node3D" parent="." unique_id=58148057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.95, -0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaFD" unique_id=1568368756]
+[node name="Perna" type="MeshInstance3D" parent="PernaFD" unique_id=310493300]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("CylinderMesh_kg7op")
 
-[node name="PernaTE" type="Node3D" parent="." unique_id=500259360]
+[node name="PernaTE" type="Node3D" parent="." unique_id=100947453]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.95, 0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaTE" unique_id=648079705]
+[node name="Perna" type="MeshInstance3D" parent="PernaTE" unique_id=1034224738]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("CylinderMesh_6ev0m")
 
-[node name="PernaTD" type="Node3D" parent="." unique_id=567623933]
+[node name="PernaTD" type="Node3D" parent="." unique_id=1987442599]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0.95, 0.65)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaTD" unique_id=1284461505]
+[node name="Perna" type="MeshInstance3D" parent="PernaTD" unique_id=376091813]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.47, 0)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("CylinderMesh_hnlqv")
 
-[node name="Fogo" type="CPUParticles3D" parent="." unique_id=1181472643]
+[node name="Fogo" type="CPUParticles3D" parent="." unique_id=429055969]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.02, -1.25)
 amount = 36
 lifetime = 0.75
@@ -103,7 +103,7 @@ scale_amount_min = 0.6
 scale_amount_max = 1.1
 color_ramp = SubResource("Gradient_3ltan")
 
-[node name="ChamaLuz" type="OmniLight3D" parent="." unique_id=1984136781]
+[node name="ChamaLuz" type="OmniLight3D" parent="." unique_id=1484991235]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, -1.3)
 light_color = Color(1, 0.45, 0.15, 1)
 light_energy = 3.4

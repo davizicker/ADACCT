@@ -53,7 +53,7 @@ func _ready() -> void:
 	_restart_btn = _btn("Recomeçar", func() -> void: restart_requested.emit())
 	_main_box.add_child(_restart_btn)
 	_main_box.add_child(_btn("Sair", func() -> void: get_tree().quit()))
-	var help := _lbl("WASD andar · Shift correr · Ctrl agachar · F lampião · E interagir · R gritar (ou use o microfone)", 14, Color(0.6, 0.6, 0.66))
+	var help := _lbl("WASD andar · Shift correr · Ctrl agachar · F lanterna · E interagir · R gritar (ou use o microfone)", 14, Color(0.6, 0.6, 0.66))
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_main_box.add_child(help)
 
