@@ -40,7 +40,7 @@ func _ready() -> void:
 	_title = _lbl("BRADADOR", 54, Color(0.95, 0.78, 0.4))
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(_title)
-	var sub := _lbl("Use fones de ouvido. Quando o Bradador gritar, pare e grite de volta.\nSobreviva até a igreja.", 16, Color(0.75, 0.75, 0.8))
+	var sub := _lbl("Use fones de ouvido. Quando o Bradador gritar, agache e fique quieto.\nEntre nas casas, ache o que a igreja precisa e chegue lá antes do amanhecer.", 16, Color(0.75, 0.75, 0.8))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(sub)
 	stack.add_child(HSeparator.new())
@@ -53,7 +53,7 @@ func _ready() -> void:
 	_restart_btn = _btn("Recomeçar", func() -> void: restart_requested.emit())
 	_main_box.add_child(_restart_btn)
 	_main_box.add_child(_btn("Sair", func() -> void: get_tree().quit()))
-	var help := _lbl("WASD andar · Shift correr · Ctrl agachar · F lanterna · E interagir · R gritar (ou use o microfone)", 14, Color(0.6, 0.6, 0.66))
+	var help := _lbl("WASD andar · Shift correr · Ctrl agachar · F lanterna · E interagir/entrar", 14, Color(0.6, 0.6, 0.66))
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_main_box.add_child(help)
 
@@ -120,6 +120,13 @@ func _build_options() -> void:
 		options_changed.emit())
 	row.add_child(ob)
 	_opts_box.add_child(row)
+	var cg := CheckBox.new()
+	cg.text = "Responder o grito gritando (microfone ou tecla R) em vez de agachar"
+	cg.button_pressed = Config.grito_ativo
+	cg.toggled.connect(func(on: bool) -> void:
+		Config.grito_ativo = on
+		options_changed.emit())
+	_opts_box.add_child(cg)
 	var c1 := CheckBox.new()
 	c1.text = "Efeitos de câmera (vinheta, granulado, medo)"
 	c1.button_pressed = Config.camera_fx

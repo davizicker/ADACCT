@@ -19,6 +19,7 @@ extends Node3D
 @onready var audio: AudioDirector = $Audio
 @onready var mula: Mula = $Mula
 @onready var eventos: EventDirector = $Eventos
+@onready var missao: Missao = $Missao
 @onready var church_door: Area3D = $Vila/Adro/Igreja/Porta
 var finished := false
 var menu: Menu = null
@@ -53,6 +54,8 @@ func _ready() -> void:
 		mode = "becos"
 	elif "--selftest-itens" in args:
 		mode = "itens"
+	elif "--selftest-casas" in args:
+		mode = "casas"
 	var mula_case := ""
 	for a in args:
 		if a.begins_with("--selftest-mula="):
@@ -110,6 +113,9 @@ func _ready() -> void:
 	screams.audio = audio
 	audio.setup(player, screams)
 	eventos.setup(player, screams, audio, mula, hud)
+	add_to_group("jogo")
+	missao.modo_teste = mode != "" and mode != "casas"
+	missao.setup(player, hud, screams, eventos, ($Vila/Ambiente as WorldEnvironment).environment, mode == "")
 	eventos.enabled = (mode == "" or mode == "auto")
 	hud.apply_config()
 	player.interact_hint.connect(hud.show_interact)
@@ -152,13 +158,17 @@ func _ready() -> void:
 	elif mode == "mula":
 		Engine.time_scale = 8.0
 		_setup_mula_test(mula_case)
+	elif mode == "casas":
+		Engine.time_scale = 1.0
+		screams.enabled = false
+		_test_casas()
 	elif mode == "becos" or mode == "itens":
 		Engine.time_scale = 4.0
 		screams.enabled = false
 		_test_state = 0
 	elif mode == "auto":
 		Engine.time_scale = 6.0
-		Input.action_press("shout")   # responde a todos os gritos (segurando R)
+		Input.action_press("crouch")   # responde a todos os gritos (agachado e parado)
 
 
 func _setup_input() -> void:
@@ -199,11 +209,20 @@ func _on_died() -> void:
 func _on_door(body: Node3D) -> void:
 	if body != player or finished:
 		return
+	if missao.modo_teste:
+		vitoria()
+	else:
+		missao.tentar_igreja()
+
+
+func vitoria() -> void:
+	if finished:
+		return
 	finished = true
 	screams.enabled = false
 	player.frozen = true
 	print("[game] WIN at z=%.1f y=%.2f (rua %.2f)" % [player.global_position.z, player.global_position.y, Route.ground_near(player.global_position)])
-	hud.end_screen("Amanheceu.", "(por enquanto)", Color(0.9, 0.8, 0.55, 0.85))
+	hud.end_screen("Amanheceu.", "Os nomes foram lidos. A terra calou.\n(fim da primeira noite)", Color(0.9, 0.8, 0.55, 0.85))
 
 
 ## Teste da Mula: "rua" (deve morrer), "refugio" (lampião apagado: salvo), "refugio_aceso" (penalidade).
@@ -235,7 +254,8 @@ func _process(delta: float) -> void:
 	hud.set_fear(audio.fear, audio.get_bpm())
 	hud.set_stamina(player.stamina / Player.STAMINA_MAX, player.exhausted)
 	var env := ($Vila/Ambiente as WorldEnvironment).environment
-	env.fog_density = lerpf(env.fog_density, 0.030 + 0.022 * audio.fear, clampf(delta * 2.0, 0.0, 1.0))
+	var fog_alvo := 0.004 if missao.dentro != "" else 0.030 + 0.022 * audio.fear
+	env.fog_density = lerpf(env.fog_density, fog_alvo, clampf(delta * 2.0, 0.0, 1.0))
 	_frames += 1
 	if mode == "shot":
 		if _frames == _shot_frames:
@@ -265,6 +285,103 @@ func _process(delta: float) -> void:
 	elif mode == "selftest" and finished:
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		get_tree().quit()
+
+
+## Teste das casas: entra em cada porta, confere o chão, pega os itens, sai, cumpre a trama e vence na igreja.
+func _test_casas() -> void:
+	eventos.enabled = false
+	await get_tree().create_timer(0.6, true, false, true).timeout
+	var falhas := 0
+	var portas: Array = get_tree().get_nodes_in_group("interagivel").filter(func(n: Node) -> bool: return n is Porta and str((n as Porta).destino) != "")
+	portas.sort_custom(func(a: Porta, b: Porta) -> bool: return str(a.requer) != "" and str(b.requer) == "")      # a porta trancada primeiro
+	print("[casas] portas na rua: %d" % portas.size())
+	var space := get_viewport().world_3d.direct_space_state
+	var vistos := {}
+	for p: Porta in portas:
+		var pid: String = p.destino
+		var out: Vector3 = -(p.get_parent() as Node3D).global_transform.basis.x
+		var pe := p.global_position + out * 1.0
+		var qg := PhysicsRayQueryParameters3D.create(pe + Vector3(0, 2.0, 0), pe - Vector3(0, 4.0, 0))
+		qg.exclude = [player.get_rid()]
+		var hg := space.intersect_ray(qg)
+		if not hg.is_empty():
+			pe.y = (hg["position"] as Vector3).y + 0.05
+		player.global_position = pe
+		player.velocity = Vector3.ZERO
+		var d := p.global_position - player.cam.global_position
+		player.rotation.y = atan2(-d.x, -d.z)
+		player.cam.rotation.x = 0.0
+		_hint = ""
+		player.interact_hint.connect(func(t: String) -> void: _hint = t, CONNECT_ONE_SHOT)
+		await get_tree().create_timer(0.5, true, false, true).timeout
+		var aviso_ok := _hint.contains("Entrar")
+		if str(p.requer) != "" and not missao.tem(str(p.requer)):
+			_press_interact()
+			await get_tree().create_timer(0.4, true, false, true).timeout
+			var ficou_fora := missao.dentro == ""
+			print("[casas] %s trancada sem %s: ficou fora=%s -> %s" % [pid, str(p.requer), str(ficou_fora), "OK" if ficou_fora else "FALHOU"])
+			if not ficou_fora:
+				falhas += 1
+				missao.sair()
+			missao.inv[str(p.requer)] = true
+			await get_tree().create_timer(1.1, true, false, true).timeout
+		_press_interact()
+		await get_tree().create_timer(0.6, true, false, true).timeout
+		if missao.dentro != pid:
+			print("[casas]   DEBUG %s: alvo=%s dentro=%s frozen=%s pos=%s" % [pid, str(player._target), missao.dentro, str(player.frozen), str(player.global_position)])
+		var dentro_ok := missao.dentro == pid
+		var sala := get_node("Vila/Interiores/" + pid) as Node3D
+		var q := PhysicsRayQueryParameters3D.create(player.global_position + Vector3(0, 0.5, 0), player.global_position - Vector3(0, 2.0, 0))
+		q.exclude = [player.get_rid()]
+		var hit := space.intersect_ray(q)
+		var chao_ok := (not hit.is_empty()) and absf((hit["position"] as Vector3).y - sala.global_position.y) < 0.35
+		# itens da sala: nenhum dentro de móvel; pegar todos
+		var embutidos := 0
+		var pegos := 0
+		for it in sala.get_children():
+			if it is Area3D and it.is_in_group("interagivel") and not (it is Porta):
+				var pq := PhysicsPointQueryParameters3D.new()
+				pq.position = (it as Node3D).global_position + Vector3(0, 0.1, 0)
+				pq.collide_with_areas = false
+				if space.intersect_point(pq, 1).size() > 0:
+					embutidos += 1
+					print("[casas]   item dentro de móvel: %s em %s" % [it.name, pid])
+				it.call("interagir", player)
+				pegos += 1
+				if hud.note_open():
+					hud.hide_note()
+					player.frozen = false
+		await get_tree().create_timer(0.3, true, false, true).timeout
+		var obj_ok := missao.objetivo() != ""
+		print("[casas] %s: aviso=%s dentro=%s chao=%s itens=%d embutidos=%d -> %s" % [pid, str(aviso_ok), str(dentro_ok), str(chao_ok), pegos, embutidos, "OK" if (aviso_ok and dentro_ok and chao_ok and embutidos == 0 and obj_ok) else "FALHOU"])
+		if not (aviso_ok and dentro_ok and chao_ok and embutidos == 0):
+			falhas += 1
+		vistos[pid] = true
+		player.frozen = false
+		missao.sair()
+		await get_tree().create_timer(1.1, true, false, true).timeout
+		if missao.dentro != "":
+			falhas += 1
+	var completo := missao.completo()
+	print("[casas] trama completa (livro + chave da igreja): %s" % str(completo))
+	if not completo:
+		falhas += 1
+	# vitória pela igreja
+	_place_player(Route.CHURCH_S - 4.0, 0.0, 0.0)
+	missao.tentar_igreja()
+	await get_tree().create_timer(0.8, true, false, true).timeout
+	var igreja_ok := missao.dentro == "igreja"
+	print("[casas] igreja destrancada e interior carregado: %s" % str(igreja_ok))
+	if not igreja_ok:
+		falhas += 1
+	else:
+		var altar := get_node("Vila/Interiores/igreja/Altar") as Altar
+		altar.interagir(player)
+		await get_tree().create_timer(0.4, true, false, true).timeout
+		if not finished:
+			falhas += 1
+	print("[casas] RESULTADO: salas=%d falhas=%d" % [vistos.size(), falhas])
+	get_tree().quit()
 
 
 ## Robô que segue a rota (testa subida, curvas e colisões).
@@ -374,7 +491,7 @@ func _press_interact() -> void:
 
 func _test_itens(delta: float) -> void:
 	if _test_state == 0:
-		_test_items = get_tree().get_nodes_in_group("interagivel").duplicate()
+		_test_items = get_tree().get_nodes_in_group("interagivel").filter(func(n: Node) -> bool: return n is Coletavel and not str(n.get_path()).contains("Interiores"))
 		player.oil = 60.0
 		player.interact_hint.connect(func(t: String) -> void: _hint = t)
 		_test_state = 1

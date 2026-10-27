@@ -1,8 +1,9 @@
 class_name ScreamSystem
 extends Node
-## Mecânica central: o Bradador grita de longe, você PARA e RESPONDE gritando.
-## Responder certo o afasta; ficar em silêncio, andar durante a janela, ou olhar
-## para ele o aproxima. No estágio final ele chega até você.
+## Mecânica central: o Bradador grita de longe. Quando o grito termina você tem poucos segundos para
+## FICAR PARADO E AGACHADO (C), sem lanterna correndo e sem andar. Andar, correr ou olhar para ele o aproxima.
+## (Opção antiga em Config.grito_ativo: responder gritando com o microfone ou segurando R.)
+## No estágio final ele chega até você.
 
 signal player_died
 signal log_line(text: String)
@@ -151,14 +152,19 @@ func _process(delta: float) -> void:
 		State.WINDOW:
 			_check_noise(delta)
 			_window_left -= delta
-			if player.move_speed < 0.5 and is_shouting():
+			if Config.grito_ativo:
+				if player.move_speed < 0.5 and is_shouting():
+					_shout_time += delta
+			elif player.crouching and player.move_speed < 0.5:
 				_shout_time += delta
 			if forced_results.size() > 0:
 				_resolve(forced_results.pop_front())
-			elif _shout_time >= SHOUT_NEEDED:
+			elif Config.grito_ativo and _shout_time >= SHOUT_NEEDED:
 				_resolve(true)
+			elif not Config.grito_ativo and player.move_speed > 1.3:
+				_resolve(false)           # mexeu-se durante a janela: ele ouviu
 			elif _window_left <= 0.0:
-				_resolve(false)
+				_resolve((not Config.grito_ativo) and _shout_time >= WINDOW_SECONDS - 0.6)
 		State.RESULT:
 			_timer -= delta
 			if _timer <= 0.0:
@@ -192,7 +198,10 @@ func _begin_scream() -> void:
 	_scream_left = scream_stream.get_length()
 	state = State.SCREAM
 	if _screams_heard == 1:
-		hud.show_prompt("Algo grita na névoa.\nQuando parar: PARE e RESPONDA (grite ou segure R).", 6.0)
+		if Config.grito_ativo:
+			hud.show_prompt("Algo grita na névoa.\nQuando parar: PARE e RESPONDA (grite ou segure R).", 6.0)
+		else:
+			hud.show_prompt("Algo grita na névoa.\nQuando o grito parar: AGACHE (C) e não se mexa.", 6.0)
 	if audio != null and stage >= 2:
 		audio.play_whisper()
 	log_line.emit("scream #%d stage=%d axis=%d" % [_screams_heard, stage, int(_axis)])
@@ -203,7 +212,7 @@ func _begin_window() -> void:
 	_window_left = WINDOW_SECONDS
 	_shout_time = 0.0
 	if _screams_heard <= 2:
-		hud.show_prompt("PARE E GRITE!", WINDOW_SECONDS)
+		hud.show_prompt("PARE E GRITE!" if Config.grito_ativo else "AGACHE (C) E FIQUE QUIETO!", WINDOW_SECONDS)
 
 
 func _resolve(success: bool) -> void:
@@ -216,11 +225,15 @@ func _resolve(success: bool) -> void:
 			echo_done = true
 			_echo_t = 1.8
 	else:
-		stage += 1
-		player.shake(0.06, 0.6)
-		if audio != null:
-			audio.bump_fear(0.25)
-		log_line.emit("FALHOU -> stage=%d" % stage)
+		var m := get_tree().get_first_node_in_group("missao")
+		if m != null and m.absorver_erro():
+			log_line.emit("FALHOU, mas o terço protegeu -> stage=%d" % stage)
+		else:
+			stage += 1
+			player.shake(0.06, 0.6)
+			if audio != null:
+				audio.bump_fear(0.25)
+			log_line.emit("FALHOU -> stage=%d" % stage)
 	if stage >= STAGE_DIST.size() - 1:
 		_kill()
 		return

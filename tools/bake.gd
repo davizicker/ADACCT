@@ -443,6 +443,11 @@ func _main() -> void:
 	ev.set_script(load("res://scripts/event_director.gd"))
 	main.add_child(ev)
 	ev.owner = main
+	var mis := Node.new()
+	mis.name = "Missao"
+	mis.set_script(load("res://scripts/missao.gd"))
+	main.add_child(mis)
+	mis.owner = main
 	var aud := Node.new()
 	aud.name = "Audio"
 	aud.set_script(load("res://scripts/audio_director.gd"))

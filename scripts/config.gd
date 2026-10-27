@@ -9,7 +9,8 @@ static var music := 0.7
 static var effects := 1.0
 static var mouse_sens := 0.0025
 static var mic_threshold := 0.07
-static var quality := 1         # 0 baixa, 1 média, 2 alta
+static var quality := 2         # 0 baixa, 1 média, 2 alta (2 liga os efeitos do Forward+: AO, reflexos, névoa volumétrica)
+static var grito_ativo := false # opção antiga: responder gritando (microfone ou R). Padrão: ficar parado e agachado
 static var camera_fx := true    # vinheta, granulado, aberração
 static var head_bob := true
 static var loaded := false
@@ -30,6 +31,7 @@ static func load_all() -> void:
 	quality = cf.get_value("video", "quality", quality)
 	camera_fx = cf.get_value("video", "camera_fx", camera_fx)
 	head_bob = cf.get_value("video", "head_bob", head_bob)
+	grito_ativo = cf.get_value("controles", "grito_ativo", grito_ativo)
 
 
 static func save_all() -> void:
@@ -42,6 +44,7 @@ static func save_all() -> void:
 	cf.set_value("video", "quality", quality)
 	cf.set_value("video", "camera_fx", camera_fx)
 	cf.set_value("video", "head_bob", head_bob)
+	cf.set_value("controles", "grito_ativo", grito_ativo)
 	cf.save(PATH)
 
 

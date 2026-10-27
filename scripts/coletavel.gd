@@ -1,9 +1,10 @@
 class_name Coletavel
 extends Area3D
-## Objeto que o jogador pega com a tecla E: frasco de óleo (recarrega o lampião) ou bilhete (lore).
+## Objeto que o jogador pega com a tecla E: frasco de óleo (recarrega o lampião), bilhete (lore) ou item da trama (chave, livro, terço).
 ## O Player procura nós do grupo "interagivel" com o método `interagir` e a propriedade `texto_interacao`.
 
-@export_enum("oleo", "nota") var tipo := "oleo"
+@export_enum("oleo", "nota", "item") var tipo := "oleo"
+@export var item_id := ""
 @export var nota_id := 0
 @export var texto_interacao := "Pegar"
 
@@ -24,6 +25,12 @@ func interagir(player: Player) -> void:
 		player.oil_changed.emit(player.oil)
 		get_tree().call_group("audio", "play_clink")
 		get_tree().call_group("hud", "show_prompt", "Você pegou querosene.", 3.0)
+		visible = false
+		set_deferred("monitorable", false)
+		remove_from_group("interagivel")
+	elif tipo == "item":
+		_usado = true
+		get_tree().call_group("missao", "dar_item", item_id)
 		visible = false
 		set_deferred("monitorable", false)
 		remove_from_group("interagivel")

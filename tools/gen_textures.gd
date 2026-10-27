@@ -25,11 +25,42 @@ func _init() -> void:
 	_capim()
 	_hera()
 	_bananeira()
+	_decals()
 	_ponto_luz()
 	_silhueta()
 	_janelas()
 	print("[tex] pronto")
 	quit()
+
+
+# ------------------------------------------------------------------ decalques de sujeira (só Forward+)
+
+## sujeira_base.png: sujeira e respingos que sobem do chão, com escorridos verticais.
+## mancha.png: manchas de umidade/mofo em lugares aleatórios. Texturas RGBA; v=1 é o PÉ da parede.
+func _decals() -> void:
+	var streak := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 1.0, 81, 3)
+	var blot := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 1.0, 82, 4)
+	var fine := _noise(FastNoiseLite.TYPE_SIMPLEX, 1.0, 83)
+	var a := Image.create(512, 512, false, Image.FORMAT_RGBA8)
+	var m := Image.create(512, 512, false, Image.FORMAT_RGBA8)
+	for y in 512:
+		for x in 512:
+			var v := float(y) / 511.0           # 0 = topo, 1 = pé da parede
+			var u := float(x) / 511.0
+			var st := streak.get_noise_2d(u * 38.0, v * 3.0) * 0.5 + 0.5        # escorridos verticais finos
+			var bl := blot.get_noise_2d(u * 5.0, v * 5.0) * 0.5 + 0.5
+			var fn := fine.get_noise_2d(u * 120.0, v * 120.0) * 0.5 + 0.5
+			var base := pow(v, 3.2)                                              # mais sujo perto do chão
+			var alpha := clampf(base * (0.55 + st * 0.9) + (bl - 0.5) * 0.25 * v, 0.0, 1.0) * (0.75 + fn * 0.25)
+			alpha = clampf(alpha * 0.85, 0.0, 0.8)
+			var col := Color(0.10, 0.08, 0.06).lerp(Color(0.18, 0.16, 0.10), clampf(bl, 0.0, 1.0) * 0.5)
+			a.set_pixel(x, y, Color(col.r, col.g, col.b, alpha))
+			var mk := clampf((bl - 0.52) * 4.0, 0.0, 1.0) * clampf(st * 1.4, 0.0, 1.0)
+			var edge := smoothstep(0.0, 0.12, u) * smoothstep(1.0, 0.88, u) * smoothstep(0.0, 0.1, v) * smoothstep(1.0, 0.9, v)
+			var mcol := Color(0.12, 0.13, 0.09).lerp(Color(0.10, 0.17, 0.08), clampf(fn, 0.0, 1.0))
+			m.set_pixel(x, y, Color(mcol.r, mcol.g, mcol.b, mk * edge * 0.7))
+	a.save_png(OUT + "sujeira_base.png")
+	m.save_png(OUT + "mancha.png")
 
 
 # ------------------------------------------------------------------ utilidades

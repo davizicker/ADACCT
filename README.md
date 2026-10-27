@@ -16,3 +16,10 @@ desta pasta (não crie um projeto novo e copie arquivos).
 - Mercado e conceito: `docs/01…03`
 
 **F5** para jogar. O mundo está em `scenes/vila.scn` (edite no editor).
+
+
+## Novidades (v8)
+- Entre nas casas (tecla E na porta com lampião), pegue chaves e o livro, abra a igreja e leia os nomes.
+- O grito agora é: agache (C) e fique quieto. Gritar com microfone virou opção.
+- Roteiro do jogo de 2 horas: `docs/10-roteiro-do-jogo-de-2-horas.md`. Prompts para IA: `docs/11-prompts-para-ia.md`.
+- Testes novos: `--selftest-casas`, `tools/auditoria_pecas.gd`, `tools/foto_interiores.gd`.

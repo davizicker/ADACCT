@@ -91,3 +91,10 @@ Ferramentas novas (rodam sozinhas e acusam o problema):
 Bradador e Mula foram refeitos (malhas por código: manto esfarrapado, rosto, braços longos e dedos; corpo, pescoço em brasa, pernas articuladas, cauda). Continuam **placeholders**: os modelos reais são o item 1 e 3 de `docs/09-mapa-de-assets-realismo-extremo.md`.
 
 Casas que se atravessavam nas curvas (6 pares, com telhados cruzados): agora cada casa **encurta a profundidade** até a planta não invadir a vizinha (`_casa_atravessa`). `auditoria_geom.gd`: **0 casas se atravessando** (antes 6).
+
+## 8. Casas, trama e gráficos (v8)
+- **Mecânica do grito trocada:** agora, quando o grito acaba, é **agachar (C) e ficar parado**; mexer-se, correr ou olhar para ele aproxima o Bradador. Gritar/microfone continua como **opção** no menu.
+- **14 becos** (antes 7), todos testados subindo inteiros. O teste achou um barril bloqueando um beco; agora portas, becos, barris e bancos reservam seu lugar (`_livre/_reservar`).
+- **6 casas visitáveis + igreja por dentro**, com lampião aceso na porta; itens (chaves, livro, terço), cartas e querosene; objetivo e inventário na tela; o Casarão fica trancado até achar a chave; a igreja só abre com a chave e o livro. `--selftest-casas` entra em cada porta, confere o chão, pega os itens (nenhum dentro de móvel), sai, cumpre a trama e vence no altar.
+- **Forward+ por padrão** (com fallback para OpenGL) e Qualidade Alta ligada: reflexos na pedra molhada, iluminação global, neblina volumétrica, oclusão ambiente. Decalques de sujeira/umidade nas fachadas. Estimativa em placa real não medida.
+- Roteiro de 2 horas em `docs/10` e prompts prontos em `docs/11`.

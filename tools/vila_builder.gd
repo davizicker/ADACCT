@@ -18,8 +18,18 @@ const WALLS: Array[String] = ["reboco_branco", "reboco_ocre", "reboco_amarelo", 
 const WALL_WEIGHT: Array[int] = [30, 14, 18, 8, 8, 4, 6, 12]
 const WOODS: Array[String] = ["madeira_azul", "madeira_vermelha", "madeira_verde", "madeira_ocre", "madeira_natural", "madeira_branca"]
 ## becos em escada: [s, lado]
-const ALLEYS: Array = [[40.0, 1.0], [88.0, -1.0], [136.0, -1.0], [188.0, 1.0], [226.0, 1.0], [262.0, -1.0], [286.0, 1.0]]
+const ALLEYS: Array = [[18.0, -1.0], [40.0, 1.0], [64.0, 1.0], [88.0, -1.0], [104.0, 1.0], [136.0, -1.0], [172.0, -1.0], [188.0, 1.0], [208.0, -1.0], [226.0, 1.0], [244.0, 1.0], [262.0, -1.0], [276.0, -1.0], [286.0, 1.0]]
 const FOUNTAIN := [Route.FOUNTAIN_S, Route.FOUNTAIN_SIDE]
+## Casas que o jogador pode ENTRAR (porta com luz). O lote real é o primeiro "casa" a partir de `s` no lado `sigma`.
+## `requer`/`trancada`: item do inventário que destranca a porta e o aviso enquanto trancada.
+const ENTRADAS: Array = [
+	{"s": 28.0, "sigma": -1.0, "id": "benedita", "texto": "Entrar na casa de Dona Benedita"},
+	{"s": 54.0, "sigma": -1.0, "id": "padaria", "texto": "Entrar na padaria"},
+	{"s": 94.0, "sigma": 1.0, "id": "venda", "texto": "Entrar na Venda do Seu Zé"},
+	{"s": 194.0, "sigma": -1.0, "id": "barbearia", "texto": "Entrar na barbearia"},
+	{"s": 214.0, "sigma": 1.0, "id": "casarao", "texto": "Entrar no Casarão dos Vaz", "requer": "chave_casarao", "trancada": "Trancada com chave de ferro. Dizem que o Seu Zé guarda a chave."},
+	{"s": 248.0, "sigma": 1.0, "id": "sineiro", "texto": "Entrar na casa do sineiro"},
+]
 
 var _rng := RandomNumberGenerator.new()
 var _cache := {}
@@ -28,6 +38,9 @@ var _rs := PackedVector2Array()
 var _noise_lo: FastNoiseLite
 var _noise_hi: FastNoiseLite
 var _n := 0
+var _entrada_atual: Dictionary = {}
+var _entradas_feitas: Dictionary = {}
+var _ocupados: Array = []     # [Vector3, raio]: lugares já usados por portas/barris/bancos (nada se sobrepõe)
 var _casas_postas: Array[Dictionary] = []   # {xf, depth, w} das casas já colocadas (para não se atravessarem nas curvas)
 var _flutuando: Array[String] = []   # peças que não encostam em nada (auditoria feita no bake)
 var _spots: Array[Vector2] = []
@@ -434,6 +447,7 @@ func _moon() -> DirectionalLight3D:
 	l.name = "Lua"
 	l.light_color = Color(0.55, 0.65, 0.95)
 	l.light_energy = 0.30
+	l.light_cull_mask = 1             # os interiores (camada 2) não recebem luar
 	# a lua fica no céu à frente e à direita de quem começa a subir a rua; a luz viaja no sentido oposto
 	var moon_dir := Vector3(0.50, 0.46, -0.74).normalized()
 	l.transform = Transform3D(Basis.looking_at(-moon_dir, Vector3.UP), Vector3.ZERO)
@@ -466,6 +480,8 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_props_encosta())
 	root.add_child(_serra())
 	root.add_child(_route_path())
+	root.add_child(Interiores.new().construir(self))
+	print("[vila] entradas: ", _entradas_feitas)
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
 	for name in ["Casas", "MurosEQuintais", "Becos", "FundoDaRua", "Ponte"]:
 		var n := root.get_node_or_null(name)
@@ -536,6 +552,15 @@ func _frontage(root: Node3D) -> void:
 					kind = "quintal"
 				elif r < (0.12 if narrow else 0.25):
 					kind = "talude"
+			_entrada_atual = {}
+			if kind == "casa" or kind == "quintal" or kind == "talude":
+				for e in ENTRADAS:
+					if float(e["sigma"]) == sigma and not _entradas_feitas.has(e["id"]) and s >= float(e["s"]) - 3.0 and w_street >= 3.6:
+						kind = "casa"
+						w = maxf(w, 7.2)
+						_entrada_atual = e
+						_entradas_feitas[e["id"]] = s
+						break
 			var s2 := _advance(sigma, s, w)
 			var f := lot_frame(sigma, s, s2)
 			match kind:
@@ -591,7 +616,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		depth -= 0.3
 	_casas_postas.append({"xf": xf0, "depth": depth, "w": float(f["w"]) + 0.24})
 	var casa := make_casa(f["w"] + 0.24, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
-		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted)
+		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted, _entrada_atual)
 	casa.name = "Casa_%02d" % _n
 	# cada casa recua um pouco diferente da vizinha (como no real) e dispensa o z-fighting entre fachadas
 	var jit := (0.01 + _rng.randf() * 0.03) if _n % 2 == 0 else (0.08 + _rng.randf() * 0.03)
@@ -600,9 +625,28 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	xf.origin += xf.basis.x * jit
 	casa.transform = xf
 	parent.add_child(casa)
+	_reservar(xf * Vector3(-1.0, 0.0, float(casa.get_meta("door_z"))), 1.2)
+	_decalques_fachada(casa, float(f["w"]) + 0.24, float(casa.get_meta("altura")))
+	var porta_a := casa.get_node_or_null("Entrada_%s" % _entrada_atual.get("id", "")) as Node3D
+	if porta_a != null:
+		# em ladeira o chão na porta fica acima/abaixo da origem do lote: o gatilho acompanha o chão real
+		var wp: Vector3 = xf * porta_a.position
+		var delta := Route.height(Route.nearest_s(wp)) + SW_H - xf.origin.y
+		porta_a.position.y = 1.3 + clampf(delta, -1.0, 1.0)
 
 
 ## true se a pegada (planta) da casa em `xf` com `depth` x `w` invade a de alguma casa já colocada.
+func _livre(p: Vector3, r: float) -> bool:
+	for o in _ocupados:
+		if Vector2(p.x - (o[0] as Vector3).x, p.z - (o[0] as Vector3).z).length() < r + float(o[1]):
+			return false
+	return true
+
+
+func _reservar(p: Vector3, r: float) -> void:
+	_ocupados.append([p, r])
+
+
 func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
 	for o in _casas_postas:
 		var oxf: Transform3D = o["xf"]
@@ -626,7 +670,7 @@ func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
 # ------------------------------------------------------------------ casa colonial
 
 ## `w` largura da fachada; `floors` 1–3; `depth` profundidade; `lit_p` chance de janela acesa.
-func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false) -> Node3D:
+func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false, entrada := {}) -> Node3D:
 	var c := Node3D.new()
 	c.name = "Casa"
 	var fh := 4.0
@@ -663,6 +707,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		col_z.append(-w / 2.0 + (i + 0.5) * w / cols)
 	var door_i := _rng.randi_range(0, cols - 1)
 	var dz := col_z[door_i]
+	c.set_meta("door_z", dz)
+	c.set_meta("altura", height)
 	# porta com moldura de cantaria; em arco nos sobrados "arqueados"
 	var arched := (not simple) and _rng.randf() < 0.5
 	if arched:
@@ -685,6 +731,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 				b.box("madeira_natural", Vector3(0.03, 0.75, 0.5), Vector3(-0.235, py, dz + pz))
 		b.box("janela_escura", Vector3(0.05, 0.32, 1.3), Vector3(-0.2, 2.9, dz))
 	b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                         # soleira
+	if not entrada.is_empty():
+		_porta_entrada(c, entrada, dz)
 
 	var bal_cols: Array[int] = []
 	if balcony and floors >= 2:
@@ -725,6 +773,49 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		_flutuando.append("casa w=%.1f: %s" % [w, fl])
 	_mesh_node(c, "Detalhes", b.commit())
 	return c
+
+
+## Sujeira e umidade projetadas na fachada (Decal: só Forward+; em Compatibilidade são ignorados).
+func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
+	# a projeção do Decal desce pelo -Y local; giramos para ela entrar na parede (+X local da casa).
+	var basis := Basis(Vector3(0, 0, -1), Vector3(-1, 0, 0), Vector3(0, 1, 0))
+	for k in 2:
+		if k == 1 and _rng.randf() > 0.6:
+			continue
+		var d := Decal.new()
+		d.name = "Sujeira" if k == 0 else "Umidade"
+		d.texture_albedo = load("res://assets/textures/%s.png" % ("sujeira_base" if k == 0 else "mancha"))
+		var h := minf(altura + 0.5, 4.0 if k == 0 else 3.4)
+		d.size = Vector3(w, 0.9, h)
+		d.transform = Transform3D(basis, Vector3(0.1, h * 0.5 - 0.25, 0.0))
+		d.distance_fade_enabled = true
+		d.distance_fade_begin = 45.0
+		d.distance_fade_length = 15.0
+		d.upper_fade = 0.05
+		d.lower_fade = 0.05
+		d.cull_mask = 1
+		casa.add_child(d)
+
+
+## Porta que o jogador pode abrir (E): gatilho + lampião de parede aceso ao lado (marca as casas visitáveis).
+func _porta_entrada(c: Node3D, entrada: Dictionary, dz: float) -> void:
+	var a := Area3D.new()
+	a.name = "Entrada_%s" % entrada["id"]
+	a.position = Vector3(-0.85, 1.3, dz)
+	a.set_script(load("res://scripts/porta.gd"))
+	a.set("destino", entrada["id"])
+	a.set("texto_interacao", entrada["texto"])
+	a.set("requer", entrada.get("requer", ""))
+	a.set("texto_trancada", entrada.get("trancada", "Está trancada."))
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(1.6, 2.6, 1.8)
+	cs.shape = bs
+	a.add_child(cs)
+	c.add_child(a)
+	var lw := _lantern_wall(Vector3(0.0, 3.0, dz + 1.35), -PI / 2.0)
+	lw.name = "LampiaoDaPorta"
+	c.add_child(lw)
 
 
 func _sign(c: Node3D, b: MeshBatch, z: float) -> void:
@@ -958,6 +1049,8 @@ func _lot_beco(parent: Node3D, f: Dictionary) -> void:
 	var wb: float = f["w"]
 	var g := _group(parent, "Beco_%02d" % _n, f["xf"])
 	_n += 1
+	for off in [-0.5, 0.0, 1.0, 2.0]:
+		_reservar((f["xf"] as Transform3D) * Vector3(-1.0 - off * 0.0, 0.0, 0.0) + (f["xf"] as Transform3D).basis.x * (-1.4 + off), wb * 0.5 + 0.9)
 	var steps := 36
 	var run := 0.45
 	var rise := 0.19
@@ -1769,6 +1862,9 @@ func _adornos() -> Node3D:
 		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
 		var out := -Route.right(s) * sigma
 		var p := base + out * 0.45
+		if not _livre(p, 0.55):
+			continue
+		_reservar(p, 0.55)
 		if _rng.randf() < 0.6:
 			var barril := _prop(root, "wine_barrel_01", p, _rng.randf() * TAU, _rng.randf_range(0.95, 1.1))
 			_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
@@ -2055,11 +2151,15 @@ func _props_rua() -> Node3D:
 	root.name = "Props"
 	# --- bar com a TV ligada na calçada do largo (as pessoas se juntavam para ver TV nos bares): barril, TV, banquinhos
 	var bar := _spot(-1.0, 148.5, 0.55)
+	_reservar(bar["pos"], 0.6)
 	var barril := _prop(root, "wine_barrel_01", bar["pos"], 0.0, 1.0)
 	_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
 	_tv(root, bar["pos"] + Vector3(0, 0.86, 0), _yaw_to(bar["out"]))
 	for k in 2:
 		var sb := _spot(-1.0, 147.0 + k * 3.0, 0.9)
+		if not _livre(sb["pos"], 0.45):
+			continue
+		_reservar(sb["pos"], 0.45)
 		var banco := _prop(root, "wooden_stool_01", sb["pos"], _rng.randf() * TAU, 1.0)
 		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
 	# --- carros cobertos com lona, estacionados na borda do largo e do adro
@@ -2073,6 +2173,9 @@ func _props_rua() -> Node3D:
 	# --- banquinhos e baldes junto às portas, com um lampião de querosene esquecido em um deles
 	for cfg in [[30.0, 1.0], [96.0, -1.0], [205.0, 1.0], [247.0, -1.0], [276.0, 1.0]]:
 		var sp := _spot(cfg[1], cfg[0], 0.55)
+		if not _livre(sp["pos"], 0.45):
+			continue
+		_reservar(sp["pos"], 0.45)
 		var banco := _prop(root, "wooden_stool_01", sp["pos"], _rng.randf() * TAU, 1.0)
 		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
 		if int(cfg[0]) == 96 or int(cfg[0]) == 247:
@@ -2081,6 +2184,9 @@ func _props_rua() -> Node3D:
 			_halo(lan, Vector3(0, 0.13, 0), 0.9, "halo_vela")
 	for cfg in [[64.0, 1.0], [122.0, -1.0], [231.0, -1.0], [164.0, 1.0]]:
 		var sp := _spot(cfg[1], cfg[0], 0.45)
+		if not _livre(sp["pos"], 0.4):
+			continue
+		_reservar(sp["pos"], 0.4)
 		var balde := _prop(root, "wooden_bucket_01", sp["pos"], _rng.randf() * TAU, 1.0)
 		_prop_collision(balde, "cil", Vector3(0.38, 0.3, 0.38), Vector3(0, 0.15, 0))
 	# --- ferro-velho de 1961: aros de roda encostados na parede (a ferraria) e uma bola de futebol esquecida

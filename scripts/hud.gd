@@ -5,6 +5,7 @@ extends CanvasLayer
 var _prompt: Label
 var _status: Label
 var _mic: Label
+var _objetivo: Label
 var _debug: Label
 var _interact: Label
 var _stamina: ColorRect
@@ -46,6 +47,9 @@ func _ready() -> void:
 	_status = _label(0.94, 1.0, 16, HORIZONTAL_ALIGNMENT_LEFT)
 	_mic = _label(0.90, 0.94, 16, HORIZONTAL_ALIGNMENT_LEFT)
 	_debug = _label(0.0, 0.1, 14, HORIZONTAL_ALIGNMENT_RIGHT)
+	_objetivo = _label(0.02, 0.16, 18, HORIZONTAL_ALIGNMENT_LEFT)
+	_objetivo.offset_left = 20.0
+	_objetivo.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	for l in [_status, _mic]:
 		(l as Label).offset_left = 16.0
 
@@ -132,7 +136,9 @@ func set_status(oil: float, lantern_on: bool) -> void:
 
 
 func set_mic(level: float, threshold: float, has_mic: bool) -> void:
-	if has_mic:
+	if not Config.grito_ativo:
+		_mic.text = ""
+	elif has_mic:
 		var bars := "|".repeat(clampi(int(level * 80.0), 0, 40))
 		_mic.text = "mic %s   limiar %.2f  ([ e ] ajustam)   ou segure R" % [bars, threshold]
 	else:
@@ -154,6 +160,11 @@ func set_stamina(frac: float, exhausted: bool) -> void:
 	_stamina_bg.visible = frac < 0.995
 	_stamina.anchor_right = clampf(frac, 0.0, 1.0)
 	_stamina.color = Color(0.85, 0.35, 0.25, 0.85) if exhausted else Color(0.9, 0.8, 0.55, 0.8)
+
+
+## Objetivo atual e itens carregados (canto superior esquerdo).
+func set_objetivo(text: String) -> void:
+	_objetivo.text = text
 
 
 func show_interact(text: String) -> void:
