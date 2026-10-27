@@ -44,6 +44,8 @@ func _init() -> void:
 		return bb.has_point(q)
 	var problems := 0
 	for it in get_nodes_in_group("interagivel"):
+		if it is Porta:
+			continue        # portas de beco ficam dentro do volume da casa vizinha de propósito
 		var p: Vector3 = (it as Node3D).global_position + Vector3(0, 0.3, 0)
 		for m in corpos:
 			if dentro.call(p, m, 0.05):

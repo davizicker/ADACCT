@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/bananeira.res" id="1_c236t"]
 
-[node name="Bananeira" type="Node3D" unique_id=119692535]
+[node name="Bananeira" type="Node3D" unique_id=370584886]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=1453176777]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=1607296497]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1

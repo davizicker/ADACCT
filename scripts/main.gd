@@ -343,7 +343,7 @@ func _test_casas() -> void:
 	var vistos := {}
 	for p: Porta in portas:
 		var pid: String = p.destino
-		var out: Vector3 = -(p.get_parent() as Node3D).global_transform.basis.x
+		var out: Vector3 = (p.get_parent() as Node3D).global_transform.basis * (p.get_meta("fora_local", Vector3(-1, 0, 0)) as Vector3)
 		var pe := p.global_position + out * 1.0
 		var qg := PhysicsRayQueryParameters3D.create(pe + Vector3(0, 2.0, 0), pe - Vector3(0, 4.0, 0))
 		qg.exclude = [player.get_rid()]
@@ -459,7 +459,7 @@ var _esc_leaks: Array[String] = []
 
 ## Para cada ponto da rua, anda para a esquerda e para a direita; não pode sair do corredor.
 func _escape_test(delta: float) -> void:
-	var points: Array[float] = [12.0, 30.0, 50.0, 70.0, 95.0, 120.0, 150.0, 165.0, 200.0, 225.0, 250.0, 275.0, 290.0, 310.0, 330.0]
+	var points: Array[float] = [12.0, 30.0, 50.0, 70.0, 95.0, 120.0, 150.0, 165.0, 200.0, 232.0, 270.0, 305.0, 335.0, 360.0, 380.0]
 	var total := points.size() * 2
 	if _esc_i >= total:
 		print("[escape] pior distancia=%.1f m | vazamentos=%d %s" % [_esc_worst, _esc_leaks.size(), str(_esc_leaks)])
@@ -509,7 +509,8 @@ func _test_becos(delta: float) -> void:
 		Input.action_release("move_forward")
 		var along := (player.global_position - beco.global_position).dot(x_axis)
 		var rise := player.global_position.y - float(_hint)
-		var ok := along > 12.0 and rise > 4.0
+		var cego := beco.has_meta("cego")
+		var ok := (along > 5.0 and rise > 2.0) if cego else (along > 12.0 and rise > 4.0)
 		var why := ""
 		for i in player.get_slide_collision_count():
 			var col := player.get_slide_collision(i)

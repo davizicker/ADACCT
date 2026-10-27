@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/arbusto.res" id="1_dfgiq"]
 
-[node name="Arbusto" type="Node3D" unique_id=1826563373]
+[node name="Arbusto" type="Node3D" unique_id=57518941]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=616523695]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=879741714]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1
