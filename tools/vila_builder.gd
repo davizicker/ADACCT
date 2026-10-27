@@ -723,10 +723,13 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 
 	var b := _batch()
 	b.box("muro", Vector3(0.3, 5.1, w + 0.1), Vector3(-0.1, -1.45, 0))            # embasamento de pedra
-	b.box("cantaria", Vector3(0.55, 0.25, w + 0.2), Vector3(-0.27, height - 0.35, 0))  # cornija
+	var ncor := maxi(1, int(ceil(w)))
+	for k in ncor:
+		var zc := -w / 2.0 + (k + 0.5) * w / ncor
+		b.malha(Kit.mesh("cornija_1m"), Kit.fachada(Vector3(0.0, height - 0.2, zc), Vector3(w / ncor, 1.0, 1.0)))      # cornija com dentículos
 	for k in int(w / 0.9):
 		var z := -w / 2.0 + 0.5 + k * 0.9
-		b.box("madeira_natural", Vector3(0.8, 0.12, 0.14), Vector3(-0.4, height + 0.04, z))   # cachorros do beiral
+		b.malha(Kit.mesh("cachorro_beiral"), Kit.fachada(Vector3(0.0, height - 0.04, z)), {"madeira": "madeira_natural"})   # cachorros do beiral
 	if floors >= 2 and _rng.randf() < 0.5:
 		b.box("cantaria", Vector3(0.18, 0.16, w + 0.1), Vector3(-0.07, fh - 0.2, 0))           # cordão
 	if _rng.randf() < 0.55:
@@ -757,17 +760,10 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
 		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
 	else:
-		b.box("cantaria", Vector3(0.2, 3.1, 1.8), Vector3(-0.08, 1.55, dz))
-		b.box(wood, Vector3(0.08, 2.7, 1.4), Vector3(-0.18, 1.35, dz))
-		for pz in [-0.34, 0.34]:
-			for py in [0.8, 1.95]:
-				b.box("madeira_natural", Vector3(0.03, 0.75, 0.5), Vector3(-0.235, py, dz + pz))
-		b.box("janela_escura", Vector3(0.05, 0.32, 1.3), Vector3(-0.2, 2.9, dz))
-	b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                         # soleira
-	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.19, 2.45, dz + 0.78))              # número da casa
-	b.box("ferro", Vector3(0.03, 0.14, 0.09), Vector3(-0.255, 1.3, dz - 0.5))                     # aldrava
-	b.cylinder("ferro", 0.045, 0.045, 0.015, Vector3(-0.27, 1.2, dz - 0.5), Vector3(0, 0, PI / 2.0), 8)
-	b.box("cantaria", Vector3(0.75, 0.1, 2.3), Vector3(-0.42, -0.08, dz))                         # degrau
+		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood})
+	if arched:
+		b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
+	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + (1.25 if not arched else 1.15)))   # número da casa na parede
 	if not entrada.is_empty():
 		_porta_entrada(c, entrada, dz)
 
@@ -791,8 +787,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		_balcony(b, col_z[bal_cols[0]] - 0.95, col_z[bal_cols[bal_cols.size() - 1]] + 0.95, fh, wood)
 	if not simple and _rng.randf() < 0.4:
 		var chz := _rng.randf_range(-w * 0.3, w * 0.3)
-		b.box(wall, Vector3(0.7, 2.2, 0.7), Vector3(depth / 2.0 - 0.2, height + rise + 0.45, chz))        # desce até dentro do telhado
-		b.box("cantaria", Vector3(0.85, 0.12, 0.85), Vector3(depth / 2.0 - 0.2, height + rise + 1.5, chz))
+		b.malha(Kit.mesh("chamine"), Transform3D(Basis.IDENTITY, Vector3(depth / 2.0 - 0.2, height + rise - 0.55, chz)))      # chaminé de pedra do kit (embute no telhado)
 	if haunted and floors >= 2:
 		var hi := (door_i + 1) % cols
 		_haunted_window(c, Vector3(-0.18, fh + 1.65, col_z[hi]))
@@ -994,18 +989,17 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 		if not door:
 			b.box("cantaria", Vector3(0.34, 0.1, wid + 0.5), Vector3(-0.17, base_y - 0.1, p.z))
 		return
-	b.box("cantaria", Vector3(0.18, hgt + 0.4, wid + 0.4), Vector3(-0.07, p.y, p.z))
-	b.quad(glass, Vector2(wid, hgt), Vector3(-0.17, p.y, p.z), -PI / 2.0)
-	b.box(wood, Vector3(0.05, hgt, 0.05), Vector3(-0.19, p.y, p.z))
-	b.box(wood, Vector3(0.05, 0.05, wid), Vector3(-0.19, p.y + hgt * 0.14, p.z))
-	if not door:
-		b.box(wood, Vector3(0.05, 0.05, wid), Vector3(-0.19, p.y - hgt * 0.28, p.z))
-		b.box("cantaria", Vector3(0.34, 0.1, wid + 0.5), Vector3(-0.17, p.y - hgt / 2.0 - 0.25, p.z))   # peitoril
+	var base_y := p.y - hgt / 2.0
+	if door:
+		# porta-balcão: porta de duas folhas do kit, menos funda
+		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.4, hgt / 2.5, 0.6)), {"madeira": wood, "vidro": glass})
+	else:
+		b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
 		var sorteio := _rng.randf()
 		if sorteio < 0.16:
-			_pot(b, Vector3(-0.3, p.y - hgt / 2.0 - 0.2, p.z))
+			_pot(b, Vector3(-0.2, base_y + 0.03, p.z))
 		elif sorteio < 0.30:
-			_jardineira(b, Vector3(-0.34, p.y - hgt / 2.0 - 0.2, p.z), wid)
+			_jardineira(b, Vector3(-0.26, base_y + 0.03, p.z), wid)
 		if _rng.randf() < 0.55:
 			_venezianas(b, p, wid, hgt, wood)
 	if grate:
@@ -1016,18 +1010,13 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 ## Venezianas de madeira abertas em ângulo (cada folha gira na dobradiça, na lateral do vão).
 func _venezianas(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String) -> void:
 	var theta := _rng.randf_range(0.8, 1.35)
-	var lw := wid * 0.5 + 0.02
 	for side: float in [-1.0, 1.0]:
-		var theta_i := theta * _rng.randf_range(0.85, 1.1)
-		var hinge := Vector3(-0.2, p.y, p.z + side * (wid * 0.5 + 0.2))
-		var dir := Vector3(-sin(theta_i), 0.0, -side * cos(theta_i))
-		var c := hinge + dir * lw * 0.5
-		var yaw := atan2(dir.x, dir.z)
-		b.box(wood, Vector3(0.035, hgt + 0.1, lw), c, Vector3(0, yaw, 0))
-		for k in 3:                                   # travessas horizontais
-			b.box("madeira_escura", Vector3(0.045, 0.05, lw * 0.96), c + Vector3(0, -hgt * 0.4 + k * hgt * 0.4, 0), Vector3(0, yaw, 0))
-		b.box("ferro", Vector3(0.05, 0.05, 0.05), hinge + Vector3(0, hgt * 0.4, 0))
-		b.box("ferro", Vector3(0.05, 0.05, 0.05), hinge + Vector3(0, -hgt * 0.4, 0))
+		var th := theta * _rng.randf_range(0.85, 1.1)
+		var hinge := Vector3(-0.12, p.y - hgt / 2.0 - 0.03, p.z + side * (wid * 0.5 + 0.2))
+		# folha do kit (a da direita é espelhada); gira na dobradiça: a esquerda abre para -theta, a direita para +theta
+		var mesh := Kit.mesh("veneziana" if side < 0.0 else "veneziana_e")
+		var bas := Basis(Vector3.UP, -side * th) * Basis(Vector3.UP, -PI / 2.0)
+		b.malha(mesh, Transform3D(bas.scaled_local(Vector3((wid * 0.5 + 0.02) / 0.52, (hgt + 0.1) / 1.56, 1.0)), hinge), {"madeira": wood})
 
 
 ## Jardineira de madeira sob a janela, com folhagem e flores.
@@ -1045,19 +1034,25 @@ func _balcony(b: MeshBatch, z0: float, z1: float, floor_y: float, wood: String) 
 	var bz := (z0 + z1) * 0.5
 	var iron := _rng.randf() < 0.7
 	var rail := "ferro" if iron else "madeira_natural"
-	b.box("cantaria", Vector3(1.25, 0.18, bw), Vector3(-0.62, floor_y - 0.09, bz))
-	for z in [z0 + 0.3, z1 - 0.3, bz]:
-		b.box("cantaria", Vector3(0.9, 0.32, 0.3), Vector3(-0.45, floor_y - 0.34, z))      # mísulas
-	b.box(rail, Vector3(0.06, 0.06, bw), Vector3(-1.2, floor_y + 1.0, bz))
-	b.box(rail, Vector3(0.05, 0.05, bw), Vector3(-1.2, floor_y + 0.12, bz))
+	if iron:
+		var nm := maxi(1, int(ceil(bw)))
+		for k in nm:
+			b.malha(Kit.mesh("sacada_1m"), Kit.fachada(Vector3(0.0, floor_y, z0 + (k + 0.5) * bw / nm), Vector3(bw / nm, 1.0, 1.0)))     # laje, mísulas, balaústres torneados
+	else:
+		b.box("cantaria", Vector3(1.25, 0.18, bw), Vector3(-0.62, floor_y - 0.09, bz))
+		for z in [z0 + 0.3, z1 - 0.3, bz]:
+			b.box("cantaria", Vector3(0.9, 0.32, 0.3), Vector3(-0.45, floor_y - 0.34, z))      # mísulas
+		b.box(rail, Vector3(0.06, 0.06, bw), Vector3(-1.2, floor_y + 1.0, bz))
+		b.box(rail, Vector3(0.05, 0.05, bw), Vector3(-1.2, floor_y + 0.12, bz))
 	for z in [z0, z1]:
 		b.box(rail, Vector3(1.2, 0.05, 0.05), Vector3(-0.6, floor_y + 1.0, z))
 	if _rng.randf() < 0.6:
 		for k in maxi(1, int(bw / 1.5)):
 			_pot(b, Vector3(-0.95, floor_y, z0 + bw * (k + 0.5) / maxi(1, int(bw / 1.5))))
-	var posts := int(bw / (0.16 if iron else 0.22))
-	for k in posts + 1:
-		b.box(rail, Vector3(0.025 if iron else 0.045, 0.88, 0.025 if iron else 0.045), Vector3(-1.2, floor_y + 0.56, z0 + bw * k / posts))
+	if not iron:
+		var posts := int(bw / 0.22)
+		for k in posts + 1:
+			b.box(rail, Vector3(0.045, 0.88, 0.045), Vector3(-1.2, floor_y + 0.56, z0 + bw * k / posts))
 
 
 # ------------------------------------------------------------------ lotes especiais

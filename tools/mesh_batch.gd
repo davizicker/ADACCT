@@ -122,12 +122,9 @@ func roof(mat_roof: String, mat_gable: String, size: Vector3, pos: Vector3, yaw 
 	var nr := (xf.basis * Vector3(size.y, hx, 0)).normalized()
 	var uz := size.z / tile
 	var vs := slope / tile
-	# água esquerda: cumeeira (v=0) -> beiral (v=vs)
-	tri_uv(st, c, c2, a2, Vector2(0, 0), Vector2(uz, 0), Vector2(uz, vs), nl)
-	tri_uv(st, c, a2, a, Vector2(0, 0), Vector2(uz, vs), Vector2(0, vs), nl)
-	# água direita
-	tri_uv(st, c, b, b2, Vector2(0, 0), Vector2(0, vs), Vector2(uz, vs), nr)
-	tri_uv(st, c, b2, c2, Vector2(0, 0), Vector2(uz, vs), Vector2(uz, 0), nr)
+	# águas em "capa e canal": a superfície ondula na direção da cumeeira (telhas curvas), com 3 fiadas ao longo do caimento
+	_agua(st, c, c2, a, a2, nl, size.z, uz, vs, 0.032)
+	_agua(st, c, c2, b, b2, nr, size.z, uz, vs, 0.032)
 	var sg := _tool(mat_gable)
 	tri(sg, a, b, c, xf.basis * Vector3(0, 0, -1))
 	tri(sg, a2, c2, b2, xf.basis * Vector3(0, 0, 1))
@@ -137,6 +134,37 @@ func roof(mat_roof: String, mat_gable: String, size: Vector3, pos: Vector3, yaw 
 		var down := xf.basis * Vector3(0, -1, 0)
 		tri(ss, a, a2, b2, down)
 		tri(ss, a, b2, b, down)
+
+
+## Uma água do telhado como grade ondulada. r0/r1 = cumeeira nas pontas, e0/e1 = beiral nas pontas.
+func _agua(st: SurfaceTool, r0: Vector3, r1: Vector3, e0: Vector3, e1: Vector3, n: Vector3, comp: float, uz: float, vs: float, amp: float) -> void:
+	var nz := maxi(6, int(comp / 0.15))
+	var ns := 3
+	var periodo := 0.30
+	var grade: Array = []
+	for i in nz + 1:
+		var t := float(i) / nz
+		var linha: Array[Vector3] = []
+		var ridge := r0.lerp(r1, t)
+		var eave := e0.lerp(e1, t)
+		var onda := amp * (0.5 + 0.5 * sin(TAU * t * comp / periodo))
+		for j in ns + 1:
+			var v := float(j) / ns
+			var fiada := amp * 0.5 * (1.0 if j % 2 == 1 else 0.0) * 0.4     # sobreposição de fiadas: leve degrau
+			linha.append(ridge.lerp(eave, v) + n * (onda + fiada))
+		grade.append(linha)
+	for i in nz:
+		for j in ns:
+			var p00: Vector3 = grade[i][j]
+			var p01: Vector3 = grade[i][j + 1]
+			var p10: Vector3 = grade[i + 1][j]
+			var p11: Vector3 = grade[i + 1][j + 1]
+			var u0 := uz * float(i) / nz
+			var u1 := uz * float(i + 1) / nz
+			var v0 := vs * float(j) / ns
+			var v1 := vs * float(j + 1) / ns
+			tri_uv(st, p00, p10, p11, Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1), n)
+			tri_uv(st, p00, p11, p01, Vector2(u0, v0), Vector2(u1, v1), Vector2(u0, v1), n)
 
 
 ## Prisma triangular (telhado de duas águas). Cumeeira ao longo de Z local.
@@ -253,6 +281,18 @@ func commit() -> ArrayMesh:
 		if mesh.get_surface_count() > before:
 			mesh.surface_set_material(before, _loader.call(mat_name))
 	return mesh
+
+
+## Junta uma malha pronta (do kit modelado no Blender, assets/models/kit/) ao lote, com transformação `xf`.
+## `mapa` troca o nome do material do .glb pelo material do jogo (ex.: {"madeira": "madeira_azul", "vidro": "vidro_luz"}).
+func malha(mesh: Mesh, xf: Transform3D, mapa := {}) -> void:
+	for i in mesh.get_surface_count():
+		var m := mesh.surface_get_material(i)
+		var nome: String = m.resource_name if m != null else "cantaria"
+		nome = mapa.get(nome, nome)
+		_tool(nome).append_from(mesh, i, xf)
+		var bb: AABB = xf * mesh.surface_get_aabb(i) if mesh.has_method("surface_get_aabb") else xf * mesh.get_aabb()
+		_boxes.append([nome, bb])
 
 
 ## Auditoria: caixas que não encostam em nenhuma outra caixa do lote nem nos sólidos dados (flutuando).

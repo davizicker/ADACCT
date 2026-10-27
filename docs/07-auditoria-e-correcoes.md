@@ -110,3 +110,9 @@ Casas que se atravessavam nas curvas (6 pares, com telhados cruzados): agora cad
 - **17 becos** (12 sobem até a porta, 5 sem saída). O teste dos becos achou um bug real: uma casa vizinha invadia o beco (o jogador parava a 4,8 m). Corrigido (casas perto de becos ficam rasas e as casas seguintes respeitam a "pegada" do beco).
 - **14 interiores**, 21 modelos novos integrados, plantas reais no solo, esconderijos (`--selftest-esconder`).
 - **Desempenho (Forward+, Qualidade Média, mesmo ponto de vista no software):** chamadas de desenho **2.515 → 1.935** (-23%) e triângulos **3,6 M → 1,6 M**, por: oclusão por casa (OccluderInstance3D), alcances de visibilidade ajustados à neblina, detalhes sem sombra, FXAA no lugar de MSAA, GI/SSIL/SSR/TAA só na Alta, névoa volumétrica em resolução menor, resolução de renderização com FSR 2. **Padrão agora é Média**; F3 mostra FPS.
+
+## 11. Kit de fachada modelado no Blender (v12)
+- `tools/blender/kit_colonial.py` modela por script (bisel, ripas, balaústres torneados) 8 módulos em `assets/models/kit/`: janela com guarnição de pedra e caixilho de 6 vidros, veneziana (e espelhada), porta dupla com almofadas, sacada com balaústres, cornija com dentículos, cachorro de beiral e chaminé. O jogo os usa em todas as casas (`tools/kit.gd`, `MeshBatch.malha`).
+- Telhado agora em "capa e canal" (superfície ondulada em 3 fiadas) em vez de plano liso.
+- São modelos **procedurais**, melhores que caixas, mas não são fotogrametria como os do Poly Haven.
+- Testes: caminhada (centro e bordas), 17 becos, casas, itens, fuga e auditorias, todos em 0 problemas.
