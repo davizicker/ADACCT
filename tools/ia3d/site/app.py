@@ -14,6 +14,8 @@ from flask import Flask, request, jsonify, send_from_directory, render_template_
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.abspath(os.path.join(AQUI, "..", "..", ".."))
 FAB = os.path.join(AQUI, "..", "fabrica3d.py")
+ANIMAR = os.path.join(AQUI, "..", "animar.py")
+sys.path.insert(0, os.path.join(AQUI, ".."))
 SAIDA = os.path.join(RAIZ, "tools", "ia3d", "saida")
 DEST_JOGO = os.path.join(RAIZ, "assets", "models", "gerados")
 os.makedirs(SAIDA, exist_ok=True)
@@ -73,6 +75,47 @@ def gerar():
     jid = uuid.uuid4().hex[:8]
     JOBS[jid] = {"estado": "fila", "log": "", "modelo": "", "nome": nome, "inicio": time.time()}
     threading.Thread(target=rodar_job, args=(jid, args, nome), daemon=True).start()
+    return jsonify(id=jid)
+
+
+def rodar_animar(jid, nome, tipo, anims):
+    job = JOBS[jid]
+    job["estado"] = "rodando"
+    try:
+        import fabrica3d
+        py = fabrica3d.carregar_config()["python_bpy"]
+    except Exception:
+        py = sys.executable
+    src = os.path.join(SAIDA, nome + ".glb")
+    destino = os.path.join(SAIDA, nome + "_animado.glb")
+    cmd = [py, ANIMAR, src, destino, "--tipo", tipo]
+    if anims:
+        cmd += ["--anims", anims]
+    job["log"] += "$ " + " ".join(cmd) + "\n"
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        for linha in p.stdout:
+            if "[animar]" in linha or "Error" in linha or "Traceback" in linha:
+                job["log"] += linha
+        p.wait()
+        job["estado"] = "pronto" if (p.returncode == 0 and os.path.exists(destino)) else "erro"
+        job["modelo"] = nome + "_animado"
+    except Exception as e:
+        job["log"] += "ERRO: %s\n" % e
+        job["estado"] = "erro"
+
+
+@app.post("/api/animar/<nome>")
+def animar(nome):
+    n = nome_seguro(nome)
+    if not os.path.exists(os.path.join(SAIDA, n + ".glb")):
+        abort(404)
+    tipo = request.form.get("tipo", "humanoide")
+    if tipo not in ("humanoide", "quadrupede"):
+        return jsonify(erro="tipo inválido"), 400
+    jid = uuid.uuid4().hex[:8]
+    JOBS[jid] = {"estado": "fila", "log": "", "modelo": "", "nome": n, "inicio": time.time()}
+    threading.Thread(target=rodar_animar, args=(jid, n, tipo, request.form.get("anims", "")), daemon=True).start()
     return jsonify(id=jid)
 
 
@@ -169,14 +212,23 @@ const g=document.getElementById('g'),vz=document.getElementById('vazio'),log=doc
 async function lista(){const r=await fetch('/api/modelos');const m=await r.json();vz.hidden=m.length>0;g.innerHTML=m.map(x=>`
 <div class="card"><model-viewer src="/modelos/${x.nome}.glb" camera-controls auto-rotate shadow-intensity="1" exposure="1"></model-viewer>
 <div class="nome">${x.nome}</div><div class="pq">${x.kb} KB ${x.no_jogo?'· no jogo':''}</div>
-<div class="acoes"><a href="/modelos/${x.nome}.glb?baixar=1">Baixar</a><button class="sec" onclick="enviar('${x.nome}')">Enviar ao jogo</button><button class="sec" onclick="apagar('${x.nome}')">Apagar</button></div></div>`).join('')}
+<div class="anims" id="an-${x.nome}"></div>
+<div class="acoes"><a href="/modelos/${x.nome}.glb?baixar=1">Baixar</a>${x.nome.endsWith('_animado')?'':`<button class="sec" onclick="animar('${x.nome}')">Rigar e animar</button>`}<button class="sec" onclick="enviar('${x.nome}')">Enviar ao jogo</button><button class="sec" onclick="apagar('${x.nome}')">Apagar</button></div></div>`).join('')}
+function acompanhar(j){log.hidden=false;const t=setInterval(async()=>{const s=await (await fetch('/api/job/'+j.id)).json();log.textContent='['+s.estado+']\n'+s.log;log.scrollTop=log.scrollHeight;
+  if(s.estado==='pronto'||s.estado==='erro'){clearInterval(t);b.disabled=false;lista()}},1500)}
+async function animar(n){const tipo=prompt('Tipo do modelo: humanoide ou quadrupede','humanoide');if(!tipo)return;
+ const fd=new FormData();fd.append('tipo',tipo);const r=await fetch('/api/animar/'+n,{method:'POST',body:fd});const j=await r.json();
+ if(!r.ok){alert(j.erro||'erro');return}b.disabled=true;acompanhar(j)}
+document.addEventListener('load',e=>{const mv=e.target;if(mv.tagName!=='MODEL-VIEWER')return;const an=mv.availableAnimations||[];if(!an.length)return;
+ const box=mv.parentElement.querySelector('.anims');if(!box||box.childElementCount)return;
+ box.innerHTML=an.map(a=>`<button class="sec" style="padding:3px 8px;font-size:12px;margin:3px 3px 0 0">${a}</button>`).join('');
+ box.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{mv.animationName=bt.textContent;mv.play()})},true);
 async function enviar(n){const r=await fetch('/api/enviar/'+n,{method:'POST'});const j=await r.json();alert('Copiado para '+j.destino);lista()}
 async function apagar(n){if(confirm('Apagar '+n+'?')){await fetch('/api/modelos/'+n,{method:'DELETE'});lista()}}
 document.getElementById('f').onsubmit=async e=>{e.preventDefault();b.disabled=true;log.hidden=false;log.textContent='Enviando…';
  const r=await fetch('/api/gerar',{method:'POST',body:new FormData(e.target)});const j=await r.json();
  if(!r.ok){log.textContent=j.erro;b.disabled=false;return}
- const t=setInterval(async()=>{const s=await (await fetch('/api/job/'+j.id)).json();log.textContent='['+s.estado+']\n'+s.log;log.scrollTop=log.scrollHeight;
-  if(s.estado==='pronto'||s.estado==='erro'){clearInterval(t);b.disabled=false;lista()}},1500)};
+ acompanhar(j)};
 lista();
 </script></body></html>"""
 

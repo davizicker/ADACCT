@@ -68,3 +68,15 @@ python tools/ia3d/site/app.py --demo assets/models/poly/GothicCabinet_01.glb   #
 ```
 Tem campo de prompt, envio de imagem, nome/altura/triângulos, andamento ao vivo, galeria com prévia 3D girando, botão **Baixar** e **Enviar ao jogo** (copia para `assets/models/gerados/`).
 **Testado:** o site e o fluxo completo em modo demonstração (gerar, acompanhar, listar, baixar, enviar). **Não testado:** a IA de verdade (precisa do TripoSR instalado e GPU). A prévia 3D usa um componente do Google carregado da internet.
+
+## Rig e animação automáticos (o que o Mixamo faz)
+`tools/ia3d/animar.py` cria o **esqueleto** pelas proporções do modelo, liga a malha com **pesos automáticos** e gera **animações em laço** por código:
+- humanoide: `idle`, `walk`, `run`, `scream` (o grito do Bradador);
+- quadrúpede: `idle`, `walk`, `gallop` (a Mula).
+```
+python tools/ia3d/animar.py modelo.glb modelo_animado.glb --tipo humanoide
+python tools/ia3d/animar.py mula.glb mula_animada.glb --tipo quadrupede --anims idle,gallop
+```
+No site, cada modelo tem o botão **Rigar e animar**; a prévia mostra os botões das animações.
+**Testado** com um humanoide e um quadrúpede de teste (esqueleto, pesos e animações exportados e tocando no Godot; arquivos de teste via `gerar_teste.py` e `tools/preview_anim.gd`).
+**Limites:** supõe humanoide em pose T/A de pé ou quadrúpede de lado; pesos automáticos falham em malhas muito sujas; as animações são simples e cíclicas, não são captura de movimento. A biblioteca de milhares de animações do Mixamo não dá para replicar; o próximo passo é importar animações gratuitas (CMU Mocap, Quaternius CC0) e retargetar para o esqueleto.
