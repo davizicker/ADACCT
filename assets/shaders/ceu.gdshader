@@ -52,10 +52,15 @@ void sky() {
 		vec3 ccol = mix(cloud_dark, cloud_lit, edge * 0.8);
 		col = mix(col, ccol, cl);
 		// estrelas (só onde não há nuvem)
-		vec2 sp = dir.xz / (dir.y + 0.001) * 18.0;
-		vec2 cell = floor(sp);
-		float st = step(0.9965, hash(cell));
-		float tw = 0.6 + 0.4 * sin(TIME * 2.0 + hash(cell + 7.0) * 30.0);
+		// estrelas redondas e do mesmo tamanho em qualquer direção (grade 3D na esfera)
+		vec3 sp3 = dir * 70.0;
+		vec3 cell3 = floor(sp3);
+		float hh = hash(cell3.xz + cell3.y * 17.0);
+		vec2 jit = vec2(hash(cell3.xz * 1.7 + cell3.y), hash(cell3.zx * 2.3 + cell3.y * 3.1));
+		vec3 fp = fract(sp3);
+		float dstar = length(vec2(dot(fp, vec3(1.0, 0.0, 0.0)), fp.z) - jit * 0.6 - 0.2);
+		float st = step(0.985, hh) * smoothstep(0.13, 0.0, dstar) * 1.6;
+		float tw = 0.6 + 0.4 * sin(TIME * 2.0 + hash(cell3.xz + 7.0) * 30.0);
 		col += vec3(0.8, 0.85, 1.0) * st * tw * star_strength * (1.0 - cl) * smoothstep(0.12, 0.4, dir.y);
 	} else {
 		col = mix(horizon_color * 0.7, vec3(0.02, 0.03, 0.05), clamp(-dir.y * 3.0, 0.0, 1.0));

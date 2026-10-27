@@ -358,89 +358,16 @@ func _player() -> CharacterBody3D:
 
 
 func _bradador(b: VilaBuilder) -> Node3D:
-	var n := Node3D.new()
-	n.name = "Bradador"
-	var manto := MeshInstance3D.new()
-	manto.name = "Manto"
-	var cone := CylinderMesh.new()
-	cone.top_radius = 0.14
-	cone.bottom_radius = 0.55
-	cone.height = 2.2
-	cone.radial_segments = 10
-	manto.mesh = cone
-	manto.material_override = b.mat("bradador_preto")
-	manto.position.y = 1.15
-	n.add_child(manto)
-	var cabeca := MeshInstance3D.new()
-	cabeca.name = "Cabeca"
-	var sph := SphereMesh.new()
-	sph.radius = 0.15
-	sph.height = 0.46
-	cabeca.mesh = sph
-	cabeca.material_override = b.mat("bradador_palido")
-	cabeca.position.y = 2.45
-	n.add_child(cabeca)
-	for side: float in [-1.0, 1.0]:
-		var arm := MeshInstance3D.new()
-		arm.name = "Braco_%s" % ("Esq" if side < 0.0 else "Dir")
-		var ac := CylinderMesh.new()
-		ac.top_radius = 0.05
-		ac.bottom_radius = 0.03
-		ac.height = 1.7
-		arm.mesh = ac
-		arm.material_override = b.mat("bradador_preto")
-		arm.position = Vector3(side * 0.34, 1.45, 0.05)
-		arm.rotation_degrees = Vector3(0, 0, side * 6.0)
-		n.add_child(arm)
-	return n
+	return Criaturas.bradador(b.mat("bradador_preto"), b.mat("bradador_palido"))
 
 
 ## Mula-sem-cabeça: corpo escuro, quatro pernas que balançam, pescoço cotoco com fogo e luz.
 func _mula(b: VilaBuilder) -> Node3D:
-	var m := Node3D.new()
-	m.name = "Mula"
+	var m := Criaturas.mula(b.mat("mula_corpo"))
 	m.set_script(load("res://scripts/mula.gd"))
-	var mat := b.mat("mula_corpo")
-	var body := MeshInstance3D.new()
-	body.name = "Corpo"
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.32
-	cap.height = 1.9
-	body.mesh = cap
-	body.material_override = mat
-	body.rotation_degrees.x = 90.0
-	body.position = Vector3(0, 1.2, 0)
-	m.add_child(body)
-	var neck := MeshInstance3D.new()
-	neck.name = "Pescoco"
-	var nc := CylinderMesh.new()
-	nc.top_radius = 0.13
-	nc.bottom_radius = 0.2
-	nc.height = 0.9
-	neck.mesh = nc
-	neck.material_override = mat
-	neck.rotation_degrees.x = -38.0
-	neck.position = Vector3(0, 1.62, -0.95)
-	m.add_child(neck)
-	var legs := [["PernaFE", -0.2, -0.65], ["PernaFD", 0.2, -0.65], ["PernaTE", -0.2, 0.65], ["PernaTD", 0.2, 0.65]]
-	for l in legs:
-		var pivot := Node3D.new()
-		pivot.name = l[0]
-		pivot.position = Vector3(l[1], 0.95, l[2])
-		var leg := MeshInstance3D.new()
-		leg.name = "Perna"
-		var lc := CylinderMesh.new()
-		lc.top_radius = 0.07
-		lc.bottom_radius = 0.045
-		lc.height = 0.95
-		leg.mesh = lc
-		leg.material_override = mat
-		leg.position = Vector3(0, -0.47, 0)
-		pivot.add_child(leg)
-		m.add_child(pivot)
 	var fire := CPUParticles3D.new()
 	fire.name = "Fogo"
-	fire.position = Vector3(0, 2.02, -1.25)
+	fire.position = Vector3(0, 2.2, -1.35)
 	fire.amount = 36
 	fire.lifetime = 0.75
 	fire.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
@@ -463,7 +390,7 @@ func _mula(b: VilaBuilder) -> Node3D:
 	m.add_child(fire)
 	var light := OmniLight3D.new()
 	light.name = "ChamaLuz"
-	light.position = Vector3(0, 2.1, -1.3)
+	light.position = Vector3(0, 2.3, -1.4)
 	light.light_color = Color(1.0, 0.45, 0.15)
 	light.light_energy = 3.4
 	light.omni_range = 16.0

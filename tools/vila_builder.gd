@@ -28,6 +28,7 @@ var _rs := PackedVector2Array()
 var _noise_lo: FastNoiseLite
 var _noise_hi: FastNoiseLite
 var _n := 0
+var _flutuando: Array[String] = []   # peças que não encostam em nada (auditoria feita no bake)
 var _spots: Array[Vector2] = []
 var _lamp_n := 0
 var _haunted := 0
@@ -217,6 +218,7 @@ func terrain_h(x: float, z: float) -> float:
 	var dc := Route.width(q.x) * 0.5 + SW + 12.0       # corredor plano onde ficam as casas
 	var t := maxf(0.0, q.y - dc)
 	var rise := 0.30 * t + 0.0030 * t * t
+	rise = 130.0 * tanh(rise / 130.0)        # morros altos, mas sem paredões de 400 m nas bordas do terreno
 	var n := _noise_lo.get_noise_2d(x, z) * 16.0 + _noise_hi.get_noise_2d(x, z) * 3.0
 	# leito do riacho que passa sob a ponte (cruza a rua; some longe, nas encostas)
 	var carve := 3.6 * (1.0 - smoothstep(3.0, 6.8, absf(q.x - Route.BRIDGE_S))) * (1.0 - smoothstep(55.0, 85.0, q.y))
@@ -404,7 +406,7 @@ func _environment() -> WorldEnvironment:
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.11, 0.14, 0.22)
-	env.ambient_light_energy = 0.50
+	env.ambient_light_energy = 0.38
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.10, 0.12, 0.19)
 	env.fog_density = 0.030
@@ -430,7 +432,7 @@ func _moon() -> DirectionalLight3D:
 	var l := DirectionalLight3D.new()
 	l.name = "Lua"
 	l.light_color = Color(0.55, 0.65, 0.95)
-	l.light_energy = 0.42
+	l.light_energy = 0.30
 	# a lua fica no céu à frente e à direita de quem começa a subir a rua; a luz viaja no sentido oposto
 	var moon_dir := Vector3(0.50, 0.46, -0.74).normalized()
 	l.transform = Transform3D(Basis.looking_at(-moon_dir, Vector3.UP), Vector3.ZERO)
@@ -478,6 +480,9 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 		(halo as GeometryInstance3D).visibility_range_end = 75.0
 	_set_range(root.get_node("Morros/CasasDoMorro"), 360.0)
 	_set_range(root.get_node("Morros/Arvores"), 220.0)
+	print("[vila] pecas soltas (flutuando): %d" % _flutuando.size())
+	for f in _flutuando.slice(0, 40):
+		print("[vila]   ", f)
 	return root
 
 
@@ -672,8 +677,9 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if not bal_cols.is_empty() and not simple:
 		_balcony(b, col_z[bal_cols[0]] - 0.95, col_z[bal_cols[bal_cols.size() - 1]] + 0.95, fh, wood)
 	if not simple and _rng.randf() < 0.4:
-		b.box(wall, Vector3(0.7, 1.8, 0.7), Vector3(depth / 2.0 - 0.2, height + rise + 0.45, _rng.randf_range(-w * 0.3, w * 0.3)))
-		b.box("cantaria", Vector3(0.85, 0.12, 0.85), Vector3(depth / 2.0 - 0.2, height + rise + 1.4, 0))
+		var chz := _rng.randf_range(-w * 0.3, w * 0.3)
+		b.box(wall, Vector3(0.7, 2.2, 0.7), Vector3(depth / 2.0 - 0.2, height + rise + 0.45, chz))        # desce até dentro do telhado
+		b.box("cantaria", Vector3(0.85, 0.12, 0.85), Vector3(depth / 2.0 - 0.2, height + rise + 1.5, chz))
 	if haunted and floors >= 2:
 		var hi := (door_i + 1) % cols
 		_haunted_window(c, Vector3(-0.18, fh + 1.65, col_z[hi]))
@@ -685,6 +691,10 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			b.box("ferro", Vector3(0.09, height + 0.3, 0.09), Vector3(-0.12, height / 2.0 - 0.1, dz2))   # tubo de queda
 		if _rng.randf() < 0.22:
 			_sign(c, b, col_z[(door_i + 1) % cols])
+	var solidos := [AABB(Vector3(0.0, -2.0, -w / 2.0), Vector3(depth, height + 4.0, w)),
+		AABB(Vector3(rcx - (depth + 1.4) / 2.0, ry - 0.05, -(w + 0.5) / 2.0), Vector3(depth + 1.4, rise + 0.1, w + 0.5))]
+	for fl in b.floating(solidos):
+		_flutuando.append("casa w=%.1f: %s" % [w, fl])
 	_mesh_node(c, "Detalhes", b.commit())
 	return c
 
@@ -871,9 +881,11 @@ func _lot_quintal(parent: Node3D, f: Dictionary) -> void:
 	var gz := _rng.randf_range(-w * 0.2, w * 0.2)
 	for sz: float in [-1.0, 1.0]:
 		b.box("cantaria", Vector3(0.7, wall_h + 0.6, 0.45), Vector3(0.0, (wall_h + 0.6) / 2.0 - 0.3, gz + sz * 0.95))   # pilares do portão
-		b.box("cantaria", Vector3(0.8, 0.2, 0.6), Vector3(0.0, wall_h + 0.7, gz + sz * 0.95))
+		b.box("cantaria", Vector3(0.8, 0.2, 0.6), Vector3(0.0, wall_h + 0.36, gz + sz * 0.95))
 	b.box("madeira_natural", Vector3(0.1, wall_h - 0.2, 1.5), Vector3(-0.1, (wall_h - 0.2) / 2.0, gz))
 	b.box("ferro", Vector3(0.12, 0.05, 1.5), Vector3(-0.17, wall_h * 0.55, gz))
+	for fl in b.floating([AABB(Vector3(0.0, -1.5, -w / 2.0), Vector3(0.5, wall_h + 1.5, w))]):
+		_flutuando.append("quintal w=%.1f: %s" % [w, fl])
 	_mesh_node(g, "Detalhes", b.commit())
 	_wall_ivy(g, w, wall_h)
 	var mats_here := ["arvore_0", "arvore_1", "arvore_2", "arvore_pequena", "palmeira", "bananeira"]
@@ -1038,13 +1050,13 @@ func _lot_chafariz(parent: Node3D, f: Dictionary) -> void:
 
 
 # ------------------------------------------------------------------ iluminação
-func _lamp_light(parent: Node3D, pos: Vector3, energy := 1.6) -> OmniLight3D:
+func _lamp_light(parent: Node3D, pos: Vector3, energy := 0.9) -> OmniLight3D:
 	var light := OmniLight3D.new()
 	light.name = "Luz"
 	light.position = pos
 	light.light_color = Color(1.0, 0.72, 0.35)
 	light.light_energy = energy
-	light.omni_range = 10.0
+	light.omni_range = 8.0
 	light.distance_fade_enabled = true
 	light.distance_fade_begin = 50.0
 	light.distance_fade_length = 15.0
@@ -1069,7 +1081,7 @@ func make_poste() -> Node3D:
 	m.name = "Poste"
 	PropKit.setup_bulb(m, Color(1.0, 0.82, 0.52), 3.4)
 	var bpos: Vector3 = m.get_meta("bulb_pos", Vector3(0, 3.5, 0))
-	_lamp_light(m, bpos, 1.7)
+	_lamp_light(m, bpos, 0.95)
 	_halo(m, bpos, 2.6)
 	_prop_collision(m, "cil", Vector3(0.22, 3.9, 0.22), Vector3(0, 1.95, 0))
 	return m
@@ -1088,7 +1100,7 @@ func _lantern_wall(pos: Vector3, yaw: float) -> Node3D:
 	m.rotation.y = yaw
 	PropKit.setup_bulb(m, Color(1.0, 0.80, 0.48), 3.0)
 	var bpos: Vector3 = m.get_meta("bulb_pos", Vector3(0, 0.8, 0.3))
-	_lamp_light(m, bpos, 1.5)
+	_lamp_light(m, bpos, 0.85)
 	_halo(m, bpos, 1.8)
 	return m
 
@@ -1542,22 +1554,6 @@ func _forest() -> Node3D:
 ## Luzes distantes das encostas (milhares de pontos amarelos como nas fotos), em MultiMesh.
 func _far_lights() -> MultiMeshInstance3D:
 	var xforms: Array[Transform3D] = _hill_lights.duplicate()
-	for o in _spots:
-		for k in _rng.randi_range(0, 2):
-			var p := o + Vector2(_rng.randf_range(-6, 6), _rng.randf_range(-6, 6))
-			var y := terrain_h(p.x, p.y) + _rng.randf_range(1.5, 4.0)
-			xforms.append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * _rng.randf_range(0.7, 1.5)), Vector3(p.x, y, p.y)))
-	var tries := 0
-	var extra := 0
-	while extra < 900 and tries < 5000:
-		tries += 1
-		var x := _rng.randf_range(-290.0, 260.0)
-		var z := _rng.randf_range(-540.0, 120.0)
-		var nr := _nearest(x, z)
-		if nr.y < 45.0:
-			continue
-		xforms.append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * _rng.randf_range(0.8, 1.8)), Vector3(x, terrain_h(x, z) + _rng.randf_range(2.0, 6.0), z)))
-		extra += 1
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	var quad := QuadMesh.new()
@@ -1966,7 +1962,7 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 func _coletaveis() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Coletaveis"
-	var oil_pts := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [154.0, -1.0], [198.0, 1.0], [244.0, -1.0], [286.0, 1.0]]
+	var oil_pts := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [171.0, -1.0], [198.0, 1.0], [244.0, -1.0], [286.0, 1.0]]
 	var i := 0
 	for o in oil_pts:
 		var s: float = o[0]

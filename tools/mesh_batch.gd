@@ -6,6 +6,7 @@ extends RefCounted
 
 var _st := {}                 # nome do material -> SurfaceTool
 var _loader: Callable         # nome -> Material
+var _boxes: Array = []        # [material, AABB] de cada box() (para a auditoria de peças soltas)
 
 
 func _init(material_loader: Callable) -> void:
@@ -65,6 +66,7 @@ func box(mat: String, size: Vector3, pos: Vector3, rot := Vector3.ZERO) -> void:
 	var xf := Transform3D(Basis.from_euler(rot), pos)
 	var st := _tool(mat)
 	var h := size * 0.5
+	_boxes.append([mat, xf * AABB(-h, size)])
 	for axis in 3:
 		for sign in [-1.0, 1.0]:
 			var n := Vector3.ZERO
@@ -251,3 +253,25 @@ func commit() -> ArrayMesh:
 		if mesh.get_surface_count() > before:
 			mesh.surface_set_material(before, _loader.call(mat_name))
 	return mesh
+
+
+## Auditoria: caixas que não encostam em nenhuma outra caixa do lote nem nos sólidos dados (flutuando).
+## Devolve descrições "material em (x,y,z)". `tol` = folga em metros.
+func floating(solids: Array, tol := 0.04) -> Array[String]:
+	var out: Array[String] = []
+	for i in _boxes.size():
+		var a: AABB = (_boxes[i][1] as AABB).grow(tol)
+		var touches := false
+		for sd in solids:
+			if a.intersects(sd as AABB):
+				touches = true
+				break
+		if not touches:
+			for j in _boxes.size():
+				if i != j and a.intersects(_boxes[j][1] as AABB):
+					touches = true
+					break
+		if not touches:
+			var c: Vector3 = (_boxes[i][1] as AABB).get_center()
+			out.append("%s em (%.2f, %.2f, %.2f)" % [_boxes[i][0], c.x, c.y, c.z])
+	return out

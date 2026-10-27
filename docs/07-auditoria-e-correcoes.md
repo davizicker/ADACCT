@@ -71,3 +71,21 @@ godot --headless --path . --quit-after 60000 -- --selftest-walk --walk-offset=1.
 ## 6. Atualização: assets reais (v6)
 - 15 modelos 3D do Poly Haven e 10 texturas CC0 (ambientCG e Poly Haven) integrados: postes e lampiões de parede, lanterna na mão, TV com tela animada, carros cobertos, estátua, porta de beco, barris, banquinhos, baldes, árvores mortas, arbustos, bola, aros de roda, diário. Créditos em `assets/CREDITOS.md`; contexto em `docs/08-ambientacao-1961.md`.
 - Regressão na Godot 4.7.2 depois da integração: selftest, walk (centro, +1,5 e -1,5), escape, Mula (3 casos), becos 7/7, itens, auditoria: **0 buracos, 0 problemas**.
+
+## 7. Limpeza geral (v7): "objetos voando e madeiras entrando umas nas outras"
+| Problema | Causa | Correção |
+|---|---|---|
+| Quadradinhos azuis/brancos "voando" no céu | **Estrelas do shader do céu** eram células quadradas que crescem para o zênite | Estrelas redondas, pequenas e do mesmo tamanho em qualquer direção |
+| Pontos de luz amarelos flutuando sobre os morros | 900 "luzes distantes" aleatórias no ar | Removidas: só ficam as luzes das janelas das casas dos morros |
+| Laje branca flutuando ao lado de chaminés | Tampa da chaminé em z diferente do corpo | Corpo e tampa no mesmo z; o corpo entra no telhado |
+| Capitel solto acima dos pilares do portão dos quintais | Tampa 0,3 m acima do pilar | Tampa encostada |
+| Paredão de 400 m nas bordas do terreno | Elevação quadrática sem limite | Elevação limitada (130 m) |
+| Frasco de querosene dentro do carro coberto | Posição sobreposta | Frasco movido |
+| Luz forte demais para 1961 | Lampiões 1,5–1,7, lua 0,42, ambiente 0,5 | Lampiões ~0,9, alcance 8 m, lua 0,30, ambiente 0,38 |
+
+Ferramentas novas (rodam sozinhas e acusam o problema):
+- **No bake:** `MeshBatch.floating()` checa cada peça de casas e quintais: "pecas soltas (flutuando): 0".
+- `godot --headless --path . --script res://tools/auditoria_pecas.gd`: props flutuando/afundados e atravessando outros props. Resultado: **44 itens, 0/0/0**.
+- `tools/preview_criaturas.gd`: fotografa Bradador e Mula de perto.
+
+Bradador e Mula foram refeitos (malhas por código: manto esfarrapado, rosto, braços longos e dedos; corpo, pescoço em brasa, pernas articuladas, cauda). Continuam **placeholders**: os modelos reais são o item 1 e 3 de `docs/09-mapa-de-assets-realismo-extremo.md`.
