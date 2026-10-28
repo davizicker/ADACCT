@@ -391,9 +391,23 @@ func _test_save() -> void:
 
 
 ## Teste das casas: entra em cada porta, confere o chão, pega os itens, sai, cumpre a trama e vence na igreja.
+## Espera n quadros (o tempo real não serve: no software de vídeo um quadro leva segundos).
+func _aguarda_quadros(n: int) -> void:
+	for i in n:
+		await get_tree().process_frame
+
+
+## Espera o tempo de JOGO (não o relógio): com a vila pesada o software de vídeo roda a poucos quadros por segundo e o recarga da porta demora.
+func _esperar_missao() -> void:
+	var n := 0
+	while missao._cooldown > 0.0 and n < 4000:
+		n += 1
+		await get_tree().process_frame
+
+
 func _test_casas() -> void:
 	eventos.enabled = false
-	await get_tree().create_timer(0.6, true, false, true).timeout
+	await _aguarda_quadros(8)
 	var falhas := 0
 	var portas: Array = get_tree().get_nodes_in_group("interagivel").filter(func(n: Node) -> bool: return n is Porta and str((n as Porta).destino) != "")
 	portas.sort_custom(func(a: Porta, b: Porta) -> bool: return str(a.requer) != "" and str(b.requer) == "")      # a porta trancada primeiro
@@ -416,22 +430,24 @@ func _test_casas() -> void:
 		player.cam.rotation.x = 0.0
 		_hint = ""
 		player.interact_hint.connect(func(t: String) -> void: _hint = t, CONNECT_ONE_SHOT)
-		await get_tree().create_timer(0.5, true, false, true).timeout
+		await _aguarda_quadros(7)
 		var aviso_ok := _hint.contains("Entrar")
 		if str(p.requer) != "" and not missao.tem(str(p.requer)):
+			await _esperar_missao()
 			_press_interact()
-			await get_tree().create_timer(0.4, true, false, true).timeout
+			await _aguarda_quadros(6)
 			var ficou_fora := missao.dentro == ""
 			print("[casas] %s trancada sem %s: ficou fora=%s -> %s" % [pid, str(p.requer), str(ficou_fora), "OK" if ficou_fora else "FALHOU"])
 			if not ficou_fora:
 				falhas += 1
 				missao.sair()
 			missao.inv[str(p.requer)] = true
-			await get_tree().create_timer(1.1, true, false, true).timeout
+			await _aguarda_quadros(13)
+		await _esperar_missao()
 		_press_interact()
-		await get_tree().create_timer(0.6, true, false, true).timeout
+		await _aguarda_quadros(8)
 		if missao.dentro != pid:
-			print("[casas]   DEBUG %s: alvo=%s dentro=%s frozen=%s pos=%s" % [pid, str(player._target), missao.dentro, str(player.frozen), str(player.global_position)])
+			print("[casas]   DEBUG %s: alvo=%s dentro=%s frozen=%s pos=%s cd=%.2f hidden=%s" % [pid, str(player._target), missao.dentro, str(player.frozen), str(player.global_position), missao._cooldown, str(player.hidden)])
 		var dentro_ok := missao.dentro == pid
 		var sala := get_node("Vila/Interiores/" + pid) as Node3D
 		var q := PhysicsRayQueryParameters3D.create(player.global_position + Vector3(0, 0.5, 0), player.global_position - Vector3(0, 2.0, 0))
@@ -454,7 +470,7 @@ func _test_casas() -> void:
 				if hud.note_open():
 					hud.hide_note()
 					player.frozen = false
-		await get_tree().create_timer(0.3, true, false, true).timeout
+		await _aguarda_quadros(5)
 		var obj_ok := missao.objetivo() != ""
 		print("[casas] %s: aviso=%s dentro=%s chao=%s itens=%d embutidos=%d -> %s" % [pid, str(aviso_ok), str(dentro_ok), str(chao_ok), pegos, embutidos, "OK" if (aviso_ok and dentro_ok and chao_ok and embutidos == 0 and obj_ok) else "FALHOU"])
 		if not (aviso_ok and dentro_ok and chao_ok and embutidos == 0):
@@ -462,7 +478,7 @@ func _test_casas() -> void:
 		vistos[pid] = true
 		player.frozen = false
 		missao.sair()
-		await get_tree().create_timer(1.1, true, false, true).timeout
+		await _aguarda_quadros(13)
 		if missao.dentro != "":
 			falhas += 1
 	var completo := missao.completo()
@@ -471,8 +487,9 @@ func _test_casas() -> void:
 		falhas += 1
 	# vitória pela igreja
 	_place_player(Route.CHURCH_S - 4.0, 0.0, 0.0)
+	await _esperar_missao()
 	missao.tentar_igreja()
-	await get_tree().create_timer(0.8, true, false, true).timeout
+	await _aguarda_quadros(10)
 	var igreja_ok := missao.dentro == "igreja"
 	print("[casas] igreja destrancada e interior carregado: %s" % str(igreja_ok))
 	if not igreja_ok:
@@ -480,7 +497,7 @@ func _test_casas() -> void:
 	else:
 		var altar := get_node("Vila/Interiores/igreja/Altar") as Altar
 		altar.interagir(player)
-		await get_tree().create_timer(0.4, true, false, true).timeout
+		await _aguarda_quadros(6)
 		if not finished:
 			falhas += 1
 	print("[casas] RESULTADO: salas=%d falhas=%d" % [vistos.size(), falhas])
@@ -499,7 +516,7 @@ func _walk_bot() -> void:
 	if int(_t) != int(_t - get_process_delta_time()) and int(_t) % 10 == 0:
 		print("[walk] t=%.0f s=%.1f desvio=%.2f y=%.2f rua=%.2f" % [_t, s_p, Route.dist_to_center(player.global_position), player.global_position.y, Route.ground_near(player.global_position)])
 	if finished:
-		await get_tree().create_timer(0.3, true, false, true).timeout
+		await _aguarda_quadros(5)
 		get_tree().quit()
 	elif _t > 400.0:
 		var why := ""

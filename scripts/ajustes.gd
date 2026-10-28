@@ -22,9 +22,10 @@ func _aplicar_zonas() -> void:
 	var vila := get_tree().root.get_node_or_null("Main/Vila")
 	if vila == null:
 		return
-	var zonas: Array[ZonaLimpa] = []
-	for c in find_children("*", "ZonaLimpa", true, false):
-		zonas.append(c as ZonaLimpa)
+	var zonas: Array[Node3D] = []
+	for c in find_children("*", "Node3D", true, false):
+		if c.has_method("contem"):          # ZonaLimpa (sem depender do tipo global, que só existe depois do import do editor)
+			zonas.append(c as Node3D)
 	if zonas.is_empty():
 		return
 	var removidos := 0
@@ -37,7 +38,7 @@ func _aplicar_zonas() -> void:
 			if not (n is MeshInstance3D or n.scene_file_path != "" or n.has_node("Modelo")):
 				continue
 			for z in zonas:
-				if z.contem((n as Node3D).global_position):
+				if z.call("contem", (n as Node3D).global_position):
 					n.queue_free()
 					removidos += 1
 					break
