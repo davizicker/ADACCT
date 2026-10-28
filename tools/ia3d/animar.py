@@ -285,7 +285,7 @@ if a.mocap and a.tipo == "humanoide":
         if c.get("tipo", "humanoide") != "humanoide":
             continue
         n, j = bvh_retarget.retargetar_humanoide(arm, bones, zmin, FWD, os.path.join(pasta, c["arquivo"]), c["nome"],
-                                                 c.get("laco", True), c.get("no_lugar", True))
+                                                 c.get("laco", True), c.get("no_lugar", True), c.get("chao", "ancorar"))
         print("[animar] mocap '%s': %d quadros, %d juntas ligadas" % (c["nome"], n, j))
 
 arm.animation_data.action = None

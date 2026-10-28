@@ -8,22 +8,53 @@ e mandar para o jogo. Usa tools/ia3d/fabrica3d.py por baixo.
 
 O site só escuta no seu computador (127.0.0.1). A prévia 3D usa o componente <model-viewer> do Google, carregado de um CDN
 (precisa de internet só para a prévia)."""
-import argparse, json, os, re, shutil, subprocess, sys, threading, time, uuid
-from flask import Flask, request, jsonify, send_from_directory, render_template_string, abort
+import argparse, hmac, json, os, re, shutil, subprocess, sys, threading, time, uuid
+from flask import Flask, request, jsonify, send_from_directory, render_template_string, abort, Response
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.abspath(os.path.join(AQUI, "..", "..", ".."))
 FAB = os.path.join(AQUI, "..", "fabrica3d.py")
 ANIMAR = os.path.join(AQUI, "..", "animar.py")
 sys.path.insert(0, os.path.join(AQUI, ".."))
-SAIDA = os.path.join(RAIZ, "tools", "ia3d", "saida")
+NUVEM = os.environ.get("MODO_NUVEM") == "1"        # hospedado (Render): GPU do Hugging Face, senha, sem "enviar ao jogo"
+SAIDA = os.environ.get("DATA_DIR") or os.path.join(RAIZ, "tools", "ia3d", "saida")
 DEST_JOGO = os.path.join(RAIZ, "assets", "models", "gerados")
 os.makedirs(SAIDA, exist_ok=True)
+MAX_MODELOS = 40                                    # na nuvem o disco é pequeno: guarda só os mais novos
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024
 JOBS = {}
-DEMO = {"glb": ""}
+DEMO = {"glb": os.environ.get("DEMO_GLB", "")}
 LOCK = threading.Lock()
+
+
+@app.before_request
+def exigir_senha():
+    """Se a variável SENHA existir, o site pede usuário (qualquer) e essa senha. Evita que estranhos gastem sua cota."""
+    senha = os.environ.get("SENHA")
+    if not senha or request.path == "/healthz":
+        return None
+    au = request.authorization
+    if au and hmac.compare_digest(au.password or "", senha):
+        return None
+    return Response("Senha necessária", 401, {"WWW-Authenticate": 'Basic realm="Fabrica 3D"'})
+
+
+@app.get("/healthz")
+def healthz():
+    return "ok"
+
+
+def ocupado():
+    return any(j["estado"] in ("fila", "rodando") for j in JOBS.values())
+
+
+def limpar_antigos():
+    fs = [os.path.join(SAIDA, f) for f in os.listdir(SAIDA) if f.endswith(".glb")]
+    fs.sort(key=os.path.getmtime, reverse=True)
+    for f in fs[MAX_MODELOS:]:
+        os.remove(f)
 
 
 def nome_seguro(s):
@@ -31,27 +62,36 @@ def nome_seguro(s):
     return s or "modelo"
 
 
-def rodar_job(jid, args, nome):
+VARIANTES = [("", []), ("_b", ["--fundo", "0.75", "--resolucao", "320"]), ("_c", ["--fundo", "0.92", "--resolucao", "256"])]
+
+
+def rodar_job(jid, args, nome, candidatos=1):
+    """Gera 1 a 3 versões (a IA erra bastante: a galeria deixa você escolher a melhor)."""
     job = JOBS[jid]
     job["estado"] = "rodando"
-    destino = os.path.join(SAIDA, nome + ".glb")
-    cmd = [sys.executable, FAB] + args + ["--nome", nome, "--destino", destino]
-    if DEMO["glb"]:
-        cmd += ["--simular", DEMO["glb"]]
-    job["log"] += "$ " + " ".join(cmd) + "\n"
-    try:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for linha in p.stdout:
-            job["log"] += linha
-        p.wait()
-        if p.returncode == 0 and os.path.exists(destino):
-            job["estado"] = "pronto"
-            job["modelo"] = nome
-        else:
-            job["estado"] = "erro"
-    except Exception as e:
-        job["log"] += "ERRO: %s\n" % e
-        job["estado"] = "erro"
+    ok = 0
+    for suf, extra in VARIANTES[:candidatos]:
+        n = nome + suf
+        destino = os.path.join(SAIDA, n + ".glb")
+        cmd = [sys.executable, FAB] + args + ["--nome", n, "--destino", destino]
+        if DEMO["glb"]:
+            cmd += ["--simular", DEMO["glb"]]
+        elif NUVEM:
+            cmd += extra
+        job["log"] += "$ " + " ".join(cmd) + "\n"
+        try:
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for linha in p.stdout:
+                job["log"] += linha
+            p.wait()
+            if p.returncode == 0 and os.path.exists(destino):
+                ok += 1
+                job["modelo"] = n
+        except Exception as e:
+            job["log"] += "ERRO: %s\n" % e
+    job["estado"] = "pronto" if ok else "erro"
+    if NUVEM:
+        limpar_antigos()
 
 
 @app.post("/api/gerar")
@@ -60,6 +100,9 @@ def gerar():
     nome = nome_seguro(request.form.get("nome") or prompt)
     altura = request.form.get("altura", "0") or "0"
     tris = request.form.get("tris", "30000") or "30000"
+    candidatos = max(1, min(3, int(request.form.get("candidatos", "1") or 1)))
+    if ocupado():
+        return jsonify(erro="Já tem um modelo sendo gerado. Espere terminar."), 429
     args = ["--altura", str(float(altura)), "--tris", str(int(tris))]
     arq = request.files.get("imagem")
     if arq and arq.filename:
@@ -74,7 +117,7 @@ def gerar():
         return jsonify(erro="Escreva um prompt ou envie uma imagem"), 400
     jid = uuid.uuid4().hex[:8]
     JOBS[jid] = {"estado": "fila", "log": "", "modelo": "", "nome": nome, "inicio": time.time()}
-    threading.Thread(target=rodar_job, args=(jid, args, nome), daemon=True).start()
+    threading.Thread(target=rodar_job, args=(jid, args, nome, candidatos), daemon=True).start()
     return jsonify(id=jid)
 
 
@@ -113,6 +156,8 @@ def animar(nome):
     n = nome_seguro(nome)
     if not os.path.exists(os.path.join(SAIDA, n + ".glb")):
         abort(404)
+    if ocupado():
+        return jsonify(erro="Já tem uma tarefa rodando. Espere terminar."), 429
     tipo = request.form.get("tipo", "humanoide")
     if tipo not in ("humanoide", "quadrupede"):
         return jsonify(erro="tipo inválido"), 400
@@ -147,6 +192,8 @@ def baixar(nome):
 
 @app.post("/api/enviar/<nome>")
 def enviar(nome):
+    if NUVEM:
+        abort(404)
     n = nome_seguro(nome)
     src = os.path.join(SAIDA, n + ".glb")
     if not os.path.exists(src):
@@ -167,7 +214,7 @@ def apagar(nome):
 
 @app.get("/")
 def index():
-    return render_template_string(PAGINA, demo=bool(DEMO["glb"]))
+    return render_template_string(PAGINA, demo=bool(DEMO["glb"]), nuvem=NUVEM)
 
 
 PAGINA = r"""<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -181,7 +228,7 @@ main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:20px;padding
 @media(max-width:800px){main{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px}
 label{display:block;font-size:13px;color:var(--mu);margin:12px 0 4px}
-textarea,input{width:100%;background:#0e0f14;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:9px;font:inherit}
+textarea,input,select{width:100%;background:#0e0f14;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:9px;font:inherit}
 textarea{min-height:96px;resize:vertical}.row{display:flex;gap:10px}.row>div{flex:1}
 button{background:var(--ac);color:#1b1408;border:0;border-radius:6px;padding:10px 14px;font:600 15px system-ui;cursor:pointer}
 button.sec{background:#262a3a;color:var(--tx)}button:disabled{opacity:.5}
@@ -192,7 +239,7 @@ model-viewer{width:100%;height:220px;background:#0b0c11;border-radius:8px;--post
 .acoes button,.acoes a{font-size:13px;padding:6px 9px}.acoes a{background:#262a3a;color:var(--tx);border-radius:6px;text-decoration:none}
 .aviso{background:#2a2112;border:1px solid #5a4620;color:#e8c987;padding:8px 10px;border-radius:6px;font-size:13px;margin-bottom:10px}
 </style></head><body>
-<header><h1>Fábrica <span>3D</span></h1><div class="pq">Prompt ou imagem → modelo 3D pronto para o jogo. Tudo no seu computador.</div></header>
+<header><h1>Fábrica <span>3D</span></h1><div class="pq">Prompt ou imagem → modelo 3D pronto para o jogo. {% if nuvem %}Na nuvem: a IA roda numa GPU grátis do Hugging Face.{% else %}Tudo no seu computador.{% endif %}</div></header>
 <main>
 <section class="card">
  {% if demo %}<div class="aviso">MODO DEMONSTRAÇÃO: nenhuma IA roda; o resultado é sempre o arquivo de exemplo.</div>{% endif %}
@@ -202,6 +249,8 @@ model-viewer{width:100%;height:220px;background:#0b0c11;border-radius:8px;--post
   <label>…ou envie uma imagem (fundo liso funciona melhor)</label>
   <input type="file" name="imagem" accept="image/*">
   <label>Nome do arquivo</label><input name="nome" placeholder="barril">
+  <label>Quantas versões gerar (a IA erra muito; escolha a melhor)</label>
+  <select name="candidatos"><option value="1">1 (mais rápido)</option><option value="2">2 versões</option><option value="3">3 versões</option></select>
   <div class="row"><div><label>Altura (m)</label><input name="altura" type="number" step="0.01" value="1"></div>
   <div><label>Triângulos</label><input name="tris" type="number" step="1000" value="30000"></div></div>
   <div style="margin-top:14px"><button id="b" type="submit">Gerar modelo</button></div>
@@ -211,12 +260,13 @@ model-viewer{width:100%;height:220px;background:#0b0c11;border-radius:8px;--post
 <section><div class="grade" id="g"></div><p class="pq" id="vazio">Nenhum modelo ainda.</p></section>
 </main>
 <script>
+const NUVEM={{ 'true' if nuvem else 'false' }};
 const g=document.getElementById('g'),vz=document.getElementById('vazio'),log=document.getElementById('log'),b=document.getElementById('b');
 async function lista(){const r=await fetch('/api/modelos');const m=await r.json();vz.hidden=m.length>0;g.innerHTML=m.map(x=>`
 <div class="card"><model-viewer src="/modelos/${x.nome}.glb" camera-controls auto-rotate shadow-intensity="1" exposure="1"></model-viewer>
 <div class="nome">${x.nome}</div><div class="pq">${x.kb} KB ${x.no_jogo?'· no jogo':''}</div>
 <div class="anims" id="an-${x.nome}"></div>
-<div class="acoes"><a href="/modelos/${x.nome}.glb?baixar=1">Baixar</a>${x.nome.endsWith('_animado')?'':`<button class="sec" onclick="animar('${x.nome}')">Rigar e animar</button>`}<button class="sec" onclick="enviar('${x.nome}')">Enviar ao jogo</button><button class="sec" onclick="apagar('${x.nome}')">Apagar</button></div></div>`).join('')}
+<div class="acoes"><a href="/modelos/${x.nome}.glb?baixar=1">Baixar</a>${x.nome.endsWith('_animado')?'':`<button class="sec" onclick="animar('${x.nome}')">Rigar e animar</button>`}${NUVEM?'':`<button class="sec" onclick="enviar('${x.nome}')">Enviar ao jogo</button>`}<button class="sec" onclick="apagar('${x.nome}')">Apagar</button></div></div>`).join('')}
 function acompanhar(j){log.hidden=false;const t=setInterval(async()=>{const s=await (await fetch('/api/job/'+j.id)).json();log.textContent='['+s.estado+']\n'+s.log;log.scrollTop=log.scrollHeight;
   if(s.estado==='pronto'||s.estado==='erro'){clearInterval(t);b.disabled=false;lista()}},1500)}
 async function animar(n){const tipo=prompt('Tipo do modelo: humanoide ou quadrupede','humanoide');if(!tipo)return;

@@ -117,7 +117,7 @@ def achar_laco(cin, nomes, min_len, max_len):
     return melhor[1], melhor[2]
 
 
-def retargetar_humanoide(arm, bones, zmin, FWD, caminho, nome, laco=True, no_lugar=True, fps=30):
+def retargetar_humanoide(arm, bones, zmin, FWD, caminho, nome, laco=True, no_lugar=True, chao="ancorar", fps=30):
     """Cria uma ação `nome` no armature `arm` com o movimento do BVH. `bones` = {nome: (head, tail, pai)} do animar.py."""
     pb = arm.pose.bones
     bvh = ler_bvh(caminho)
@@ -170,6 +170,10 @@ def retargetar_humanoide(arm, bones, zmin, FWD, caminho, nome, laco=True, no_lug
     alt_alvo = bones["quadril"][0].z - zmin
     esc = alt_alvo / alt_fonte
 
+    pes = [n for n in bones if n.split(".")[0] == "pe"]
+    base_pe = min(min(bones[n][0].z, bones[n][1].z) for n in pes) if pes else zmin
+    M_arm = arm.matrix_world
+
     act = bpy.data.actions.new(nome)
     arm.animation_data_create()
     arm.animation_data.action = act
@@ -197,6 +201,16 @@ def retargetar_humanoide(arm, bones, zmin, FWD, caminho, nome, laco=True, no_lug
             mov = Vector((0.0, mov.y, 0.0))
         mov_alvo = M @ (mov * esc)
         pb["quadril"].location = rest["quadril"].inverted() @ mov_alvo
+        if pes:
+            # ajuste ao chão: mede o pé mais baixo e corrige a altura do quadril.
+            # "ancorar": o pé mais baixo fica exatamente no chão (acaba com pé flutuando/afundado);
+            # "minimo": só impede de afundar (preserva o salto da corrida)
+            bpy.context.view_layer.update()
+            baixo = min(min((M_arm @ pb[n].head).z, (M_arm @ pb[n].tail).z) for n in pes)
+            erro = base_pe - baixo
+            if chao == "ancorar" or erro > 0:
+                mov_alvo.z += erro
+                pb["quadril"].location = rest["quadril"].inverted() @ mov_alvo
         pb["quadril"].keyframe_insert("location", frame=idx + 1)
     act.use_fake_user = True
     for p in pb:

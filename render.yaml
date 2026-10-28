@@ -1,0 +1,14 @@
+# Blueprint do Render: New > Blueprint > escolha este repositório. Veja docs/16-hospedar-no-render.md
+services:
+  - type: web
+    name: fabrica-3d
+    runtime: docker
+    dockerfilePath: ./tools/ia3d/Dockerfile
+    dockerContext: ./tools/ia3d
+    plan: free              # se faltar memória (Out of memory), troque por "starter"
+    healthCheckPath: /healthz
+    envVars:
+      - key: SENHA          # você digita no painel do Render; é a senha do site
+        sync: false
+      - key: HF_TOKEN       # token grátis do Hugging Face (huggingface.co/settings/tokens, tipo "Read")
+        sync: false

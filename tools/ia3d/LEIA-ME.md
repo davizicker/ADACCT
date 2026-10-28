@@ -1,5 +1,7 @@
 # Gerar modelos 3D no seu PC, de graça (como o Meshy)
 
+> **Mais fácil:** hospede na nuvem (Render + GPU grátis do Hugging Face) ou dê dois cliques em `iniciar_fabrica3d.bat`. Veja `docs/16-hospedar-no-render.md`.
+
 **Aviso honesto:** estes scripts eu **não consegui testar** (este ambiente não tem placa de vídeo NVIDIA). Os comandos vêm do README oficial de cada projeto; se der erro, cole a mensagem aqui que eu corrijo.
 Vai precisar de: Windows com **placa NVIDIA** (sua RTX 2060 de 6 GB serve para o TripoSR), Python 3.10 e Git. Tudo é grátis e roda **sem internet** depois de baixar.
 

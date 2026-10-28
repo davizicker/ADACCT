@@ -1,7 +1,7 @@
 {
   "clips": [
     {"nome": "walk",        "arquivo": "cmu_02_01_walk.bvh",     "laco": true,  "no_lugar": true, "tipo": "humanoide"},
-    {"nome": "run",         "arquivo": "cmu_02_03_run.bvh",      "laco": true,  "no_lugar": true, "tipo": "humanoide"},
+    {"nome": "run",         "arquivo": "cmu_02_03_run.bvh",      "laco": true,  "chao": "minimo",  "no_lugar": true, "tipo": "humanoide"},
     {"nome": "zombie_walk", "arquivo": "cmu_20_08_zombie.bvh",   "laco": true,  "no_lugar": true, "tipo": "humanoide"},
     {"nome": "creep",       "arquivo": "cmu_07_04_slowwalk.bvh", "laco": true,  "no_lugar": true, "tipo": "humanoide"},
     {"nome": "stride",      "arquivo": "cmu_08_11_stride.bvh",   "laco": true,  "no_lugar": true, "tipo": "humanoide"}

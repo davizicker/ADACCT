@@ -1,0 +1,4 @@
+saida/
+__pycache__/
+*.glb
+fabrica3d.json

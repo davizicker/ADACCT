@@ -17,7 +17,11 @@ TEMPLATE = "{p}, single object, centered, full view, front view, plain white bac
 
 
 def carregar_config():
-    cfg = {"triposr_dir": "", "python_triposr": sys.executable, "python_bpy": sys.executable,
+    cfg = {"backend": os.environ.get("FABRICA_BACKEND", "local"),      # "local" (TripoSR no seu PC) ou "hf" (GPU grátis do Hugging Face)
+           "hf_space": os.environ.get("HF_SPACE", "stabilityai/TripoSR"),
+           "hf_token": os.environ.get("HF_TOKEN", ""),
+           "hf_texto2img": os.environ.get("HF_TEXTO2IMG", "black-forest-labs/FLUX.1-schnell"),
+           "triposr_dir": "", "python_triposr": sys.executable, "python_bpy": sys.executable,
            "modelo_texto2img": "stabilityai/stable-diffusion-xl-base-1.0", "pasta_saida": os.path.join(RAIZ, "tools", "ia3d", "saida")}
     p = os.path.join(AQUI, "fabrica3d.json")
     if os.path.exists(p):
@@ -41,6 +45,41 @@ def texto_para_imagem(prompt, cfg, saida):
     img = pipe(TEMPLATE.format(p=prompt), num_inference_steps=30, guidance_scale=6.5).images[0]
     img.save(saida)
     return saida
+
+
+def texto_para_imagem_hf(prompt, cfg, saida):
+    """Texto -> imagem pela API de inferência do Hugging Face (precisa de HF_TOKEN gratuito)."""
+    if not cfg["hf_token"]:
+        sys.exit("Para gerar a partir de TEXTO na nuvem defina HF_TOKEN (token grátis em huggingface.co/settings/tokens). "
+                 "Ou envie uma IMAGEM, que não precisa de token.")
+    from huggingface_hub import InferenceClient
+    img = InferenceClient(token=cfg["hf_token"]).text_to_image(TEMPLATE.format(p=prompt), model=cfg["hf_texto2img"])
+    img.save(saida)
+    return saida
+
+
+def imagem_para_3d_hf(imagem, cfg, pasta, fundo=0.85, resolucao=256):
+    """Imagem -> 3D numa GPU gratuita do Hugging Face (Space do TripoSR), via gradio_client. O Space também remove o fundo."""
+    try:
+        from gradio_client import Client, handle_file
+    except ImportError:
+        sys.exit("Falta: pip install gradio_client")
+    kw = {"token": cfg["hf_token"]} if cfg["hf_token"] else {}
+    try:
+        cli = Client(cfg["hf_space"], **kw)
+        pre = cli.predict(handle_file(os.path.abspath(imagem)), True, fundo, api_name="/preprocess")
+        res = cli.predict(pre, resolucao, api_name="/generate")
+    except Exception as e:
+        sys.exit("O Space do Hugging Face falhou (%s). Causas comuns: fila cheia, limite diário grátis (crie um token e defina HF_TOKEN), "
+                 "ou o Space mudou de API. Tente de novo em alguns minutos." % e)
+    achados = [x for x in (res if isinstance(res, (list, tuple)) else [res]) if isinstance(x, str) and os.path.exists(x)]
+    achados.sort(key=lambda x: 0 if x.endswith(".glb") else 1)
+    if not achados:
+        sys.exit("O Space respondeu sem arquivo 3D: %r" % (res,))
+    os.makedirs(pasta, exist_ok=True)
+    dst = os.path.join(pasta, "bruto" + os.path.splitext(achados[0])[1])
+    shutil.copy(achados[0], dst)
+    return dst
 
 
 def remover_fundo(entrada, saida):
@@ -69,8 +108,9 @@ def imagem_para_3d(imagem, cfg, pasta):
     return achados[0]
 
 
-def limpar(malha, destino_glb, tris, altura, solto, cfg):
-    cmd = [cfg["python_bpy"], os.path.join(AQUI, "pos_processar.py"), malha, destino_glb, "--tris", str(tris), "--altura", str(altura), "--solto", str(solto)]
+def limpar(malha, destino_glb, tris, altura, solto, cfg, suavizar=0):
+    cmd = [cfg["python_bpy"], os.path.join(AQUI, "pos_processar.py"), malha, destino_glb, "--tris", str(tris), "--altura", str(altura), "--solto", str(solto),
+           "--suavizar", str(suavizar)]
     print("  " + " ".join(cmd))
     subprocess.run(cmd, check=True)
 
@@ -84,6 +124,9 @@ def main():
     ap.add_argument("--tris", type=int, default=30000)
     ap.add_argument("--solto", type=float, default=0.02)
     ap.add_argument("--destino", help="onde salvar o .glb final (padrão: assets/models/gerados/<nome>.glb)")
+    ap.add_argument("--fundo", type=float, default=0.85, help="(nuvem) proporção do objeto na imagem; varie para obter outras versões")
+    ap.add_argument("--resolucao", type=int, default=256, help="(nuvem) resolução da malha do TripoSR (256 ou 320)")
+    ap.add_argument("--suavizar", type=int, default=2, help="passadas de suavização que desfazem o aspecto 'derretido' da IA (0 desliga)")
     ap.add_argument("--simular", help="TESTE: usa este .glb/.obj como se fosse a saída da IA (pula as etapas 1 a 3)")
     a = ap.parse_args()
     cfg = carregar_config()
@@ -92,9 +135,11 @@ def main():
     destino = a.destino or os.path.join(RAIZ, "assets", "models", "gerados", a.nome + ".glb")
     os.makedirs(os.path.dirname(destino), exist_ok=True)
 
+    nuvem = cfg["backend"] == "hf"
     if a.simular:
         passo(1, "SIMULAÇÃO: pulando texto/imagem/3D, usando " + a.simular)
         malha = a.simular
+        a.suavizar = 0
     else:
         if a.imagem:
             img = a.imagem
@@ -102,13 +147,18 @@ def main():
             if not a.prompt:
                 sys.exit("Dê um prompt ou --imagem")
             passo(1, "texto -> imagem")
-            img = texto_para_imagem(a.prompt, cfg, os.path.join(pasta, "imagem.png"))
-        passo(2, "remover fundo")
-        img = remover_fundo(img, os.path.join(pasta, "imagem_sem_fundo.png"))
-        passo(3, "imagem -> 3D (TripoSR)")
-        malha = imagem_para_3d(img, cfg, os.path.join(pasta, "bruto"))
+            f = texto_para_imagem_hf if nuvem else texto_para_imagem
+            img = f(a.prompt, cfg, os.path.join(pasta, "imagem.png"))
+        if nuvem:
+            passo(2, "imagem -> 3D na GPU gratuita do Hugging Face (remove o fundo sozinho; pode esperar na fila)")
+            malha = imagem_para_3d_hf(img, cfg, os.path.join(pasta, "bruto"), a.fundo, a.resolucao)
+        else:
+            passo(2, "remover fundo")
+            img = remover_fundo(img, os.path.join(pasta, "imagem_sem_fundo.png"))
+            passo(3, "imagem -> 3D (TripoSR)")
+            malha = imagem_para_3d(img, cfg, os.path.join(pasta, "bruto"))
     passo(4, "limpeza e otimização")
-    limpar(malha, destino, a.tris, a.altura, a.solto, cfg)
+    limpar(malha, destino, a.tris, a.altura, a.solto, cfg, a.suavizar)
     passo(5, "pronto")
     print("  Modelo: " + destino)
     print("  Abra o Godot (ele importa sozinho) ou me mande o arquivo para eu encaixar no jogo.")

@@ -10,6 +10,7 @@ ap.add_argument("entrada")
 ap.add_argument("saida")
 ap.add_argument("--tris", type=int, default=30000)
 ap.add_argument("--altura", type=float, default=0.0, help="altura final em metros (0 = não muda)")
+ap.add_argument("--suavizar", type=int, default=0, help="passadas de suavização (desfaz o aspecto 'derretido' dos geradores de IA)")
 ap.add_argument("--solto", type=float, default=0.02, help="remove pedaços soltos com menos de X do total de faces")
 a = ap.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:])
 
@@ -61,8 +62,24 @@ for ilha in ilhas:
     if len(ilha) < total * a.solto and len(ilhas) > 1:
         bmesh.ops.delete(bm, geom=[f for f in ilha if f.is_valid], context="FACES")
         removidas += 1
+# fecha buracos pequenos e orienta as normais para fora (IA costuma deixar furos e faces viradas)
+bm.edges.ensure_lookup_table()
+buracos = [e for e in bm.edges if e.is_boundary]
+if buracos:
+    try:
+        bmesh.ops.holes_fill(bm, edges=buracos, sides=8)
+    except Exception:
+        pass
+bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
 bm.to_mesh(ob.data)
 bm.free()
+
+# suaviza o ruído da malha (só desloca vértices suavemente; mantém o volume com o fator baixo)
+if a.suavizar > 0:
+    md = ob.modifiers.new("suave", "SMOOTH")
+    md.factor = 0.5
+    md.iterations = a.suavizar * 2
+    bpy.ops.object.modifier_apply(modifier=md.name)
 
 # 2) reduz triângulos
 ob.data.calc_loop_triangles()
