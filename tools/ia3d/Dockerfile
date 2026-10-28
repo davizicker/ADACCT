@@ -7,7 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY requirements-nuvem.txt .
-RUN pip install --no-cache-dir -r requirements-nuvem.txt
+# o bpy exige numpy<2 (1.26.4), que NÃO tem pacote pronto para Python 3.13: precisa compilar (uns 5-10 min).
+# As ferramentas de compilação entram e saem na mesma camada para a imagem não engordar.
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+    && pip install --no-cache-dir -r requirements-nuvem.txt \
+    && apt-get purge -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 COPY . .
 ENV PYTHONPATH=/app/site:/app
 # 1 processo + várias threads: os trabalhos ficam na memória do processo
