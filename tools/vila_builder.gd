@@ -144,6 +144,7 @@ const PLANTAS_REAIS := {
 	"samambaia": [["periwinkle_a", "periwinkle_b", "periwinkle_c", "mato_b"], 0.5],
 }
 var _alt_real := {}
+const ESPECIE_REAL := {"arvore_0": "arvore_a", "arvore_1": "arvore_b", "arvore_2": "arvore_c"}
 
 
 func _plant(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0) -> Node3D:
@@ -155,12 +156,13 @@ func _plant(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0) -
 			_alt_real[real] = maxf((amostra.get_meta("bb") as AABB).size.y, 0.05)
 			amostra.free()
 		return _prop(parent, real, pos, yaw, float(PLANTAS_REAIS[key][1]) * scale / float(_alt_real[real]))
-	var n := (_veg[key] as PackedScene).instantiate() as Node3D
+	# árvores, palmeiras e bananeiras: geometria real (tools/arvores.gd), com troca de detalhe por distância
+	var esp: String = ESPECIE_REAL.get(key, key)
+	var n := Arvores.no(esp, scale)
 	n.name = "%s_%03d" % [key, _n]
 	_n += 1
 	n.position = pos
 	n.rotation.y = yaw
-	n.scale = Vector3.ONE * scale
 	parent.add_child(n)
 	return n
 
@@ -1997,19 +1999,13 @@ func _near_trees(root: Node3D) -> void:
 		planted += 1
 
 
-func _plant_mesh(key: String) -> Mesh:
-	var n := (_veg[key] as PackedScene).instantiate()
-	var m: Mesh = (n.get_node("Malha") as MeshInstance3D).mesh
-	n.free()
-	return m
-
-
-## Mata das encostas e do fundo do vale, em MultiMesh (um desenho por tipo de árvore).
+## Mata das encostas e do fundo do vale. Perto da rua (até 60 m) cada árvore é um nó com 2 níveis de detalhe;
+## o resto vai em MultiMesh por quadras de 64 m (só as quadras próximas são desenhadas), com o nível de detalhe simples.
 func _forest() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Mata"
-	var keys: Array[String] = ["arvore_0", "arvore_1", "arvore_2", "palmeira"]
-	var lists: Array = [[], [], [], []]
+	var esp: Array[String] = ["arvore_a", "arvore_b", "arvore_c", "palmeira"]
+	var quadras := {}      # "ix,iz" -> [listas por espécie]
 	var tries := 0
 	var count := 0
 	while count < 1700 and tries < 12000:
@@ -2028,23 +2024,38 @@ func _forest() -> Node3D:
 		if blocked:
 			continue
 		var kind := 3 if _rng.randf() < 0.07 else _rng.randi_range(0, 2)
-		var sc := _rng.randf_range(1.2, 2.6) if kind < 3 else _rng.randf_range(1.0, 1.4)
-		var xf := Transform3D(Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * sc), Vector3(x, terrain_h(x, z) - 0.4, z))
-		(lists[kind] as Array).append(xf)
+		var sc := _rng.randf_range(1.2, 2.2) if kind < 3 else _rng.randf_range(1.0, 1.4)
+		var pos := Vector3(x, terrain_h(x, z) - 0.4, z)
+		var yaw := _rng.randf() * TAU
 		count += 1
-	for k in 4:
-		var xs: Array = lists[k]
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = _plant_mesh(keys[k])
-		mm.instance_count = xs.size()
-		for i in xs.size():
-			mm.set_instance_transform(i, xs[i])
-		var mmi := MultiMeshInstance3D.new()
-		mmi.name = keys[k].capitalize().replace(" ", "")
-		mmi.multimesh = mm
-		mmi.visibility_range_end = 300.0
-		root.add_child(mmi)
+		if nr.y < 60.0:
+			var n := Arvores.no(esp[kind], sc)
+			n.name = "%s_%03d" % [esp[kind], count]
+			n.position = pos
+			n.rotation.y = yaw
+			root.add_child(n)
+			continue
+		var kq := "%d,%d" % [floori(x / 64.0), floori(z / 64.0)]
+		if not quadras.has(kq):
+			quadras[kq] = [[], [], [], []]
+		((quadras[kq] as Array)[kind] as Array).append(Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * sc), pos))
+	for kq: String in quadras:
+		for k in 4:
+			var xs: Array = (quadras[kq] as Array)[k]
+			if xs.is_empty():
+				continue
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.mesh = Arvores.malha(esp[k] + "_L1")
+			mm.instance_count = xs.size()
+			for i in xs.size():
+				mm.set_instance_transform(i, xs[i])
+			var mmi := MultiMeshInstance3D.new()
+			mmi.name = "%s_q%s" % [esp[k], kq.replace(",", "_").replace("-", "m")]
+			mmi.multimesh = mm
+			mmi.visibility_range_end = 260.0
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			root.add_child(mmi)
 	return root
 
 
@@ -2075,7 +2086,12 @@ func _set_label_range(n: Node, end: float) -> void:
 func _set_range(n: Node, end: float) -> void:
 	for ch in n.get_children():
 		if ch is GeometryInstance3D:
-			(ch as GeometryInstance3D).visibility_range_end = end
+			var gi := ch as GeometryInstance3D
+			if ch.has_meta("lod"):       # árvores com troca de detalhe: só encurta o alcance, sem mexer no limite da troca
+				if gi.visibility_range_end <= 0.0 or end < gi.visibility_range_end:
+					gi.visibility_range_end = end
+			else:
+				gi.visibility_range_end = end
 		_set_range(ch, end)
 
 
@@ -2217,8 +2233,9 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 		if _rng.randf() < 0.5:
 			_cont(parent, "Basket1", p + Vector3(_rng.randf_range(-0.5, 0.5), 0, _rng.randf_range(-0.5, 0.5)), _rng.randf() * TAU)
 	elif r < 0.93:
+		var desl: Array = [Vector3(-0.35, 0, -0.1), Vector3(0.3, 0, 0.0), Vector3(0.0, 0, 0.45)]      # afastados: os jarros não se atravessam
 		for k in _rng.randi_range(1, 3):
-			_cont(parent, "Jug1" if _rng.randf() < 0.5 else "Jug2", p + Vector3(_rng.randf_range(-0.45, 0.45), 0, _rng.randf_range(-0.45, 0.45)), _rng.randf() * TAU)
+			_cont(parent, "Jug1" if _rng.randf() < 0.5 else "Jug2", p + desl[k], _rng.randf() * TAU)
 	else:
 		_cont(parent, "Sack1" if _rng.randf() < 0.5 else "Sack2", p, _rng.randf() * TAU)
 		_cont(parent, "Bucket1", p + Vector3(0.5, 0, 0.3), _rng.randf() * TAU)

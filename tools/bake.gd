@@ -15,12 +15,9 @@ const SCENES := "res://scenes/"
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute("res://assets/meshes")
-	DirAccess.make_dir_recursive_absolute("res://scenes/veg")
 	_materials()
-	var veg := Veg.build_all()
-	print("[bake] plantas: ", veg.size())
 	var b := VilaBuilder.new()
-	var vila := b.build_vila(veg)
+	var vila := b.build_vila({})
 	_save(vila, "vila.scn")
 	_save(_player(), "jogador.tscn")
 	_save(_bradador(b), "bradador.tscn")
@@ -313,12 +310,6 @@ func _materials() -> void:
 	_real("pele_bradador", "Bark014", Color(0.75, 0.72, 0.7), 2.0, 1.5)   # para o modelo do Bradador, se vier sem textura
 	_flat("bradador_preto", Color(0, 0, 0), 1.0, 0.0, 0.0, true)
 	_flat("bradador_palido", Color(0.78, 0.78, 0.72), 1.0, 0.0, 0.0, true)
-	_leafy("folhagem", "folhagem", Color(0.85, 0.95, 0.8))
-	_leafy("arbusto", "arbusto")
-	_leafy("samambaia", "samambaia")
-	_leafy("capim", "capim")
-	_leafy("bananeira", "bananeira")
-	_leafy("hera", "hera", Color(0.9, 1.0, 0.85), true)
 
 
 # ------------------------------------------------------------------ atores

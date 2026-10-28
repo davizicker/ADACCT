@@ -77,9 +77,9 @@ static func apply(main: Node) -> void:
 		var mata := vila.get_node_or_null("Morros/Mata")
 		if mata:
 			mata.visible = quality >= 1
-		var capim := vila.get_node_or_null("Morros/Capim")
-		if capim:
-			capim.visible = quality >= 1
+		var matos := vila.get_node_or_null("Detalhes/PlantasReais")      # matos, tufos e ervas reais: só da Média para cima
+		if matos:
+			matos.visible = quality >= 1
 	_apply_high_end(main)
 	var jog := main.get_node_or_null("Jogador")
 	if jog:

@@ -11,7 +11,7 @@ const MODELO := "res://assets/models/arms/fps_arms.glb"
 @export var escala := 1.35                     ## braços de FPS são maiores que o real para alcançar a lanterna
 @export var deslocamento := Vector3(0.0, -0.33, 0.10)   ## onde ficam os ombros em relação à câmera
 @export var empunhadura := Vector3(0.0, 0.23, 0.0)     ## onde a mão pega, no espaço do nó da lanterna
-@export var mao_esquerda := Vector3(-0.27, -0.45, -0.48)  ## posição da mão esquerda (no espaço da câmera)
+@export var mao_esquerda := Vector3(-0.29, -0.52, -0.46)  ## posição da mão esquerda (no espaço da câmera)
 @export var curvatura_dedos := -1.1                ## radianos de dobra dos dedos da direita (empunhadura)
 
 var lanterna: Node3D = null
@@ -46,6 +46,9 @@ func _ready() -> void:
 				var d := mat.duplicate() as StandardMaterial3D
 				d.albedo_color = pele
 				d.roughness = 0.75
+				d.emission_enabled = true          # um pouco de luz própria: a lanterna fica à frente dos braços e eles ficariam só silhueta
+				d.emission = Color(0.28, 0.17, 0.13)
+				d.emission_energy_multiplier = 0.2
 				m.set_surface_override_material(si, d)
 
 
