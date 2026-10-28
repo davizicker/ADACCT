@@ -1,20 +1,26 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/Color.jpg" id="1_bqqkn"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/AmbientOcclusion.jpg" id="2_xbqdm"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/NormalGL.jpg" id="3_f6ufb"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/Roughness.jpg" id="4_bt4c7"]
+[ext_resource type="Shader" path="res://assets/shaders/superficie_mista.gdshader" id="1_f6ufb"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/Color.jpg" id="2_bt4c7"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground037/Color.jpg" id="3_0dtim"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground054/NormalGL.jpg" id="4_boigw"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Ground037/NormalGL.jpg" id="5_y4nwx"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="6_n0cyk"]
 
 [resource]
-albedo_color = Color(0.95, 0.68, 0.55, 1)
-albedo_texture = ExtResource("1_bqqkn")
-roughness_texture = ExtResource("4_bt4c7")
-normal_enabled = true
-normal_texture = ExtResource("3_f6ufb")
-ao_enabled = true
-ao_light_affect = 0.6
-ao_texture = ExtResource("2_xbqdm")
-uv1_scale = Vector3(0.3, 0.3, 0.3)
-uv1_triplanar = true
-uv1_world_triplanar = true
-texture_filter = 5
+render_priority = 0
+shader = ExtResource("1_f6ufb")
+shader_parameter/albedo_a = ExtResource("2_bt4c7")
+shader_parameter/normal_a = ExtResource("4_boigw")
+shader_parameter/albedo_b = ExtResource("3_0dtim")
+shader_parameter/normal_b = ExtResource("5_y4nwx")
+shader_parameter/ruido = ExtResource("6_n0cyk")
+shader_parameter/tint = Color(0.95, 0.68, 0.55, 1)
+shader_parameter/tint_b = Color(0.8, 0.9, 0.7, 1)
+shader_parameter/escala = 0.3
+shader_parameter/escala_ruido = 0.09
+shader_parameter/mistura = 0.38
+shader_parameter/contraste = 3.2
+shader_parameter/sujeira = 0.2
+shader_parameter/normal_forca = 1.0
+shader_parameter/rough = 0.95

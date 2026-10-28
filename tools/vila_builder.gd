@@ -579,6 +579,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_church_plaza())
 	root.add_child(_hillside())
 	root.add_child(_props_encosta())
+	root.add_child(Realismo.new().construir(self))
 	root.add_child(_serra())
 	root.add_child(_route_path())
 	root.add_child(Interiores.new().construir(self))
@@ -934,6 +935,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if not simple and _rng.randf() < 0.4:
 		var chz := _rng.randf_range(-w * 0.3, w * 0.3)
 		b.malha(Kit.mesh("chamine"), Transform3D(Basis.IDENTITY, Vector3(depth / 2.0 - 0.2, height + rise - 0.55, chz)))      # chaminé de pedra do kit (embute no telhado)
+		if _rng.randf() < 0.4:
+			c.add_child(Realismo.fumaca(Vector3(depth / 2.0 - 0.2, height + rise + 1.15, chz)))
 	if haunted and floors >= 2:
 		var hi := (door_i + 1) % cols
 		_haunted_window(c, Vector3(-0.18, fh + 1.65, col_z[hi]))
@@ -1626,7 +1629,7 @@ func _lamps() -> Node3D:
 		i += 1
 		s += _rng.randf_range(10.0, 13.5)
 	# postes nas partes largas (largo, adro)
-	for ps in [150.0, 164.0, 336.0, 356.0, 374.0]:
+	for ps in [150.0, 164.0, S_END + 10.0, S_END + 26.0, S_END + 42.0]:
 		for sigma: float in [-1.0, 1.0]:
 			var w := Route.width(ps)
 			var p := make_poste()
@@ -1710,7 +1713,7 @@ func _church_plaza() -> Node3D:
 	church.transform = Transform3D(basis, pos + Vector3(0, 0.0, 0))
 	root.add_child(church)
 	# cruzeiro
-	var cz := _group(root, "Cruzeiro", Transform3D(Basis.IDENTITY, Route.pos(364.0) + Route.right(364.0) * 4.5))
+	var cz := _group(root, "Cruzeiro", Transform3D(Basis.IDENTITY, Route.pos(S_END + 24.0) + Route.right(S_END + 24.0) * 4.5))
 	var cb := _batch()
 	for k in 3:
 		cb.box("cantaria", Vector3(2.4 - k * 0.5, 0.3, 2.4 - k * 0.5), Vector3(0, 0.15 + k * 0.3, 0))
@@ -1720,7 +1723,7 @@ func _church_plaza() -> Node3D:
 	_blocker(cz, "Colisao", Vector3(2.4, 5.0, 2.4), Vector3(0, 2.5, 0))
 	# palmeiras do adro
 	for sigma: float in [-1.0, 1.0]:
-		for ss: float in [306.0, 326.0]:
+		for ss: float in [S_END + 8.0, S_END + 28.0]:
 			var p := Route.pos(ss) + Route.right(ss) * sigma * (Route.width(ss) * 0.5 + SW + 2.6)
 			_plant(root, "palmeira", Vector3(p.x, p.y - 0.4, p.z), _rng.randf() * TAU, _rng.randf_range(0.95, 1.2))
 	return root
@@ -2262,7 +2265,7 @@ func _adornos() -> Node3D:
 		for k in 4:
 			b.box("cantaria", Vector3(0.5, 0.02, 0.03), p + Vector3(0, 0.05, 0), Vector3(0, k * PI / 4.0, 0))
 	# lugares dos carros cobertos (colocados depois, em _props_rua): nada se sobrepõe a eles
-	for cfg in [[153.0, -1.0], [360.0, 1.0]]:
+	for cfg in [[153.0, -1.0], [S_END + 22.0, 1.0]]:
 		var cs0: float = cfg[0]
 		_reservar(Route.pos(cs0) + Route.right(cs0) * float(cfg[1]) * (Route.width(cs0) * 0.5 - 1.25), 3.0)
 	# barris e caixotes junto às paredes
@@ -2524,6 +2527,20 @@ func _prop(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0, al
 	return p
 
 
+## Colisão de cilindro solta (poste, tronco): devolve um StaticBody3D na posição `pos` (mundo).
+func _prop_collision_node(pos: Vector3, diametro: float, altura: float) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = "ColisaoPoste"
+	body.position = pos + Vector3(0, altura * 0.5, 0)
+	var cs := CollisionShape3D.new()
+	var cy := CylinderShape3D.new()
+	cy.radius = diametro * 0.5
+	cy.height = altura
+	cs.shape = cy
+	body.add_child(cs)
+	return body
+
+
 ## Colisão simples para um prop: "cil" (cilindro: size.x = diâmetro, size.y = altura) ou "caixa".
 func _prop_collision(p: Node3D, kind: String, size: Vector3, off := Vector3.ZERO) -> void:
 	var body := StaticBody3D.new()
@@ -2571,7 +2588,7 @@ func _props_rua() -> Node3D:
 		var banco := _prop(root, "wooden_stool_01", sb["pos"], _rng.randf() * TAU, 1.0)
 		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
 	# --- carros cobertos com lona, estacionados na borda do largo e do adro
-	for cfg in [[153.0, -1.0], [360.0, 1.0]]:
+	for cfg in [[153.0, -1.0], [S_END + 22.0, 1.0]]:
 		var s: float = cfg[0]
 		var sg: float = cfg[1]
 		var c := Route.pos(s) + Route.right(s) * sg * (Route.width(s) * 0.5 - 1.25)
@@ -2645,8 +2662,9 @@ func _props_rua() -> Node3D:
 		lousa.name = "Lousa_%s" % id
 		_prop_collision(lousa, "caixa", (lousa.get_meta("bb") as AABB).size, (lousa.get_meta("bb") as AABB).get_center())
 	# --- estátua sobre pedestal no adro, voltada para a porta da igreja
-	var sa := Route.pos(360.0) + Route.right(360.0) * (-5.4)
-	var base := _group(root, "Pedestal", Transform3D(Basis(Vector3.UP, _yaw_to(Route.tangent(360.0))), sa))
+	var s_est := S_END + 20.0
+	var sa := Route.pos(s_est) + Route.right(s_est) * (-5.4)
+	var base := _group(root, "Pedestal", Transform3D(Basis(Vector3.UP, _yaw_to(Route.tangent(s_est))), sa))
 	var pb := _batch()
 	pb.box("cantaria", Vector3(1.5, 0.28, 1.5), Vector3(0, 0.14, 0))
 	pb.box("cantaria", Vector3(1.2, 0.7, 1.2), Vector3(0, 0.63, 0))

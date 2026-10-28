@@ -157,89 +157,89 @@ _surfaces = [{
 "vertex_data": PackedByteArray("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")
 }]
 
-[node name="Bradador" type="Node3D" unique_id=2100871404]
+[node name="Bradador" type="Node3D" unique_id=174283358]
 
-[node name="Manto" type="MeshInstance3D" parent="." unique_id=1033948886]
+[node name="Manto" type="MeshInstance3D" parent="." unique_id=116596547]
 transform = Transform3D(1, 0, 0, 0, 0.9975641, -0.06975647, 0, 0.06975647, 0.9975641, 0, 0, 0)
 material_override = ExtResource("1_dak3m")
 mesh = SubResource("ArrayMesh_sjvce")
 
-[node name="Capuz" type="MeshInstance3D" parent="." unique_id=1780940794]
+[node name="Capuz" type="MeshInstance3D" parent="." unique_id=1379295309]
 transform = Transform3D(0.48, 0, 0, 0, 0.63377154, 0.061236165, 0, -0.08907078, 0.43571794, 0, 2.46, 0.1)
 material_override = ExtResource("1_dak3m")
 mesh = SubResource("SphereMesh_kqda2")
 
-[node name="Cabeca" type="Node3D" parent="." unique_id=1703606016]
+[node name="Cabeca" type="Node3D" parent="." unique_id=1319772101]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.42, -0.17)
 
-[node name="Rosto" type="MeshInstance3D" parent="Cabeca" unique_id=306429424]
+[node name="Rosto" type="MeshInstance3D" parent="Cabeca" unique_id=1791107253]
 transform = Transform3D(0.26, 0, 0, 0, 0.46, 0, 0, 0, 0.26, 0, 0, 0)
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("SphereMesh_6u1f3")
 
-[node name="Boca" type="MeshInstance3D" parent="Cabeca" unique_id=649124153]
+[node name="Boca" type="MeshInstance3D" parent="Cabeca" unique_id=751933341]
 transform = Transform3D(0.13, 0, 0, 0, 0.2, 0, 0, 0, 0.07, 0, -0.15, -0.115)
 material_override = SubResource("StandardMaterial3D_4qbdl")
 mesh = SubResource("SphereMesh_8riqb")
 
-[node name="Olho" type="MeshInstance3D" parent="Cabeca" unique_id=2066408288]
+[node name="Olho" type="MeshInstance3D" parent="Cabeca" unique_id=1002422792]
 transform = Transform3D(0.06, 0, 0, 0, 0.08, 0, 0, 0, 0.05, -0.06, 0.06, -0.105)
 material_override = SubResource("StandardMaterial3D_4qbdl")
 mesh = SubResource("SphereMesh_igrff")
 
-[node name="@MeshInstance3D@655" type="MeshInstance3D" parent="Cabeca" unique_id=259981498]
+[node name="@MeshInstance3D@693" type="MeshInstance3D" parent="Cabeca" unique_id=1269289856]
 transform = Transform3D(0.06, 0, 0, 0, 0.08, 0, 0, 0, 0.05, 0.06, 0.06, -0.105)
 material_override = SubResource("StandardMaterial3D_4qbdl")
 mesh = SubResource("SphereMesh_3j7g7")
 
-[node name="Braco_Esq" type="Node3D" parent="." unique_id=1643155490]
+[node name="Braco_Esq" type="Node3D" parent="." unique_id=1517969669]
 
-[node name="Membro" type="MeshInstance3D" parent="Braco_Esq" unique_id=547570884]
+[node name="Membro" type="MeshInstance3D" parent="Braco_Esq" unique_id=941090114]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_2ynje")
 
-[node name="Dedo" type="MeshInstance3D" parent="Braco_Esq" unique_id=961410877]
+[node name="Dedo" type="MeshInstance3D" parent="Braco_Esq" unique_id=1713009647]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_stqwl")
 
-[node name="@MeshInstance3D@656" type="MeshInstance3D" parent="Braco_Esq" unique_id=1894951075]
+[node name="@MeshInstance3D@694" type="MeshInstance3D" parent="Braco_Esq" unique_id=100902121]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_ww86y")
 
-[node name="@MeshInstance3D@657" type="MeshInstance3D" parent="Braco_Esq" unique_id=95562446]
+[node name="@MeshInstance3D@695" type="MeshInstance3D" parent="Braco_Esq" unique_id=535344735]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_dfix2")
 
-[node name="@MeshInstance3D@658" type="MeshInstance3D" parent="Braco_Esq" unique_id=2107145848]
+[node name="@MeshInstance3D@696" type="MeshInstance3D" parent="Braco_Esq" unique_id=1903398726]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_xhy7w")
 
-[node name="@MeshInstance3D@659" type="MeshInstance3D" parent="Braco_Esq" unique_id=793709]
+[node name="@MeshInstance3D@697" type="MeshInstance3D" parent="Braco_Esq" unique_id=565278984]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_rdhpl")
 
-[node name="Braco_Dir" type="Node3D" parent="." unique_id=2088502083]
+[node name="Braco_Dir" type="Node3D" parent="." unique_id=772795019]
 
-[node name="Membro" type="MeshInstance3D" parent="Braco_Dir" unique_id=1877878074]
+[node name="Membro" type="MeshInstance3D" parent="Braco_Dir" unique_id=741009303]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_e1p66")
 
-[node name="Dedo" type="MeshInstance3D" parent="Braco_Dir" unique_id=1322171334]
+[node name="Dedo" type="MeshInstance3D" parent="Braco_Dir" unique_id=744743879]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_wxftq")
 
-[node name="@MeshInstance3D@660" type="MeshInstance3D" parent="Braco_Dir" unique_id=1330983954]
+[node name="@MeshInstance3D@698" type="MeshInstance3D" parent="Braco_Dir" unique_id=618792325]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_booiy")
 
-[node name="@MeshInstance3D@661" type="MeshInstance3D" parent="Braco_Dir" unique_id=1021346365]
+[node name="@MeshInstance3D@699" type="MeshInstance3D" parent="Braco_Dir" unique_id=2134610666]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_ycgk6")
 
-[node name="@MeshInstance3D@662" type="MeshInstance3D" parent="Braco_Dir" unique_id=1541355828]
+[node name="@MeshInstance3D@700" type="MeshInstance3D" parent="Braco_Dir" unique_id=637423425]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_0urpa")
 
-[node name="@MeshInstance3D@663" type="MeshInstance3D" parent="Braco_Dir" unique_id=788813202]
+[node name="@MeshInstance3D@701" type="MeshInstance3D" parent="Braco_Dir" unique_id=1353651843]
 material_override = ExtResource("2_41mtf")
 mesh = SubResource("ArrayMesh_w3hp1")

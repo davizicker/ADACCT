@@ -1,16 +1,26 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/Color.jpg" id="1_68oym"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/NormalGL.jpg" id="2_ho1ir"]
-[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/Roughness.jpg" id="3_25otf"]
+[ext_resource type="Shader" path="res://assets/shaders/superficie_mista.gdshader" id="1_kmklr"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/Color.jpg" id="2_bv6ud"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood028/Color.jpg" id="3_qpuxe"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/NormalGL.jpg" id="4_rpv2x"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood028/NormalGL.jpg" id="5_iu2n1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="6_1vyes"]
 
 [resource]
-albedo_color = Color(1, 0.95, 0.9, 1)
-albedo_texture = ExtResource("1_68oym")
-roughness_texture = ExtResource("3_25otf")
-normal_enabled = true
-normal_texture = ExtResource("2_ho1ir")
-uv1_scale = Vector3(0.8, 0.8, 0.8)
-uv1_triplanar = true
-uv1_world_triplanar = true
-texture_filter = 5
+render_priority = 0
+shader = ExtResource("1_kmklr")
+shader_parameter/albedo_a = ExtResource("2_bv6ud")
+shader_parameter/normal_a = ExtResource("4_rpv2x")
+shader_parameter/albedo_b = ExtResource("3_qpuxe")
+shader_parameter/normal_b = ExtResource("5_iu2n1")
+shader_parameter/ruido = ExtResource("6_1vyes")
+shader_parameter/tint = Color(1, 0.95, 0.9, 1)
+shader_parameter/tint_b = Color(0.95, 0.9, 0.85, 1)
+shader_parameter/escala = 0.8
+shader_parameter/escala_ruido = 0.09
+shader_parameter/mistura = 0.45
+shader_parameter/contraste = 3.2
+shader_parameter/sujeira = 0.25
+shader_parameter/normal_forca = 1.0
+shader_parameter/rough = 0.9

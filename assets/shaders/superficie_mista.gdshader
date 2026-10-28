@@ -9,10 +9,11 @@ uniform sampler2D albedo_b : source_color, filter_linear_mipmap_anisotropic, rep
 uniform sampler2D normal_b : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D ruido : filter_linear_mipmap, repeat_enable;
 uniform vec3 tint : source_color = vec3(1.0);
+uniform vec3 tint_b : source_color = vec3(1.0);
 uniform float escala = 0.22;
 uniform float escala_ruido = 0.09;
 uniform float mistura : hint_range(0.0, 1.0) = 0.45;
-uniform float contraste = 5.0;
+uniform float contraste = 3.2;
 uniform float sujeira : hint_range(0.0, 1.0) = 0.3;
 uniform float normal_forca = 1.0;
 uniform float rough = 0.93;
@@ -53,7 +54,7 @@ void fragment() {
 	float k = clamp((m - (1.0 - mistura)) * contraste + 0.5, 0.0, 1.0);
 	vec3 aa = TRI(albedo_a, wpos, w, escala).rgb;
 	vec3 bb = TRI(albedo_b, wpos, w, escala * 1.07).rgb;
-	vec3 alb = mix(aa, bb, k) * tint;
+	vec3 alb = mix(aa * tint, bb * tint_b, k);
 	// manchas de umidade: ruído esticado na vertical (escorridos)
 	float s2 = TRI(ruido, wpos * vec3(0.7, 0.18, 0.7) + vec3(3.1, 0.0, 7.7), w, escala_ruido * 2.3).r;
 	alb *= 1.0 - sujeira * smoothstep(0.52, 0.85, s2);

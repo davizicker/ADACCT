@@ -117,6 +117,27 @@ func _mista(mat_name: String, a: String, b: String, tint: Color, escala: float, 
 	ResourceSaver.save(m, MATS + mat_name + ".tres")
 
 
+## Como _mista, mas com texturas PBR do ambientCG (pastas de assets/textures/ambientcg): A = pasta_a, B = pasta_b.
+func _mista_pbr(mat_name: String, pasta_a: String, pasta_b: String, tint_a: Color, tint_b: Color, escala: float, mistura := 0.4, sujeira := 0.3, rough := 0.9, normal := 1.0) -> void:
+	var m := ShaderMaterial.new()
+	m.shader = load("res://assets/shaders/superficie_mista.gdshader")
+	var da := TEX + "ambientcg/" + pasta_a + "/"
+	var db := TEX + "ambientcg/" + pasta_b + "/"
+	m.set_shader_parameter("albedo_a", load(da + "Color.jpg"))
+	m.set_shader_parameter("normal_a", load(da + "NormalGL.jpg"))
+	m.set_shader_parameter("albedo_b", load(db + "Color.jpg"))
+	m.set_shader_parameter("normal_b", load(db + "NormalGL.jpg"))
+	m.set_shader_parameter("ruido", _tex("ruido_mistura.png"))
+	m.set_shader_parameter("tint", tint_a)
+	m.set_shader_parameter("tint_b", tint_b)
+	m.set_shader_parameter("escala", escala)
+	m.set_shader_parameter("mistura", mistura)
+	m.set_shader_parameter("sujeira", sujeira)
+	m.set_shader_parameter("rough", rough)
+	m.set_shader_parameter("normal_forca", normal)
+	ResourceSaver.save(m, MATS + mat_name + ".tres")
+
+
 ## Camada de musgo/limo/sujeira por cima de um material (next_pass).
 func _sobrepor(mat_path: String, cor: Color, cobertura: float, escala: float, so_topo: float, opacidade: float) -> void:
 	var base := load(mat_path) as Material
@@ -170,14 +191,14 @@ func _materials() -> void:
 	ResourceSaver.save(pc, MATS + "pedra_chao.tres")
 	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.34, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
-	_mista("reboco_branco", "reboco_velho", "reboco", Color(0.97, 0.95, 0.90), 0.22, 0.5)
-	_mista("reboco_branco_novo", "reboco", "reboco_velho", Color(0.98, 0.97, 0.93), 0.22, 0.4)
-	_mista("reboco_ocre", "reboco_velho", "reboco", Color(0.90, 0.76, 0.50), 0.22, 0.5)
-	_mista("reboco_amarelo", "reboco", "reboco_velho", Color(0.95, 0.86, 0.55), 0.22, 0.4)
-	_mista("reboco_azul", "reboco_velho", "reboco", Color(0.58, 0.70, 0.82), 0.22, 0.5)
-	_mista("reboco_salmao", "reboco", "reboco_velho", Color(0.86, 0.64, 0.55), 0.22, 0.4)
-	_mista("reboco_verde", "reboco_velho", "reboco", Color(0.66, 0.78, 0.64), 0.22, 0.5)
-	_mista("reboco_creme", "reboco_velho", "reboco", Color(0.96, 0.88, 0.68), 0.22, 0.5)
+	_mista("reboco_branco", "reboco_velho", "reboco", Color(0.97, 0.95, 0.90), 0.22, 0.30, 0.22)
+	_mista("reboco_branco_novo", "reboco", "reboco_velho", Color(0.98, 0.97, 0.93), 0.22, 0.24, 0.2)
+	_mista("reboco_ocre", "reboco_velho", "reboco", Color(0.90, 0.76, 0.50), 0.22, 0.30, 0.22)
+	_mista("reboco_amarelo", "reboco", "reboco_velho", Color(0.95, 0.86, 0.55), 0.22, 0.24, 0.2)
+	_mista("reboco_azul", "reboco_velho", "reboco", Color(0.58, 0.70, 0.82), 0.22, 0.30, 0.22)
+	_mista("reboco_salmao", "reboco", "reboco_velho", Color(0.86, 0.64, 0.55), 0.22, 0.24, 0.2)
+	_mista("reboco_verde", "reboco_velho", "reboco", Color(0.66, 0.78, 0.64), 0.22, 0.30, 0.22)
+	_mista("reboco_creme", "reboco_velho", "reboco", Color(0.96, 0.88, 0.68), 0.22, 0.30, 0.22)
 	_surf("telha", "telha", Color(1, 1, 1), 0.3, 0.8, 1.2)
 	# telhado com UV: as telhas correm no sentido do caimento (usado pelos telhados de MeshBatch.roof)
 	var tuv := StandardMaterial3D.new()
@@ -205,7 +226,7 @@ func _materials() -> void:
 	_surf("madeira_vermelha", "madeira", Color(0.62, 0.14, 0.10), 0.6)
 	_surf("madeira_verde", "madeira", Color(0.18, 0.40, 0.28), 0.6)
 	_surf("madeira_ocre", "madeira", Color(0.80, 0.58, 0.18), 0.6)
-	_real("madeira_natural", "Wood035", Color(1.0, 0.95, 0.9), 0.8)
+	_mista_pbr("madeira_natural", "Wood035", "Wood028", Color(1.0, 0.95, 0.9), Color(0.95, 0.9, 0.85), 0.8, 0.45, 0.25)
 	_surf("madeira_branca", "madeira", Color(0.92, 0.90, 0.84), 0.6)
 	var terreno := ShaderMaterial.new()
 	terreno.shader = load("res://assets/shaders/terreno.gdshader")
@@ -222,7 +243,7 @@ func _materials() -> void:
 	ResourceSaver.save(terreno, MATS + "terreno.tres")
 	_real("ferro", "Metal047B", Color(0.28, 0.26, 0.25), 0.9, 1.0, 1.0)            # ferro escuro corroído (grades, braços, ferragens)
 	_real("ferro_ferrugem", "Metal053C", Color(0.9, 0.85, 0.8), 0.7, 1.0, 1.0)     # chapa com tinta descascando e ferrugem (calhas, tubos)
-	_real("madeira_escura", "Wood028", Color(1, 1, 1), 0.7)
+	_mista_pbr("madeira_escura", "Wood028", "Ground054", Color(1, 1, 1), Color(0.55, 0.45, 0.38), 0.7, 0.22, 0.45)      # tábuas com poeira e barro seco
 	_flat("vaso", Color(0.55, 0.26, 0.16), 0.9)
 	_flat("verde_vaso", Color(0.10, 0.28, 0.09), 1.0)
 	_flat("flor_vermelha", Color(0.75, 0.08, 0.08), 0.8)
@@ -343,7 +364,7 @@ func _materials() -> void:
 	flor.roughness = 0.8
 	ResourceSaver.save(flor, MATS + "flor_mix.tres")
 	_real("palma_tronco", "Bark014", Color(0.62, 0.6, 0.57), 0.9, 1.0)
-	_real("terra_quintal", "Ground054", Color(0.95, 0.68, 0.55), 0.3, 1.0)       # barro vermelho de Minas (Ground054 tingido)
+	_mista_pbr("terra_quintal", "Ground054", "Ground037", Color(0.95, 0.68, 0.55), Color(0.8, 0.9, 0.7), 0.3, 0.38, 0.2, 0.95)       # barro vermelho de Minas com tufos de grama e musgo
 	_real("pele_bradador", "Bark014", Color(0.75, 0.72, 0.7), 2.0, 1.5)   # para o modelo do Bradador, se vier sem textura
 	_flat("bradador_preto", Color(0, 0, 0), 1.0, 0.0, 0.0, true)
 	_flat("bradador_palido", Color(0.78, 0.78, 0.72), 1.0, 0.0, 0.0, true)

@@ -42,6 +42,8 @@ var _frames := 0
 func _ready() -> void:
 	Config.load_all()
 	_setup_input()
+	add_child((load("res://scripts/vagalumes.gd") as GDScript).new() as Node3D)
+	add_child((load("res://scripts/morcegos.gd") as GDScript).new() as Node3D)
 	var args := OS.get_cmdline_user_args()
 	if "--modo-teste" in args:
 		Config.modo_teste = true
