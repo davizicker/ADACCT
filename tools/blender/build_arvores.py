@@ -181,16 +181,16 @@ def palmeira(nome, lod):
             path.append(topo + out * (L * t * math.cos(a0)) + up * (L * t * math.sin(a0) - 1.2 * L * t * t))
         tube(bm, path, [0.05 * (1 - k / nseg) + 0.012 for k in range(nseg + 1)], 4 if lod == 0 else 3, 1)
         if lod == 0:
-            for k in range(2, nseg + 1):
-                for j in range(3):
-                    t = (k - 1 + j / 3) / nseg
+            for k in range(1, nseg + 1):
+                for j in range(5):
+                    t = (k - 1 + j / 5) / nseg
                     t = min(t, 1.0)
                     pk = topo + out * (L * t * math.cos(a0)) + up * (L * t * math.sin(a0) - 1.2 * L * t * t)
                     side = out.cross(up)
                     ll = 0.95 * (1 - 0.55 * t)
                     for sg in (-1, 1):
                         dirv = (side * sg * 0.9 + out * 0.45 - up * 0.65).normalized()
-                        w = 0.07
+                        w = 0.11
                         a = bm.verts.new(pk)
                         b = bm.verts.new(pk + dirv * ll * 0.5 + out * 0.1 + up * 0.04)
                         c = bm.verts.new(pk + dirv * ll + up * -0.25 * ll)
@@ -240,22 +240,28 @@ def bananeira(nome, lod):
             side = out.cross(Vector((0, 0, 1)))
             L = rng.uniform(2.2, 2.9)
             a0 = math.radians(rng.uniform(25, 60))
-            ns = 7 if lod == 0 else 3
+            ns = 8 if lod == 0 else 3
+            nc = 9 if lod == 0 else 3        # colunas através da folha: nervuras/ondulações (só no nível perto)
+            mi = 1 + (i + s) % 2             # duas cores de verde alternadas
             rows = []
             for k in range(ns + 1):
                 t = k / ns
                 c = top + out * (L * t * math.cos(a0)) + Vector((0, 0, 1)) * (L * t * math.sin(a0) - 1.6 * L * t * t)
                 w = 0.42 * math.sin(math.pi * min(t * 1.05 + 0.04, 1.0)) ** 0.8
-                wave = 0.06 * math.sin(t * 9 + i)
-                rows.append((bm.verts.new(c - side * w + Vector((0, 0, -w * 0.25 + wave))), bm.verts.new(c), bm.verts.new(c + side * w + Vector((0, 0, -w * 0.25 - wave)))))
+                row = []
+                for jj in range(nc):
+                    u = -1 + 2 * jj / (nc - 1)
+                    ridge = 0.025 * math.sin(u * 11 + i * 1.7) if lod == 0 else 0.0
+                    row.append(bm.verts.new(c + side * w * u + Vector((0, 0, -w * 0.28 * abs(u) + ridge + 0.05 * math.sin(t * 9 + i)))))
+                rows.append(row)
             for k in range(ns):
-                for j in range(2):
-                    a, b = rows[k][j], rows[k][j + 1]
-                    c2, d2 = rows[k + 1][j + 1], rows[k + 1][j]
-                    for tri in ((a, b, c2), (a, c2, d2)):
+                for jj in range(nc - 1):
+                    a_, b_ = rows[k][jj], rows[k][jj + 1]
+                    c2, d2 = rows[k + 1][jj + 1], rows[k + 1][jj]
+                    for tri in ((a_, b_, c2), (a_, c2, d2)):
                         try:
                             f = bm.faces.new(tri)
-                            f.material_index = 1
+                            f.material_index = mi
                             f.smooth = True
                         except ValueError:
                             pass
@@ -268,7 +274,7 @@ def bananeira(nome, lod):
 
 
 MATS = {"casca": (0.35, 0.28, 0.22), "folha_a": (0.12, 0.30, 0.08), "folha_b": (0.20, 0.38, 0.10), "folha_c": (0.28, 0.42, 0.12),
-        "palma_tronco": (0.55, 0.52, 0.48), "palma_folha": (0.16, 0.34, 0.10), "banana_tronco": (0.45, 0.55, 0.25), "banana_folha": (0.25, 0.48, 0.12)}
+        "palma_tronco": (0.55, 0.52, 0.48), "palma_folha": (0.16, 0.34, 0.10), "banana_tronco": (0.45, 0.55, 0.25), "banana_folha": (0.25, 0.48, 0.12), "banana_folha2": (0.17, 0.38, 0.09)}
 
 
 def mats(ob, nomes):
@@ -292,7 +298,7 @@ for lod in (0, 1):
     mats(ob, ["palma_tronco", "palma_folha"])
     objs.append(ob)
     ob = bananeira("bananeira_L%d" % lod, lod)
-    mats(ob, ["banana_tronco", "banana_folha"])
+    mats(ob, ["banana_tronco", "banana_folha", "banana_folha2"])
     objs.append(ob)
 for ob in objs:
     print("[arv] %-22s %6d tris" % (ob.name, sum(len(p.vertices) - 2 for p in ob.data.polygons)))

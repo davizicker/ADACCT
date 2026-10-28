@@ -139,7 +139,7 @@ func _blocker(parent: Node, node_name: String, size: Vector3, pos: Vector3) -> v
 ## Plantas de cartão (texturas geradas) que foram trocadas por modelos reais: chave antiga -> [modelos, altura-alvo em m].
 ## Cartões continuam só nas árvores, palmeiras e bananeiras (não há modelo real delas).
 const PLANTAS_REAIS := {
-	"arbusto": [["mato_a", "mato_c", "weed_a", "weed_b"], 1.1],
+	"arbusto": [["rooibos", "rooibos", "rooibos", "mato_a", "weed_a"], 1.1],
 	"capim": [["mato_b", "grass_tuft_a", "grass_tuft_b", "mato_c"], 0.45],
 	"samambaia": [["periwinkle_a", "periwinkle_b", "periwinkle_c", "mato_b"], 0.5],
 }
@@ -151,6 +151,14 @@ func _plant(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0) -
 	if PLANTAS_REAIS.has(key):
 		var opcoes: Array = PLANTAS_REAIS[key][0]
 		var real: String = opcoes[_rng.randi() % opcoes.size()]
+		if real == "rooibos":        # moita de verdade (wild_rooibos_bush, Poly Haven) com 2 níveis de detalhe
+			var rn := Arvores.no_kit("plantas_lod", "rooibos", scale * _rng.randf_range(0.9, 1.3), float(PLANTAS_REAIS[key][1]))
+			rn.name = "rooibos_%03d" % _n
+			_n += 1
+			rn.position = pos
+			rn.rotation.y = yaw
+			parent.add_child(rn)
+			return rn
 		if not _alt_real.has(real):
 			var amostra := PropKit.make(real)
 			_alt_real[real] = maxf((amostra.get_meta("bb") as AABB).size.y, 0.05)
@@ -2231,7 +2239,7 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 	elif r < 0.84:
 		_cont(parent, "Basket1" if _rng.randf() < 0.6 else "Basket2", p, _rng.randf() * TAU)
 		if _rng.randf() < 0.5:
-			_cont(parent, "Basket1", p + Vector3(_rng.randf_range(-0.5, 0.5), 0, _rng.randf_range(-0.5, 0.5)), _rng.randf() * TAU)
+			_cont(parent, "Basket1", p + Vector3(0.66, 0, 0.12), _rng.randf() * TAU)
 	elif r < 0.93:
 		var desl: Array = [Vector3(-0.35, 0, -0.1), Vector3(0.3, 0, 0.0), Vector3(0.0, 0, 0.45)]      # afastados: os jarros não se atravessam
 		for k in _rng.randi_range(1, 3):
@@ -2683,7 +2691,7 @@ func _props_encosta() -> Node3D:
 	root.name = "PropsEncosta"
 	var placed := 0
 	var tries := 0
-	while placed < 7 and tries < 400:
+	while placed < 30 and tries < 1200:
 		tries += 1
 		var sc := _rng.randf_range(10.0, Route.length() - 10.0)
 		var sg := -1.0 if _rng.randf() < 0.5 else 1.0
@@ -2691,13 +2699,16 @@ func _props_encosta() -> Node3D:
 		var p := Route.pos(sc) + Route.right(sc) * sg * d
 		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 9.0) or Route.dist_to_center(p) < Route.width(sc) * 0.5 + 13.0:
 			continue
-		var tora := _prop(root, "dead_tree_trunk", Vector3(p.x, terrain_h(p.x, p.z) - 0.05, p.z), _rng.randf() * TAU, _rng.randf_range(0.9, 1.3))
+		var tora := Arvores.no_kit("plantas_lod", "tronco", _rng.randf_range(0.9, 1.4))
+		tora.position = Vector3(p.x, terrain_h(p.x, p.z) - 0.05, p.z)
+		tora.rotation.y = _rng.randf() * TAU
+		root.add_child(tora)
 		tora.name = "Tora_%02d" % placed
 		_spots.append(Vector2(p.x, p.z))
 		placed += 1
 	placed = 0
 	tries = 0
-	while placed < 26 and tries < 800:
+	while placed < 140 and tries < 3000:
 		tries += 1
 		var sc := _rng.randf_range(4.0, Route.length() - 4.0)
 		var sg := -1.0 if _rng.randf() < 0.5 else 1.0
@@ -2705,7 +2716,10 @@ func _props_encosta() -> Node3D:
 		var p := Route.pos(sc) + Route.right(sc) * sg * d
 		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 6.5) or Route.dist_to_center(p) < Route.width(sc) * 0.5 + 12.0:
 			continue
-		var arb := _prop(root, "wild_rooibos_bush", Vector3(p.x, terrain_h(p.x, p.z) - 0.04, p.z), _rng.randf() * TAU, _rng.randf_range(1.0, 1.7))
+		var arb := Arvores.no_kit("plantas_lod", "rooibos", _rng.randf_range(1.0, 1.7))
+		arb.position = Vector3(p.x, terrain_h(p.x, p.z) - 0.04, p.z)
+		arb.rotation.y = _rng.randf() * TAU
+		root.add_child(arb)
 		arb.name = "Arbusto_%02d" % placed
 		_spots.append(Vector2(p.x, p.z))
 		placed += 1

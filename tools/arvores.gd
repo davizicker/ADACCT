@@ -30,8 +30,9 @@ static func _material(nome: String) -> Material:
 				"folha_b": c = Color(0.17, 0.34, 0.09)
 				"folha_c": c = Color(0.25, 0.40, 0.11)
 				"palma_folha": c = Color(0.16, 0.34, 0.10)
-				"banana_tronco": c = Color(0.40, 0.50, 0.22)
-				"banana_folha": c = Color(0.22, 0.45, 0.11)
+				"banana_tronco": c = Color(0.30, 0.40, 0.16)
+				"banana_folha": c = Color(0.13, 0.32, 0.07)
+				"banana_folha2": c = Color(0.09, 0.25, 0.05)
 			s.albedo_color = c
 			s.backlight = c * 0.55
 			m = s
@@ -76,4 +77,34 @@ static func no(especie: String, escala := 1.0, colide := false) -> Node3D:
 	l1.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	n.add_child(l1)
 	n.scale = Vector3.ONE * escala
+	return n
+
+
+## Como `no`, para os modelos reais do Poly Haven com LOD (kit "plantas_lod": rooibos_L0/L1, tronco_L0/L1): materiais próprios do .glb.
+## `alvo_h` > 0 escala o modelo para essa altura (m). O pé do modelo fica em y = 0, centrado em X/Z.
+static func no_kit(kit: String, base: String, escala := 1.0, alvo_h := 0.0, dist_l0 := 35.0) -> Node3D:
+	var n := Node3D.new()
+	n.name = base
+	var m0 := PropKit.kit_mesh(kit, base + "_L0")
+	var bb := m0.get_aabb()
+	var k := escala
+	if alvo_h > 0.0:
+		k = escala * alvo_h / maxf(bb.size.y, 0.05)
+	var c := bb.get_center()
+	for lod in 2:
+		var mi := MeshInstance3D.new()
+		mi.name = "L%d" % lod
+		mi.mesh = PropKit.kit_mesh(kit, "%s_L%d" % [base, lod])
+		mi.set_meta("lod", true)
+		mi.position = Vector3(-c.x, -bb.position.y, -c.z)
+		if lod == 0:
+			mi.visibility_range_end = dist_l0
+			mi.visibility_range_end_margin = 3.0
+		else:
+			mi.visibility_range_begin = dist_l0
+			mi.visibility_range_begin_margin = 3.0
+			mi.visibility_range_end = 200.0
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		n.add_child(mi)
+	n.scale = Vector3.ONE * k
 	return n

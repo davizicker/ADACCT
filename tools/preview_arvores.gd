@@ -26,7 +26,7 @@ func _init() -> void:
 	var cam := Camera3D.new()
 	w.add_child(cam)
 	cam.make_current()
-	cam.look_at_from_position(Vector3(14, 5, 22), Vector3(14, 4, 0))
+	cam.look_at_from_position(Vector3(40, 5, 18), Vector3(40, 5, 0))
 	cam.fov = 60
 	for i in 6:
 		await process_frame

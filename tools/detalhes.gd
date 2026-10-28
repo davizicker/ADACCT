@@ -319,8 +319,24 @@ func _planta(key: String) -> Dictionary:
 	return {"mesh": mesh, "rel": rel}
 
 
-func _espalha(nome: String, key: String, n: int, modo: String, esc: Vector2, fim: float) -> MultiMeshInstance3D:
-	var pl := _planta(key)
+## Como `_planta`, para uma malha de um kit (.glb com várias malhas): pé em y = 0, centrada em X/Z, recorte de alfa.
+func _planta_kit(kit: String, malha: String) -> Dictionary:
+	var mesh := PropKit.kit_mesh(kit, malha).duplicate() as Mesh
+	var bb := mesh.get_aabb()
+	for i in mesh.get_surface_count():
+		var m := mesh.surface_get_material(i)
+		if m is BaseMaterial3D:
+			var d := m.duplicate() as BaseMaterial3D
+			d.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			d.alpha_scissor_threshold = 0.4
+			d.cull_mode = BaseMaterial3D.CULL_DISABLED
+			mesh.surface_set_material(i, d)
+	var c := bb.get_center()
+	return {"mesh": mesh, "rel": Transform3D(Basis(), Vector3(-c.x, -bb.position.y, -c.z))}
+
+
+func _espalha(nome: String, key: String, n: int, modo: String, esc: Vector2, fim: float, kit := "") -> MultiMeshInstance3D:
+	var pl := _planta_kit(kit, key) if kit != "" else _planta(key)
 	var rel: Transform3D = pl["rel"]
 	var xf: Array[Transform3D] = []
 	var tries := 0
@@ -367,4 +383,9 @@ func _plantas_reais() -> Node3D:
 	g.add_child(_espalha("Mato_c_calcada", "mato_c", 800, "calcada", Vector2(0.35, 0.6), 70.0))
 	g.add_child(_espalha("Mato_a_calcada", "mato_a", 600, "calcada", Vector2(0.3, 0.5), 70.0))
 	g.add_child(_espalha("Mato_b_rua", "mato_b", 500, "rua", Vector2(0.4, 0.75), 55.0))
+	# musgo (moss_01, Poly Haven, CC0): tufos de 28 fios no pé das paredes, nas frestas da rua e nas encostas
+	for v in ["musgo_a", "musgo_b", "musgo_c"]:
+		g.add_child(_espalha(v + "_calcada", v, 380, "calcada", Vector2(0.9, 1.7), 45.0, "musgo"))
+		g.add_child(_espalha(v + "_rua", v, 110, "rua", Vector2(0.6, 1.1), 40.0, "musgo"))
+		g.add_child(_espalha(v + "_encosta", v, 160, "encosta", Vector2(1.2, 2.4), 60.0, "musgo"))
 	return g
