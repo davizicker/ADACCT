@@ -2,3 +2,4 @@
 *.translation
 assets/models/_raw/
 tools/ia3d/saida/
+__pycache__/
