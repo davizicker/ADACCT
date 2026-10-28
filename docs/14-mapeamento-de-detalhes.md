@@ -134,3 +134,15 @@ Os números vêm do bake (`[vila] detalhes:`) e das ferramentas de teste; se mud
 | Portão de ferro nos quintais (50%) | ✅ | ✅ |
 | Esconderijos: 2 carros + 5 becos sem saída | ✅ | ✅ |
 | Musgo (moss_01) | recebido, falta método (fios finos) | ⬜ |
+
+## 12. Atualização v13 (ladeira da igreja em zigue-zague e becos de atalho)
+| Detalhe | Hoje | Status |
+|---|---|---|
+| Ladeira da igreja em **zigue-zague**: duas curvas de ~180° (raio ~13 m) entre três "pernas" ~22 m afastadas (rota de 458 m; igreja em s=445) | ✅ | ✅ |
+| **2 becos de atalho** (`PASSAGENS` em `tools/vila_builder.gd`): corredores de pedra com escada e patamares, arcos nas duas bocas e lampiões, ligando uma perna da ladeira à de cima. *Atalho do Sino*: 80 m de rua viram ~21 m de escada (sobe ~8 m). *Atalho da Fonte*: ~66 m viram ~20 m (sobe ~2 m) | ✅ | ✅ |
+| Descida também funciona (o teste `--selftest-becos` sobe e desce cada atalho) | ✅ | ✅ |
+| Terreno entalhado sob o corredor; casas/quintais/árvores/morro não invadem o vão | ✅ | ✅ |
+| Nas curvas fechadas, lote em que a casa não cabe vira quintal murado | ✅ | ✅ |
+| Mais atalhos (rota alternativa para fugir do Bradador, atalhos que abrem só com item/chave) | | ⬜ |
+
+**Como criar mais atalhos:** acrescente em `PASSAGENS` `{"id": "...", "a": [s_baixo, lado], "b": [s_alto, lado]}` (lado -1 = esquerda de quem sobe, +1 = direita). Boa corda: 14 a 28 m, trecho de rua entre as bocas ≥ 2,5× a corda, subida ≤ 9 m. Evite lados internos de outros becos em escada (`ALLEYS`) e casas de `ENTRADAS` a menos de 12 m de uma boca. Rode `bash rebuild`, `--selftest-becos`, `--selftest-walk` e `auditoria_geom`.

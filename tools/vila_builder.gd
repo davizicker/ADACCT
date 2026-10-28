@@ -21,9 +21,17 @@ const WOODS: Array[String] = ["madeira_azul", "madeira_vermelha", "madeira_verde
 ## Becos em escada: [s, lado, tipo]. tipo "cego" = beco SEM SAÍDA (pátio com portão de ferro, itens e uma casa com porta); sem tipo = escada que sobe até a porta do alto.
 const ALLEYS: Array = [
 	[18.0, -1.0], [28.0, 1.0, "cego"], [44.0, 1.0], [60.0, -1.0, "cego"], [74.0, 1.0], [88.0, -1.0], [104.0, 1.0],
-	[134.0, -1.0], [172.0, -1.0], [196.0, 1.0], [214.0, -1.0, "cego"], [232.0, -1.0], [248.0, 1.0], [266.0, 1.0, "cego"],
-	[284.0, -1.0], [302.0, 1.0], [318.0, -1.0, "cego"],
+	[134.0, -1.0], [172.0, -1.0], [196.0, 1.0], [214.0, -1.0, "cego"], [250.0, 1.0], [268.0, 1.0, "cego"],
+	[348.0, -1.0, "cego"], [372.0, -1.0],
 ]
+## PASSAGENS = becos de atalho: escadas/rampas que atravessam de uma perna do zigue-zague da ladeira da igreja à outra.
+## "a" é a boca de baixo e "b" a de cima: [s da rua, lado]. Dá para subir 60-80 m de rua em ~20 m de escada.
+const PASSAGENS: Array = [
+	{"id": "AtalhoDoSino", "a": [240.0, -1.0], "b": [318.0, -1.0]},
+	{"id": "AtalhoDaFonte", "a": [310.0, 1.0], "b": [376.0, 1.0]},
+]
+const PASS_W := 3.2          # largura útil do corredor
+const PASS_BOCA := 4.6       # largura da boca na fachada
 const FOUNTAIN := [Route.FOUNTAIN_S, Route.FOUNTAIN_SIDE]
 ## Interiores atrás de cada beco sem saída, na ordem em que aparecem subindo a rua.
 const CEGO_IDS: Array[String] = ["ferraria", "casa_vazia", "pensao", "costureira", "deposito"]
@@ -55,6 +63,7 @@ var _ocupados: Array = []     # [Vector3, raio]: lugares já usados por portas/b
 var _casas_postas: Array[Dictionary] = []   # {xf, depth, w} das casas já colocadas (para não se atravessarem nas curvas)
 var _flutuando: Array[String] = []   # peças que não encostam em nada (auditoria feita no bake)
 var _spots: Array[Vector2] = []
+var _pass_geo: Array[Dictionary] = []     # geometria dos becos de atalho (calculada uma vez, só com a rota)
 var _lamp_n := 0
 var _haunted := 0
 var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos)
@@ -190,6 +199,43 @@ func lot_frame(sigma: float, s: float, s2: float) -> Dictionary:
 	return {"xf": Transform3D(basis, origin), "w": dist, "sm": sm}
 
 
+## Boca de um beco de atalho: lote estreito que começa em s_t - PASS_BOCA/2 (calculável só com a rota, sem sorteio).
+func _boca_frame(sigma: float, s_t: float) -> Dictionary:
+	var s_m := s_t - PASS_BOCA * 0.5
+	var s2 := _advance(sigma, s_m, PASS_BOCA)
+	var f := lot_frame(sigma, s_m, s2)
+	f["s_m"] = s_m
+	f["s2"] = s2
+	return f
+
+
+func _passagens_calc() -> void:
+	_pass_geo.clear()
+	for i in PASSAGENS.size():
+		var P: Dictionary = PASSAGENS[i]
+		var fa := _boca_frame(float(P["a"][1]), float(P["a"][0]))
+		var fb := _boca_frame(float(P["b"][1]), float(P["b"][0]))
+		var A: Vector3 = (fa["xf"] as Transform3D).origin
+		var B: Vector3 = (fb["xf"] as Transform3D).origin
+		var dv := Vector3(B.x - A.x, 0.0, B.z - A.z)
+		var D := dv.length()
+		_pass_geo.append({"id": P["id"], "A": A, "B": B, "dir": dv / D, "D": D, "rise": B.y - A.y, "fa": fa, "fb": fb})
+
+
+## true se o ponto (x, z) está sobre o corredor de algum beco de atalho (com folga m).
+func _na_passagem(x: float, z: float, m: float) -> bool:
+	for G in _pass_geo:
+		var A: Vector3 = G["A"]
+		var dv: Vector3 = G["dir"]
+		var rx := x - A.x
+		var rz := z - A.z
+		var along := rx * dv.x + rz * dv.z
+		var lat := absf(rx * dv.z - rz * dv.x)
+		if along > -m and along < float(G["D"]) + m and lat < PASS_W * 0.5 + m:
+			return true
+	return false
+
+
 # ------------------------------------------------------------------ terreno
 
 func _setup(veg_scenes: Dictionary) -> void:
@@ -210,6 +256,7 @@ func _setup(veg_scenes: Dictionary) -> void:
 		var p := Route.pos(s)
 		_rs.append(Vector2(p.x, p.z))
 		s += 2.0
+	_passagens_calc()
 
 
 ## (s, distância) do ponto mais próximo da linha central.
@@ -247,7 +294,21 @@ func terrain_h(x: float, z: float) -> float:
 	var n := _noise_lo.get_noise_2d(x, z) * 16.0 + _noise_hi.get_noise_2d(x, z) * 3.0
 	# leito do riacho que passa sob a ponte (cruza a rua; some longe, nas encostas)
 	var carve := 3.6 * (1.0 - smoothstep(3.0, 6.8, absf(q.x - Route.BRIDGE_S))) * (1.0 - smoothstep(55.0, 85.0, q.y))
-	return base + rise + n * smoothstep(0.0, 25.0, t) - carve
+	var h := base + rise + n * smoothstep(0.0, 25.0, t) - carve
+	# leito dos becos de atalho: o terreno desce/sobe até o piso da escada (senão cobriria os degraus)
+	for G in _pass_geo:
+		var A: Vector3 = G["A"]
+		var dv: Vector3 = G["dir"]
+		var rx := x - A.x
+		var rz := z - A.z
+		var along := rx * dv.x + rz * dv.z
+		var lat := absf(rx * dv.z - rz * dv.x)
+		var Dd: float = G["D"]
+		if along > -3.0 and along < Dd + 3.0 and lat < 8.0:
+			var w := (1.0 - smoothstep(PASS_W * 0.5 + 1.5, PASS_W * 0.5 + 7.0, lat)) * smoothstep(-3.0, 0.5, along) * (1.0 - smoothstep(Dd - 0.5, Dd + 3.0, along))
+			var floor_y := A.y + clampf(along / Dd, 0.0, 1.0) * float(G["rise"]) - 0.45
+			h = lerpf(h, floor_y, w)
+	return h
 func _terrain() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Terreno"
@@ -543,10 +604,27 @@ func _frontage(root: Node3D) -> void:
 	var muros := _group(root, "MurosEQuintais")
 	var becos := _group(root, "Becos")
 	_start_wall(root)
+	# os corredores dos becos de atalho entram como "casas já postas": nenhuma casa nem quintal invade o vão
+	for G in _pass_geo:
+		var dv: Vector3 = G["dir"]
+		_casas_postas.append({"xf": Transform3D(Basis(dv, Vector3.UP, dv.cross(Vector3.UP)), G["A"]), "depth": float(G["D"]) + 0.4, "w": PASS_W + 2.4})
+		var k := 0.0
+		while k <= float(G["D"]):
+			var q: Vector3 = (G["A"] as Vector3) + dv * k
+			_spots.append(Vector2(q.x, q.z))
+			k += 3.0
 	for sigma: float in [-1.0, 1.0]:
 		var s := 0.0
 		var prev_special := true
 		var done_alley := {}
+		var bocas: Array[Dictionary] = []
+		for gi in PASSAGENS.size():
+			for fim: String in ["a", "b"]:
+				if float(PASSAGENS[gi][fim][1]) == sigma:
+					var bf: Dictionary = _pass_geo[gi]["fa" if fim == "a" else "fb"]
+					bocas.append({"s_m": float(bf["s_m"]), "s2": float(bf["s2"]), "idx": gi, "ini": fim == "a"})
+		bocas.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x["s_m"]) < float(y["s_m"]))
+		var bi := 0
 		while s < S_END - 6.0:
 			var w_street := Route.width(s)
 			var w := _rng.randf_range(6.5, 11.5) if w_street >= 5.0 else _rng.randf_range(5.5, 9.0)
@@ -562,6 +640,10 @@ func _frontage(root: Node3D) -> void:
 					if a.size() > 2:
 						_cego_atual = CEGO_IDS[_cego_n % CEGO_IDS.size()]
 						_cego_n += 1
+			var boca: Dictionary = bocas[bi] if bi < bocas.size() else {}
+			if not boca.is_empty() and s >= float(boca["s_m"]) - 0.01:
+				kind = "passagem"
+				w = PASS_BOCA
 			if kind == "casa" and not done_alley.has("b") and s >= Route.BRIDGE_S - Route.BRIDGE_HALF:
 				kind = "ponte"
 				done_alley["b"] = true
@@ -587,7 +669,23 @@ func _frontage(root: Node3D) -> void:
 						_entradas_feitas[e["id"]] = s
 						break
 			var s2 := _advance(sigma, s, w)
+			if kind == "passagem":
+				s2 = float(boca["s2"])
+				bi += 1
+			elif not boca.is_empty():
+				# o lote termina exatamente onde começa a boca do atalho (a boca tem posição fixa)
+				var sm_t := float(boca["s_m"])
+				if s2 > sm_t - 0.01 or sm_t - s2 < 5.0:
+					s2 = sm_t
+					if s2 - s < 4.5 and (kind == "casa" or kind == "quintal" or kind == "talude"):
+						kind = "quintal"
 			var f := lot_frame(sigma, s, s2)
+			if kind == "casa" and _entrada_atual.is_empty():
+				# nas curvas fechadas a casa não cabe nem raspando (caixas giram uma contra a outra): vira quintal murado
+				var xt: Transform3D = f["xf"]
+				xt.origin += xt.basis.x * 0.05
+				if _casa_penetra(xt, 2.6, float(f["w"]) + 0.24):
+					kind = "quintal"
 			match kind:
 				"casa":
 					_lot_casa(casas, f, sigma, w_street)
@@ -601,6 +699,8 @@ func _frontage(root: Node3D) -> void:
 					_lot_chafariz(muros, f)
 				"ponte":
 					_lot_ponte(muros, f, sigma)
+				"passagem":
+					_lot_passagem(becos, f, int(boca["idx"]), bool(boca["ini"]))
 			if kind == "casa" or kind == "quintal" or kind == "talude":
 				_joints.append({"sigma": sigma, "s": s})
 			prev_special = kind != "casa"
@@ -670,6 +770,23 @@ func _livre(p: Vector3, r: float) -> bool:
 
 func _reservar(p: Vector3, r: float) -> void:
 	_ocupados.append([p, r])
+
+
+## Interpenetração REAL (pontos internos de uma caixa dentro da outra), mais folgada que _casa_atravessa (que também recusa encostos de 0,2 m).
+func _casa_penetra(xf: Transform3D, depth: float, w: float) -> bool:
+	for o in _casas_postas:
+		var oxf: Transform3D = o["xf"]
+		if oxf.origin.distance_to(xf.origin) > depth + float(o["depth"]) + w + float(o["w"]):
+			continue
+		for fx in [0.15, 0.85]:
+			for fz in [0.15, 0.85]:
+				var q: Vector3 = oxf.affine_inverse() * (xf * Vector3(depth * fx, 0.0, -w / 2.0 + w * fz))
+				if q.x > 0.2 and q.x < float(o["depth"]) - 0.2 and absf(q.z) < float(o["w"]) / 2.0 - 0.2:
+					return true
+				var q2: Vector3 = xf.affine_inverse() * (oxf * Vector3(float(o["depth"]) * fx, 0.0, -float(o["w"]) / 2.0 + float(o["w"]) * fz))
+				if q2.x > 0.2 and q2.x < depth - 0.2 and absf(q2.z) < w / 2.0 - 0.2:
+					return true
+	return false
 
 
 func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
@@ -1198,6 +1315,90 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 	g.add_child(lamp)
 
 
+## Beco de atalho. A boca de baixo ("ini") constrói o corredor inteiro (escadaria com patamares, muros, arcos, lampiões);
+## a boca de cima só reserva o espaço: o corredor chega nela pelo outro lado.
+func _lot_passagem(parent: Node3D, f: Dictionary, idx: int, ini: bool) -> void:
+	var G: Dictionary = _pass_geo[idx]
+	var xf_boca: Transform3D = f["xf"]
+	_n += 1
+	_reservar(xf_boca.origin, PASS_BOCA * 0.5 + 0.8)
+	if not ini:
+		return
+	var dv: Vector3 = G["dir"]
+	var D: float = G["D"]
+	var rise: float = G["rise"]
+	var g := _group(parent, str(G["id"]), Transform3D(Basis(dv, Vector3.UP, dv.cross(Vector3.UP)), G["A"]))
+	g.set_meta("passagem", true)
+	g.set_meta("comprimento", D)
+	g.set_meta("subida", rise)
+	var wb := PASS_W
+	var n := maxi(8, int(round(D / 0.5)))
+	var run := D / n
+	var q := 0.0
+	if rise > 0.05:
+		q = rise / ceilf(rise / 0.19)       # degraus de no máximo 19 cm; onde a rampa "sobra", vira patamar plano
+	var tops := PackedFloat32Array()
+	for i in n:
+		var lin := (i + 1) * rise / n
+		tops.append(roundf(lin / q) * q if q > 0.0 else lin)
+	var b := _batch()
+	for i in n:
+		var top := tops[i]
+		var hh := top + 1.0
+		b.box("pedra_chao", Vector3(run + 0.02, hh, wb + 0.1), Vector3((i + 0.5) * run, top - hh / 2.0, 0))
+	# muros de pedra dos dois lados, em lances que acompanham a subida
+	var nseg := int(ceil(D / 4.0))
+	var seg := D / nseg
+	for sz: float in [-1.0, 1.0]:
+		for k in nseg:
+			var x0 := k * seg
+			var top := tops[mini(n - 1, int((k + 1) * seg / run) - 1)] + 2.7
+			b.box("muro", Vector3(seg + 0.05, top + 1.0, 0.5), Vector3(x0 + seg / 2.0, top / 2.0 - 0.5, sz * (wb / 2.0 + 0.25)))
+			b.box("cantaria", Vector3(seg + 0.05, 0.12, 0.7), Vector3(x0 + seg / 2.0, top + 0.06, sz * (wb / 2.0 + 0.25)))
+	# arcos de cantaria nas duas bocas
+	for fim: float in [0.0, 1.0]:
+		var ax := 0.45 if fim == 0.0 else D - 0.45
+		var by := tops[0] if fim == 0.0 else tops[n - 1]
+		for sz: float in [-1.0, 1.0]:
+			b.box("cantaria", Vector3(0.7, 3.3, 0.6), Vector3(ax, by + 1.65, sz * (wb / 2.0 + 0.3)))
+		b.box("cantaria", Vector3(0.9, 0.45, wb + 1.5), Vector3(ax, by + 3.5, 0))
+		b.box("cantaria", Vector3(1.1, 0.14, wb + 1.7), Vector3(ax, by + 3.78, 0))
+	_mesh_node(g, "Degraus", b.commit())
+	# colisão: rampa lisa sob os degraus (o jogador sobe como nos outros becos) + paredes
+	var ang := atan2(rise, D)
+	var ramp := StaticBody3D.new()
+	ramp.name = "Rampa"
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(sqrt(D * D + rise * rise) + 0.5, 0.4, wb)
+	cs.shape = bs
+	ramp.add_child(cs)
+	ramp.position = Vector3(D / 2.0, rise / 2.0 - 0.2 * cos(ang), 0)
+	ramp.rotation.z = ang
+	g.add_child(ramp)
+	for sz: float in [-1.0, 1.0]:
+		_blocker(g, "Parede_%d" % int(sz), Vector3(D - 0.2, rise + 6.0, 0.6), Vector3(D / 2.0, rise / 2.0, sz * (wb / 2.0 + 0.3)))
+	# refúgio no meio: dentro do corredor fechado vale como esconderijo contra a Mula
+	var refuge := Area3D.new()
+	refuge.name = "Refugio"
+	refuge.add_to_group("refugio", true)
+	var rcs := CollisionShape3D.new()
+	var rbs := BoxShape3D.new()
+	rbs.size = Vector3(minf(D - 2.0, 10.0), rise + 3.4, wb)
+	rcs.shape = rbs
+	refuge.add_child(rcs)
+	refuge.position = Vector3(D / 2.0, rise / 2.0 + 1.7, 0)
+	g.add_child(refuge)
+	# lampiões e vegetação
+	for li in 2:
+		var lx := D * (0.28 if li == 0 else 0.72)
+		var ly := tops[mini(n - 1, int(lx / run))] + 2.3
+		var sg := 1.0 if li == 0 else -1.0
+		g.add_child(_lantern_wall(Vector3(lx, ly, sg * (wb / 2.0)), PI if li == 0 else 0.0))
+		_plant(g, "samambaia", Vector3(lx + 2.0, ly + 0.4, -sg * (wb / 2.0 + 0.6)), 0.0, 1.2)
+	_plant(g, "samambaia", Vector3(D * 0.5, tops[n / 2] + 2.8, wb / 2.0 + 0.6), 0.0, 1.3)
+
+
 func _lot_chafariz(parent: Node3D, f: Dictionary) -> void:
 	var w: float = f["w"]
 	var g := _group(parent, "Chafariz", f["xf"])
@@ -1674,6 +1875,8 @@ func _hill_houses(root: Node3D) -> void:
 		var d := _rng.randf_range(Route.width(sc) * 0.5 + 21.0, 150.0)
 		var p := Route.pos(sc) + Route.right(sc) * sigma * d
 		var q := Vector2(p.x, p.z)
+		if Route.dist_to_center(p) < Route.width(sc) * 0.5 + 19.0:      # nas curvas fechadas, d medido na normal pode cair perto de OUTRA perna da rua
+			continue
 		var near := false
 		for o in _spots:
 			if o.distance_to(q) < 10.5:
@@ -1742,6 +1945,8 @@ func _near_trees(root: Node3D) -> void:
 		var d := _rng.randf_range(Route.width(s) * 0.5 + 14.0, 60.0)
 		var p := Route.pos(s) + Route.right(s) * sigma * d
 		var q := Vector2(p.x, p.z)
+		if Route.dist_to_center(p) < Route.width(s) * 0.5 + 12.0:
+			continue
 		var blocked := false
 		for o in _spots:
 			if o.distance_to(q) < 8.5:
@@ -2438,7 +2643,7 @@ func _props_encosta() -> Node3D:
 		var sg := -1.0 if _rng.randf() < 0.5 else 1.0
 		var d := _rng.randf_range(Route.width(sc) * 0.5 + 16.0, 55.0)
 		var p := Route.pos(sc) + Route.right(sc) * sg * d
-		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 9.0):
+		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 9.0) or Route.dist_to_center(p) < Route.width(sc) * 0.5 + 13.0:
 			continue
 		var tora := _prop(root, "dead_tree_trunk", Vector3(p.x, terrain_h(p.x, p.z) - 0.05, p.z), _rng.randf() * TAU, _rng.randf_range(0.9, 1.3))
 		tora.name = "Tora_%02d" % placed
@@ -2452,7 +2657,7 @@ func _props_encosta() -> Node3D:
 		var sg := -1.0 if _rng.randf() < 0.5 else 1.0
 		var d := _rng.randf_range(Route.width(sc) * 0.5 + 15.0, 62.0)
 		var p := Route.pos(sc) + Route.right(sc) * sg * d
-		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 6.5):
+		if absf(sc - Route.BRIDGE_S) < 12.0 or _near_spot(Vector2(p.x, p.z), 6.5) or Route.dist_to_center(p) < Route.width(sc) * 0.5 + 12.0:
 			continue
 		var arb := _prop(root, "wild_rooibos_bush", Vector3(p.x, terrain_h(p.x, p.z) - 0.04, p.z), _rng.randf() * TAU, _rng.randf_range(1.0, 1.7))
 		arb.name = "Arbusto_%02d" % placed

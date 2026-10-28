@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/arvore_pequena.res" id="1_geu03"]
 
-[node name="ArvorePequena" type="Node3D" unique_id=276978669]
+[node name="ArvorePequena" type="Node3D" unique_id=810746256]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=266181671]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=1667874012]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1

@@ -555,11 +555,18 @@ func _test_becos(delta: float) -> void:
 	var area := refs[_test_i] as Area3D
 	var beco := area.get_parent() as Node3D
 	var x_axis := beco.global_transform.basis.x      # para dentro do beco
+	var atalho := beco.has_meta("passagem")           # beco de atalho: sobe até a outra rua e depois desce de volta
+	var d_at: float = float(beco.get_meta("comprimento", 0.0))
+	var desce := atalho and _test_state == 1
 	if _test_t == 0.0:
 		var start := beco.global_position - x_axis * 2.2 + Vector3(0, 0.4, 0)
+		var dir := x_axis
+		if desce:
+			start = beco.global_position + x_axis * (d_at + 2.2) + Vector3(0, float(beco.get_meta("subida", 0.0)) + 0.4, 0)
+			dir = -x_axis
 		player.global_position = start
 		player.velocity = Vector3.ZERO
-		player.rotation.y = atan2(-x_axis.x, -x_axis.z)
+		player.rotation.y = atan2(-dir.x, -dir.z)
 		player.cam.rotation.x = 0.0
 		Input.action_press("move_forward")
 		_hint = str(start.y)
@@ -570,16 +577,22 @@ func _test_becos(delta: float) -> void:
 		var rise := player.global_position.y - float(_hint)
 		var cego := beco.has_meta("cego")
 		var ok := (along > 5.0 and rise > 2.0) if cego else (along > 12.0 and rise > 4.0)
+		if atalho:
+			ok = along > d_at + 1.0 if not desce else along < -1.0       # passou pela boca do outro lado
 		var why := ""
 		for i in player.get_slide_collision_count():
 			var col := player.get_slide_collision(i)
 			var cn := col.get_collider() as Node
 			why += " [%s/%s n=%s]" % [cn.get_parent().name if cn else "?", cn.name if cn else "?", str(col.get_normal())]
-		print("[becos] %s: avançou %.1f m, subiu %.1f m -> %s%s" % [beco.name, along, rise, "OK" if ok else "TRAVOU", why if not ok else ""])
+		print("[becos] %s%s: avançou %.1f m (de %.1f), subiu %.1f m -> %s%s" % [beco.name, " (descendo)" if desce else "", along, d_at, rise, "OK" if ok else "TRAVOU", why if not ok else ""])
 		if not ok:
 			_test_fail += 1
 		_test_t = 0.0
-		_test_i += 1
+		if atalho and not desce:
+			_test_state = 1
+		else:
+			_test_state = 0
+			_test_i += 1
 
 
 ## Pega todos os frascos e lê todos os bilhetes pelo caminho real (raycast + tecla E).

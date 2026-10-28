@@ -10,28 +10,42 @@ extends RefCounted
 const CTRL_XZ: Array[Vector2] = [
 	Vector2(0, 14), Vector2(0, 0), Vector2(4, -22), Vector2(-4, -42), Vector2(-20, -56),
 	Vector2(-34, -78), Vector2(-30, -104), Vector2(-14, -122), Vector2(4, -134),
-	Vector2(20, -156), Vector2(30, -184), Vector2(22, -212), Vector2(4, -228),
-	Vector2(-14, -246), Vector2(-20, -272), Vector2(-8, -292), Vector2(8, -302),
-	Vector2(16, -322), Vector2(14, -342),
+	Vector2(20, -156), Vector2(30, -184),
+	# ladeira da igreja: zigue-zague com duas curvas de 180 graus (raio ~13 m); as pernas ficam ~26 m uma da outra
+	Vector2(31.8, -187.8), Vector2(34.4, -191.1), Vector2(37.6, -193.8), Vector2(41.2, -195.8),
+	Vector2(45.2, -196.9), Vector2(48.7, -197.6), Vector2(52.1, -198.2), Vector2(55.6, -198.8),
+	Vector2(59.0, -199.5), Vector2(62.9, -200.8), Vector2(66.1, -203.3), Vector2(68.4, -206.6),
+	Vector2(69.6, -210.5), Vector2(69.5, -214.6), Vector2(68.1, -218.4), Vector2(65.7, -221.7),
+	Vector2(62.3, -224.0), Vector2(58.4, -225.1), Vector2(54.3, -225.0), Vector2(50.7, -224.4),
+	Vector2(47.0, -223.7), Vector2(43.3, -223.0), Vector2(39.6, -222.3), Vector2(35.9, -221.7),
+	Vector2(32.2, -221.0), Vector2(28.5, -220.3), Vector2(24.8, -219.7), Vector2(20.8, -219.6),
+	Vector2(16.9, -220.7), Vector2(13.5, -223.0), Vector2(11.1, -226.3), Vector2(9.7, -230.1),
+	Vector2(9.6, -234.2), Vector2(10.8, -238.1), Vector2(13.1, -241.4), Vector2(16.3, -243.9),
+	Vector2(20.2, -245.2), Vector2(23.9, -245.9), Vector2(27.5, -246.6), Vector2(31.2, -247.2),
+	Vector2(34.9, -247.9), Vector2(38.6, -248.6), Vector2(42.3, -249.3), Vector2(46.0, -249.9),
+	Vector2(49.7, -250.6), Vector2(53.9, -251.9), Vector2(57.6, -254.2), Vector2(60.7, -257.3),
+	Vector2(62.9, -261.1), Vector2(64.2, -265.3), Vector2(64.9, -269.4), Vector2(65.6, -273.6),
+	Vector2(66.3, -277.7), Vector2(67.0, -281.9), Vector2(67.7, -286.0), Vector2(68.4, -290.1),
+	Vector2(69.1, -294.3), Vector2(69.8, -298.4), Vector2(70.5, -302.6), Vector2(71.2, -306.7),
 ]
 ## Altitude (m) em função da distância percorrida s (m).
 const CTRL_H: Array[Vector2] = [
 	Vector2(-20, -2), Vector2(0, 0), Vector2(30, 3.5), Vector2(60, 9.0), Vector2(90, 13.0),
-	Vector2(120, 17.5), Vector2(150, 19.5), Vector2(178, 19.9), Vector2(216.4, 26.0),
-	Vector2(255.4, 32.0), Vector2(294.4, 36.5), Vector2(336, 38.0), Vector2(394.5, 38.8),
+	Vector2(120, 17.5), Vector2(150, 19.5), Vector2(178, 19.9), Vector2(221.8, 26.0),
+	Vector2(268.6, 32.0), Vector2(315.5, 36.5), Vector2(375.0, 38.0), Vector2(455.0, 38.8),
 ]
 ## Largura do leito da rua (m, entre meios-fios) em função de s.
 const CTRL_W: Array[Vector2] = [
 	Vector2(0, 5.5), Vector2(22, 5.5), Vector2(45, 4.2), Vector2(68, 3.4), Vector2(92, 4.4),
 	Vector2(118, 5.5), Vector2(138, 6.0), Vector2(152, 12.0), Vector2(166, 13.0),
-	Vector2(180, 6.0), Vector2(208.6, 5.0), Vector2(229.4, 3.6), Vector2(258, 3.6),
-	Vector2(281.4, 5.0), Vector2(312.6, 6.0), Vector2(330.8, 11.0), Vector2(351.6, 19.0), Vector2(394.5, 20.0),
+	Vector2(180, 6.0), Vector2(212.4, 5.0), Vector2(237.3, 3.6), Vector2(271.8, 3.6),
+	Vector2(299.9, 5.0), Vector2(337.5, 5.5), Vector2(385.0, 6.0), Vector2(392.0, 11.0), Vector2(412.0, 19.0), Vector2(455.0, 20.0),
 ]
 const STEP := 0.5
 const SIDEWALK := 0.7
 ## s onde termina o casario e começa o adro da igreja, e s da fachada da igreja.
-const S_END := 331.0
-const CHURCH_S := 385.5
+const S_END := 388.0
+const CHURCH_S := 445.0
 ## ponte de pedra sobre um riacho que cruza a rua em BRIDGE_S (metade do comprimento = BRIDGE_HALF)
 const BRIDGE_S := 118.0
 const BRIDGE_HALF := 4.6
