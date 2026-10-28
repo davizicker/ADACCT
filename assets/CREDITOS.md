@@ -62,3 +62,6 @@ shaders em `assets/shaders/`). O restante vem de terceiros, **todos CC0** (domí
 | assets/models/poly/grass_tuft_a/b.glb (variantes extraídas) | [Poly Haven](https://polyhaven.com/a/grass_medium_01) | Poly Haven | CC0 1.0 |
 | moss_01 (Poly Haven, CC0) | recebido, ainda não usado (modelo de fios finos; precisa de outro método) | Poly Haven | CC0 1.0 |
 | Animações de captura de movimento (tools/ia3d/mocap/*.bvh) | "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." | CMU Graphics Lab Motion Capture Database | uso livre, inclusive comercial; não revender os dados em si |
+| assets/models/poly/mato_a/b/c.glb, hera.glb (Tiny Weeds 3: ervas e peças de hera, convertidos de OBJ+TGA) | Nobiax (nobiax.deviantart.com) | Nobiax | CC0 1.0 |
+| assets/models/poly/containers.glb (Medieval Containers: 45 barris, cestos, caixotes, baldes, jarros, potes e sacos; texturas religadas) | [BlendSwap 76295](http://www.blendswap.com/blends/view/76295) | Daniel74 | CC0 1.0 |
+| assets/models/arms/fps_arms.glb (FPS ARMS RIG 1: braços em primeira pessoa, 50 ossos) | enviado pelo autor do jogo, **sem arquivo de licença no pacote** | desconhecido | **CONFIRMAR a licença antes de publicar** |

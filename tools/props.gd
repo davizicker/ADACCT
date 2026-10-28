@@ -54,6 +54,33 @@ static func make(key: String, scale := 1.0, align := "chao") -> Node3D:
 	return holder
 
 
+## Kits: um .glb com várias malhas (um nó por variação) -> Mesh por nome. Usado por containers.glb e hera.glb.
+static var _kits: Dictionary = {}
+
+
+static func kit_mesh(arquivo: String, nome: String) -> Mesh:
+	_kit_carrega(arquivo)
+	return (_kits[arquivo] as Dictionary).get(nome, null)
+
+
+static func kit_nomes(arquivo: String) -> PackedStringArray:
+	_kit_carrega(arquivo)
+	var out := PackedStringArray((_kits[arquivo] as Dictionary).keys())
+	out.sort()
+	return out
+
+
+static func _kit_carrega(arquivo: String) -> void:
+	if _kits.has(arquivo):
+		return
+	var d := {}
+	var inst := (load(DIR + arquivo + ".glb") as PackedScene).instantiate()
+	for mi in inst.find_children("*", "MeshInstance3D", true, false):
+		d[(mi as MeshInstance3D).name] = (mi as MeshInstance3D).mesh
+	inst.free()
+	_kits[arquivo] = d
+
+
 ## Medieval Containers (Daniel74, CC0): um .glb com 45 variações (Barrel1_1.., Basket1_1.., Crate1_1.., Jug1_1.., Sack1_1.. etc.).
 static var _cont: Dictionary = {}
 

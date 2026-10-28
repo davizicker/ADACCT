@@ -65,3 +65,42 @@ for pasta, (obj, nome) in MAP.items():
     patch_glb(saida)
     ob.data.calc_loop_triangles()
     print("[matos] %s: %d tris, %.2f x %.2f x %.2f m, %d KB" % (nome, len(ob.data.loop_triangles), *ob.dimensions, os.path.getsize(saida) // 1024))
+
+
+# ---- hera: as 5 peças de hera (default, bend L/R, corner H/V) num único .glb, um nó por peça ----
+bpy.ops.wm.read_factory_settings(use_empty=True)
+mat = bpy.data.materials.new("hera_real")
+mat.use_nodes = True
+nt = mat.node_tree
+for n in list(nt.nodes):
+    nt.nodes.remove(n)
+out = nt.nodes.new("ShaderNodeOutputMaterial")
+bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
+nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+tex = nt.nodes.new("ShaderNodeTexImage")
+tex.image = bpy.data.images.load(os.path.join(src, "ivy", "diffuse.tga"))
+nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
+nrm = nt.nodes.new("ShaderNodeTexImage")
+nrm.image = bpy.data.images.load(os.path.join(src, "ivy", "normal.tga"))
+nrm.image.colorspace_settings.name = "Non-Color"
+nm = nt.nodes.new("ShaderNodeNormalMap")
+nt.links.new(nrm.outputs["Color"], nm.inputs["Color"])
+nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+bsdf.inputs["Roughness"].default_value = 0.85
+for nome in ["ivy_default", "ivy_bend_left", "ivy_bend_right", "ivy_corner_horizontal", "ivy_corner_vertical"]:
+    bpy.ops.wm.obj_import(filepath=os.path.join(src, "ivy", nome + ".obj"), forward_axis="NEGATIVE_Z", up_axis="Y")
+    ob = bpy.context.selected_objects[0] if bpy.context.selected_objects else bpy.context.scene.objects[-1]
+    ob.name = nome
+    ob.scale = (0.01, 0.01, 0.01)
+    bpy.context.view_layer.objects.active = ob
+    bpy.ops.object.select_all(action="DESELECT")
+    ob.select_set(True)
+    bpy.ops.object.transform_apply(scale=True)
+    ob.data.materials.clear()
+    ob.data.materials.append(mat)
+saida = os.path.join(dst, "hera.glb")
+bpy.ops.export_scene.gltf(filepath=saida, export_format="GLB", export_yup=True, export_image_format="AUTO", export_materials="EXPORT",
+                          export_cameras=False, export_lights=False)
+patch_glb(saida)
+print("[matos] hera.glb: %d peças, %d KB" % (len([o for o in bpy.data.objects if o.type == "MESH"]), os.path.getsize(saida) // 1024))

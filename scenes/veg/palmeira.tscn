@@ -2,9 +2,9 @@
 
 [ext_resource type="ArrayMesh" path="res://assets/meshes/palmeira.res" id="1_magm5"]
 
-[node name="Palmeira" type="Node3D" unique_id=460325693]
+[node name="Palmeira" type="Node3D" unique_id=1209848013]
 
-[node name="Malha" type="MeshInstance3D" parent="." unique_id=552509220]
+[node name="Malha" type="MeshInstance3D" parent="." unique_id=1286993909]
 visibility_range_end = 260.0
 visibility_range_end_margin = 30.0
 visibility_range_fade_mode = 1

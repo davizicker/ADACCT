@@ -193,7 +193,6 @@ func absorver_erro() -> bool:
 
 
 func usar_porta(porta: Node, p: Player) -> void:
-	print("[missao-dbg] usar_porta %s cd=%.2f t=%d" % [str(porta.get("destino")), _cooldown, Time.get_ticks_msec()])
 	if _cooldown > 0.0:
 		return
 	var req: String = porta.get("requer")
@@ -209,7 +208,6 @@ func usar_porta(porta: Node, p: Player) -> void:
 
 
 func entrar(id: String) -> void:
-	print("[missao-dbg] entrar %s t=%d cd=%.2f" % [id, Time.get_ticks_msec(), _cooldown])
 	var sala := get_tree().root.get_node_or_null("Main/Vila/Interiores/" + id) as Node3D
 	if sala == null:
 		push_warning("Interior inexistente: " + id)
@@ -233,7 +231,6 @@ func entrar(id: String) -> void:
 
 
 func sair() -> void:
-	print("[missao-dbg] sair t=%d" % Time.get_ticks_msec())
 	_cooldown = 1.0
 	player.global_position = _ret_pos
 	player.velocity = Vector3.ZERO

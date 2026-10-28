@@ -8,10 +8,11 @@ extends Node3D
 const MODELO := "res://assets/models/arms/fps_arms.glb"
 
 @export var pele := Color(1, 1, 1)                 ## multiplica a textura (ex.: Color(0.78, 0.6, 0.5) para pele mais escura)
-@export var escala := 1.0
-@export var empunhadura := Vector3(0.0, 0.12, 0.0)     ## onde a mão pega, no espaço do nó da lanterna
-@export var mao_esquerda := Vector3(-0.30, -0.60, -0.50)  ## posição da mão esquerda (no espaço da câmera)
-@export var curvatura_dedos := 1.1                 ## radianos de dobra dos dedos da direita (empunhadura)
+@export var escala := 1.35                     ## braços de FPS são maiores que o real para alcançar a lanterna
+@export var deslocamento := Vector3(0.0, -0.33, 0.10)   ## onde ficam os ombros em relação à câmera
+@export var empunhadura := Vector3(0.0, 0.23, 0.0)     ## onde a mão pega, no espaço do nó da lanterna
+@export var mao_esquerda := Vector3(-0.27, -0.45, -0.48)  ## posição da mão esquerda (no espaço da câmera)
+@export var curvatura_dedos := -1.1                ## radianos de dobra dos dedos da direita (empunhadura)
 
 var lanterna: Node3D = null
 var _sk: Skeleton3D = null
@@ -26,6 +27,8 @@ func _ready() -> void:
 	var inst := (load(MODELO) as PackedScene).instantiate() as Node3D
 	add_child(inst)
 	inst.scale = Vector3.ONE * escala
+	inst.rotation.y = PI            # o modelo olha para +Z; a câmera olha para -Z
+	inst.position = deslocamento
 	var sks := inst.find_children("*", "Skeleton3D", true, false)
 	if sks.is_empty():
 		return
@@ -58,15 +61,15 @@ func _process(delta: float) -> void:
 	if _sk == null:
 		return
 	_t += delta
-	var cam_para_sk := _sk.global_transform.affine_inverse() * get_parent().global_transform
+	var cam_para_sk: Transform3D = _sk.global_transform.affine_inverse() * (get_parent() as Node3D).global_transform
 	# mão direita: segue a lanterna
-	var alvo_d := Vector3(0.31, -0.28, -0.62)
+	var alvo_d: Vector3 = Vector3(0.31, -0.28, -0.62)
 	if lanterna != null:
 		alvo_d = lanterna.position + lanterna.transform.basis * empunhadura
-	_ik("R", cam_para_sk * alvo_d, Vector3(0.4, -1.0, 0.2))
+	_ik("R", cam_para_sk * alvo_d, Vector3(-0.4, -1.0, -0.2))
 	# mão esquerda: relaxada, balançando de leve
-	var alvo_e := mao_esquerda + Vector3(sin(_t * 1.3) * 0.006, cos(_t * 1.7) * 0.005, 0.0)
-	_ik("L", cam_para_sk * alvo_e, Vector3(-0.4, -1.0, 0.2))
+	var alvo_e: Vector3 = mao_esquerda + Vector3(sin(_t * 1.3) * 0.006, cos(_t * 1.7) * 0.005, 0.0)
+	_ik("L", cam_para_sk * alvo_e, Vector3(0.4, -1.0, -0.2))
 	_dedos("R", curvatura_dedos)
 	_dedos("L", 0.35)
 
@@ -100,7 +103,6 @@ func _ik(lado: String, alvo: Vector3, polo: Vector3) -> void:
 	_aponta(i_ombro, s, cot, e0)
 	_aponta(i_cot, cot, maoP, w0)
 	# mão: mantém a orientação de repouso girada junto com o antebraço
-	var rot_ant: Basis = _sk.get_bone_global_pose_override(i_cot).basis if false else Basis()
 	var b_rest: Basis = _rest[ih].basis
 	var ant := (maoP - cot).normalized()
 	var ant0 := (w0 - e0).normalized()

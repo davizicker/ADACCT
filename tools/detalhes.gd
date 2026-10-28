@@ -363,8 +363,8 @@ func _plantas_reais() -> Node3D:
 	g.add_child(_espalha("Mato_a", "mato_a", 1100, "encosta", Vector2(0.4, 0.9), 110.0))
 	g.add_child(_espalha("Mato_c", "mato_c", 1100, "encosta", Vector2(0.4, 0.8), 110.0))
 	g.add_child(_espalha("Mato_b", "mato_b", 1000, "encosta", Vector2(0.9, 1.8), 110.0))
-	g.add_child(_espalha("Mato_b_calcada", "mato_b", 900, "calcada", Vector2(0.35, 0.7), 60.0))
-	g.add_child(_espalha("Mato_c_calcada", "mato_c", 500, "calcada", Vector2(0.2, 0.4), 60.0))
-	g.add_child(_espalha("Mato_a_calcada", "mato_a", 300, "calcada", Vector2(0.18, 0.32), 60.0))
-	g.add_child(_espalha("Mato_b_rua", "mato_b", 300, "rua", Vector2(0.3, 0.55), 45.0))
+	g.add_child(_espalha("Mato_b_calcada", "mato_b", 1300, "calcada", Vector2(0.6, 1.1), 70.0))
+	g.add_child(_espalha("Mato_c_calcada", "mato_c", 800, "calcada", Vector2(0.35, 0.6), 70.0))
+	g.add_child(_espalha("Mato_a_calcada", "mato_a", 600, "calcada", Vector2(0.3, 0.5), 70.0))
+	g.add_child(_espalha("Mato_b_rua", "mato_b", 500, "rua", Vector2(0.4, 0.75), 55.0))
 	return g

@@ -38,6 +38,7 @@ var _shake_t := 0.0
 var _shake_amp := 0.0
 var _base_energy := 1.7
 var _lantern_home := Vector3.ZERO
+var _bracos: Node3D = null
 var _lantern_glass: StandardMaterial3D = null
 var _lantern_rot := Vector3.ZERO
 var _bob_phase := 0.0
@@ -59,6 +60,12 @@ func _ready() -> void:
 		_lantern_home = lantern_model.position
 		_lantern_rot = lantern_model.rotation
 		cam.near = 0.03     # a lanterna fica colada na câmera: não pode ser cortada
+		# braços em primeira pessoa (FPS ARMS RIG): a mão direita segura a lanterna (scripts/bracos.gd)
+		if ResourceLoader.exists("res://assets/models/arms/fps_arms.glb"):
+			_bracos = (load("res://scripts/bracos.gd") as GDScript).new() as Node3D
+			_bracos.name = "Bracos"
+			_bracos.set("lanterna", lantern_model)
+			cam.add_child(_bracos)
 	floor_snap_length = 0.6
 	floor_max_angle = deg_to_rad(50.0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -195,6 +202,8 @@ func _process(delta: float) -> void:
 func _update_lantern_model(delta: float, lit: bool) -> void:
 	if lantern_model == null:
 		return
+	if _bracos != null:
+		_bracos.visible = not hidden
 	var sway := 0.012 if move_speed > 0.3 else 0.003
 	if sprinting:
 		sway = 0.028

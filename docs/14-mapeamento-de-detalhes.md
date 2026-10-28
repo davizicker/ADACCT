@@ -146,3 +146,15 @@ Os números vêm do bake (`[vila] detalhes:`) e das ferramentas de teste; se mud
 | Mais atalhos (rota alternativa para fugir do Bradador, atalhos que abrem só com item/chave) | | ⬜ |
 
 **Como criar mais atalhos:** acrescente em `PASSAGENS` `{"id": "...", "a": [s_baixo, lado], "b": [s_alto, lado]}` (lado -1 = esquerda de quem sobe, +1 = direita). Boa corda: 14 a 28 m, trecho de rua entre as bocas ≥ 2,5× a corda, subida ≤ 9 m. Evite lados internos de outros becos em escada (`ALLEYS`) e casas de `ENTRADAS` a menos de 12 m de uma boca. Rode `bash rebuild`, `--selftest-becos`, `--selftest-walk` e `auditoria_geom`.
+
+## 13. Atualização v14 (matos reais, recipientes, braços, edição no Godot)
+| Detalhe | Hoje | Status |
+|---|---|---|
+| **Matos reais** (Tiny Weeds 3, CC0) no lugar do capim de cartão: 3 modelos recortados, ~7.000 instâncias (encostas, pé das paredes, frestas da rua) | ✅ | ✅ |
+| Plantas de lote (`arbusto`, `capim`, `samambaia` em quintais, becos, taludes) trocadas por mato/vinca/tufo **reais** (sem a moita de 16 mil triângulos) | ✅ | ✅ |
+| **Hera real** (5 peças) no lugar dos cartões verdes dos muros | ✅ | ✅ |
+| Árvores, palmeiras e bananeiras **ainda são cartões** (não há modelo real delas) | | ⬜ |
+| **Medieval Containers** (CC0): barris, caixotes empilhados, cestos, jarros, sacos e baldes nas ruas (44 grupos) e nos interiores (depósito, venda, sacos) | ✅ | ✅ |
+| **Braços em primeira pessoa** segurando a lanterna (IK de 2 ossos, dedos curvados); mão esquerda relaxada | ✅ | ✅ |
+| Animações dos braços (abrir porta, pegar item, correr) | | ⬜ |
+| Camada manual `scenes/ajustes.tscn` + `ZonaLimpa` para editar no Godot sem perder nada no bake (`docs/17`) | ✅ | ✅ |

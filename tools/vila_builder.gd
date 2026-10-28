@@ -1192,15 +1192,25 @@ func _balcony(b: MeshBatch, z0: float, z1: float, floor_y: float, wood: String) 
 
 # ------------------------------------------------------------------ lotes especiais
 
+## Hera de verdade (peças do "Tiny Weeds 3", Nobiax, CC0): pendem do alto do muro, viradas para a rua (-x local).
 func _wall_ivy(parent: Node3D, w: float, height: float, x := -0.03) -> void:
-	var count := maxi(1, int(w / 2.2))
-	for i in count:
-		var q := QuadMesh.new()
-		var qh := height * _rng.randf_range(0.5, 0.8)
-		q.size = Vector2(2.4, qh)
-		var mi := _mesh_node(parent, "Hera_%d" % i, q, Vector3(x, height - qh / 2.0 - 0.1, -w / 2.0 + (i + 0.5) * w / count))
-		mi.rotation.y = -PI / 2.0
-		mi.material_override = mat("hera")
+	var nomes := PropKit.kit_nomes("hera")
+	var cols := maxi(1, int(w / 0.85))
+	for i in cols:
+		var nome: String = nomes[_rng.randi() % nomes.size()]
+		var mesh := PropKit.kit_mesh("hera", nome)
+		var bb := mesh.get_aabb()
+		var sc := minf(_rng.randf_range(1.3, 2.1), height * 0.95 / maxf(bb.size.y, 0.1))
+		var mi := MeshInstance3D.new()
+		mi.name = "Hera_%d" % i
+		mi.mesh = mesh
+		mi.scale = Vector3.ONE * sc
+		mi.rotation.y = -PI / 2.0 + _rng.randf_range(-0.12, 0.12)
+		var topo := height - _rng.randf_range(0.0, 0.25)
+		mi.position = Vector3(x + bb.position.z * sc, topo - (bb.position.y + bb.size.y) * sc, -w / 2.0 + (i + 0.5) * w / cols + _rng.randf_range(-0.15, 0.15))
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.visibility_range_end = 45.0
+		parent.add_child(mi)
 
 
 func _lot_quintal(parent: Node3D, f: Dictionary) -> void:
