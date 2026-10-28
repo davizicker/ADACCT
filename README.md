@@ -24,4 +24,5 @@ desta pasta (não crie um projeto novo e copie arquivos).
 - Roteiro do jogo de 2 horas: `docs/10-roteiro-do-jogo-de-2-horas.md`. Prompts para IA: `docs/11-prompts-para-ia.md`.
 - Testes novos: `--selftest-casas`, `tools/auditoria_pecas.gd`, `tools/foto_interiores.gd`.
 - Novos: salvar/continuar automático, tecla J (reler cartas), F3 (FPS), chuva nas opções. Mapa geral em `docs/12`, prompt de detalhes e realismo em `docs/13`.
+- **v15: modo de teste (imortal): tecla F9, Opções ou `--modo-teste`.** Ladeira da igreja em zigue-zague com 2 becos de atalho, plantas/árvores de geometria real, texturas misturadas nas paredes, postes com fios, vaga-lumes e morcegos. Guias: `docs/16` (hospedar a Fábrica 3D) e `docs/17` (editar no Godot).
 - v11: rua mais longa e curva, 17 becos (5 sem saída), 14 interiores, esconderijos (E atrás de carros e nos becos sem saída), plantas reais, desempenho melhor (padrão Média; F3 mostra FPS; opção de resolução com FSR). Testes novos: `--selftest-esconder`.

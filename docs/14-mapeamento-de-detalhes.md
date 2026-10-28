@@ -158,3 +158,17 @@ Os números vêm do bake (`[vila] detalhes:`) e das ferramentas de teste; se mud
 | **Braços em primeira pessoa** segurando a lanterna (IK de 2 ossos, dedos curvados); mão esquerda relaxada | ✅ | ✅ |
 | Animações dos braços (abrir porta, pegar item, correr) | | ⬜ |
 | Camada manual `scenes/ajustes.tscn` + `ZonaLimpa` para editar no Godot sem perder nada no bake (`docs/17`) | ✅ | ✅ |
+
+## 14. Atualização v15 (modo de teste, texturas misturadas, mais realismo)
+| Detalhe | Hoje | Status |
+|---|---|---|
+| **Modo de teste (imortal)**: Bradador e Mula não te matam, só avisam. Liga em Opções, com a tecla **F9** no jogo ou com `--modo-teste`. O modo normal é o padrão; os testes automáticos sempre usam o normal | ✅ | ✅ |
+| **Paredes com textura mista** (shader `superficie_mista`): reboco novo + reboco velho em manchas, umidade em escorridos e variação de cor por parede, mapas de normal triplanares | ✅ | ✅ |
+| **Pisos e portas**: madeira + poeira/barro seco; quintais: barro vermelho com tufos de grama e musgo (Ground054 + Ground037) | ✅ | ✅ |
+| **Musgo em manchas** por cima de telhados, muros e cantaria (shader `sobreposicao`, mais nas faces voltadas para cima) | ✅ | ✅ |
+| Todas as texturas ambientCG/Poly Haven enviadas estão em uso (Bark014, Ground028/037/054/108, Metal047B/053C, Wood028/035, stone_wall_04) | ✅ | ✅ |
+| **Postes de madeira com cruzeta, isoladores, transformador e fios** (catenária) | ✅ | ✅ |
+| **Fumaça de chaminé** (~40% das chaminés), **vaga-lumes** em volta do jogador, **morcegos** sobre o adro | ✅ | ✅ |
+| **Cogumelos** (700) e **galhos caídos** (220, o tronco morto do Poly Haven em escala pequena) | ✅ | ✅ |
+| Limpeza: pedras e plantas das encostas não nascem mais em cima da rua nas curvas fechadas (`tools/auditoria_lugar.gd`: 0 na rua, 0 flutuando) | ✅ | ✅ |
+| Gato, cachorro, pombos, roupas animadas, cortinas ao vento | | ⬜ |
