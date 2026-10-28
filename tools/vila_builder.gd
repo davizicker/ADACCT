@@ -161,7 +161,8 @@ func _plant(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0) -
 			return rn
 		if not _alt_real.has(real):
 			var amostra := PropKit.make(real)
-			_alt_real[real] = maxf((amostra.get_meta("bb") as AABB).size.y, 0.05)
+			var bbm := (amostra.get_meta("bb") as AABB).size
+			_alt_real[real] = maxf(maxf(bbm.x, bbm.z), maxf(bbm.y, 0.05))      # maior dimensão: plantas rasteiras são largas e baixas
 			amostra.free()
 		return _prop(parent, real, pos, yaw, float(PLANTAS_REAIS[key][1]) * scale / float(_alt_real[real]))
 	# árvores, palmeiras e bananeiras: geometria real (tools/arvores.gd), com troca de detalhe por distância

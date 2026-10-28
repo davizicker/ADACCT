@@ -143,6 +143,13 @@ func _build_options() -> void:
 		Config.grito_ativo = on
 		options_changed.emit())
 	_opts_box.add_child(cg)
+	var ct := CheckBox.new()
+	ct.text = "MODO DE TESTE: imortal (Bradador e Mula não te matam). Também: tecla F9 no jogo"
+	ct.button_pressed = Config.modo_teste
+	ct.toggled.connect(func(on: bool) -> void:
+		Config.modo_teste = on
+		options_changed.emit())
+	_opts_box.add_child(ct)
 	var c1 := CheckBox.new()
 	c1.text = "Efeitos de câmera (vinheta, granulado, medo)"
 	c1.button_pressed = Config.camera_fx

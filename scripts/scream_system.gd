@@ -284,6 +284,16 @@ func _update_gaze(delta: float) -> void:
 
 
 func _kill() -> void:
+	if Config.modo_teste:
+		# MODO DE TESTE: a "morte" vira só um aviso; o Bradador recua e o jogo segue (veja Config.modo_teste / tecla F9)
+		stage = 0
+		_noise_t = 0.0
+		if hud != null:
+			hud.show_prompt("[MODO TESTE] O Bradador te pegaria aqui.", 3.5)
+		if bradador != null:
+			bradador.visible = false
+		log_line.emit("MODO TESTE: morte ignorada")
+		return
 	enabled = false
 	stage = STAGE_DIST.size() - 1
 	_place_bradador()

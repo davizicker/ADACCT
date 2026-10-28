@@ -15,6 +15,7 @@ static var grito_ativo := false # opção antiga: responder gritando (microfone 
 static var camera_fx := true    # vinheta, granulado, aberração
 static var head_bob := true
 static var chuva := false
+static var modo_teste := false   # MODO DE TESTE: imortal (Bradador e Mula não te matam; o jogo só avisa). Normal = padrão
 static var loaded := false
 
 
@@ -36,6 +37,7 @@ static func load_all() -> void:
 	head_bob = cf.get_value("video", "head_bob", head_bob)
 	grito_ativo = cf.get_value("controles", "grito_ativo", grito_ativo)
 	chuva = cf.get_value("video", "chuva", chuva)
+	modo_teste = cf.get_value("jogo", "modo_teste", modo_teste)
 
 
 static func save_all() -> void:
@@ -51,6 +53,7 @@ static func save_all() -> void:
 	cf.set_value("video", "head_bob", head_bob)
 	cf.set_value("controles", "grito_ativo", grito_ativo)
 	cf.set_value("video", "chuva", chuva)
+	cf.set_value("jogo", "modo_teste", modo_teste)
 	cf.save(PATH)
 
 

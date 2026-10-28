@@ -19,6 +19,7 @@ func _init() -> void:
 	_madeira()
 	_cantaria()
 	_terra()
+	_ruido()
 	_decals()
 	_folha_seca()
 	_reboco_caido()
@@ -709,3 +710,20 @@ func _janelas() -> void:
 	lit.save_png(OUT + "vidro_luz.png")
 	dark.save_png(OUT + "vidro_noite.png")
 	print("[tex] janelas")
+
+
+## ruido_mistura.png: ruído de nuvens SEM EMENDA (mistura de texturas e manchas nos shaders superficie_mista e sobreposicao).
+func _ruido() -> void:
+	var n := FastNoiseLite.new()
+	n.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	n.fractal_type = FastNoiseLite.FRACTAL_FBM
+	n.fractal_octaves = 5
+	n.frequency = 0.012
+	n.seed = 4242
+	var img := n.get_seamless_image(512, 512, false, false, 0.2)
+	var out := Image.create(512, 512, false, Image.FORMAT_RGB8)
+	for y in 512:
+		for x in 512:
+			var v := clampf(img.get_pixel(x, y).r * 1.15, 0.0, 1.0)
+			out.set_pixel(x, y, Color(v, v, v))
+	out.save_png(OUT + "ruido_mistura.png")

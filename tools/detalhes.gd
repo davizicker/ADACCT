@@ -145,6 +145,12 @@ func _ponto(s: float, lateral: float, sobe := 0.0) -> Vector3:
 
 # ------------------------------------------------------------------ pedras, seixos, flores, folhas, poças
 
+## true se (x, z) está a pelo menos `margem` m do leito da rua MEDIDA até o ponto mais próximo da rota (nas curvas fechadas a
+## distância ao longo da normal de outro trecho engana: o ponto pode cair em cima de OUTRA perna da ladeira).
+func _fora(p: Vector3, margem: float) -> bool:
+	return Route.dist_to_center(p) >= Route.width(Route.nearest_s(p)) * 0.5 + margem and not b._na_passagem(p.x, p.z, 3.0)
+
+
 func _pedras_encosta() -> Node3D:
 	var g := Node3D.new()
 	g.name = "Pedras"
@@ -158,6 +164,8 @@ func _pedras_encosta() -> Node3D:
 			var sig := -1.0 if b._rng.randf() < 0.5 else 1.0
 			var d := b._rng.randf_range(Route.width(s) * 0.5 + 9.0, 85.0)
 			var p := Route.pos(s) + Route.right(s) * sig * d
+			if not _fora(p, 14.0):
+				continue
 			var tam := b._rng.randf_range(0.35, 1.9) * (1.0 + v * 0.25)
 			var bas := Basis.from_euler(Vector3(b._rng.randf_range(-0.2, 0.2), b._rng.randf() * TAU, b._rng.randf_range(-0.2, 0.2))).scaled(Vector3(tam, tam, tam * b._rng.randf_range(0.8, 1.3)))
 			xf.append(Transform3D(bas, Vector3(p.x, b.terrain_h(p.x, p.z) + tam * 0.12, p.z)))
@@ -209,6 +217,8 @@ func _flores() -> Node3D:
 		var sig := -1.0 if b._rng.randf() < 0.5 else 1.0
 		var d := b._rng.randf_range(Route.width(ss) * 0.5 + 12.0, 60.0)
 		var p := Route.pos(ss) + Route.right(ss) * sig * d
+		if not _fora(p, 10.0):
+			continue
 		xf.append(Transform3D(Basis(Vector3.UP, b._rng.randf() * TAU).scaled(Vector3.ONE * b._rng.randf_range(1.0, 2.4)), Vector3(p.x, b.terrain_h(p.x, p.z) - 0.03, p.z)))
 		n += 1
 	g.add_child(_mmi("Flores", mesh, xf, [], 100.0))
@@ -357,6 +367,8 @@ func _espalha(nome: String, key: String, n: int, modo: String, esc: Vector2, fim
 				var d := b._rng.randf_range(w * 0.5 + 11.0, 65.0)
 				var q := Route.pos(s) + Route.right(s) * sig * d
 				p = Vector3(q.x, b.terrain_h(q.x, q.z) - 0.04, q.z)
+				if not _fora(p, 10.0):
+					continue
 		var sc := b._rng.randf_range(esc.x, esc.y)
 		var bas := Basis(Vector3.UP, b._rng.randf() * TAU).scaled(Vector3.ONE * sc)
 		xf.append(Transform3D(bas, p) * rel)

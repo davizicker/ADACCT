@@ -1,15 +1,25 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/reboco_velho_albedo.png" id="1_80d4v"]
-[ext_resource type="Texture2D" path="res://assets/textures/reboco_velho_normal.png" id="2_orhsj"]
+[ext_resource type="Shader" path="res://assets/shaders/superficie_mista.gdshader" id="1_kv31b"]
+[ext_resource type="Texture2D" path="res://assets/textures/reboco_velho_albedo.png" id="2_nyx7r"]
+[ext_resource type="Texture2D" path="res://assets/textures/reboco_albedo.png" id="3_bndgg"]
+[ext_resource type="Texture2D" path="res://assets/textures/reboco_velho_normal.png" id="4_l15kg"]
+[ext_resource type="Texture2D" path="res://assets/textures/reboco_normal.png" id="5_iwr3p"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="6_8hcv2"]
 
 [resource]
-albedo_color = Color(0.58, 0.7, 0.82, 1)
-albedo_texture = ExtResource("1_80d4v")
-roughness = 0.95
-normal_enabled = true
-normal_texture = ExtResource("2_orhsj")
-uv1_scale = Vector3(0.22, 0.22, 0.22)
-uv1_triplanar = true
-uv1_world_triplanar = true
-texture_filter = 5
+render_priority = 0
+shader = ExtResource("1_kv31b")
+shader_parameter/albedo_a = ExtResource("2_nyx7r")
+shader_parameter/normal_a = ExtResource("4_l15kg")
+shader_parameter/albedo_b = ExtResource("3_bndgg")
+shader_parameter/normal_b = ExtResource("5_iwr3p")
+shader_parameter/ruido = ExtResource("6_8hcv2")
+shader_parameter/tint = Color(0.58, 0.7, 0.82, 1)
+shader_parameter/escala = 0.22
+shader_parameter/escala_ruido = 0.09
+shader_parameter/mistura = 0.5
+shader_parameter/contraste = 5.0
+shader_parameter/sujeira = 0.3
+shader_parameter/normal_forca = 1.0
+shader_parameter/rough = 0.93

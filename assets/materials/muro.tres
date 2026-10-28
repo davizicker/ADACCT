@@ -1,10 +1,23 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
 [ext_resource type="Texture2D" path="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_diff_1k.jpg" id="1_we5ae"]
+[ext_resource type="Shader" path="res://assets/shaders/sobreposicao.gdshader" id="2_fv3ve"]
 [ext_resource type="Texture2D" path="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_nor_gl_1k.jpg" id="2_wfekp"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="3_8bbwd"]
 [ext_resource type="Texture2D" path="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_rough_1k.jpg" id="3_fv3ve"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_op8h2"]
+render_priority = 0
+shader = ExtResource("2_fv3ve")
+shader_parameter/ruido = ExtResource("3_8bbwd")
+shader_parameter/cor = Color(0.14, 0.26, 0.08, 1)
+shader_parameter/cobertura = 0.36
+shader_parameter/escala = 0.42
+shader_parameter/so_topo = 0.75
+shader_parameter/opacidade = 0.8
+
 [resource]
+next_pass = SubResource("ShaderMaterial_op8h2")
 albedo_color = Color(0.95, 0.93, 0.9, 1)
 albedo_texture = ExtResource("1_we5ae")
 roughness_texture = ExtResource("3_fv3ve")

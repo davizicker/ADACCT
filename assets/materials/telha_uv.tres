@@ -1,9 +1,22 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
 [ext_resource type="Texture2D" path="res://assets/textures/telha_albedo.png" id="1_x1ff2"]
+[ext_resource type="Shader" path="res://assets/shaders/sobreposicao.gdshader" id="2_6bm1w"]
 [ext_resource type="Texture2D" path="res://assets/textures/telha_normal.png" id="2_kqsom"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="3_625kg"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lt1bg"]
+render_priority = 0
+shader = ExtResource("2_6bm1w")
+shader_parameter/ruido = ExtResource("3_625kg")
+shader_parameter/cor = Color(0.15, 0.25, 0.08, 1)
+shader_parameter/cobertura = 0.3
+shader_parameter/escala = 0.5
+shader_parameter/so_topo = 0.45
+shader_parameter/opacidade = 0.75
 
 [resource]
+next_pass = SubResource("ShaderMaterial_lt1bg")
 albedo_texture = ExtResource("1_x1ff2")
 roughness = 0.78
 normal_enabled = true

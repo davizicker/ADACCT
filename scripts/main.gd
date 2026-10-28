@@ -43,6 +43,12 @@ func _ready() -> void:
 	Config.load_all()
 	_setup_input()
 	var args := OS.get_cmdline_user_args()
+	if "--modo-teste" in args:
+		Config.modo_teste = true
+	else:
+		for a in args:
+			if a.begins_with("--selftest"):
+				Config.modo_teste = false      # os testes automáticos medem as regras reais (inclusive a morte)
 	if "--selftest" in args:
 		mode = "selftest"
 	elif "--selftest-walk" in args:
@@ -205,6 +211,15 @@ func _setup_input() -> void:
 				var ev := InputEventKey.new()
 				ev.physical_keycode = key as Key
 				InputMap.action_add_event(action, ev)
+
+
+## F9: alterna entre modo NORMAL e modo de TESTE (imortal).
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F9:
+		Config.modo_teste = not Config.modo_teste
+		Config.save_all()
+		hud.apply_config()
+		hud.show_prompt("MODO TESTE LIGADO: você não morre." if Config.modo_teste else "Modo normal: o Bradador pode te pegar.", 3.5)
 
 
 func _on_options() -> void:

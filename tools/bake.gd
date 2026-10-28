@@ -16,6 +16,10 @@ const SCENES := "res://scenes/"
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute("res://assets/meshes")
 	_materials()
+	# camadas de musgo/limo em manchas por cima de telhados, muros de pedra e cantaria
+	_sobrepor(MATS + "telha_uv.tres", Color(0.15, 0.25, 0.08), 0.30, 0.5, 0.45, 0.75)
+	_sobrepor(MATS + "muro.tres", Color(0.14, 0.26, 0.08), 0.36, 0.42, 0.75, 0.8)
+	_sobrepor(MATS + "cantaria.tres", Color(0.42, 0.46, 0.28), 0.22, 0.45, 0.6, 0.5)
 	var b := VilaBuilder.new()
 	var vila := b.build_vila({})
 	_save(vila, "vila.scn")
@@ -95,6 +99,39 @@ func _real(mat_name: String, folder: String, tint: Color, scale: float, normal_s
 	ResourceSaver.save(m, MATS + mat_name + ".tres")
 
 
+## Superfície mista (shader superficie_mista): textura A + textura B em manchas, triplanar no mundo.
+func _mista(mat_name: String, a: String, b: String, tint: Color, escala: float, mistura := 0.45, sujeira := 0.3, rough := 0.93, normal := 1.0) -> void:
+	var m := ShaderMaterial.new()
+	m.shader = load("res://assets/shaders/superficie_mista.gdshader")
+	m.set_shader_parameter("albedo_a", _tex(a + "_albedo.png"))
+	m.set_shader_parameter("normal_a", _tex(a + "_normal.png"))
+	m.set_shader_parameter("albedo_b", _tex(b + "_albedo.png"))
+	m.set_shader_parameter("normal_b", _tex(b + "_normal.png"))
+	m.set_shader_parameter("ruido", _tex("ruido_mistura.png"))
+	m.set_shader_parameter("tint", tint)
+	m.set_shader_parameter("escala", escala)
+	m.set_shader_parameter("mistura", mistura)
+	m.set_shader_parameter("sujeira", sujeira)
+	m.set_shader_parameter("rough", rough)
+	m.set_shader_parameter("normal_forca", normal)
+	ResourceSaver.save(m, MATS + mat_name + ".tres")
+
+
+## Camada de musgo/limo/sujeira por cima de um material (next_pass).
+func _sobrepor(mat_path: String, cor: Color, cobertura: float, escala: float, so_topo: float, opacidade: float) -> void:
+	var base := load(mat_path) as Material
+	var o := ShaderMaterial.new()
+	o.shader = load("res://assets/shaders/sobreposicao.gdshader")
+	o.set_shader_parameter("ruido", _tex("ruido_mistura.png"))
+	o.set_shader_parameter("cor", cor)
+	o.set_shader_parameter("cobertura", cobertura)
+	o.set_shader_parameter("escala", escala)
+	o.set_shader_parameter("so_topo", so_topo)
+	o.set_shader_parameter("opacidade", opacidade)
+	base.next_pass = o
+	ResourceSaver.save(base, mat_path)
+
+
 func _flat(mat_name: String, color: Color, rough := 0.9, metal := 0.0, emissive := 0.0, unshaded := false) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
@@ -133,14 +170,14 @@ func _materials() -> void:
 	ResourceSaver.save(pc, MATS + "pedra_chao.tres")
 	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.34, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
-	_surf("reboco_branco", "reboco_velho", Color(0.97, 0.95, 0.90), 0.22)
-	_surf("reboco_branco_novo", "reboco", Color(0.98, 0.97, 0.93), 0.22)
-	_surf("reboco_ocre", "reboco_velho", Color(0.90, 0.76, 0.50), 0.22)
-	_surf("reboco_amarelo", "reboco", Color(0.95, 0.86, 0.55), 0.22)
-	_surf("reboco_azul", "reboco_velho", Color(0.58, 0.70, 0.82), 0.22)
-	_surf("reboco_salmao", "reboco", Color(0.86, 0.64, 0.55), 0.22)
-	_surf("reboco_verde", "reboco_velho", Color(0.66, 0.78, 0.64), 0.22)
-	_surf("reboco_creme", "reboco_velho", Color(0.96, 0.88, 0.68), 0.22)
+	_mista("reboco_branco", "reboco_velho", "reboco", Color(0.97, 0.95, 0.90), 0.22, 0.5)
+	_mista("reboco_branco_novo", "reboco", "reboco_velho", Color(0.98, 0.97, 0.93), 0.22, 0.4)
+	_mista("reboco_ocre", "reboco_velho", "reboco", Color(0.90, 0.76, 0.50), 0.22, 0.5)
+	_mista("reboco_amarelo", "reboco", "reboco_velho", Color(0.95, 0.86, 0.55), 0.22, 0.4)
+	_mista("reboco_azul", "reboco_velho", "reboco", Color(0.58, 0.70, 0.82), 0.22, 0.5)
+	_mista("reboco_salmao", "reboco", "reboco_velho", Color(0.86, 0.64, 0.55), 0.22, 0.4)
+	_mista("reboco_verde", "reboco_velho", "reboco", Color(0.66, 0.78, 0.64), 0.22, 0.5)
+	_mista("reboco_creme", "reboco_velho", "reboco", Color(0.96, 0.88, 0.68), 0.22, 0.5)
 	_surf("telha", "telha", Color(1, 1, 1), 0.3, 0.8, 1.2)
 	# telhado com UV: as telhas correm no sentido do caimento (usado pelos telhados de MeshBatch.roof)
 	var tuv := StandardMaterial3D.new()

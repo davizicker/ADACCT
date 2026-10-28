@@ -8,6 +8,7 @@ var _mic: Label
 var _objetivo: Label
 var _fps_on := false
 var _debug: Label
+var _teste: Label
 var _interact: Label
 var _stamina: ColorRect
 var _stamina_bg: ColorRect
@@ -48,6 +49,10 @@ func _ready() -> void:
 	_status = _label(0.94, 1.0, 16, HORIZONTAL_ALIGNMENT_LEFT)
 	_mic = _label(0.90, 0.94, 16, HORIZONTAL_ALIGNMENT_LEFT)
 	_debug = _label(0.0, 0.1, 14, HORIZONTAL_ALIGNMENT_RIGHT)
+	_teste = _label(0.0, 0.05, 18, HORIZONTAL_ALIGNMENT_CENTER)
+	_teste.add_theme_color_override("font_color", Color(0.5, 1.0, 0.6))
+	_teste.text = "MODO TESTE (imortal)  ·  F9 volta ao modo normal"
+	_teste.visible = Config.modo_teste
 	_objetivo = _label(0.02, 0.16, 18, HORIZONTAL_ALIGNMENT_LEFT)
 	_objetivo.offset_left = 20.0
 	_objetivo.vertical_alignment = VERTICAL_ALIGNMENT_TOP
@@ -105,6 +110,8 @@ func _ready() -> void:
 
 
 func apply_config() -> void:
+	if _teste != null:
+		_teste.visible = Config.modo_teste
 	var on := Config.camera_fx
 	_fx.visible = on
 	_fx_mat.set_shader_parameter("vignette", 0.55 if on else 0.0)
