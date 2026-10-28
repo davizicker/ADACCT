@@ -144,6 +144,8 @@ const PLANTAS_REAIS := {
 	"samambaia": [["periwinkle_a", "periwinkle_b", "periwinkle_c", "mato_b"], 0.5],
 }
 var _alt_real := {}
+var _jan_atual: Array = []      # painéis de vidro da casa em construção: {pos, size, lit} (locais da casa)
+var _pl_atual: Array = []       # plantas de janela da casa em construção: {pos, tipo, esc}
 const ESPECIE_REAL := {"arvore_0": "arvore_a", "arvore_1": "arvore_b", "arvore_2": "arvore_c"}
 
 
@@ -570,6 +572,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_terrain())
 	root.add_child(_road())
 	_frontage(root)
+	root.add_child(Realismo.new().vidros_e_plantas(self, root))
 	root.add_child(_lamps())
 	root.add_child(_adornos())
 	root.add_child(_nichos())
@@ -845,6 +848,8 @@ func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
 func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false, entrada := {}) -> Node3D:
 	var c := Node3D.new()
 	c.name = "Casa"
+	_jan_atual = []
+	_pl_atual = []
 	var fh := 4.0
 	var up := 3.4
 	var height := fh + (floors - 1) * up
@@ -869,7 +874,6 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	_mesh_node(c, "Telhado", rb.commit())
 
 	var b := _batch()
-	b.box("muro", Vector3(0.3, 5.1, w + 0.1), Vector3(-0.1, -1.45, 0))            # embasamento de pedra
 	var ncor := maxi(1, int(ceil(w)))
 	for k in ncor:
 		var zc := -w / 2.0 + (k + 0.5) * w / ncor
@@ -892,22 +896,36 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var dz := col_z[door_i]
 	c.set_meta("door_z", dz)
 	c.set_meta("altura", height)
+	# embasamento de pedra em dois trechos: o vão da porta fica livre (antes o muro de 1,1 m tapava a parte de baixo da porta)
+	var vao := 1.15
+	var z_ini := -w / 2.0 - 0.05
+	var z_fim := w / 2.0 + 0.05
+	var trechos: Array = [[z_ini, dz - vao], [dz + vao, z_fim]]
+	for tr in trechos:
+		var comp: float = float(tr[1]) - float(tr[0])
+		if comp > 0.05:
+			b.box("muro", Vector3(0.3, 5.1, comp), Vector3(-0.1, -1.45, (float(tr[0]) + float(tr[1])) * 0.5))
+	b.box("muro", Vector3(0.3, 4.0, vao * 2.0), Vector3(-0.1, -2.0, dz))      # sob a soleira: só abaixo do piso da porta
 	# porta com moldura de cantaria; em arco nos sobrados "arqueados"
 	var arched := (not simple) and _rng.randf() < 0.5
+	# a porta nunca tem a cor da parede: tons claros/ocre viram madeira escura, para ela se destacar da fachada
+	var wood_porta := wood
+	if wood == "madeira_ocre" or wood == "madeira_branca" or wood == "madeira_natural":
+		wood_porta = "madeira_escura"
 	if arched:
 		var dr := 0.72
 		var dh := 3.0
 		for sz: float in [-1.0, 1.0]:
 			b.box("cantaria", Vector3(0.2, dh - dr + 0.1, 0.22), Vector3(-0.08, (dh - dr) / 2.0, dz + sz * (dr + 0.11)))
 		b.arch("cantaria", Vector3(-0.08, dh - dr, dz), dr + 0.11, 0.22, 0.2, 9)
-		b.box(wood, Vector3(0.08, dh - dr, dr * 2.0), Vector3(-0.18, (dh - dr) / 2.0, dz))
-		b.half_disc(wood, Vector3(-0.225, dh - dr, dz), dr)
+		b.box(wood_porta, Vector3(0.08, dh - dr, dr * 2.0), Vector3(-0.18, (dh - dr) / 2.0, dz))
+		b.half_disc(wood_porta, Vector3(-0.225, dh - dr, dz), dr)
 		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz - 0.34))
 		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz + 0.34))
 		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
 		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
 	else:
-		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood})
+		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
 	if arched:
 		b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
 	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + (1.25 if not arched else 1.15)))   # número da casa na parede
@@ -954,6 +972,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		_flutuando.append("casa w=%.1f: %s" % [w, fl])
 	var det := _mesh_node(c, "Detalhes", b.commit())
 	det.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # molduras e grades não precisam de sombra (menos uma passada por casa)
+	c.set_meta("janelas", _jan_atual)
+	c.set_meta("plantas_janela", _pl_atual)
 	return c
 
 
@@ -1114,10 +1134,7 @@ func _emblem(b: MeshBatch, kind: String, bx: float, z: float) -> void:
 
 func _pot(b: MeshBatch, p: Vector3) -> void:
 	b.cylinder("vaso", 0.11, 0.08, 0.16, p + Vector3(0, 0.08, 0), Vector3.ZERO, 8)
-	b.sphere("verde_vaso", 0.17, p + Vector3(0, 0.27, 0), 7, 4)
-	var fl: String = ["flor_vermelha", "flor_rosa", "flor_amarela"][_rng.randi() % 3]
-	for k in 3:
-		b.sphere(fl, 0.045, p + Vector3(_rng.randf_range(-0.12, 0.12), 0.3 + _rng.randf_range(0.0, 0.1), _rng.randf_range(-0.12, 0.12)), 5, 3)
+	_pl_atual.append({"pos": p + Vector3(0, 0.15, 0), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.2)})
 
 
 func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false) -> void:
@@ -1131,7 +1148,7 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 		for sz: float in [-1.0, 1.0]:
 			b.box("cantaria", Vector3(0.18, hr + 0.15, 0.2), Vector3(-0.07, base_y + hr / 2.0 - 0.02, p.z + sz * (r + 0.1)))
 		b.arch("cantaria", Vector3(-0.07, spring, p.z), r + 0.1, 0.2, 0.18, 9)
-		b.quad(glass, Vector2(wid, hr), Vector3(-0.17, base_y + hr / 2.0, p.z), -PI / 2.0, Vector2(0, r / hgt), Vector2(1, 1))
+		_jan_atual.append({"pos": Vector3(-0.17, base_y + hr / 2.0, p.z), "size": Vector2(wid, hr), "lit": lit})
 		b.half_disc(glass, Vector3(-0.17, spring, p.z), r, 10, Vector2(r / hgt, hgt))
 		b.box(wood, Vector3(0.05, hgt, 0.05), Vector3(-0.19, p.y, p.z))
 		b.box(wood, Vector3(0.05, 0.05, wid), Vector3(-0.19, base_y + hr * 0.55, p.z))
@@ -1144,6 +1161,7 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.4, hgt / 2.5, 0.6)), {"madeira": wood, "vidro": glass})
 	else:
 		b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
+		_jan_atual.append({"pos": Vector3(-0.012, p.y, p.z), "size": Vector2(wid * 0.9, hgt * 0.933), "lit": lit})
 		var sorteio := _rng.randf()
 		if sorteio < 0.16:
 			_pot(b, Vector3(-0.2, base_y + 0.03, p.z))
@@ -1171,11 +1189,9 @@ func _venezianas(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String)
 ## Jardineira de madeira sob a janela, com folhagem e flores.
 func _jardineira(b: MeshBatch, p: Vector3, wid: float) -> void:
 	b.box("madeira_escura", Vector3(0.26, 0.16, wid * 0.9), p + Vector3(0, 0.08, 0))
-	for k in int(wid * 4.0):
-		var z := p.z - wid * 0.4 + k * 0.25
-		b.sphere("verde_vaso", 0.11, Vector3(p.x, p.y + 0.24, z), 6, 4)
-		if _rng.randf() < 0.7:
-			b.sphere(["flor_vermelha", "flor_rosa", "flor_amarela"][_rng.randi() % 3], 0.045, Vector3(p.x - 0.03, p.y + 0.33, z + _rng.randf_range(-0.05, 0.05)), 5, 3)
+	for k in maxi(2, int(wid * 2.2)):
+		var z := p.z - wid * 0.38 + k * (wid * 0.76) / maxf(1.0, int(wid * 2.2) - 1)
+		_pl_atual.append({"pos": Vector3(p.x, p.y + 0.15, z), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.3)})
 
 
 func _balcony(b: MeshBatch, z0: float, z1: float, floor_y: float, wood: String) -> void:
@@ -1931,9 +1947,9 @@ func _hill_houses(root: Node3D) -> void:
 		var dep := _rng.randf_range(6.0, 9.0)
 		var hi := -INF
 		var lo := INF
-		for cx: float in [-1.0, 1.0]:
-			for cz: float in [-1.0, 1.0]:
-				var cp := p + x_axis * cx * dep * 0.5 + z_axis * cz * w * 0.5
+		for cx: float in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+			for cz: float in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+				var cp := p + x_axis * cx * (dep * 0.5 + 0.8) + z_axis * cz * (w * 0.5 + 0.8)
 				var hh := terrain_h(cp.x, cp.z)
 				hi = maxf(hi, hh)
 				lo = minf(lo, hh)
@@ -1947,7 +1963,7 @@ func _hill_houses(root: Node3D) -> void:
 			batches[key] = _batch()
 		var b: MeshBatch = batches[key]
 		var yaw := atan2(-x_axis.z, x_axis.x)
-		var skirt := base - lo + 1.0
+		var skirt := base - lo + 2.0
 		b.box("muro", Vector3(dep + 1.0, skirt, w + 1.0), Vector3(p.x, base - skirt / 2.0 + 0.05, p.z), Vector3(0, yaw, 0))
 		var hw := _pick_wall()
 		b.box(hw, Vector3(dep, hgt, w), Vector3(p.x, base + hgt / 2.0, p.z), Vector3(0, yaw, 0))
@@ -1960,10 +1976,10 @@ func _hill_houses(root: Node3D) -> void:
 				if _rng.randf() < 0.75:
 					var lit := _rng.randf() < 0.34
 					var wp: Vector3 = face + z_axis * k * w * 0.3 + Vector3(0, base + 1.9 + fl * 3.2, 0)
-					if lit and d > 60.0:
+					if lit and d > 40.0:
 						# longe: vira um ponto de luz redondo (como nas fotos das encostas)
 						_hill_lights.append(Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * _rng.randf_range(1.1, 1.8)), wp - x_axis * 0.4))
-					else:
+					elif d < 70.0:
 						b.quad("vidro_luz" if lit else "vidro_noite", Vector2(0.9, 1.3), wp, face_yaw)
 		_spots.append(q)
 		placed += 1
@@ -2109,38 +2125,56 @@ func _set_range(n: Node, end: float) -> void:
 
 ## Tufos de capim em MultiMesh: bordas da rua, pés de muro e encostas.
 ## Silhueta distante da serra (anel de montanhas), sem névoa, contra o céu.
-func _serra() -> MeshInstance3D:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+func _serra() -> Node3D:
+	# três anéis de serra, de longe para perto: o mais distante é azulado e alto (névoa), o mais perto é escuro e esverdeado.
+	# Cada anel tem cume "rugoso" (ruído em cristas), vales entre os picos e cor por vértice (mais clara no alto).
+	var out := Node3D.new()
+	out.name = "Serra"
 	var center := Vector3(-5.0, 0, -170.0)
-	var segs := 360
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	noise.frequency = 0.9
-	noise.seed = 12
-	noise.fractal_octaves = 3
-	var top: Array[Vector3] = []
-	var bottom: Array[Vector3] = []
-	for i in segs + 1:
-		var a := TAU * float(i % segs) / segs
-		var n := noise.get_noise_1d(float(i % segs) * 0.05)
-		var r := 720.0 + n * 90.0
-		var h := 150.0 + n * 90.0 + (noise.get_noise_1d(float(i % segs) * 0.22 + 50.0)) * 25.0
-		var dir := Vector3(cos(a), 0, sin(a))
-		top.append(center + dir * r + Vector3(0, 20.0 + h, 0))
-		bottom.append(center + dir * r + Vector3(0, -120.0, 0))
-	for i in segs:
-		var mid := (top[i] + bottom[i + 1]) * 0.5
-		var inward := (center - mid)
-		inward.y = 0
-		MeshBatch.tri(st, bottom[i], top[i], top[i + 1], inward)
-		MeshBatch.tri(st, bottom[i], top[i + 1], bottom[i + 1], inward)
-	var mesh := st.commit()
-	mesh.surface_set_material(0, mat("serra"))
-	var mi := MeshInstance3D.new()
-	mi.name = "Serra"
-	mi.mesh = _save_mesh(mesh, "serra")
-	return mi
+	var aneis := [
+		{"r": 980.0, "h": 260.0, "amp": 150.0, "seed": 12, "topo": Color(0.085, 0.105, 0.17), "base": Color(0.05, 0.065, 0.11)},
+		{"r": 790.0, "h": 190.0, "amp": 110.0, "seed": 31, "topo": Color(0.05, 0.068, 0.105), "base": Color(0.03, 0.044, 0.07)},
+		{"r": 640.0, "h": 110.0, "amp": 70.0, "seed": 57, "topo": Color(0.03, 0.05, 0.05), "base": Color(0.018, 0.03, 0.032)},
+	]
+	var segs := 480
+	for k in aneis.size():
+		var A: Dictionary = aneis[k]
+		var noise := FastNoiseLite.new()
+		noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+		noise.frequency = 0.9
+		noise.seed = int(A["seed"])
+		noise.fractal_octaves = 4
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var top: Array[Vector3] = []
+		var bottom: Array[Vector3] = []
+		var ctop: Color = A["topo"]
+		var cbot: Color = A["base"]
+		for i in segs + 1:
+			var ii := float(i % segs)
+			var a := TAU * ii / segs
+			var n := noise.get_noise_1d(ii * 0.05)
+			var crista := 1.0 - absf(noise.get_noise_1d(ii * 0.16 + 90.0)) * 2.0       # 1 = pico, -1 = vale
+			var r: float = float(A["r"]) + n * 90.0
+			var h: float = float(A["h"]) + n * float(A["amp"]) + crista * float(A["amp"]) * 0.45 + noise.get_noise_1d(ii * 0.7 + 50.0) * 18.0
+			var dir := Vector3(cos(a), 0, sin(a))
+			top.append(center + dir * r + Vector3(0, 10.0 + h, 0))
+			bottom.append(center + dir * r + Vector3(0, -120.0, 0))
+		for i in segs:
+			var mid := (top[i] + bottom[i + 1]) * 0.5
+			var inward := center - mid
+			inward.y = 0
+			var t0 := ctop * (0.8 + 0.4 * noise.get_noise_1d(float(i) * 0.4))
+			var t1 := ctop * (0.8 + 0.4 * noise.get_noise_1d(float(i + 1) * 0.4))
+			_tri_c(st, bottom[i], top[i], top[i + 1], cbot, t0, t1, inward)
+			_tri_c(st, bottom[i], top[i + 1], bottom[i + 1], cbot, t1, cbot, inward)
+		var mesh := st.commit()
+		mesh.surface_set_material(0, mat("serra"))
+		var mi := MeshInstance3D.new()
+		mi.name = "Anel_%d" % k
+		mi.mesh = _save_mesh(mesh, "serra_%d" % k)
+		out.add_child(mi)
+	return out
 
 
 # ------------------------------------------------------------------ ponte e riacho
@@ -2239,7 +2273,7 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 			var top := (c1.get_meta("bb") as AABB).size.y
 			_cont(parent, "Crate3", p + Vector3(0, top, 0), yaw + _rng.randf_range(-0.5, 0.5), 0.9, false)
 	elif r < 0.74:
-		_cont(parent, "Crate1" if _rng.randf() < 0.6 else "Crate2", p, yaw + _rng.randf_range(-0.2, 0.2))
+		_cont(parent, "Crate1" if _rng.randf() < 0.6 else "Crate2", p, yaw + PI / 2.0 + _rng.randf_range(-0.15, 0.15))      # lado comprido junto à parede
 	elif r < 0.84:
 		_cont(parent, "Basket1" if _rng.randf() < 0.6 else "Basket2", p, _rng.randf() * TAU)
 		if _rng.randf() < 0.5:
@@ -2271,7 +2305,7 @@ func _adornos() -> Node3D:
 	# barris e caixotes junto às paredes
 	var count := 0
 	var tries := 0
-	while count < 44 and tries < 300:
+	while count < 80 and tries < 700:
 		tries += 1
 		var s := _rng.randf_range(10.0, S_END - 8.0)
 		if absf(s - Route.BRIDGE_S) < 8.0 or Route.width(s) < 3.8:
@@ -2279,7 +2313,7 @@ func _adornos() -> Node3D:
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
 		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
 		var out := -Route.right(s) * sigma
-		var p := base + out * 0.45
+		var p := base + out * 0.05        # encostado na parede: o meio da rua (corredor de 2,2 m) fica livre
 		if not _livre(p, 0.55):
 			continue
 		_reservar(p, 0.55)

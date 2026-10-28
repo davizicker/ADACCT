@@ -117,24 +117,9 @@ func _malha_flores() -> Mesh:
 	return mesh
 
 
-func _mmi(nome: String, mesh: Mesh, xf: Array[Transform3D], cores := [], fim := 90.0) -> MultiMeshInstance3D:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = cores.size() > 0
-	mm.mesh = mesh
-	mm.instance_count = xf.size()
-	for i in xf.size():
-		mm.set_instance_transform(i, xf[i])
-		if cores.size() > 0:
-			mm.set_instance_color(i, cores[i])
-	var mi := MultiMeshInstance3D.new()
-	mi.name = nome
-	mi.multimesh = mm
-	mi.visibility_range_end = fim
-	mi.visibility_range_end_margin = 10.0
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if fim < 100.0 else GeometryInstance3D.SHADOW_CASTING_SETTING_ON    # detalhes pequenos não projetam sombra (economiza uma passada inteira)
+func _mmi(nome: String, mesh: Mesh, xf: Array[Transform3D], cores := [], fim := 90.0) -> Node3D:
 	contagem[nome] = xf.size()
-	return mi
+	return Quadras.dividir(nome, mesh, xf, fim, fim >= 100.0, [], cores)
 
 
 ## Ponto na rua/calçada: s, lado (-1/+1) e distância ao eixo; y sobre o piso.
@@ -345,7 +330,11 @@ func _planta_kit(kit: String, malha: String) -> Dictionary:
 	return {"mesh": mesh, "rel": Transform3D(Basis(), Vector3(-c.x, -bb.position.y, -c.z))}
 
 
-func _espalha(nome: String, key: String, n: int, modo: String, esc: Vector2, fim: float, kit := "") -> MultiMeshInstance3D:
+const DENS := 2.2       # multiplicador da densidade de plantas espalhadas (o jogo pode pesar: mais vegetação)
+
+
+func _espalha(nome: String, key: String, n_base: int, modo: String, esc: Vector2, fim: float, kit := "") -> Node3D:
+	var n := int(n_base * DENS)
 	var pl := _planta_kit(kit, key) if kit != "" else _planta(key)
 	var rel: Transform3D = pl["rel"]
 	var xf: Array[Transform3D] = []

@@ -235,113 +235,113 @@ size = Vector2(0.7, 0.7)
 offsets = PackedFloat32Array(0, 0.4, 1)
 colors = PackedColorArray(1, 0.9, 0.5, 0.95, 1, 0.4, 0.1, 0.8, 0.4, 0.05, 0, 0)
 
-[node name="Mula" type="Node3D" unique_id=683792039]
+[node name="Mula" type="Node3D" unique_id=606795655]
 script = ExtResource("1_7vwmj")
 
-[node name="Corpo" type="MeshInstance3D" parent="." unique_id=531159922]
+[node name="Corpo" type="MeshInstance3D" parent="." unique_id=873699639]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_cdrr2")
 
-[node name="Pescoco" type="MeshInstance3D" parent="." unique_id=1818932321]
+[node name="Pescoco" type="MeshInstance3D" parent="." unique_id=616217821]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_dloqh")
 
-[node name="Toco" type="MeshInstance3D" parent="." unique_id=2141878722]
+[node name="Toco" type="MeshInstance3D" parent="." unique_id=435809904]
 transform = Transform3D(0.28, 0, 0, 0, 0.12, 0, 0, 0, 0.28, 0, 2.15, -1.35)
 material_override = SubResource("StandardMaterial3D_tcl1k")
 mesh = SubResource("SphereMesh_kg7op")
 
-[node name="Crina" type="MeshInstance3D" parent="." unique_id=74934824]
+[node name="Crina" type="MeshInstance3D" parent="." unique_id=1642646474]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_6ev0m")
 
-[node name="@MeshInstance3D@704" type="MeshInstance3D" parent="." unique_id=33951283]
+[node name="@MeshInstance3D@718" type="MeshInstance3D" parent="." unique_id=1719921989]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_hnlqv")
 
-[node name="@MeshInstance3D@705" type="MeshInstance3D" parent="." unique_id=885376061]
+[node name="@MeshInstance3D@719" type="MeshInstance3D" parent="." unique_id=1978118922]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_y067q")
 
-[node name="@MeshInstance3D@706" type="MeshInstance3D" parent="." unique_id=214696234]
+[node name="@MeshInstance3D@720" type="MeshInstance3D" parent="." unique_id=441161781]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_3ltan")
 
-[node name="@MeshInstance3D@707" type="MeshInstance3D" parent="." unique_id=210206907]
+[node name="@MeshInstance3D@721" type="MeshInstance3D" parent="." unique_id=343305979]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_tudan")
 
-[node name="AncaE" type="MeshInstance3D" parent="." unique_id=1758761224]
+[node name="AncaE" type="MeshInstance3D" parent="." unique_id=2122816229]
 transform = Transform3D(0.34, 0, 0, 0, 0.5, 0, 0, 0, 0.52, -0.2, 1.32, 0.78)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("SphereMesh_7heb1")
 
-[node name="AncaD" type="MeshInstance3D" parent="." unique_id=2059106544]
+[node name="AncaD" type="MeshInstance3D" parent="." unique_id=1177589238]
 transform = Transform3D(0.34, 0, 0, 0, 0.5, 0, 0, 0, 0.52, 0.2, 1.32, 0.78)
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("SphereMesh_wmrjw")
 
-[node name="Cauda" type="MeshInstance3D" parent="." unique_id=608048311]
+[node name="Cauda" type="MeshInstance3D" parent="." unique_id=1061162988]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_0hrl7")
 
-[node name="@MeshInstance3D@708" type="MeshInstance3D" parent="." unique_id=1114040256]
+[node name="@MeshInstance3D@722" type="MeshInstance3D" parent="." unique_id=1117596124]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_s4plo")
 
-[node name="@MeshInstance3D@709" type="MeshInstance3D" parent="." unique_id=975196302]
+[node name="@MeshInstance3D@723" type="MeshInstance3D" parent="." unique_id=1799185160]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_lu275")
 
-[node name="@MeshInstance3D@710" type="MeshInstance3D" parent="." unique_id=523369340]
+[node name="@MeshInstance3D@724" type="MeshInstance3D" parent="." unique_id=1544977400]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_807yq")
 
-[node name="PernaFE" type="Node3D" parent="." unique_id=52820619]
+[node name="PernaFE" type="Node3D" parent="." unique_id=1094367633]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 1.15, -0.62)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaFE" unique_id=529941251]
+[node name="Perna" type="MeshInstance3D" parent="PernaFE" unique_id=37265262]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_3e78y")
 
-[node name="Casco" type="MeshInstance3D" parent="PernaFE" unique_id=1174910519]
+[node name="Casco" type="MeshInstance3D" parent="PernaFE" unique_id=2115561814]
 material_override = SubResource("StandardMaterial3D_jetwx")
 mesh = SubResource("ArrayMesh_50kbk")
 
-[node name="PernaFD" type="Node3D" parent="." unique_id=412281968]
+[node name="PernaFD" type="Node3D" parent="." unique_id=958299617]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 1.15, -0.62)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaFD" unique_id=791977874]
+[node name="Perna" type="MeshInstance3D" parent="PernaFD" unique_id=911914530]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_ivut6")
 
-[node name="Casco" type="MeshInstance3D" parent="PernaFD" unique_id=1833642636]
+[node name="Casco" type="MeshInstance3D" parent="PernaFD" unique_id=89998318]
 material_override = SubResource("StandardMaterial3D_mvyes")
 mesh = SubResource("ArrayMesh_2p0uj")
 
-[node name="PernaTE" type="Node3D" parent="." unique_id=1339716134]
+[node name="PernaTE" type="Node3D" parent="." unique_id=1942986214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.21, 1.15, 0.8)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaTE" unique_id=1390624439]
+[node name="Perna" type="MeshInstance3D" parent="PernaTE" unique_id=1869040052]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_s5b7d")
 
-[node name="Casco" type="MeshInstance3D" parent="PernaTE" unique_id=974959338]
+[node name="Casco" type="MeshInstance3D" parent="PernaTE" unique_id=11866047]
 material_override = SubResource("StandardMaterial3D_4yfp2")
 mesh = SubResource("ArrayMesh_8yfxe")
 
-[node name="PernaTD" type="Node3D" parent="." unique_id=562388682]
+[node name="PernaTD" type="Node3D" parent="." unique_id=1353219993]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.21, 1.15, 0.8)
 
-[node name="Perna" type="MeshInstance3D" parent="PernaTD" unique_id=5852085]
+[node name="Perna" type="MeshInstance3D" parent="PernaTD" unique_id=1366763962]
 material_override = ExtResource("2_n4ewo")
 mesh = SubResource("ArrayMesh_icpap")
 
-[node name="Casco" type="MeshInstance3D" parent="PernaTD" unique_id=2106276075]
+[node name="Casco" type="MeshInstance3D" parent="PernaTD" unique_id=1373772410]
 material_override = SubResource("StandardMaterial3D_ff4gi")
 mesh = SubResource("ArrayMesh_1fe7y")
 
-[node name="Fogo" type="CPUParticles3D" parent="." unique_id=1266997435]
+[node name="Fogo" type="CPUParticles3D" parent="." unique_id=1130916490]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -1.35)
 amount = 36
 lifetime = 0.75
@@ -357,7 +357,7 @@ scale_amount_min = 0.6
 scale_amount_max = 1.1
 color_ramp = SubResource("Gradient_0tdol")
 
-[node name="ChamaLuz" type="OmniLight3D" parent="." unique_id=1963998376]
+[node name="ChamaLuz" type="OmniLight3D" parent="." unique_id=946583210]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, -1.4)
 light_color = Color(1, 0.45, 0.15, 1)
 light_energy = 3.4

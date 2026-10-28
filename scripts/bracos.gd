@@ -12,8 +12,11 @@ const MODELO := "res://assets/models/arms/fps_arms.glb"
 @export var deslocamento := Vector3(0.0, -0.33, 0.10)   ## onde ficam os ombros em relação à câmera
 @export var empunhadura := Vector3(0.0, 0.23, 0.0)     ## onde a mão pega, no espaço do nó da lanterna
 @export var mao_esquerda := Vector3(-0.29, -0.52, -0.46)  ## posição da mão esquerda (no espaço da câmera)
+@export var rolo_mao := 120.0                       ## graus: giro da mão em volta do antebraço (palma para baixo/dentro)
+@export var recuo_punho := 0.06                   ## quanto o punho fica atrás do ponto de empunhadura (a palma cobre o cabo)
 @export var curvatura_dedos := -1.1                ## radianos de dobra dos dedos da direita (empunhadura)
 
+@export var rolo_mao_esq := 120.0
 var lanterna: Node3D = null
 var _sk: Skeleton3D = null
 var _t := 0.0
@@ -69,7 +72,7 @@ func _process(delta: float) -> void:
 	var alvo_d: Vector3 = Vector3(0.31, -0.28, -0.62)
 	if lanterna != null:
 		alvo_d = lanterna.position + lanterna.transform.basis * empunhadura
-	_ik("R", cam_para_sk * alvo_d, Vector3(-0.4, -1.0, -0.2))
+	_ik("R", cam_para_sk * alvo_d, Vector3(-0.4, -1.0, -0.2), rolo_mao)
 	# mão esquerda: relaxada, balançando de leve
 	var alvo_e: Vector3 = mao_esquerda + Vector3(sin(_t * 1.3) * 0.006, cos(_t * 1.7) * 0.005, 0.0)
 	_ik("L", cam_para_sk * alvo_e, Vector3(0.4, -1.0, -0.2))
@@ -78,7 +81,7 @@ func _process(delta: float) -> void:
 
 
 ## IK analítico de 2 ossos para o braço `lado` ("R"/"L"); `alvo` no espaço do esqueleto, `polo` = direção para onde o cotovelo aponta.
-func _ik(lado: String, alvo: Vector3, polo: Vector3) -> void:
+func _ik(lado: String, alvo: Vector3, polo: Vector3, rolo := 0.0) -> void:
 	var i_ombro := _osso("upper_arm", lado)
 	var i_cot := _osso("forearm", lado)
 	var i_mao := _osso("hand", lado)
@@ -87,6 +90,8 @@ func _ik(lado: String, alvo: Vector3, polo: Vector3) -> void:
 	# hand.R.control também começa com "hand": prefere o osso exato
 	var ih: int = _ossos.get("hand." + lado, i_mao)
 	var s: Vector3 = _rest[i_ombro].origin
+	if lado == "R":
+		alvo -= (alvo - s).normalized() * recuo_punho / maxf(escala, 0.01)
 	var e0: Vector3 = _rest[i_cot].origin
 	var w0: Vector3 = _rest[ih].origin
 	var l1 := s.distance_to(e0)
@@ -110,7 +115,7 @@ func _ik(lado: String, alvo: Vector3, polo: Vector3) -> void:
 	var ant := (maoP - cot).normalized()
 	var ant0 := (w0 - e0).normalized()
 	var q := Quaternion(ant0, ant)
-	_sk.set_bone_global_pose_override(ih, Transform3D(Basis(q) * b_rest, maoP), 1.0, true)
+	_sk.set_bone_global_pose_override(ih, Transform3D(Basis(ant, deg_to_rad(rolo)) * Basis(q) * b_rest, maoP), 1.0, true)
 
 
 func _aponta(i: int, de: Vector3, para: Vector3, filho_rest: Vector3) -> void:

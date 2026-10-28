@@ -18,7 +18,9 @@ func _init() -> void:
 		var nome := m.name
 		var rocha := nome.begins_with("Rochas")
 		var arvore := nome.begins_with("arvore") or nome.begins_with("palmeira")
-		var encosta := nome in ["Mato_a", "Mato_b", "Mato_c", "Tufo_c", "Tufo_d", "Vinca_c"] or nome.ends_with("_encosta")
+		var encosta := nome.begins_with("Mato_a_") or nome.begins_with("Mato_b_") or nome.begins_with("Mato_c_") or nome.begins_with("Tufo_c") or nome.begins_with("Tufo_d") or nome.begins_with("Vinca_c") or nome.contains("_encosta_")
+		if nome.contains("calcada") or nome.contains("_rua"):
+			encosta = false
 		if not (rocha or arvore or encosta):
 			continue
 		for i in m.multimesh.instance_count:

@@ -131,7 +131,7 @@ def janela():
     p.box("madeira", (0.035, h, 0.045), (0, h / 2, z), bevel=0.003)
     for yy in (h / 3, 2 * h / 3):
         p.box("madeira", (w, 0.03, 0.04), (0, yy, z), bevel=0.003)
-    p.box("vidro", (w - 0.1, h - 0.1, 0.01), (0, h / 2, 0.012))
+    # o vidro NÃO faz parte do módulo: é um painel separado com shader de interior (assets/shaders/janela_interior.gdshader)
     p.exportar("janela_colonial")
 
 

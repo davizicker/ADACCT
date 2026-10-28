@@ -119,18 +119,7 @@ func _cogumelos() -> Node3D:
 		for k in b._rng.randi_range(1, 3):       # tufinhos de 1 a 3
 			var off := Vector3(b._rng.randf_range(-0.1, 0.1), 0, b._rng.randf_range(-0.1, 0.1))
 			xf.append(Transform3D(Basis(Vector3.UP, b._rng.randf() * TAU).scaled(Vector3.ONE * sc * b._rng.randf_range(0.7, 1.2)), p + off))
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = xf.size()
-	for i in xf.size():
-		mm.set_instance_transform(i, xf[i])
-	var mi := MultiMeshInstance3D.new()
-	mi.name = "Cogumelos"
-	mi.multimesh = mm
-	mi.visibility_range_end = 40.0
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	root.add_child(mi)
+	root.add_child(Quadras.dividir("Cogumelos", mesh, xf, 45.0))
 	return root
 
 
@@ -157,18 +146,7 @@ func _galhos() -> Node3D:
 		var k := b._rng.randf_range(0.12, 0.34)
 		var bas := Basis.from_euler(Vector3(b._rng.randf_range(-0.12, 0.12), b._rng.randf() * TAU, b._rng.randf_range(-0.12, 0.12))).scaled(Vector3.ONE * k)
 		xf.append(Transform3D(bas, p) * Transform3D(Basis(), Vector3(-c.x, -bb.position.y, -c.z)))
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = xf.size()
-	for i in xf.size():
-		mm.set_instance_transform(i, xf[i])
-	var mi := MultiMeshInstance3D.new()
-	mi.name = "Galhos"
-	mi.multimesh = mm
-	mi.visibility_range_end = 70.0
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	root.add_child(mi)
+	root.add_child(Quadras.dividir("Galhos", mesh, xf, 80.0))
 	return root
 
 
@@ -227,3 +205,83 @@ static func fumaca(pos: Vector3) -> GPUParticles3D:
 	q.material = m
 	p.draw_pass_1 = q
 	return p
+
+
+# ------------------------------------------------------------------ vidros com interior e plantas de janela (MultiMesh)
+
+const PLANTAS_JANELA := ["periwinkle_a", "periwinkle_b", "periwinkle_c", "mato_b", "weed_b"]
+
+
+func vidros_e_plantas(builder: VilaBuilder, root: Node3D) -> Node3D:
+	b = builder
+	var out := Node3D.new()
+	out.name = "VidrosEPlantas"
+	var panes: Array = []        # [Transform3D, seed, lit]
+	var plantas: Array = [[], [], [], [], []]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 6161
+	for g_name in ["Casas", "FundoDaRua"]:
+		var g := root.get_node_or_null(g_name) as Node3D
+		if g == null:
+			continue
+		var filhos: Array = g.get_children() if g_name == "Casas" else [g]
+		for n in filhos:
+			if not (n is Node3D):
+				continue
+			var cn := n as Node3D
+			# casas diretamente em "Casas"; o prédio do fundo está dentro de "FundoDaRua"
+			var alvo: Node3D = cn if cn.has_meta("janelas") else cn.get_node_or_null("Casarao") as Node3D
+			if alvo == null:
+				continue
+			var base_xf: Transform3D = (cn.transform if g_name == "Casas" else cn.transform * alvo.transform)
+			for j in alvo.get_meta("janelas", []):
+				var sz: Vector2 = j["size"]
+				var bas := Basis(Vector3.UP, -PI / 2.0).scaled_local(Vector3(sz.x, sz.y, 1.0))
+				panes.append([base_xf * Transform3D(bas, j["pos"]), rng.randf(), 1.0 if bool(j["lit"]) else 0.0])
+			for pl in alvo.get_meta("plantas_janela", []):
+				var tipo: int = int(pl["tipo"])
+				var rot := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * float(pl["esc"]))
+				(plantas[tipo] as Array).append(base_xf * Transform3D(rot, pl["pos"]))
+	# vidros
+	var q := QuadMesh.new()
+	q.size = Vector2(1, 1)
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://assets/shaders/janela_interior.gdshader")
+	q.material = mat
+	var xfs: Array = []
+	var dados: Array = []
+	for pn in panes:
+		xfs.append(pn[0])
+		dados.append(Color(float(pn[1]), float(pn[2]), rng.randf(), 0.0))
+	out.add_child(Quadras.dividir("Vidros", q, xfs, 120.0, false, dados))
+	# plantas das jardineiras e vasos: modelos reais (vinca, mato, erva), normalizados para ~35 cm
+	for t in 5:
+		var xs: Array = plantas[t]
+		if xs.is_empty():
+			continue
+		var h := PropKit.make(PLANTAS_JANELA[t])
+		var bb: AABB = h.get_meta("bb")
+		var md := maxf(bb.size.x, maxf(bb.size.y, bb.size.z))
+		var inst := h.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		var rel := Transform3D.IDENTITY
+		var nd: Node = inst
+		while nd != h and nd != null:
+			rel = (nd as Node3D).transform * rel
+			nd = nd.get_parent()
+		var mesh := inst.mesh.duplicate() as Mesh
+		for si in mesh.get_surface_count():
+			var m := mesh.surface_get_material(si)
+			if m is BaseMaterial3D:
+				var d := m.duplicate() as BaseMaterial3D
+				d.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+				d.alpha_scissor_threshold = 0.45
+				d.cull_mode = BaseMaterial3D.CULL_DISABLED
+				mesh.surface_set_material(si, d)
+		h.free()
+		var k := 0.5 / maxf(md, 0.05)
+		var xfp: Array = []
+		for i in xs.size():
+			xfp.append((xs[i] as Transform3D) * Transform3D(Basis().scaled(Vector3.ONE * k), Vector3.ZERO) * rel)
+		out.add_child(Quadras.dividir("Plantas_%s" % PLANTAS_JANELA[t], mesh, xfp, 60.0))
+	print("[vila] vidros com interior: %d | plantas de janela: %d" % [panes.size(), (plantas[0] as Array).size() + (plantas[1] as Array).size() + (plantas[2] as Array).size() + (plantas[3] as Array).size() + (plantas[4] as Array).size()])
+	return out

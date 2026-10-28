@@ -20,6 +20,10 @@ func _init() -> void:
 	_sobrepor(MATS + "telha_uv.tres", Color(0.15, 0.25, 0.08), 0.30, 0.5, 0.45, 0.75)
 	_sobrepor(MATS + "muro.tres", Color(0.14, 0.26, 0.08), 0.36, 0.42, 0.75, 0.8)
 	_sobrepor(MATS + "cantaria.tres", Color(0.42, 0.46, 0.28), 0.22, 0.45, 0.6, 0.5)
+	# rua e calçada: musgo nas juntas, lama seca e manchas de óleo/umidade escura (escalas diferentes, não se repetem)
+	_sobrepor(MATS + "pedra_chao.tres", Color(0.13, 0.22, 0.07), 0.20, 0.55, 1.0, 0.65)
+	_sobrepor(MATS + "pedra_chao.tres", Color(0.20, 0.13, 0.08), 0.26, 0.21, 1.0, 0.55)
+	_sobrepor(MATS + "pedra_chao.tres", Color(0.03, 0.03, 0.035), 0.14, 0.9, 1.0, 0.5)
 	var b := VilaBuilder.new()
 	var vila := b.build_vila({})
 	_save(vila, "vila.scn")
@@ -149,7 +153,10 @@ func _sobrepor(mat_path: String, cor: Color, cobertura: float, escala: float, so
 	o.set_shader_parameter("escala", escala)
 	o.set_shader_parameter("so_topo", so_topo)
 	o.set_shader_parameter("opacidade", opacidade)
-	base.next_pass = o
+	var fim: Material = base
+	while fim.next_pass != null:      # várias camadas: entra no fim da corrente
+		fim = fim.next_pass
+	fim.next_pass = o
 	ResourceSaver.save(base, mat_path)
 
 
@@ -339,7 +346,8 @@ func _materials() -> void:
 	var sky := ShaderMaterial.new()
 	sky.shader = load("res://assets/shaders/ceu.gdshader")
 	ResourceSaver.save(sky, MATS + "ceu.tres")
-	var serra := _flat("serra", Color(0.022, 0.028, 0.048), 1.0, 0.0, 0.0, true)
+	var serra := _flat("serra", Color(1, 1, 1), 1.0, 0.0, 0.0, true)
+	serra.vertex_color_use_as_albedo = true
 	serra.disable_fog = true
 	ResourceSaver.save(serra, MATS + "serra.tres")
 	_real("casca", "Bark014", Color(0.9, 0.88, 0.85), 1.0, 1.3)

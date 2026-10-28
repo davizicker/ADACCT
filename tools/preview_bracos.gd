@@ -29,11 +29,12 @@ func _init() -> void:
 	var lm := PropKit.make("Lantern_01", 0.88)
 	lant.add_child(lm)
 	# variantes: [curvatura dos dedos, altura da empunhadura]; args: saida_prefixo
-	var variantes := [[-1.1, 0.23]]
+	var variantes := [[-1.1, 0.23, 120.0]]
 	for k in variantes.size():
 		var br := Bracos.new()
 		br.lanterna = lant
 		br.curvatura_dedos = variantes[k][0]
+		br.rolo_mao = variantes[k][2]
 		br.empunhadura = Vector3(0.0, variantes[k][1], 0.0)
 		cam.add_child(br)
 		for i in 6:
