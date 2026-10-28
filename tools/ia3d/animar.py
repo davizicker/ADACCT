@@ -17,6 +17,7 @@ ap.add_argument("entrada")
 ap.add_argument("saida")
 ap.add_argument("--tipo", default="humanoide", choices=["humanoide", "quadrupede"])
 ap.add_argument("--anims", default="")
+ap.add_argument("--mocap", default="", help="clips.json com capturas de movimento BVH (humanoide)")
 a = ap.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:])
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -274,6 +275,18 @@ for nome in quais:
     frames, fn, laco = ANIMS[nome]
     nova_acao(nome, frames, fn, laco)
     print("[animar] animação '%s' (%d quadros)" % (nome, frames))
+
+if a.mocap and a.tipo == "humanoide":
+    import json
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import bvh_retarget
+    pasta = os.path.dirname(os.path.abspath(a.mocap))
+    for c in json.load(open(a.mocap))["clips"]:
+        if c.get("tipo", "humanoide") != "humanoide":
+            continue
+        n, j = bvh_retarget.retargetar_humanoide(arm, bones, zmin, FWD, os.path.join(pasta, c["arquivo"]), c["nome"],
+                                                 c.get("laco", True), c.get("no_lugar", True))
+        print("[animar] mocap '%s': %d quadros, %d juntas ligadas" % (c["nome"], n, j))
 
 arm.animation_data.action = None
 bpy.ops.object.mode_set(mode="OBJECT")

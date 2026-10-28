@@ -61,3 +61,4 @@ shaders em `assets/shaders/`). O restante vem de terceiros, **todos CC0** (domí
 | assets/models/poly/weed_a/b.glb (variantes extraídas) | [Poly Haven](https://polyhaven.com/a/weed_plant_02) | Poly Haven | CC0 1.0 |
 | assets/models/poly/grass_tuft_a/b.glb (variantes extraídas) | [Poly Haven](https://polyhaven.com/a/grass_medium_01) | Poly Haven | CC0 1.0 |
 | moss_01 (Poly Haven, CC0) | recebido, ainda não usado (modelo de fios finos; precisa de outro método) | Poly Haven | CC0 1.0 |
+| Animações de captura de movimento (tools/ia3d/mocap/*.bvh) | "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." | CMU Graphics Lab Motion Capture Database | uso livre, inclusive comercial; não revender os dados em si |

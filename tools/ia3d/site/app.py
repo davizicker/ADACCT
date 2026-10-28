@@ -91,6 +91,9 @@ def rodar_animar(jid, nome, tipo, anims):
     cmd = [py, ANIMAR, src, destino, "--tipo", tipo]
     if anims:
         cmd += ["--anims", anims]
+    clips = os.path.join(AQUI, "..", "mocap", "clips.json")
+    if tipo == "humanoide" and os.path.exists(clips):
+        cmd += ["--mocap", clips]      # caminhada, corrida, zumbi etc. de captura de movimento (CMU)
     job["log"] += "$ " + " ".join(cmd) + "\n"
     try:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)

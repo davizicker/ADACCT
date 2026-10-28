@@ -79,4 +79,12 @@ python tools/ia3d/animar.py mula.glb mula_animada.glb --tipo quadrupede --anims 
 ```
 No site, cada modelo tem o botão **Rigar e animar**; a prévia mostra os botões das animações.
 **Testado** com um humanoide e um quadrúpede de teste (esqueleto, pesos e animações exportados e tocando no Godot; arquivos de teste via `gerar_teste.py` e `tools/preview_anim.gd`).
-**Limites:** supõe humanoide em pose T/A de pé ou quadrúpede de lado; pesos automáticos falham em malhas muito sujas; as animações são simples e cíclicas, não são captura de movimento. A biblioteca de milhares de animações do Mixamo não dá para replicar; o próximo passo é importar animações gratuitas (CMU Mocap, Quaternius CC0) e retargetar para o esqueleto.
+**Limites:** supõe humanoide em pose T/A de pé ou quadrúpede de lado; pesos automáticos falham em malhas muito sujas; as animações são simples e cíclicas, não são captura de movimento. A biblioteca de milhares de animações do Mixamo não dá para replicar.
+
+### Captura de movimento grátis (humanoide)
+`--mocap tools/ia3d/mocap/clips.json` importa clipes **BVH da CMU Mocap** (andar, correr, andar de zumbi, passo lento, passada) e os adapta ao esqueleto criado (`bvh_retarget.py`: cinemática direta, delta de rotação em coordenadas do mundo, ciclo achado automaticamente, movimento "no lugar"). O site já usa isso para humanoides.
+```
+python tools/ia3d/animar.py modelo.glb saida.glb --tipo humanoide --mocap tools/ia3d/mocap/clips.json
+```
+Clipes mocap com o mesmo nome (walk, run) substituem os procedurais. Para adicionar outros: ponha o .bvh em `mocap/` e uma linha em `clips.json`. O banco inteiro: github.com/una-dinosauria/cmu-mocap.
+**Limites:** só humanoide (não há mocap grátis de quadrúpede bom); testado em boneco sintético, não em malha de IA real; pés podem deslizar/atravessar o chão em corpos de proporção muito diferente (sem IK de pés); créditos da CMU obrigatórios (`mocap/CREDITOS.md`), sem revender os dados.
