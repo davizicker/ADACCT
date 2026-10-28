@@ -136,7 +136,25 @@ func _blocker(parent: Node, node_name: String, size: Vector3, pos: Vector3) -> v
 	parent.add_child(body)
 
 
+## Plantas de cartão (texturas geradas) que foram trocadas por modelos reais: chave antiga -> [modelos, altura-alvo em m].
+## Cartões continuam só nas árvores, palmeiras e bananeiras (não há modelo real delas).
+const PLANTAS_REAIS := {
+	"arbusto": [["mato_a", "mato_c", "weed_a", "weed_b"], 1.1],
+	"capim": [["mato_b", "grass_tuft_a", "grass_tuft_b", "mato_c"], 0.45],
+	"samambaia": [["periwinkle_a", "periwinkle_b", "periwinkle_c", "mato_b"], 0.5],
+}
+var _alt_real := {}
+
+
 func _plant(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0) -> Node3D:
+	if PLANTAS_REAIS.has(key):
+		var opcoes: Array = PLANTAS_REAIS[key][0]
+		var real: String = opcoes[_rng.randi() % opcoes.size()]
+		if not _alt_real.has(real):
+			var amostra := PropKit.make(real)
+			_alt_real[real] = maxf((amostra.get_meta("bb") as AABB).size.y, 0.05)
+			amostra.free()
+		return _prop(parent, real, pos, yaw, float(PLANTAS_REAIS[key][1]) * scale / float(_alt_real[real]))
 	var n := (_veg[key] as PackedScene).instantiate() as Node3D
 	n.name = "%s_%03d" % [key, _n]
 	_n += 1
@@ -1839,7 +1857,6 @@ func _hillside() -> Node3D:
 	_near_trees(root)
 	root.add_child(_forest())
 	root.add_child(_far_lights())
-	root.add_child(_grass_tufts())
 	return root
 
 
@@ -2053,46 +2070,6 @@ func _set_range(n: Node, end: float) -> void:
 
 
 ## Tufos de capim em MultiMesh: bordas da rua, pés de muro e encostas.
-func _grass_tufts() -> MultiMeshInstance3D:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	var xforms: Array[Transform3D] = []
-	var tuft := (_veg["capim"] as PackedScene).instantiate()
-	var mesh: Mesh = (tuft.get_node("Malha") as MeshInstance3D).mesh
-	tuft.free()
-	# 1) beiras da rua (frestas do calçamento e pé das casas)
-	var s := 2.0
-	while s < Route.length() - 2.0:
-		for sigma: float in [-1.0, 1.0]:
-			if _rng.randf() < 0.8:
-				var w := Route.width(s)
-				var p := Route.pos(s) + Route.right(s) * sigma * (w * 0.5 + SW - _rng.randf_range(0.05, 0.25)) + Vector3(0, SW_H - 0.04, 0)
-				xforms.append(Transform3D(Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * _rng.randf_range(0.6, 1.2)), p))
-		s += 1.3
-	# 2) encostas
-	var tries := 0
-	var count := 0
-	while count < 2400 and tries < 6000:
-		tries += 1
-		var ss := _rng.randf_range(0.0, Route.length())
-		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
-		var d := _rng.randf_range(Route.width(ss) * 0.5 + 13.0, 70.0)
-		var p := Route.pos(ss) + Route.right(ss) * sigma * d
-		var h := terrain_h(p.x, p.z)
-		xforms.append(Transform3D(Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * _rng.randf_range(1.0, 2.2)), Vector3(p.x, h - 0.05, p.z)))
-		count += 1
-	mm.mesh = mesh
-	mm.instance_count = xforms.size()
-	for i in xforms.size():
-		mm.set_instance_transform(i, xforms[i])
-	var mmi := MultiMeshInstance3D.new()
-	mmi.name = "Capim"
-	mmi.multimesh = mm
-	mmi.visibility_range_end = 120.0
-	mmi.visibility_range_end_margin = 20.0
-	return mmi
-
-
 ## Silhueta distante da serra (anel de montanhas), sem névoa, contra o céu.
 func _serra() -> MeshInstance3D:
 	var st := SurfaceTool.new()
@@ -2188,6 +2165,55 @@ func _street_point(sigma: float, s: float, inset: float) -> Vector3:
 	return Route.pos(s) + Route.right(s) * sigma * (Route.width(s) * 0.5 - inset) + Vector3(0, 0.03, 0)
 
 
+## Um recipiente do kit "Medieval Containers" (CC0) pelo prefixo do nome ("Barrel1", "Crate3"...), com colisão simples.
+func _cont(parent: Node, prefixo: String, pos: Vector3, yaw := 0.0, scale := 1.0, colide := true) -> Node3D:
+	var nomes: Array = []
+	for nm in PropKit.cont_nomes():
+		if nm.begins_with(prefixo + "_"):
+			nomes.append(nm)
+	if nomes.is_empty():
+		return null
+	var nome: String = nomes[_rng.randi() % nomes.size()]
+	var h := PropKit.make_cont(nome, scale)
+	h.name = "%s_%03d" % [nome, _n]
+	_n += 1
+	h.position = pos
+	h.rotation.y = yaw
+	parent.add_child(h)
+	if colide:
+		var bb: AABB = h.get_meta("bb")
+		var redondo := prefixo.begins_with("Barrel") or prefixo.begins_with("Basket1") or prefixo.begins_with("Bucket") or prefixo.begins_with("Jug") or prefixo.begins_with("Bowl")
+		_prop_collision(h, "cil" if redondo else "caixa", bb.size, bb.get_center())
+	return h
+
+
+## Grupo de recipientes encostado na parede: barril, pilha de caixotes, cestos, jarros, sacos...
+func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
+	var r := _rng.randf()
+	if r < 0.22:
+		var barril := _prop(parent, "wine_barrel_01", p, _rng.randf() * TAU, _rng.randf_range(0.95, 1.1))
+		_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
+	elif r < 0.38:
+		_cont(parent, "Barrel1", p, _rng.randf() * TAU)
+	elif r < 0.62:
+		var c1 := _cont(parent, "Crate3", p, yaw + _rng.randf_range(-0.3, 0.3))
+		if c1 != null and _rng.randf() < 0.55:
+			var top := (c1.get_meta("bb") as AABB).size.y
+			_cont(parent, "Crate3", p + Vector3(0, top, 0), yaw + _rng.randf_range(-0.5, 0.5), 0.9, false)
+	elif r < 0.74:
+		_cont(parent, "Crate1" if _rng.randf() < 0.6 else "Crate2", p, yaw + _rng.randf_range(-0.2, 0.2))
+	elif r < 0.84:
+		_cont(parent, "Basket1" if _rng.randf() < 0.6 else "Basket2", p, _rng.randf() * TAU)
+		if _rng.randf() < 0.5:
+			_cont(parent, "Basket1", p + Vector3(_rng.randf_range(-0.5, 0.5), 0, _rng.randf_range(-0.5, 0.5)), _rng.randf() * TAU)
+	elif r < 0.93:
+		for k in _rng.randi_range(1, 3):
+			_cont(parent, "Jug1" if _rng.randf() < 0.5 else "Jug2", p + Vector3(_rng.randf_range(-0.45, 0.45), 0, _rng.randf_range(-0.45, 0.45)), _rng.randf() * TAU)
+	else:
+		_cont(parent, "Sack1" if _rng.randf() < 0.5 else "Sack2", p, _rng.randf() * TAU)
+		_cont(parent, "Bucket1", p + Vector3(0.5, 0, 0.3), _rng.randf() * TAU)
+
+
 ## Bueiros, barris, caixotes, bancos, carroça, varais e bandeirinhas.
 func _adornos() -> Node3D:
 	var root := Node3D.new()
@@ -2206,9 +2232,9 @@ func _adornos() -> Node3D:
 	# barris e caixotes junto às paredes
 	var count := 0
 	var tries := 0
-	while count < 16 and tries < 100:
+	while count < 44 and tries < 300:
 		tries += 1
-		var s := _rng.randf_range(10.0, 290.0)
+		var s := _rng.randf_range(10.0, S_END - 8.0)
 		if absf(s - Route.BRIDGE_S) < 8.0 or Route.width(s) < 3.8:
 			continue
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
@@ -2218,14 +2244,7 @@ func _adornos() -> Node3D:
 		if not _livre(p, 0.55):
 			continue
 		_reservar(p, 0.55)
-		if _rng.randf() < 0.6:
-			var barril := _prop(root, "wine_barrel_01", p, _rng.randf() * TAU, _rng.randf_range(0.95, 1.1))
-			_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
-		else:
-			var yaw := atan2(out.x, out.z)
-			b.box("madeira_natural", Vector3(0.6, 0.5, 0.6), p + Vector3(0, 0.25, 0), Vector3(0, yaw, 0))
-			if _rng.randf() < 0.5:
-				b.box("madeira_natural", Vector3(0.5, 0.45, 0.5), p + Vector3(0, 0.72, 0), Vector3(0, yaw + 0.4, 0))
+		_recipientes(root, p, atan2(out.x, out.z))
 		count += 1
 	# bancos no largo
 	for bs: float in [146.0, 156.0, 170.0]:

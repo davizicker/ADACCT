@@ -359,4 +359,12 @@ func _plantas_reais() -> Node3D:
 	g.add_child(_espalha("Vinca_a", "periwinkle_a", 150, "calcada", Vector2(1.5, 2.6), 40.0))
 	g.add_child(_espalha("Vinca_b", "periwinkle_b", 150, "calcada", Vector2(1.5, 2.6), 40.0))
 	g.add_child(_espalha("Vinca_c", "periwinkle_c", 120, "encosta", Vector2(2.0, 3.5), 55.0))
+	# "tiny weeds" (Nobiax, CC0): cartões recortados, bem leves; substituem o capim de cartão gerado por código
+	g.add_child(_espalha("Mato_a", "mato_a", 1100, "encosta", Vector2(0.4, 0.9), 110.0))
+	g.add_child(_espalha("Mato_c", "mato_c", 1100, "encosta", Vector2(0.4, 0.8), 110.0))
+	g.add_child(_espalha("Mato_b", "mato_b", 1000, "encosta", Vector2(0.9, 1.8), 110.0))
+	g.add_child(_espalha("Mato_b_calcada", "mato_b", 900, "calcada", Vector2(0.35, 0.7), 60.0))
+	g.add_child(_espalha("Mato_c_calcada", "mato_c", 500, "calcada", Vector2(0.2, 0.4), 60.0))
+	g.add_child(_espalha("Mato_a_calcada", "mato_a", 300, "calcada", Vector2(0.18, 0.32), 60.0))
+	g.add_child(_espalha("Mato_b_rua", "mato_b", 300, "rua", Vector2(0.3, 0.55), 45.0))
 	return g

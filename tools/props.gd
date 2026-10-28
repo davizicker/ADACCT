@@ -54,6 +54,47 @@ static func make(key: String, scale := 1.0, align := "chao") -> Node3D:
 	return holder
 
 
+## Medieval Containers (Daniel74, CC0): um .glb com 45 variações (Barrel1_1.., Basket1_1.., Crate1_1.., Jug1_1.., Sack1_1.. etc.).
+static var _cont: Dictionary = {}
+
+
+static func cont_nomes() -> PackedStringArray:
+	_cont_carrega()
+	var out := PackedStringArray(_cont.keys())
+	out.sort()
+	return out
+
+
+static func _cont_carrega() -> void:
+	if not _cont.is_empty():
+		return
+	var inst := (load(DIR + "containers.glb") as PackedScene).instantiate()
+	for mi in inst.find_children("*", "MeshInstance3D", true, false):
+		_cont[(mi as MeshInstance3D).name] = (mi as MeshInstance3D).mesh
+	inst.free()
+
+
+## Como `make`, mas para uma variação do kit de recipientes (ex.: "Barrel1_3"). Pés em y = 0, centrado em X/Z.
+static func make_cont(nome: String, scale := 1.0) -> Node3D:
+	_cont_carrega()
+	var holder := Node3D.new()
+	holder.name = nome
+	var wrap := Node3D.new()
+	wrap.name = "Modelo"
+	holder.add_child(wrap)
+	var mi := MeshInstance3D.new()
+	mi.name = nome
+	mi.mesh = _cont[nome]
+	wrap.add_child(mi)
+	var bb := mi.mesh.get_aabb()
+	mi.scale = Vector3.ONE * scale
+	var sb := AABB(bb.position * scale, bb.size * scale)
+	var c := sb.get_center()
+	mi.position = Vector3(-c.x, -sb.position.y, -c.z)
+	holder.set_meta("bb", AABB(sb.position + mi.position, sb.size))
+	return holder
+
+
 ## Procura a superfície "…_bulb" (a lâmpada) e a torna emissiva. Guarda no `holder`: caminho do mesh, índice e posição.
 static func setup_bulb(holder: Node3D, color := Color(1.0, 0.80, 0.50), energy := 3.2) -> bool:
 	for mi in holder.find_children("*", "MeshInstance3D", true, false):

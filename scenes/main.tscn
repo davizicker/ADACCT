@@ -12,11 +12,14 @@
 [ext_resource type="Script" path="res://scripts/missao.gd" id="10_yc10j"]
 [ext_resource type="Script" path="res://scripts/audio_director.gd" id="11_jscy8"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="12_pm3ni"]
+[ext_resource type="PackedScene" path="res://scenes/ajustes.tscn" id="13_ajust"]
 
 [node name="Main" type="Node3D" unique_id=187154827]
 script = ExtResource("1_eb6dy")
 
 [node name="Vila" type="Node3D" parent="." unique_id=1553703867 instance=ExtResource("2_trceg")]
+
+[node name="Ajustes" parent="." instance=ExtResource("13_ajust")]
 
 [node name="Jogador" type="CharacterBody3D" parent="." unique_id=282653567 instance=ExtResource("3_a8y0u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.30974296, 0.43562964, -1.9753197)

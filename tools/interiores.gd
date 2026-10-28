@@ -238,10 +238,14 @@ func _fogao(x: float, z: float, yaw := 0.0) -> void:
 
 
 func _saco(x: float, z: float, yaw := 0.0) -> void:
-	var c := Vector3(x, 0, z)
-	_bx("pano_cru", c, yaw, Vector3(0, 0.22, 0), Vector3(0.5, 0.44, 0.34))
-	_bx("pano_cru", c, yaw, Vector3(0, 0.46, 0), Vector3(0.36, 0.1, 0.24))
+	# sacos de pano do kit "Medieval Containers" (CC0)
+	b._cont(_g, "Sack1" if int(x * 10.0) % 2 == 0 else "Sack2", Vector3(x, 0, z), yaw, 1.0, false)
 	b._blocker(_g, "ColSaco", Vector3(0.5, 0.45, 0.4), Vector3(x, 0.22, z))
+
+
+## Recipiente do kit "Medieval Containers" (CC0) numa posição da sala; `y` para pôr em cima de móvel/caixote.
+func _cont(prefixo: String, x: float, z: float, yaw := 0.0, y := 0.0, escala := 1.0, colide := true) -> Node3D:
+	return b._cont(_g, prefixo, Vector3(x, y, z), yaw, escala, colide)
 
 
 func _quadro(x: float, y: float, z: float, lado: String, w := 0.5, h := 0.65, mat := "placa_preta") -> void:
@@ -393,6 +397,9 @@ func _sala_venda(g: Node3D) -> void:
 		_prop("wooden_stool_01", 2.7 + k * 1.2, 3.55, k * 0.7)
 	_saco(7.2, 4.9, 0.3)
 	_saco(7.5, 5.4)
+	_cont("Crate3", 1.5, 0.65, 0.2)
+	_cont("Basket1", 2.6, 0.6, 0.0)
+	_cont("Jug1", 3.3, 0.7, 0.8)
 	_mesa(7.4, 2.5, 1.0, 0.8, 0.9, "madeira_escura", PI / 2.0)       # mesinha da TV
 	b._tv(g, Vector3(7.4, 0.94, 2.5), -PI / 2.0)
 	_lamparina(2.4, 1.08, 4.7)
@@ -672,6 +679,14 @@ func _sala_deposito(g: Node3D) -> void:
 	_saco(5.4, 3.8)
 	_saco(5.9, 4.2, 0.5)
 	_saco(6.4, 3.7)
+	# caixotes, cestos e jarros do depósito (kit Medieval Containers, CC0)
+	var cx := _cont("Crate3", 2.4, 0.6, 0.1)
+	_cont("Crate3", 2.4, 0.6, 0.5, (cx.get_meta("bb") as AABB).size.y, 0.9, false)
+	_cont("Crate1", 3.6, 0.65, 0.0)
+	_cont("Basket1", 4.7, 0.6, 0.4)
+	_cont("Jug1", 4.3, 1.5, 1.0)
+	_cont("Jug2", 4.7, 1.8, 2.0)
+	_cont("Crate2", 1.5, 4.4, PI / 2.0)
 	_prop_c("wooden_ladder", 3.5, 4.55, PI, 1.5).rotation.x = 0.18
 	_prop("watering_can_metal_01", 2.5, 3.8, 0.3, 1.0)
 	_lamparina(3.5, 0.01, 1.2, 0.7)
