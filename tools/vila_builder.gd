@@ -2566,7 +2566,7 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 	elif r < 0.84:
 		_cont(parent, "Basket1" if _rng.randf() < 0.6 else "Basket2", p, _rng.randf() * TAU)
 		if _rng.randf() < 0.5:
-			_cont(parent, "Basket1", p + Basis(Vector3.UP, yaw) * Vector3(0.66, 0, 0), _rng.randf() * TAU)
+			_cont(parent, "Basket1", p + Basis(Vector3.UP, yaw) * Vector3(0.85, 0, 0), _rng.randf() * TAU)
 	elif r < 0.93:
 		var desl: Array = [Vector3(0, 0, 0), Vector3(0.55, 0, 0), Vector3(-0.55, 0, 0)]      # ao longo da parede, afastados: não invadem a rua nem se atravessam
 		for k in _rng.randi_range(1, 3):
@@ -2615,6 +2615,13 @@ func _adornos() -> Node3D:
 		var cs0: float = _s_sem_porta(float(cfg[1]), float(cfg[0]), 0.5, 3.4)      # o carro não pode ficar na frente de uma porta
 		_carros_s[int(cfg[0])] = cs0
 		_reservar(Route.pos(cs0) + Route.right(cs0) * float(cfg[1]) * (Route.width(cs0) * 0.5 - 1.25), 3.0)
+	# querosene e diários: o lugar deles (e a frente, de onde o jogador olha) fica livre de barris e caixotes
+	for o in OIL_PTS:
+		var so: float = o[0]
+		_reservar(facade(float(o[1]), so) - Route.right(so) * float(o[1]) * 0.35 + Vector3(0, SW_H, 0), 1.5)
+	for n in NOTE_PTS:
+		var sn: float = n[0]
+		_reservar(facade(float(n[1]), sn) - Route.right(sn) * float(n[1]) * 0.4 + Vector3(0, SW_H, 0), 1.5)
 	# lugar do bar da TV (barril + TV + banquinhos): reservado antes dos barris e caixotes, para nada ficar dentro dele
 	_bar_spot = _spot_livre(-1.0, 148.5, 0.55, 1.4)
 	if _bar_spot.is_empty():
@@ -2632,9 +2639,9 @@ func _adornos() -> Node3D:
 		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
 		var out := -Route.right(s) * sigma
 		var p := base + out * 0.22        # junto à parede, sem entrar nela: o meio da rua (corredor de 2,2 m) fica livre
-		if not _livre(p, 0.55, true) or Route.dist_to_center(p) < 2.3:      # cestos e jarros saem até 0,7 m do ponto
+		if not _livre(p, 0.95, true) or Route.dist_to_center(p) < 2.3:      # cestos e jarros saem até 0,7 m do ponto
 			continue
-		_reservar(p, 0.55)
+		_reservar(p, 0.95)
 		_recipientes(root, p, atan2(out.x, out.z))
 		count += 1
 	# bancos no largo
@@ -2846,10 +2853,14 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 	parent.add_child(a)
 
 
+const OIL_PTS := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [150.0, 1.0], [171.0, -1.0], [205.0, 1.0], [240.0, -1.0], [262.0, -1.0], [290.0, 1.0], [320.0, 1.0], [345.0, -1.0]]
+const NOTE_PTS := [[8.0, 1.0, 0], [76.0, -1.0, 1], [141.0, -1.0, 2], [210.0, 1.0, 3], [268.0, -1.0, 4], [340.0, 1.0, 5]]
+
+
 func _coletaveis() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Coletaveis"
-	var oil_pts := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [150.0, 1.0], [171.0, -1.0], [205.0, 1.0], [240.0, -1.0], [262.0, -1.0], [290.0, 1.0], [320.0, 1.0], [345.0, -1.0]]
+	var oil_pts := OIL_PTS
 	var i := 0
 	for o in oil_pts:
 		var s: float = o[0]
@@ -2857,7 +2868,7 @@ func _coletaveis() -> Node3D:
 		var p := facade(sigma, s) - Route.right(s) * sigma * 0.35 + Vector3(0, SW_H, 0)
 		_coletavel(root, "Oleo_%02d" % i, p, "oleo", 0, "Pegar querosene")
 		i += 1
-	var notes := [[8.0, 1.0, 0], [76.0, -1.0, 1], [141.0, -1.0, 2], [210.0, 1.0, 3], [268.0, -1.0, 4], [340.0, 1.0, 5]]
+	var notes := NOTE_PTS
 	for n in notes:
 		var s: float = n[0]
 		var sigma: float = n[1]
