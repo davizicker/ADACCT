@@ -330,7 +330,7 @@ func _planta_kit(kit: String, malha: String) -> Dictionary:
 	return {"mesh": mesh, "rel": Transform3D(Basis(), Vector3(-c.x, -bb.position.y, -c.z))}
 
 
-const DENS := 2.2       # multiplicador da densidade de plantas espalhadas (o jogo pode pesar: mais vegetação)
+const DENS := 3.0       # multiplicador da densidade de plantas espalhadas (o jogo pode pesar: mais vegetação)
 
 
 func _espalha(nome: String, key: String, n_base: int, modo: String, esc: Vector2, fim: float, kit := "") -> Node3D:
@@ -345,6 +345,8 @@ func _espalha(nome: String, key: String, n_base: int, modo: String, esc: Vector2
 		var sig := -1.0 if b._rng.randf() < 0.5 else 1.0
 		var w := Route.width(s)
 		var p := Vector3.ZERO
+		if modo != "encosta" and absf(s - Route.BRIDGE_S) < Route.BRIDGE_HALF + 1.2:
+			continue                      # em cima da ponte não nasce mato (cobria a vista do riacho)
 		match modo:
 			"calcada":                    # pé das paredes, em cima da calçada
 				p = _ponto(s, sig * (w * 0.5 + SW - b._rng.randf_range(0.04, 0.28)), SW_H - 0.03)
@@ -356,7 +358,7 @@ func _espalha(nome: String, key: String, n_base: int, modo: String, esc: Vector2
 				var d := b._rng.randf_range(w * 0.5 + 11.0, 65.0)
 				var q := Route.pos(s) + Route.right(s) * sig * d
 				p = Vector3(q.x, b.terrain_h(q.x, q.z) - 0.04, q.z)
-				if not _fora(p, 10.0):
+				if not _fora(p, 10.0) or b.no_rio(p, 0.6):
 					continue
 		var sc := b._rng.randf_range(esc.x, esc.y)
 		var bas := Basis(Vector3.UP, b._rng.randf() * TAU).scaled(Vector3.ONE * sc)

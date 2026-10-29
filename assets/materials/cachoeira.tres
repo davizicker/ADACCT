@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/cachoeira.gdshader" id="1_cnpmv"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="2_hwf8y"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_cnpmv")
+shader_parameter/ruido = ExtResource("2_hwf8y")
+shader_parameter/cor = Color(0.66, 0.8, 0.9, 1)
+shader_parameter/velocidade = 1.6

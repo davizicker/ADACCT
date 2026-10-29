@@ -52,7 +52,7 @@ void fragment() {
 
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0), 3.0);
 	ALBEDO = col;
-	EMISSION = (cor_ceu * (0.85 + 2.2 * fres) + col * 0.5) * (1.0 - espuma * 0.6);
+	EMISSION = (cor_ceu * (0.55 + 2.2 * fres) + col * 0.4) * (1.0 - espuma * 0.6);
 	ALPHA = clamp(0.93 + espuma * 0.07, 0.0, 1.0);
 	ROUGHNESS = mix(0.10, 0.6, espuma);
 	SPECULAR = 0.8;

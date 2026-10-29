@@ -199,6 +199,7 @@ func _materials() -> void:
 	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.34, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
 	_mista("reboco_branco", "reboco_velho", "reboco", Color(0.97, 0.95, 0.90), 0.22, 0.30, 0.22)
+	_mista("reboco_caiado", "reboco", "reboco_velho", Color(1.0, 0.985, 0.94), 0.22, 0.10, 0.04)          # igreja: cal fresca, quase sem sujeira
 	_mista("reboco_branco_novo", "reboco", "reboco_velho", Color(0.98, 0.97, 0.93), 0.22, 0.24, 0.2)
 	_mista("reboco_ocre", "reboco_velho", "reboco", Color(0.90, 0.76, 0.50), 0.22, 0.30, 0.22)
 	_mista("reboco_amarelo", "reboco", "reboco_velho", Color(0.95, 0.86, 0.55), 0.22, 0.24, 0.2)
@@ -324,6 +325,10 @@ func _materials() -> void:
 	fogo.vertex_color_use_as_albedo = true
 	fogo.disable_fog = true
 	ResourceSaver.save(fogo, MATS + "fogo.tres")
+	var cach := ShaderMaterial.new()
+	cach.shader = load("res://assets/shaders/cachoeira.gdshader")
+	cach.set_shader_parameter("ruido", _tex("ruido_mistura.png"))
+	ResourceSaver.save(cach, MATS + "cachoeira.tres")
 	var agua := ShaderMaterial.new()
 	agua.shader = load("res://assets/shaders/agua.gdshader")
 	agua.set_shader_parameter("ruido", _tex("ruido_mistura.png"))
