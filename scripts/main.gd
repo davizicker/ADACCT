@@ -348,6 +348,7 @@ func _test_esconder() -> void:
 		player.global_position = sp.pos_oculto + Vector3(0, 0.0, 0)
 		var antes := player.global_position
 		_hint = ""
+		missao._cooldown = 0.0        # o tempo de recarga cai por quadro de física; com ~1 fps de software ele não zera sozinho
 		missao.esconder(sp)
 		await get_tree().create_timer(0.3, true, false, true).timeout
 		var ok1 := player.hidden and player.frozen and not player.lantern_on
