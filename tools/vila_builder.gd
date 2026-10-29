@@ -71,6 +71,7 @@ var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos
 var _wear: FastNoiseLite
 var _wet: FastNoiseLite
 var _carros_s := {}
+var _bar_spot := {}
 var _rio_ok := false
 var _rio_c := Vector3.ZERO
 var _rio_r := Vector3.RIGHT
@@ -598,6 +599,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_adornos())
 	root.add_child(_nichos())
 	root.add_child(_props_rua())
+	_tira_props_dentro_das_casas(root)
 	root.add_child(_coletaveis())
 	_bridge(root)
 	root.add_child(_church_plaza())
@@ -2408,6 +2410,28 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 
 
 ## Bueiros, barris, caixotes, bancos, carroça, varais e bandeirinhas.
+## Remove caixote/barril/escada que ficou com o corpo dentro de uma casa (a casa pode avançar um pouco sobre a calçada).
+func _tira_props_dentro_das_casas(root: Node3D) -> void:
+	var tirados := 0
+	for gname in ["Adornos", "Props"]:
+		var g := root.get_node_or_null(gname)
+		if g == null:
+			continue
+		for n in g.get_children():
+			if not (n is Node3D) or not n.has_meta("bb"):
+				continue
+			var bb: AABB = n.get_meta("bb")
+			var pos: Vector3 = (n as Node3D).position
+			var r := maxf(bb.size.x, bb.size.z) * 0.5 * (n as Node3D).scale.x
+			for o in _casas_postas:
+				var q: Vector3 = (o["xf"] as Transform3D).affine_inverse() * pos
+				if q.x > -r * 0.95 and q.x < float(o["depth"]) and absf(q.z) < float(o["w"]) * 0.5 + r * 0.5:
+					n.queue_free()
+					tirados += 1
+					break
+	print("[vila] props removidos por estarem dentro de casas: ", tirados)
+
+
 func _adornos() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Adornos"
@@ -2423,6 +2447,11 @@ func _adornos() -> Node3D:
 		var cs0: float = _s_sem_porta(float(cfg[1]), float(cfg[0]), 0.5, 3.4)      # o carro não pode ficar na frente de uma porta
 		_carros_s[int(cfg[0])] = cs0
 		_reservar(Route.pos(cs0) + Route.right(cs0) * float(cfg[1]) * (Route.width(cs0) * 0.5 - 1.25), 3.0)
+	# lugar do bar da TV (barril + TV + banquinhos): reservado antes dos barris e caixotes, para nada ficar dentro dele
+	_bar_spot = _spot_livre(-1.0, 148.5, 0.55, 1.4)
+	if _bar_spot.is_empty():
+		_bar_spot = _spot(-1.0, 148.5, 0.55)
+	_reservar(_bar_spot["pos"], 1.4)
 	# barris e caixotes junto às paredes
 	var count := 0
 	var tries := 0
@@ -2434,7 +2463,7 @@ func _adornos() -> Node3D:
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
 		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
 		var out := -Route.right(s) * sigma
-		var p := base + out * 0.14        # junto à parede, sem entrar nela: o meio da rua (corredor de 2,2 m) fica livre
+		var p := base + out * 0.22        # junto à parede, sem entrar nela: o meio da rua (corredor de 2,2 m) fica livre
 		if not _livre(p, 0.55):
 			continue
 		_reservar(p, 0.55)
@@ -2767,10 +2796,7 @@ func _props_rua() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Props"
 	# --- bar com a TV ligada na calçada do largo (as pessoas se juntavam para ver TV nos bares): barril, TV, banquinhos
-	var bar := _spot_livre(-1.0, 148.5, 0.55, 1.0)
-	if bar.is_empty():
-		bar = _spot(-1.0, 148.5, 0.55)
-	_reservar(bar["pos"], 1.0)
+	var bar: Dictionary = _bar_spot
 	var barril := _prop(root, "wine_barrel_01", bar["pos"], 0.0, 1.0)
 	_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
 	_tv(root, bar["pos"] + Vector3(0, 0.86, 0), _yaw_to(bar["out"]))
@@ -2823,7 +2849,9 @@ func _props_rua() -> Node3D:
 	bola.name = "BolaEsquecida"
 	# --- ferramentas e utilidades de 1961 encostadas nas paredes: escadas, machados, regadores, lousas de cardápio
 	for cfg in [[48.0, 1.0], [110.0, -1.0], [190.0, 1.0], [240.0, 1.0], [298.0, -1.0], [348.0, 1.0]]:
-		var sl := _spot(cfg[1], cfg[0], 0.9)
+		if Route.width(cfg[0]) < 4.6:        # rua estreita: a escada (0,8 m de fundo) invadiria o corredor de passagem
+			continue
+		var sl := _spot(cfg[1], cfg[0], 0.55)
 		if not _livre(sl["pos"], 0.7):
 			continue
 		_reservar(sl["pos"], 0.7)
@@ -2851,7 +2879,7 @@ func _props_rua() -> Node3D:
 		for e in ENTRADAS:
 			if e["id"] == id:
 				ent = e
-		var sl2 := _spot(ent["sigma"], float(_entradas_feitas[id]) - 1.4, 0.9)
+		var sl2 := _spot(ent["sigma"], float(_entradas_feitas[id]) - 1.4, 0.6)
 		if not _livre(sl2["pos"], 0.7):
 			continue
 		_reservar(sl2["pos"], 0.7)

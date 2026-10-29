@@ -25,7 +25,11 @@ func _init() -> void:
 					continue
 				var pa := str(sb.get_path()).replace("/root/Vila/", "")
 				var pb := str(o.get_path()).replace("/root/Vila/", "")
-				if pb.contains("Corpo") or pa.contains("Corpo") or pb.contains("Trecho_") or pb.contains("Terreno"):
+				if pb.contains("Trecho_") or pb.contains("Terreno"):
+					continue
+				var prop_a := pa.begins_with("Adornos/") or pa.begins_with("Props/") or pa.begins_with("Iluminacao/") or pa.begins_with("Realismo/")
+				var prop_b := pb.begins_with("Adornos/") or pb.begins_with("Props/") or pb.begins_with("Iluminacao/") or pb.begins_with("Realismo/")
+				if (pb.contains("Corpo") or pa.contains("Corpo")) and not (prop_a or prop_b):
 					continue
 				var k := pa + "  x  " + pb if pa < pb else pb + "  x  " + pa
 				if not pares.has(k):
