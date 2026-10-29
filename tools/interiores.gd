@@ -371,7 +371,7 @@ func _sala_padaria(g: Node3D) -> void:
 	_prateleira(0.35, 1.6, 1.4, 1.6, PI / 2.0)
 	for k in 5:
 		_bb.cylinder("pao", 0.1, 0.1, 0.18, Vector3(0.35, 1.7, 0.8 + k * 0.32), Vector3(0, 0, PI / 2.0), 7)
-	_mesa(3.0, 1.9, 1.4, 0.9, 0.9)
+	_mesa(3.5, 1.7, 1.4, 0.9, 0.9)
 	_saco(5.3, 0.7)
 	_saco(5.6, 1.2, 0.5)
 	_saco(5.2, 1.7)
@@ -660,7 +660,7 @@ func _sala_costureira(g: Node3D) -> void:
 	b._blocker(g, "ColManequim", Vector3(0.5, 1.6, 0.5), Vector3(5.2, 0.8, 3.8))
 	for k in 4:
 		_bb.cylinder(["pano_azul", "pano_rosa", "pano_cru", "listra_vermelha"][k], 0.1, 0.1, 0.8, Vector3(0.5, 0.1 + k * 0.2, 1.4 + k * 0.01), Vector3(PI / 2.0, 0, 0), 8)
-	_prop_c("GothicCabinet_01", 1.6, 4.35, PI, 0.9)
+	_prop_c("GothicCabinet_01", 1.25, 4.35, PI, 0.9)
 	_lamparina(3.0, 0.83, 3.1)
 	_janela("L", 2.0)
 	_nota(2.5, 0.88, 3.5, 17, "Ler a encomenda do vestido")

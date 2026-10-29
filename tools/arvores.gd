@@ -26,15 +26,23 @@ static func _material(nome: String) -> Material:
 			s.backlight_enabled = true
 			var c := Color(0.2, 0.4, 0.1)
 			match nome:
-				"folha_a": c = Color(0.10, 0.27, 0.07)
-				"folha_b": c = Color(0.17, 0.34, 0.09)
-				"folha_c": c = Color(0.25, 0.40, 0.11)
+				"folha_massa": c = Color(0.05, 0.14, 0.04)
+				"folha_a": c = Color(0.35, 0.62, 0.28)
+				"folha_b": c = Color(0.50, 0.78, 0.34)
+				"folha_c": c = Color(0.70, 0.92, 0.42)
 				"palma_folha": c = Color(0.16, 0.34, 0.10)
 				"banana_tronco": c = Color(0.30, 0.40, 0.16)
 				"banana_folha": c = Color(0.13, 0.32, 0.07)
 				"banana_folha2": c = Color(0.09, 0.25, 0.05)
 			s.albedo_color = c
-			s.backlight = c * 0.55
+			if nome in ["folha_a", "folha_b", "folha_c"]:      # folha real (Poly Haven, CC0) com recorte por alpha
+				s.albedo_texture = load("res://assets/models/poly/mato_b_diffuse.png")
+				s.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+				s.alpha_scissor_threshold = 0.5
+				s.vertex_color_use_as_albedo = false
+				s.backlight_enabled = false
+			else:
+				s.backlight = c * 0.55
 			m = s
 	_mats[nome] = m
 	return m

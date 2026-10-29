@@ -9,6 +9,7 @@ extends RefCounted
 ##   A fachada está no plano x = 0 e "olha" para -X.
 
 const SW := Route.SIDEWALK
+const RIO_DECLIVE := 0.12         # quanto o leito do riacho sobe por metro de distância da rua
 const SW_H := 0.12
 const MATS := "res://assets/materials/"
 const S_END := Route.S_END     # a partir daqui começa o adro da igreja
@@ -69,6 +70,12 @@ var _haunted := 0
 var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos)
 var _wear: FastNoiseLite
 var _wet: FastNoiseLite
+var _carros_s := {}
+var _rio_ok := false
+var _rio_c := Vector3.ZERO
+var _rio_r := Vector3.RIGHT
+var _rio_t := Vector3.FORWARD
+var _portas: Array[Vector3] = []             # chão em frente a cada porta de casa: nada de prop de rua aí
 var _hill_lights: Array[Transform3D] = []   # janelas acesas das casas distantes (viram pontos de luz)
 
 
@@ -324,8 +331,22 @@ func terrain_h(x: float, z: float) -> float:
 	rise = 130.0 * tanh(rise / 130.0)        # morros altos, mas sem paredões de 400 m nas bordas do terreno
 	var n := _noise_lo.get_noise_2d(x, z) * 16.0 + _noise_hi.get_noise_2d(x, z) * 3.0
 	# leito do riacho que passa sob a ponte (cruza a rua; some longe, nas encostas)
-	var carve := 3.6 * (1.0 - smoothstep(3.0, 6.8, absf(q.x - Route.BRIDGE_S))) * (1.0 - smoothstep(55.0, 85.0, q.y))
-	var h := base + rise + n * smoothstep(0.0, 25.0, t) - carve
+	var h := base + rise + n * smoothstep(0.0, 25.0, t)
+	# o riacho: vale em V que corta a encosta dos dois lados da ponte; o leito sobe aos poucos (a água desce das serras) e as margens
+	# alargam com a distância, então ele continua um riacho de verdade até longe, em vez de um tanque quadrado
+	if not _rio_ok:
+		_rio_c = Route.pos(Route.BRIDGE_S)
+		_rio_r = Route.right(Route.BRIDGE_S)
+		_rio_t = Route.tangent(Route.BRIDGE_S)
+		_rio_ok = true
+	var drv := Vector2(x - _rio_c.x, z - _rio_c.z)
+	var dw := absf(drv.x * _rio_t.x + drv.y * _rio_t.z)          # distância ao eixo do riacho (reta no mundo)
+	var tl := absf(drv.x * _rio_r.x + drv.y * _rio_r.z)          # distância ao longo dele a partir da ponte
+	# só escava perto da ponte ou longe de qualquer trecho da rua (a rua faz zigue-zague: não pode ser comida pelo vale)
+	var protege := maxf(1.0 - smoothstep(8.0, 14.0, absf(q.x - Route.BRIDGE_S)), smoothstep(10.0, 16.0, q.y - Route.width(q.x) * 0.5))
+	var kk := (1.0 - smoothstep(3.0, 6.8 + 0.22 * maxf(tl - 10.0, 0.0), dw)) * (1.0 - smoothstep(70.0, 100.0, tl)) * protege
+	var leito := _rio_c.y - 4.0 + RIO_DECLIVE * maxf(tl - 8.0, 0.0)
+	h = lerpf(h, minf(h, leito), kk)
 	# leito dos becos de atalho: o terreno desce/sobe até o piso da escada (senão cobriria os degraus)
 	for G in _pass_geo:
 		var A: Vector3 = G["A"]
@@ -781,16 +802,19 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	_n += 1
 	var xf: Transform3D = f["xf"]
 	xf.origin += xf.basis.x * jit
+	# em ladeira o chão na porta fica acima/abaixo do chão no centro do lote: sobe/desce a casa para a soleira ficar rente à calçada
+	# (antes a calçada cobria a parte de baixo da porta ou deixava a porta no ar)
+	var pd: Vector3 = xf * Vector3(-0.4, 0.0, float(casa.get_meta("door_z")))
+	xf.origin.y += clampf(Route.height(Route.nearest_s(pd)) + SW_H - pd.y, -2.2, 2.2)
 	casa.transform = xf
 	parent.add_child(casa)
-	_reservar(xf * Vector3(-1.0, 0.0, float(casa.get_meta("door_z"))), 1.2)
+	_reservar(xf * Vector3(-1.0, 0.0, float(casa.get_meta("door_z"))), 1.7)
+	_portas.append(xf * Vector3(-0.9, 0.0, float(casa.get_meta("door_z"))))
 	_decalques_fachada(casa, float(f["w"]) + 0.24, float(casa.get_meta("altura")))
 	var porta_a := casa.get_node_or_null("Entrada_%s" % _entrada_atual.get("id", "")) as Node3D
 	if porta_a != null:
 		# em ladeira o chão na porta fica acima/abaixo da origem do lote: o gatilho acompanha o chão real
-		var wp: Vector3 = xf * porta_a.position
-		var delta := Route.height(Route.nearest_s(wp)) + SW_H - xf.origin.y
-		porta_a.position.y = 1.3 + clampf(delta, -1.0, 1.0)
+		porta_a.position.y = 1.3
 
 
 ## true se a pegada (planta) da casa em `xf` com `depth` x `w` invade a de alguma casa já colocada.
@@ -928,9 +952,12 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
 	if arched:
 		b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
-	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + (1.25 if not arched else 1.15)))   # número da casa na parede
+	var dn := 1.25 if not arched else 1.15
+	if dz + dn > w / 2.0 - 0.2:
+		dn = -dn
+	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + dn))   # número da casa na parede (do lado em que há parede)
 	if not entrada.is_empty():
-		_porta_entrada(c, entrada, dz)
+		_porta_entrada(c, entrada, dz, w)
 
 	var bal_cols: Array[int] = []
 	if balcony and floors >= 2:
@@ -1013,7 +1040,7 @@ func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
 
 
 ## Porta que o jogador pode abrir (E): gatilho + lampião de parede aceso ao lado (marca as casas visitáveis).
-func _porta_entrada(c: Node3D, entrada: Dictionary, dz: float) -> void:
+func _porta_entrada(c: Node3D, entrada: Dictionary, dz: float, w_casa: float) -> void:
 	var a := Area3D.new()
 	a.name = "Entrada_%s" % entrada["id"]
 	a.position = Vector3(-0.85, 1.3, dz)
@@ -1029,7 +1056,8 @@ func _porta_entrada(c: Node3D, entrada: Dictionary, dz: float) -> void:
 	cs.shape = bs
 	a.add_child(cs)
 	c.add_child(a)
-	var lw := _lantern_wall(Vector3(0.0, 3.0, dz + 1.35), -PI / 2.0)
+	var lado := 1.0 if dz + 1.35 < w_casa * 0.5 - 0.35 else -1.0
+	var lw := _lantern_wall(Vector3(0.0, 3.0, dz + lado * 1.35), -PI / 2.0)
 	lw.name = "LampiaoDaPorta"
 	c.add_child(lw)
 
@@ -1245,6 +1273,11 @@ func _wall_ivy(parent: Node3D, w: float, height: float, x := -0.03) -> void:
 
 func _lot_quintal(parent: Node3D, f: Dictionary) -> void:
 	var w: float = f["w"]
+	# o muro ocupa a calçada de cara: nada de caixote/balde/cesto encostado (atravessava o muro)
+	var zz := -w / 2.0 + 0.6
+	while zz <= w / 2.0 - 0.5:
+		_reservar((f["xf"] as Transform3D) * Vector3(-0.4, 0.0, zz), 0.8)
+		zz += 1.1
 	var g := _group(parent, "Quintal_%02d" % _n, f["xf"])
 	_n += 1
 	var wall_h := _rng.randf_range(2.1, 2.6)
@@ -1279,6 +1312,11 @@ func _lot_quintal(parent: Node3D, f: Dictionary) -> void:
 
 func _lot_talude(parent: Node3D, f: Dictionary) -> void:
 	var w: float = f["w"]
+	# o muro ocupa a calçada de cara: nada de caixote/balde/cesto encostado (atravessava o muro)
+	var zz := -w / 2.0 + 0.6
+	while zz <= w / 2.0 - 0.5:
+		_reservar((f["xf"] as Transform3D) * Vector3(-0.4, 0.0, zz), 0.8)
+		zz += 1.1
 	var g := _group(parent, "Talude_%02d" % _n, f["xf"])
 	_n += 1
 	var ht := _rng.randf_range(3.0, 4.6)
@@ -1460,6 +1498,8 @@ func _lot_passagem(parent: Node3D, f: Dictionary, idx: int, ini: bool) -> void:
 func _lot_chafariz(parent: Node3D, f: Dictionary) -> void:
 	var w: float = f["w"]
 	var g := _group(parent, "Chafariz", f["xf"])
+	for zz: float in [-2.4, 0.0, 2.4]:
+		_reservar((f["xf"] as Transform3D) * Vector3(-1.2, 0.0, zz), 1.6)        # tanque e bica: nada de caixote encostado
 	var b := _batch()
 	# frente do paredão de pedra com pilastras, cornija, frontão e cruz
 	b.box("muro", Vector3(1.0, 4.6, w), Vector3(0.5, 0.7, 0))
@@ -1638,12 +1678,22 @@ func _lamps() -> Node3D:
 	while s < S_END + 24.0:
 		var sigma := -1.0 if i % 2 == 0 else 1.0
 		var out := -Route.right(s) * sigma     # da fachada para a rua
-		var wall_pt := facade(sigma, s) + Vector3(0, SW_H + 2.75, 0)
-		var lamp := _lantern_wall(wall_pt, atan2(out.x, out.z))
-		lamp.name = "LampiaoParede_%02d" % i
-		root.add_child(lamp)
-		i += 1
-		s += _rng.randf_range(10.0, 13.5)
+		# só prende o lampião onde há parede de casa de verdade (vão de beco, quintal, ponte e talude deixavam o lampião no ar)
+		var sl := s
+		var achou := false
+		for k in 12:
+			var wp0 := facade(sigma, sl)
+			if _parede_de_casa(wp0, 0.7):
+				achou = true
+				break
+			sl += 0.9
+		if achou:
+			var wall_pt := facade(sigma, sl) + Vector3(0, SW_H + 2.75, 0)
+			var lamp := _lantern_wall(wall_pt, atan2(out.x, out.z))
+			lamp.name = "LampiaoParede_%02d" % i
+			root.add_child(lamp)
+			i += 1
+		s = sl + _rng.randf_range(10.0, 13.5)
 	# postes nas partes largas (largo, adro)
 	for ps in [150.0, 164.0, S_END + 10.0, S_END + 26.0, S_END + 42.0]:
 		for sigma: float in [-1.0, 1.0]:
@@ -1651,6 +1701,7 @@ func _lamps() -> Node3D:
 			var p := make_poste()
 			p.name = "Poste_%d_%d" % [int(ps), int(sigma)]
 			p.position = Route.pos(ps) + Route.right(ps) * sigma * (w * 0.5 + SW * 0.5) + Vector3(0, SW_H, 0)
+			_reservar(p.position, 0.9)
 			root.add_child(p)
 	root.add_child(_string_lights())
 	return root
@@ -2210,25 +2261,94 @@ func _bridge(root: Node3D) -> void:
 	var slope := (Route.height(s + 1.0) - Route.height(s - 1.0)) / 2.0
 	var laje := _box(g, "Laje", Vector3(width + 0.4, 1.0, Route.BRIDGE_HALF * 2.0 + 0.6), Vector3(0, -0.85, 0), "muro")
 	laje.rotation.x = atan(slope)
-	# riacho: plano d'água com shader (ondulação e reflexo), cruzando a rua
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(150.0, 5.2)
-	var water := _mesh_node(g, "Riacho", plane, Vector3(0, -3.0, 0))
+	# riacho: faixa d'água com shader (correnteza, espuma nas margens e nas pedras, reflexo do céu), cruzando a rua
+	var xf_g := Transform3D(Basis(r, Vector3.UP, r.cross(Vector3.UP)), c)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var linha: Array[Vector3] = []      # eixo do riacho: reta no mundo, passando sob a ponte
+	var ts: Array[float] = []
+	var t := -96.0
+	while t <= 96.0:
+		linha.append(c + r * t)
+		ts.append(t)
+		t += 4.0
+	var along := 0.0
+	var hw := 4.6                 # meia-largura da faixa d'água (a margem do vale corta o excesso)
+	var vs: Array[Vector3] = []
+	var uvs: Array[Vector2] = []
+	for i in linha.size():
+		var tg: Vector3 = (linha[mini(i + 1, linha.size() - 1)] - linha[maxi(i - 1, 0)])
+		tg.y = 0.0
+		tg = tg.normalized()
+		var lat := Vector3(-tg.z, 0, tg.x)
+		var tt := absf(ts[i])
+		var wy := c.y - 3.0 + RIO_DECLIVE * maxf(tt - 8.0, 0.0)
+		if i > 0:
+			along += linha[i].distance_to(linha[i - 1])
+		for sd: float in [-1.0, 1.0]:
+			var wp := linha[i] + lat * hw * sd
+			vs.append(xf_g.affine_inverse() * Vector3(wp.x, wy, wp.z))
+			uvs.append(Vector2(along, hw * sd))
+	for i in linha.size() - 1:
+		var a0 := i * 2
+		for k in [0, 2, 1, 1, 2, 3]:
+			st.set_uv(uvs[a0 + k])
+			st.set_normal(Vector3.UP)
+			st.add_vertex(vs[a0 + k])
+	var water := MeshInstance3D.new()
+	water.name = "Riacho"
+	water.mesh = st.commit()
+	g.add_child(water)
 	water.material_override = mat("agua")
-	var b := _batch()
-	for k in 14:
-		var u := _rng.randf_range(-30.0, 30.0)
-		if absf(u) < width * 0.5 + 0.5:
+	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# pedras do leito e das margens (malha facetada de verdade, não esferas), metade dentro d'água
+	var det := Detalhes.new()
+	det.b = self
+	var meshes: Array[Mesh] = []
+	for v in 3:
+		meshes.append(det._malha_pedra(40 + v * 11, 0.55 + 0.1 * v))
+	var pedras := Node3D.new()
+	pedras.name = "PedrasDoLeito"
+	g.add_child(pedras)
+	var np := 0
+	var tries := 0
+	while np < 46 and tries < 400:
+		tries += 1
+		var u := _rng.randf_range(-55.0, 55.0)
+		if absf(u) < width * 0.5 + 0.8:
 			continue
-		b.sphere("pedra_chao", _rng.randf_range(0.5, 1.3), Vector3(u, -3.5, _rng.randf_range(-2.0, 2.0)), 6, 4)
-	_mesh_node(g, "PedrasDoLeito", b.commit())
-	var keys := ["samambaia", "arbusto", "arvore_pequena", "bananeira", "arvore_1"]
-	for k in 22:
-		var u := _rng.randf_range(8.0, 46.0) * (1.0 if k % 2 == 0 else -1.0)
-		var zo := _rng.randf_range(-5.5, 5.5)
-		var wp := c + r * u - Route.tangent(s) * zo
-		var y := terrain_h(wp.x, wp.z)
-		_plant(g, keys[_rng.randi() % keys.size()], Vector3(u, y - c.y - 0.2, zo), _rng.randf() * TAU, _rng.randf_range(0.9, 1.6))
+		var zc := _rng.randf_range(-3.3, 3.3)
+		var wpr := c + r * u - Route.tangent(s) * zc
+		var hy := terrain_h(wpr.x, wpr.z) - c.y
+		if hy > -2.0 or hy < -4.6:           # só onde o leito está perto da linha d'água
+			continue
+		var sz := _rng.randf_range(0.3, 1.1)
+		var mi := MeshInstance3D.new()
+		mi.mesh = meshes[_rng.randi() % 3]
+		mi.name = "Pedra_%02d" % np
+		mi.transform = Transform3D(Basis.from_euler(Vector3(_rng.randf_range(-0.3, 0.3), _rng.randf() * TAU, _rng.randf_range(-0.3, 0.3))).scaled(Vector3(sz, sz, sz * _rng.randf_range(0.8, 1.3))), Vector3(u, hy + sz * 0.1, zc))
+		mi.visibility_range_end = 140.0
+		pedras.add_child(mi)
+		np += 1
+	# vegetação de beira de rio: capim, samambaia, taboas e mato real junto à água
+	var beira := ["capim", "samambaia", "arbusto", "capim", "samambaia"]
+	var nv := 0
+	tries = 0
+	while nv < 70 and tries < 900:
+		tries += 1
+		var u2 := _rng.randf_range(-48.0, 48.0)
+		if absf(u2) < width * 0.5 + 1.2:
+			continue
+		var zc2 := _rng.randf_range(-6.0, 6.0)
+		var wp2 := c + r * u2 - Route.tangent(s) * zc2
+		var h2 := terrain_h(wp2.x, wp2.z) - c.y
+		if h2 < -3.05 or h2 > -1.4:          # da linha d'água até ~1,6 m acima
+			continue
+		var kv: String = beira[_rng.randi() % beira.size()]
+		if absf(zc2) > 4.3 and h2 > -2.4 and _rng.randf() < 0.22:
+			kv = "bananeira" if _rng.randf() < 0.5 else "arvore_pequena"
+		_plant(g, kv, Vector3(u2, h2 - 0.08, zc2), _rng.randf() * TAU, _rng.randf_range(0.9, 1.7))
+		nv += 1
 
 
 # ------------------------------------------------------------------ adornos de rua e nichos
@@ -2300,7 +2420,8 @@ func _adornos() -> Node3D:
 			b.box("cantaria", Vector3(0.5, 0.02, 0.03), p + Vector3(0, 0.05, 0), Vector3(0, k * PI / 4.0, 0))
 	# lugares dos carros cobertos (colocados depois, em _props_rua): nada se sobrepõe a eles
 	for cfg in [[153.0, -1.0], [S_END + 22.0, 1.0]]:
-		var cs0: float = cfg[0]
+		var cs0: float = _s_sem_porta(float(cfg[1]), float(cfg[0]), 0.5, 3.4)      # o carro não pode ficar na frente de uma porta
+		_carros_s[int(cfg[0])] = cs0
 		_reservar(Route.pos(cs0) + Route.right(cs0) * float(cfg[1]) * (Route.width(cs0) * 0.5 - 1.25), 3.0)
 	# barris e caixotes junto às paredes
 	var count := 0
@@ -2313,7 +2434,7 @@ func _adornos() -> Node3D:
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
 		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
 		var out := -Route.right(s) * sigma
-		var p := base + out * 0.05        # encostado na parede: o meio da rua (corredor de 2,2 m) fica livre
+		var p := base + out * 0.14        # junto à parede, sem entrar nela: o meio da rua (corredor de 2,2 m) fica livre
 		if not _livre(p, 0.55):
 			continue
 		_reservar(p, 0.55)
@@ -2595,7 +2716,44 @@ func _prop_collision(p: Node3D, kind: String, size: Vector3, off := Vector3.ZERO
 
 
 ## Ponto na calçada a `d` m da fachada (para a rua) e a direção "para fora" e ao longo da rua.
+## `p` (na fachada) cai sobre a parede de alguma casa, com folga `folga` das quinas?
+func _parede_de_casa(p: Vector3, folga: float) -> bool:
+	for o in _casas_postas:
+		var xf: Transform3D = o["xf"]
+		var q: Vector3 = xf.affine_inverse() * p
+		if absf(q.x) < 0.45 and absf(q.z) < float(o["w"]) * 0.5 - folga:
+			return true
+	return false
+
+
+## Há porta de casa a menos de `r` m de `p` (no plano)?
+func _perto_de_porta(p: Vector3, r: float) -> bool:
+	for q in _portas:
+		if Vector2(p.x - q.x, p.z - q.z).length() < r:
+			return true
+	return false
+
+
+## `s` deslocado ao longo da rua até o ponto não ficar na frente de uma porta.
+func _s_sem_porta(sigma: float, s: float, d: float, r := 1.9) -> float:
+	for off: float in [0.0, 1.8, -1.8, 3.6, -3.6, 5.4, -5.4]:
+		var p := facade(sigma, s + off) - Route.right(s + off) * sigma * d
+		if not _perto_de_porta(p, r):
+			return s + off
+	return s
+
+
+## Como _spot, mas só devolve um lugar que esteja livre (raio `r`): tenta deslocar ao longo da rua; vazio se não houver.
+func _spot_livre(sigma: float, s: float, d: float, r: float) -> Dictionary:
+	for off: float in [0.0, 1.1, -1.1, 2.2, -2.2, 3.3, -3.3, 4.4, -4.4, 5.5, -5.5, 6.6, -6.6, 7.7, -7.7]:
+		var sp := _spot(sigma, s + off, d)
+		if _livre(sp["pos"], r):
+			return sp
+	return {}
+
+
 func _spot(sigma: float, s: float, d: float) -> Dictionary:
+	s = _s_sem_porta(sigma, s, d)
 	var out := -Route.right(s) * sigma
 	return {"pos": facade(sigma, s) + out * d + Vector3(0, SW_H, 0), "out": out, "tan": Route.tangent(s)}
 
@@ -2609,8 +2767,10 @@ func _props_rua() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Props"
 	# --- bar com a TV ligada na calçada do largo (as pessoas se juntavam para ver TV nos bares): barril, TV, banquinhos
-	var bar := _spot(-1.0, 148.5, 0.55)
-	_reservar(bar["pos"], 0.6)
+	var bar := _spot_livre(-1.0, 148.5, 0.55, 1.0)
+	if bar.is_empty():
+		bar = _spot(-1.0, 148.5, 0.55)
+	_reservar(bar["pos"], 1.0)
 	var barril := _prop(root, "wine_barrel_01", bar["pos"], 0.0, 1.0)
 	_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
 	_tv(root, bar["pos"] + Vector3(0, 0.86, 0), _yaw_to(bar["out"]))
@@ -2623,8 +2783,8 @@ func _props_rua() -> Node3D:
 		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
 	# --- carros cobertos com lona, estacionados na borda do largo e do adro
 	for cfg in [[153.0, -1.0], [S_END + 22.0, 1.0]]:
-		var s: float = cfg[0]
 		var sg: float = cfg[1]
+		var s: float = float(_carros_s.get(int(cfg[0]), cfg[0]))
 		var c := Route.pos(s) + Route.right(s) * sg * (Route.width(s) * 0.5 - 1.25)
 		var carro := _prop(root, "covered_car", c, _yaw_to(Route.tangent(s)) + (0.0 if sg < 0 else PI), 1.0)
 		carro.position.y = c.y + 0.02
@@ -2644,8 +2804,8 @@ func _props_rua() -> Node3D:
 			var lan := _prop(root, "Lantern_01", sp["pos"] + Vector3(0, 0.44, 0), _rng.randf() * TAU, 1.0)
 			_lamp_light(lan, Vector3(0, 0.13, 0), 0.9).omni_range = 5.0
 			_halo(lan, Vector3(0, 0.13, 0), 0.9, "halo_vela")
-	for cfg in [[64.0, 1.0], [122.0, -1.0], [244.0, -1.0], [164.0, 1.0], [310.0, -1.0]]:
-		var sp := _spot(cfg[1], cfg[0], 0.45)
+	for cfg in [[64.0, 1.0], [122.0, -1.0], [244.0, -1.0], [168.0, 1.0], [310.0, -1.0]]:
+		var sp := _spot(cfg[1], cfg[0], 0.55)
 		if not _livre(sp["pos"], 0.4):
 			continue
 		_reservar(sp["pos"], 0.4)
@@ -2653,14 +2813,17 @@ func _props_rua() -> Node3D:
 		_prop_collision(balde, "cil", Vector3(0.38, 0.3, 0.38), Vector3(0, 0.15, 0))
 	# --- ferro-velho de 1961: aros de roda encostados na parede (a ferraria) e uma bola de futebol esquecida
 	for cfg in [[141.0, -1.0], [141.8, -1.0], [282.0, 1.0]]:
-		var sp := _spot(cfg[1], cfg[0], 0.22)
+		var sp := _spot_livre(cfg[1], cfg[0], 0.3, 0.55)
+		if sp.is_empty():
+			continue
+		_reservar(sp["pos"], 0.55)
 		var aro := _prop(root, "rusted_wheel_rim_02", sp["pos"], _yaw_to(sp["out"]) + _rng.randf_range(-0.25, 0.25), 1.0)
 		aro.rotation.x = -0.20      # inclinado, encostado na parede
 	var bola := _prop(root, "football", _spot(1.0, 157.0, 2.6)["pos"], _rng.randf() * TAU, 1.0)
 	bola.name = "BolaEsquecida"
 	# --- ferramentas e utilidades de 1961 encostadas nas paredes: escadas, machados, regadores, lousas de cardápio
 	for cfg in [[48.0, 1.0], [110.0, -1.0], [190.0, 1.0], [240.0, 1.0], [298.0, -1.0], [348.0, 1.0]]:
-		var sl := _spot(cfg[1], cfg[0], 0.55)
+		var sl := _spot(cfg[1], cfg[0], 0.9)
 		if not _livre(sl["pos"], 0.7):
 			continue
 		_reservar(sl["pos"], 0.7)

@@ -70,6 +70,29 @@ def leaf(bm, pos, d, up, L, W, mat):
             pass
 
 
+def card(bm, uvl, pos, size, rng, mat):
+    """Folha de verdade: cartão com a textura de folha (alpha) virado para uma direção qualquer, levemente curvado."""
+    nrm = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.2, 1.0))).normalized()
+    s = nrm.cross(Vector((0, 0, 1)))
+    if s.length < 0.1:
+        s = Vector((1, 0, 0))
+    s = s.normalized()
+    u = nrm.cross(s).normalized()
+    ang = rng.uniform(0, math.tau)
+    s, u = s * math.cos(ang) + u * math.sin(ang), u * math.cos(ang) - s * math.sin(ang)
+    h = size * 0.5
+    vs = [bm.verts.new(pos + s * (-h) + u * (-h) + nrm * 0.0), bm.verts.new(pos + s * h + u * (-h) + nrm * size * 0.06),
+          bm.verts.new(pos + s * h + u * h), bm.verts.new(pos + s * (-h) + u * h + nrm * size * 0.06)]
+    try:
+        f = bm.faces.new(vs)
+    except ValueError:
+        return
+    f.material_index = mat
+    f.smooth = True
+    for l, uv in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        l[uvl].uv = uv
+
+
 def lump(bm, c, rad, rng, mat, sub=1):
     """Tufo 3D de folhagem: icosfera achatada e deformada (sub=1: 80 faces)."""
     g = bmesh.ops.create_icosphere(bm, subdivisions=sub, radius=rad)
@@ -123,14 +146,16 @@ class Arv:
         rng = self.rng
         for tip, d in self.tips:
             if self.lod == 0:
-                # miolo de folhagem (tufo 3D) + folhas individuais saindo dele
-                lump(self.bm, tip + Vector((0, 0, 0.2)), self.crown * 0.24, rng, rng.choice(cores), 1)
-                for _ in range(self.lpt):
-                    o = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.4, 1.0))).normalized() * rng.uniform(self.crown * 0.12, self.crown * 0.34)
-                    dd = o.normalized() + Vector((rng.uniform(-0.4, 0.4), rng.uniform(-0.4, 0.4), 0.1))
-                    leaf(self.bm, tip + o + Vector((0, 0, 0.2)), dd, Vector((0, 0, 1)), self.leaf_len * rng.uniform(0.8, 1.25), self.leaf_len * 0.4, rng.choice(cores))
+                # miolo escuro (enche o vão entre as folhas) + dezenas de folhas reais (cartões com textura de folha)
+                lump(self.bm, tip + Vector((0, 0, 0.2)), self.crown * 0.10, rng, 4, 1)
+                for _ in range(self.lpt * 5):
+                    o = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.5, 1.0))).normalized() * rng.uniform(self.crown * 0.05, self.crown * 0.38)
+                    card(self.bm, self.uv, tip + o + Vector((0, 0, 0.2)), self.leaf_len * rng.uniform(0.75, 1.15), rng, rng.choice(cores))
             else:
-                lump(self.bm, tip + Vector((0, 0, 0.25)), self.crown * 0.34, rng, rng.choice(cores), 1)
+                lump(self.bm, tip + Vector((0, 0, 0.25)), self.crown * 0.22, rng, 4, 1)
+                for _ in range(9):
+                    o = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.2, 1.0))).normalized() * self.crown * 0.3
+                    card(self.bm, self.uv, tip + o + Vector((0, 0, 0.25)), self.leaf_len * 1.5, rng, rng.choice(cores))
 
     def pronto(self, nome):
         me = bpy.data.meshes.new(nome)
@@ -273,7 +298,7 @@ def bananeira(nome, lod):
     return ob
 
 
-MATS = {"casca": (0.35, 0.28, 0.22), "folha_a": (0.12, 0.30, 0.08), "folha_b": (0.20, 0.38, 0.10), "folha_c": (0.28, 0.42, 0.12),
+MATS = {"casca": (0.35, 0.28, 0.22), "folha_a": (0.12, 0.30, 0.08), "folha_b": (0.20, 0.38, 0.10), "folha_c": (0.28, 0.42, 0.12), "folha_massa": (0.05, 0.14, 0.04),
         "palma_tronco": (0.55, 0.52, 0.48), "palma_folha": (0.16, 0.34, 0.10), "banana_tronco": (0.45, 0.55, 0.25), "banana_folha": (0.25, 0.48, 0.12), "banana_folha2": (0.17, 0.38, 0.09)}
 
 
@@ -290,8 +315,8 @@ specs = [("arvore_a", 11, 6.2, 3.2, 5, 3, 0.75, 22), ("arvore_b", 23, 5.0, 2.8, 
          ("arvore_pequena", 41, 2.4, 1.4, 4, 2, 0.4, 14)]
 for nome, seed, h, crown, bn, dep, ll, lpt in specs:
     for lod in (0, 1):
-        ob = arvore("%s_L%d" % (nome, lod), seed, h, crown, bn, dep, ll, lpt, lod, 1.7)
-        mats(ob, ["casca", "folha_a", "folha_b", "folha_c"])
+        ob = arvore("%s_L%d" % (nome, lod), seed, h, crown, bn, dep, ll, lpt, lod, 1.3)
+        mats(ob, ["casca", "folha_a", "folha_b", "folha_c", "folha_massa"])
         objs.append(ob)
 for lod in (0, 1):
     ob = palmeira("palmeira_L%d" % lod, lod)

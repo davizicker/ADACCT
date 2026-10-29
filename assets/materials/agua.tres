@@ -1,10 +1,16 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/shaders/agua.gdshader" id="1_7u7bd"]
+[ext_resource type="Shader" path="res://assets/shaders/agua.gdshader" id="1_kkw1l"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="2_ck5mj"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_7u7bd")
-shader_parameter/cor = Color(0.015, 0.05, 0.07, 0.88)
-shader_parameter/velocidade = 0.35
-shader_parameter/ondulacao = 0.35
+shader = ExtResource("1_kkw1l")
+shader_parameter/ruido = ExtResource("2_ck5mj")
+shader_parameter/cor_rasa = Color(0.1, 0.2, 0.18, 1)
+shader_parameter/cor_funda = Color(0.025, 0.07, 0.1, 1)
+shader_parameter/cor_ceu = Color(0.16, 0.24, 0.4, 1)
+shader_parameter/cor_espuma = Color(0.62, 0.68, 0.7, 1)
+shader_parameter/velocidade = 0.9
+shader_parameter/ondulacao = 0.5
+shader_parameter/meia_largura = 3.7

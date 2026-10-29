@@ -326,6 +326,7 @@ func _materials() -> void:
 	ResourceSaver.save(fogo, MATS + "fogo.tres")
 	var agua := ShaderMaterial.new()
 	agua.shader = load("res://assets/shaders/agua.gdshader")
+	agua.set_shader_parameter("ruido", _tex("ruido_mistura.png"))
 	ResourceSaver.save(agua, MATS + "agua.tres")
 	_flat("janela_escura", Color(0.015, 0.02, 0.03), 0.15)
 	_flat("janela_acesa", Color(1.0, 0.62, 0.25), 0.5, 0.0, 0.9)
