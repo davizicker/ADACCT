@@ -857,21 +857,23 @@ func _casa_penetra(xf: Transform3D, depth: float, w: float) -> bool:
 
 
 func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
+	# só conta SOBREPOSIÇÃO de verdade (pontos bem dentro da outra caixa): as casas vizinhas se encostam de lado de propósito
+	# (+0,24 m de largura) e antes isso encurtava quase todas as casas para 2,4 m de fundo (finas como papelão vistas dos becos)
 	for o in _casas_postas:
 		var oxf: Transform3D = o["xf"]
 		if oxf.origin.distance_to(xf.origin) > depth + float(o["depth"]) + w + float(o["w"]):
 			continue
 		for ix in 6:
-			for iz in 4:
-				var p: Vector3 = xf * Vector3(0.25 + (depth - 0.5) * ix / 5.0, 0.0, -w / 2.0 + 0.15 + (w - 0.3) * iz / 3.0)
+			for iz in 5:
+				var p: Vector3 = xf * Vector3(0.5 + (depth - 1.0) * ix / 5.0, 0.0, -w / 2.0 + 0.7 + (w - 1.4) * iz / 4.0)
 				var q: Vector3 = oxf.affine_inverse() * p
-				if q.x > -0.15 and q.x < float(o["depth"]) + 0.15 and absf(q.z) < float(o["w"]) / 2.0 + 0.15:
+				if q.x > 0.15 and q.x < float(o["depth"]) - 0.15 and absf(q.z) < float(o["w"]) / 2.0 - 0.3:
 					return true
 		for ix in 6:
-			for iz in 4:
-				var p2: Vector3 = oxf * Vector3(0.25 + (float(o["depth"]) - 0.5) * ix / 5.0, 0.0, -float(o["w"]) / 2.0 + 0.15 + (float(o["w"]) - 0.3) * iz / 3.0)
+			for iz in 5:
+				var p2: Vector3 = oxf * Vector3(0.5 + (float(o["depth"]) - 1.0) * ix / 5.0, 0.0, -float(o["w"]) / 2.0 + 0.7 + (float(o["w"]) - 1.4) * iz / 4.0)
 				var q2: Vector3 = xf.affine_inverse() * p2
-				if q2.x > -0.15 and q2.x < depth + 0.15 and absf(q2.z) < w / 2.0 + 0.15:
+				if q2.x > 0.15 and q2.x < depth - 0.15 and absf(q2.z) < w / 2.0 - 0.3:
 					return true
 	return false
 

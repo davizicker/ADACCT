@@ -24,6 +24,8 @@ func _init() -> void:
 	cam.fov = float(a[7]) if a.size() > 7 else 60.0
 	cam.far = 1500.0
 	cam.make_current()
+	if a.size() > 9 and a[9] == "sem_oclusao":
+		root.use_occlusion_culling = false
 	p.global_position = cam.global_position + Vector3(0, 300, 0)      # tira o jogador (e o braço) da foto
 	if a.size() > 8 and a[8] == "dia":
 		var amb := main.get_node("Vila").get_node_or_null("Ambiente") as WorldEnvironment
@@ -34,6 +36,13 @@ func _init() -> void:
 			amb.environment.ssao_enabled = false
 			amb.environment.adjustment_enabled = true
 			amb.environment.adjustment_brightness = 1.6
+	if a.size() > 10:
+		var alvo := main.get_node_or_null("Vila/Casas/" + str(a[10]))
+		if alvo != null:
+			for fil in str(a[11] if a.size() > 11 else "Corpo").split(","):
+				var nn := alvo.get_node_or_null(fil) as Node3D
+				if nn != null:
+					nn.visible = false
 	for i in 10:
 		await process_frame
 	root.get_viewport().get_texture().get_image().save_png(a[6])
