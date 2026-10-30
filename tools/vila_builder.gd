@@ -942,6 +942,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		if comp > 0.05:
 			b.box("muro", Vector3(0.3, 5.1, comp), Vector3(-0.1, -1.45, (float(tr[0]) + float(tr[1])) * 0.5))
 	b.box("muro", Vector3(0.3, 4.0, vao * 2.0), Vector3(-0.1, -2.0, dz))      # sob a soleira: só abaixo do piso da porta
+	var pb := _batch()          # a porta é uma malha própria (nó "Porta"): antes ficava misturada às molduras do lote e sumia em algumas casas
 	# porta com moldura de cantaria; em arco nos sobrados "arqueados"
 	var arched := (not simple) and _rng.randf() < 0.5
 	# a porta nunca tem a cor da parede: tons claros/ocre viram madeira escura, para ela se destacar da fachada
@@ -952,22 +953,24 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		var dr := 0.72
 		var dh := 3.0
 		for sz: float in [-1.0, 1.0]:
-			b.box("cantaria", Vector3(0.2, dh - dr + 0.1, 0.22), Vector3(-0.08, (dh - dr) / 2.0, dz + sz * (dr + 0.11)))
-		b.arch("cantaria", Vector3(-0.08, dh - dr, dz), dr + 0.11, 0.22, 0.2, 9)
-		b.box(wood_porta, Vector3(0.08, dh - dr, dr * 2.0), Vector3(-0.18, (dh - dr) / 2.0, dz))
-		b.half_disc(wood_porta, Vector3(-0.225, dh - dr, dz), dr)
-		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz - 0.34))
-		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz + 0.34))
-		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
-		b.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
+			pb.box("cantaria", Vector3(0.2, dh - dr + 0.1, 0.22), Vector3(-0.08, (dh - dr) / 2.0, dz + sz * (dr + 0.11)))
+		pb.arch("cantaria", Vector3(-0.08, dh - dr, dz), dr + 0.11, 0.22, 0.2, 9)
+		pb.box(wood_porta, Vector3(0.08, dh - dr, dr * 2.0), Vector3(-0.18, (dh - dr) / 2.0, dz))
+		pb.half_disc(wood_porta, Vector3(-0.225, dh - dr, dz), dr)
+		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz - 0.34))
+		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz + 0.34))
+		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
+		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
 	else:
-		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
+		pb.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
 	if arched:
-		b.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
+		pb.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
 	var dn := 1.25 if not arched else 1.15
 	if dz + dn > w / 2.0 - 0.2:
 		dn = -dn
-	b.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + dn))   # número da casa na parede (do lado em que há parede)
+	pb.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + dn))   # número da casa na parede (do lado em que há parede)
+	var porta_no := _mesh_node(c, "Porta", pb.commit())
+	porta_no.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if not entrada.is_empty():
 		_porta_entrada(c, entrada, dz, w)
 
