@@ -128,7 +128,7 @@ _surfaces = [{
 "vertex_data": PackedByteArray("XI+ivylcP0BmZj5AXI+iv83MXEBmZj5AXI+iv83MXECamUFAXI+ivylcP0BmZj5AXI+iv83MXECamUFAXI+ivylcP0CamUFApHC9vilcP0BmZj5ApHC9vs3MXECamUFApHC9vs3MXEBmZj5ApHC9vilcP0BmZj5ApHC9vilcP0CamUFApHC9vs3MXECamUFAXI+ivylcP0BmZj5AXI+ivylcP0CamUFApHC9vilcP0CamUFAXI+ivylcP0BmZj5ApHC9vilcP0CamUFApHC9vilcP0BmZj5AXI+iv83MXEBmZj5ApHC9vs3MXECamUFAXI+iv83MXECamUFAXI+iv83MXEBmZj5ApHC9vs3MXEBmZj5ApHC9vs3MXECamUFAXI+ivylcP0BmZj5ApHC9vilcP0BmZj5ApHC9vs3MXEBmZj5AXI+ivylcP0BmZj5ApHC9vs3MXEBmZj5AXI+iv83MXEBmZj5AXI+ivylcP0CamUFApHC9vs3MXECamUFApHC9vilcP0CamUFAXI+ivylcP0CamUFAXI+iv83MXECamUFApHC9vs3MXECamUFAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//3///wAA/7//f///AAD/v/9///8AAP+//3///wAA/7//f///AAD/v/9///8AAP+///////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA")
 }]
 
-[node name="Casa" type="Node3D" unique_id=1121933354]
+[node name="Casa" type="Node3D" unique_id=1594464949]
 metadata/door_z = 0.0
 metadata/altura = 7.4
 metadata/janelas = [{
@@ -146,24 +146,24 @@ metadata/janelas = [{
 }]
 metadata/plantas_janela = []
 
-[node name="Corpo" type="MeshInstance3D" parent="." unique_id=199448798]
+[node name="Corpo" type="MeshInstance3D" parent="." unique_id=1700728931]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.7, 0)
 material_override = ExtResource("1_g3anh")
 mesh = SubResource("BoxMesh_mlu1a")
 
-[node name="Colisao" type="StaticBody3D" parent="Corpo" unique_id=1670241145]
+[node name="Colisao" type="StaticBody3D" parent="Corpo" unique_id=42908390]
 
-[node name="@CollisionShape3D@694" type="CollisionShape3D" parent="Corpo/Colisao" unique_id=48933002]
+[node name="@CollisionShape3D@694" type="CollisionShape3D" parent="Corpo/Colisao" unique_id=444548142]
 shape = SubResource("BoxShape3D_cgvlm")
 
-[node name="Oclusor" type="OccluderInstance3D" parent="." unique_id=191964339]
+[node name="Oclusor" type="OccluderInstance3D" parent="." unique_id=1408043315]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.7, 0)
 occluder = SubResource("BoxOccluder3D_k26xf")
 
-[node name="Telhado" type="MeshInstance3D" parent="." unique_id=651310572]
+[node name="Telhado" type="MeshInstance3D" parent="." unique_id=2132597473]
 mesh = SubResource("ArrayMesh_41oo6")
 
-[node name="Texto" type="Label3D" parent="." unique_id=897955481]
+[node name="Texto" type="Label3D" parent="." unique_id=1601059276]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.82, 3.22, 3.032)
 pixel_size = 0.002016129
 shaded = true
@@ -176,7 +176,7 @@ font = SubResource("SystemFont_aiuw1")
 font_size = 96
 outline_size = 14
 
-[node name="@Label3D@695" type="Label3D" parent="." unique_id=1525454340]
+[node name="@Label3D@695" type="Label3D" parent="." unique_id=652720289]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.82, 3.22, 2.968)
 pixel_size = 0.002016129
 shaded = true
@@ -189,6 +189,6 @@ font = SubResource("SystemFont_aiuw1")
 font_size = 96
 outline_size = 14
 
-[node name="Detalhes" type="MeshInstance3D" parent="." unique_id=1008657879]
+[node name="Detalhes" type="MeshInstance3D" parent="." unique_id=753775468]
 cast_shadow = 0
 mesh = SubResource("ArrayMesh_o42bb")

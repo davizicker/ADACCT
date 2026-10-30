@@ -788,11 +788,13 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		_haunted += 1
 	# +0,24 m de largura: as casas se encostam por dentro e não abrem frestas na parte de fora das curvas
 	# casas vizinhas a um beco ficam rasas: a curva gira a caixa da casa e ela invadiria o vão da escada
+	# só a casa logo ANTES de um beco (ainda não sabe onde ele está) fica mais rasa; as seguintes encurtam sozinhas contra o beco já posto
 	var near_alley := false
 	for al in ALLEYS:
-		if absf(float(f["sm"]) - float(al[0])) < 15.0:
+		var ahead := float(al[0]) - float(f["sm"])
+		if ahead > -3.0 and ahead < 9.0:
 			near_alley = true
-	var depth := _rng.randf_range(3.4, 4.4) if near_alley else _rng.randf_range(9.0, 12.0)
+	var depth := _rng.randf_range(5.6, 6.8) if near_alley else _rng.randf_range(10.0, 13.0)
 	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
 	var xf0: Transform3D = f["xf"]
 	xf0.origin += xf0.basis.x * 0.05

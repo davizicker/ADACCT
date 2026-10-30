@@ -17,6 +17,7 @@ const MODELO := "res://assets/models/arms/fps_arms.glb"
 @export var curvatura_dedos := -1.1                ## radianos de dobra dos dedos da direita (empunhadura)
 
 @export var rolo_mao_esq := 120.0
+@export var curvatura_dedos_esq := -0.45           ## dedos da esquerda (relaxados)
 var lanterna: Node3D = null
 var _sk: Skeleton3D = null
 var _t := 0.0
@@ -77,7 +78,7 @@ func _process(delta: float) -> void:
 	var alvo_e: Vector3 = mao_esquerda + Vector3(sin(_t * 1.3) * 0.006, cos(_t * 1.7) * 0.005, 0.0)
 	_ik("L", cam_para_sk * alvo_e, Vector3(0.4, -1.0, -0.2))
 	_dedos("R", curvatura_dedos)
-	_dedos("L", 0.35)
+	_dedos("L", curvatura_dedos_esq)
 
 
 ## IK analítico de 2 ossos para o braço `lado` ("R"/"L"); `alvo` no espaço do esqueleto, `polo` = direção para onde o cotovelo aponta.
