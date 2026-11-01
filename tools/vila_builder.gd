@@ -72,6 +72,7 @@ var _haunted := 0
 var _joints: Array[Dictionary] = []   # junções entre lotes (onde ficam nichos)
 var _wear: FastNoiseLite
 var _wet: FastNoiseLite
+var _porta_central := false
 var _carros_s := {}
 var _bar_spot := {}
 var _rio_ok := false
@@ -795,6 +796,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		if ahead > -3.0 and ahead < 9.0:
 			near_alley = true
 	var depth := _rng.randf_range(5.6, 6.8) if near_alley else _rng.randf_range(10.0, 13.0)
+	_porta_central = near_alley
 	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
 	var xf0: Transform3D = f["xf"]
 	xf0.origin += xf0.basis.x * 0.05
@@ -803,6 +805,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	_casas_postas.append({"xf": xf0, "depth": depth, "w": float(f["w"]) + 0.24})
 	var casa := make_casa(f["w"] + 0.24, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
 		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted, _entrada_atual)
+	_porta_central = false
 	casa.name = "Casa_%02d" % _n
 	# cada casa recua um pouco diferente da vizinha (como no real) e dispensa o z-fighting entre fachadas
 	var jit := (0.01 + _rng.randf() * 0.03) if _n % 2 == 0 else (0.08 + _rng.randf() * 0.03)
@@ -929,6 +932,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	for i in cols:
 		col_z.append(-w / 2.0 + (i + 0.5) * w / cols)
 	var door_i := _rng.randi_range(0, cols - 1)
+	if _porta_central:
+		door_i = (cols - 1) / 2         # casa colada num beco: a porta no meio, longe da parede da escada
 	var dz := col_z[door_i]
 	c.set_meta("door_z", dz)
 	c.set_meta("altura", height)
