@@ -660,6 +660,11 @@ func _test_itens(delta: float) -> void:
 			var to_street := Route.pos(s) - it.global_position
 			to_street.y = 0.0
 			var from := it.global_position + to_street.normalized() * 1.3
+			if str(it.name).begins_with("Oleo_beco"):
+				# querosene no alto de um beco: o jogador chega pela escada (do lado de baixo do beco), não pelo "lado da rua mais próxima"
+				var bx := (it.get_parent() as Node3D).global_transform.basis.x
+				bx.y = 0.0
+				from = it.global_position - bx.normalized() * 1.3
 			player.global_position = Vector3(from.x, it.global_position.y + 0.05, from.z)
 			player.velocity = Vector3.ZERO
 			var d := it.global_position + Vector3(0, 0.3, 0) - player.cam.global_position

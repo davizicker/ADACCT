@@ -23,6 +23,7 @@ var _gallop: AudioStreamPlayer3D
 var _fire: AudioStreamPlayer3D
 var _neigh: AudioStreamPlayer3D
 var _phase := 0.0
+var _s_ant := 0.0
 var _judged := false
 var _legs: Array[Node3D] = []
 
@@ -56,6 +57,7 @@ func start(p_player: Player, p_screams: ScreamSystem, p_audio: AudioDirector, st
 	screams = p_screams
 	audio = p_audio
 	s_m = start_s
+	_s_ant = start_s
 	dir = direction
 	active = true
 	_judged = false
@@ -90,9 +92,12 @@ func _process(delta: float) -> void:
 	var dentro_de_casa: bool = missao_no != null and str(missao_no.get("dentro")) != ""
 	var s_p := Route.nearest_s(player.global_position)
 	var ds := 999.0 if dentro_de_casa else absf(s_m - s_p)
+	# com quadros lentos ela pode "pular" por cima do jogador (anda vários metros por quadro): conta também ter cruzado a posição dele
+	var cruzou := (not dentro_de_casa) and (_s_ant - s_p) * (s_m - s_p) <= 0.0
+	_s_ant = s_m
 	# fogo cresce quando chega perto
 	_gallop.volume_db = lerpf(-6.0, 6.0, clampf(1.0 - ds / 120.0, 0.0, 1.0))
-	if not _judged and ds < 2.0:
+	if not _judged and (ds < 2.0 or cruzou):
 		_judged = true
 		_judge()
 	if s_m < -25.0 or s_m > Route.length() + 25.0:
