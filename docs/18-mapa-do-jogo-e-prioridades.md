@@ -53,6 +53,8 @@ Uma noite de 1961 numa vila mineira inspirada em Ouro Preto. O jogador sobe uma 
 5. **Sem resgate de queda**: um buraco no terreno travava a partida. Agora cair 14 m abaixo do último chão firme volta ao último ponto seguro.
 6. **Escada de mão e quadro-negro bloqueavam o corredor** em ruas estreitas; **barril escondia o querosene** perto da ponte. Corrigidos; o corredor central só é bloqueado pela igreja (esperado).
 7. **Mão esquerda com os dedos dobrando para trás**: agora dobra para a palma (`curvatura_dedos_esq`).
+8. **O querosene no alto dos becos não aparecia para pegar**: a zona invisível de refúgio interceptava o raio da tecla E. Agora ela só detecta o jogador.
+9. **O teste da Mula nunca julgava o jogador em quadros lentos** (ela "pulava" por cima dele): agora também conta ter cruzado a posição dele, o que vale no jogo real em quedas de FPS. Resultado do teste agora real: na rua morre, no refúgio escuro sobrevive.
 
 ## 4. Aberto (em ordem de prioridade)
 
