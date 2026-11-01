@@ -113,6 +113,17 @@ func _read_mic(delta: float) -> void:
 		mic_level = maxf(0.0, mic_level - delta * 0.6)
 
 
+## Escondido num esconderijo OU dentro de uma casa: o Bradador não vê nem ouve (e o interior fica longe do eixo da rua,
+## então qualquer cálculo de "distância na rua" feito lá dentro não faria sentido).
+func _seguro() -> bool:
+	return player.hidden or _em_casa()
+
+
+func _em_casa() -> bool:
+	var m := get_tree().get_first_node_in_group("missao")
+	return m != null and str(m.get("dentro")) != ""
+
+
 func is_shouting() -> bool:
 	return Input.is_action_pressed("shout") or (has_mic and mic_level > mic_threshold)
 
@@ -155,7 +166,7 @@ func _process(delta: float) -> void:
 			if Config.grito_ativo:
 				if player.move_speed < 0.5 and is_shouting():
 					_shout_time += delta
-			elif (player.crouching and player.move_speed < 0.5) or player.hidden:
+			elif (player.crouching and player.move_speed < 0.5) or _seguro():
 				_shout_time += delta
 			if forced_results.size() > 0:
 				_resolve(forced_results.pop_front())
@@ -173,6 +184,8 @@ func _process(delta: float) -> void:
 
 
 func _place_bradador() -> void:
+	if _em_casa():
+		return          # o interior fica longe do eixo da rua: reposicionar agora jogaria o Bradador num lugar sem sentido
 	var dist := STAGE_DIST[stage]
 	var s_p := Route.nearest_s(player.global_position)
 	var s_b := s_p + _axis * dist
@@ -257,7 +270,7 @@ func _play_echo_behind() -> void:
 
 
 func _update_gaze(delta: float) -> void:
-	if player.hidden:
+	if _seguro():
 		_gaze_t = 0.0
 		return
 	if stage < 1 or not bradador.visible:
@@ -313,7 +326,7 @@ var _noise_t := 0.0
 
 ## Correr enquanto ele grita ou espera a resposta: ele ouve os passos no chão de pedra.
 func _check_noise(delta: float) -> void:
-	if player.hidden:
+	if _seguro():
 		return
 	if player.sprinting and player.move_speed > 2.0:
 		_noise_t += delta

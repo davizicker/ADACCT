@@ -84,8 +84,12 @@ func _process(delta: float) -> void:
 		return
 	s_m += dir * SPEED * delta
 	_update_pose(delta)
+	# dentro de uma casa o jogador está a milhares de metros do eixo (o interior fica longe do mapa): a Mula não o alcança,
+	# e o "ponto mais próximo da rua" desse lugar não pode servir para julgá-lo
+	var missao_no := get_tree().get_first_node_in_group("missao")
+	var dentro_de_casa: bool = missao_no != null and str(missao_no.get("dentro")) != ""
 	var s_p := Route.nearest_s(player.global_position)
-	var ds := absf(s_m - s_p)
+	var ds := 999.0 if dentro_de_casa else absf(s_m - s_p)
 	# fogo cresce quando chega perto
 	_gallop.volume_db = lerpf(-6.0, 6.0, clampf(1.0 - ds / 120.0, 0.0, 1.0))
 	if not _judged and ds < 2.0:

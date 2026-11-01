@@ -9,7 +9,7 @@ const RUA := [
 	[80, 0, 3, 0, 0], [80, 180, 3, 0, 0], [105, 0, 3, 0, 0], [105, 180, 3, 0, 0], [130, 0, 3, 0, 0], [130, 180, 3, 0, 0],
 	[150, 0, 3, 0, 0], [150, 180, 3, 0, 0], [175, 0, 3, 0, 0], [175, 180, 3, 0, 0], [200, 0, 3, 0, 0], [200, 180, 3, 0, 0],
 	[225, 0, 3, 0, 0], [225, 180, 3, 0, 0], [250, 0, 3, 0, 0], [250, 180, 3, 0, 0], [275, 0, 3, 0, 0], [275, 180, 3, 0, 0],
-	[335, 0, 3, 0, 0], [335, 180, 3, 0, 0], [366, 0, 6, 0, 0], [366, 180, 3, 0, 0],
+	[335, 0, 3, 0, 0], [335, 180, 3, 0, 0], [366, 0, 6, 0, 0], [366, 180, 3, 0, 0], [400, 0, 8, 0, 0], [420, 0, 8, 0, 0], [20, 0, 3, 0, 0], [45, 0, 3, 0, 0],
 ]
 const ALVOS := [
 	[118, 90, -10, 0, 0], [118, -90, -10, 0, 0], [112, 0, -10, 0, 0], [124, 180, -10, 0, 0],       # ponte e riacho
@@ -47,6 +47,8 @@ func _init() -> void:
 	var p := main.get_node("Jogador") as Player
 	p.set_physics_process(false)
 	(main.get_node("Gritos") as Node).set("enabled", false)
+	(main.get_node("Eventos") as Node).set("enabled", false)
+	main.get_node("Interface").call("hide_note")
 	if day:
 		var env := (main.get_node("Vila/Ambiente") as WorldEnvironment).environment
 		env.ambient_light_energy = 2.2

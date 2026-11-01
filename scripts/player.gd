@@ -33,6 +33,8 @@ var fear := 0.0
 ## 0 = silencioso, 1 = barulhento (passos); outros sistemas podem consultar
 var noise := 0.0
 
+var _ultimo_chao := Vector3.ZERO      # último ponto firme visitado (para resgatar se cair do mundo)
+var _t_chao := 0.0
 var _blackout_t := 0.0
 var _shake_t := 0.0
 var _shake_amp := 0.0
@@ -114,6 +116,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	var real := get_real_velocity()
 	move_speed = Vector2(real.x, real.z).length()
+	_resgate_de_queda(delta)
 
 	# fôlego
 	if sprinting and move_speed > 1.0:
@@ -133,6 +136,27 @@ func _physics_process(delta: float) -> void:
 			footstep.emit(noise)
 	_update_camera(delta)
 	_update_interaction()
+
+
+## Rede de segurança: se um buraco do terreno, um beco ou um objeto jogar o jogador para fora do mundo, ele volta ao último chão firme
+## (em vez de cair para sempre e travar a partida).
+func _resgate_de_queda(delta: float) -> void:
+	var m := get_tree().get_first_node_in_group("missao")
+	if m != null and str(m.get("dentro")) != "":
+		_ultimo_chao = Vector3.ZERO          # os interiores ficam longe e abaixo do mapa: nada de resgate lá dentro
+		_t_chao = 0.0
+		return
+	if is_on_floor():
+		_t_chao += delta
+		if _t_chao > 0.4:
+			_t_chao = 0.0
+			_ultimo_chao = global_position
+	elif _ultimo_chao != Vector3.ZERO and (global_position.y < _ultimo_chao.y - 14.0):
+		global_position = _ultimo_chao + Vector3(0, 0.3, 0)
+		velocity = Vector3.ZERO
+	elif global_position.y < -80.0:
+		global_position = Route.pos(0.0) + Vector3(0, 1.0, 0)
+		velocity = Vector3.ZERO
 
 
 func _update_camera(delta: float) -> void:
