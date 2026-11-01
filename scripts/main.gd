@@ -665,8 +665,17 @@ func _test_itens(delta: float) -> void:
 				var bx := (it.get_parent() as Node3D).global_transform.basis.x
 				bx.y = 0.0
 				from = it.global_position - bx.normalized() * 1.3
-			player.global_position = Vector3(from.x, it.global_position.y + 0.05, from.z)
+			var base_y := it.global_position.y + 0.05
+			if str(it.name).begins_with("Oleo_beco"):
+				# na escada o chão a 1,3 m do item é bem mais baixo: assenta o jogador no degrau de verdade (senão ele cai e a mira erra)
+				var qd := PhysicsRayQueryParameters3D.create(Vector3(from.x, it.global_position.y + 1.5, from.z), Vector3(from.x, it.global_position.y - 4.0, from.z))
+				qd.collide_with_areas = false
+				var hd := get_viewport().world_3d.direct_space_state.intersect_ray(qd)
+				if not hd.is_empty():
+					base_y = float(hd["position"].y) + 0.05
+			player.global_position = Vector3(from.x, base_y, from.z)
 			player.velocity = Vector3.ZERO
+			player.cam.position.y = Player.STAND_H     # câmera já na altura de pé (a suavização leva um tempo)
 			var d := it.global_position + Vector3(0, 0.3, 0) - player.cam.global_position
 			player.rotation.y = atan2(-d.x, -d.z)
 			player.cam.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
