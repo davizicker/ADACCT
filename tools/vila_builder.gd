@@ -1405,6 +1405,7 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 	var refuge := Area3D.new()
 	refuge.name = "Refugio"
 	refuge.add_to_group("refugio", true)
+	refuge.collision_layer = 0       # só DETECTA o jogador: não pode interceptar o raio de interação (E) de quem está dentro do beco
 	var rcs := CollisionShape3D.new()
 	var rbs := BoxShape3D.new()
 	rbs.size = Vector3(6.0, 3.4, wb)
@@ -1498,6 +1499,7 @@ func _lot_passagem(parent: Node3D, f: Dictionary, idx: int, ini: bool) -> void:
 	var refuge := Area3D.new()
 	refuge.name = "Refugio"
 	refuge.add_to_group("refugio", true)
+	refuge.collision_layer = 0       # só DETECTA o jogador: não pode interceptar o raio de interação (E) de quem está dentro do beco
 	var rcs := CollisionShape3D.new()
 	var rbs := BoxShape3D.new()
 	rbs.size = Vector3(minf(D - 2.0, 10.0), rise + 3.4, wb)
