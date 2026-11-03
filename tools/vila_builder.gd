@@ -1005,6 +1005,31 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if haunted and floors >= 2:
 		var hi := (door_i + 1) % cols
 		_haunted_window(c, Vector3(-0.18, fh + 1.65, col_z[hi]))
+	# --- detalhes de arquitetura e de abandono (para a fachada não parecer uma caixa lisa) ---
+	# cunhais de cantaria nas duas quinas (blocos alternados, como nos sobrados de Minas)
+	for qz: float in [-1.0, 1.0]:
+		var qy := 0.25
+		var qi := 0
+		while qy < height - 0.4:
+			var longo := (qi % 2 == 0)
+			b.box("cantaria", Vector3(0.13, 0.36, 0.52 if longo else 0.30), Vector3(-0.065, qy + 0.18, qz * (w / 2.0 - (0.26 if longo else 0.15))))
+			qy += 0.5
+			qi += 1
+	# caibros aparentes sob o beiral (as pontas das vigas do telhado)
+	var zc := -w / 2.0 + 0.35
+	while zc < w / 2.0 - 0.2:
+		b.box("madeira_escura", Vector3(0.78, 0.07, 0.08), Vector3(-0.52, height + 0.01, zc))
+		zc += 0.55
+	# reboco caído mostrando a alvenaria de pedra por baixo (entre as aberturas)
+	for i in range(maxi(cols - 1, 0)):
+		if _rng.randf() < 0.55:
+			var cz := (col_z[i] + col_z[i + 1]) * 0.5 + _rng.randf_range(-0.25, 0.25)
+			var cy := _rng.randf_range(0.9, maxf(1.2, height - 1.4))
+			var pw := _rng.randf_range(0.55, 1.05)
+			var ph := _rng.randf_range(0.45, 0.95)
+			b.box("muro", Vector3(0.025, ph, pw), Vector3(-0.015, cy, cz))
+			b.box("muro", Vector3(0.025, ph * 0.55, pw * 0.7), Vector3(-0.02, cy + ph * 0.4, cz + pw * 0.28), Vector3(0, 0, 0.0))
+			b.box("muro", Vector3(0.025, ph * 0.5, pw * 0.5), Vector3(-0.02, cy - ph * 0.38, cz - pw * 0.30))
 	if not simple:
 		b.box("ferro", Vector3(0.12, 0.09, w + 0.4), Vector3(-0.92, height + 0.09, 0))               # calha do beiral
 		if _rng.randf() < 0.55:
@@ -1587,6 +1612,7 @@ func _lamp_light(parent: Node3D, pos: Vector3, energy := 0.9) -> OmniLight3D:
 	light.light_color = Color(1.0, 0.72, 0.35)
 	light.light_energy = energy
 	light.omni_range = 8.0
+	light.light_volumetric_fog_energy = 1.8      # cone de luz visível na neblina (raios de luz, como nos jogos de cinema)
 	light.distance_fade_enabled = true
 	light.distance_fade_begin = 50.0
 	light.distance_fade_length = 15.0

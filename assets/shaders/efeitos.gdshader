@@ -9,6 +9,8 @@ uniform float aberration : hint_range(0.0, 0.02) = 0.0006;
 uniform float fear : hint_range(0.0, 1.0) = 0.0;
 uniform float heartbeat = 1.0;
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
+uniform float nitidez : hint_range(0.0, 1.0) = 0.38;    // máscara de nitidez (detalhe fino das pedras, reboco e folhas)
+uniform float grade : hint_range(0.0, 1.0) = 0.65;      // correção de cor de cinema: sombras frias, luzes quentes, curva em S
 
 float hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -26,7 +28,16 @@ void fragment() {
 	col.r = texture(screen_tex, uv + off).r;
 	col.g = texture(screen_tex, uv).g;
 	col.b = texture(screen_tex, uv - off).b;
+	// nitidez (unsharp mask com 4 vizinhos)
+	vec2 px = 1.0 / vec2(textureSize(screen_tex, 0));
+	vec3 borrado = (texture(screen_tex, uv + vec2(px.x, 0.0)).rgb + texture(screen_tex, uv - vec2(px.x, 0.0)).rgb
+		+ texture(screen_tex, uv + vec2(0.0, px.y)).rgb + texture(screen_tex, uv - vec2(0.0, px.y)).rgb) * 0.25;
+	col += (col - borrado) * nitidez * 1.6;
 	float l = dot(col, vec3(0.299, 0.587, 0.114));
+	// color grading: sombras esverdeadas/frias, luzes quentes e curva de contraste em S
+	vec3 tom = mix(vec3(0.90, 1.0, 1.07), vec3(1.10, 1.0, 0.88), smoothstep(0.08, 0.75, l));
+	col = mix(col, col * tom, grade);
+	col = mix(col, clamp(col * col * (3.0 - 2.0 * col), 0.0, 1.0), grade * 0.35);
 	col = mix(col, vec3(l) * vec3(0.88, 0.95, 1.08), fear * 0.55);
 	float v = 1.0 - smoothstep(0.18, 0.62 - fear * 0.10 - pulse * 0.06, r2);
 	col *= mix(1.0, 0.25 + 0.75 * v, vignette + fear * 0.25);

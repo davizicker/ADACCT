@@ -58,6 +58,7 @@ var _t := 0.0
 func _ready() -> void:
 	add_to_group("jogador")
 	_base_energy = lantern.light_energy  # a intensidade vem da cena
+	lantern.light_volumetric_fog_energy = 2.2    # o facho da lanterna aparece na neblina
 	if lantern_model != null:
 		_lantern_home = lantern_model.position
 		_lantern_rot = lantern_model.rotation

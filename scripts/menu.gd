@@ -123,6 +123,7 @@ func _build_options() -> void:
 	ob.add_item("Baixa (PC fraco)")
 	ob.add_item("Média (recomendada)")
 	ob.add_item("Alta (placa forte)")
+	ob.add_item("Cinematográfico (estilo The Last of Us, RTX)")
 	ob.select(Config.quality)
 	ob.item_selected.connect(func(i: int) -> void:
 		Config.quality = i
