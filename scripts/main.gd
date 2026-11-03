@@ -357,6 +357,9 @@ func _test_esconder() -> void:
 			var dir := (sp.global_position - sp.pos_oculto)
 			dir.y = 0.0
 			dir = dir.normalized()
+			# o jogador chega pelo lado da rua, de frente para o carro (perpendicular ao comprimento dele)
+			var lado := sp.global_transform.basis.x
+			dir = lado * signf(lado.dot(dir))
 			var o := sp.global_position + dir * 2.3 + Vector3(0, 0.4, 0)     # alcance real da interação é 2,6 m
 			var rq := PhysicsRayQueryParameters3D.create(o, sp.global_position + Vector3(0, 0.4, 0))
 			rq.collide_with_areas = true

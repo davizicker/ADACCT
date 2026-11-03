@@ -186,14 +186,41 @@ func _update_interaction() -> void:
 	if not frozen:
 		var from := cam.global_position
 		var to := from + (-cam.global_transform.basis.z) * 2.6
-		var q := PhysicsRayQueryParameters3D.create(from, to)
-		q.collide_with_areas = true
-		q.exclude = [get_rid()]
-		var hit := get_world_3d().direct_space_state.intersect_ray(q)
-		if not hit.is_empty():
-			var c := hit["collider"] as Node
-			if c != null and c.is_in_group("interagivel"):
-				found = c
+		var space := get_world_3d().direct_space_state
+		# 1) o gatilho interagível mais próximo no caminho do olhar (só áreas)
+		var qa := PhysicsRayQueryParameters3D.create(from, to)
+		qa.collide_with_areas = true
+		qa.collide_with_bodies = false
+		qa.exclude = [get_rid()]
+		var ha := space.intersect_ray(qa)
+		if not ha.is_empty() and (ha["collider"] as Node).is_in_group("interagivel"):
+			found = ha["collider"] as Node
+			# 2) uma parede entre você e o gatilho bloqueia; mas um objeto que está DENTRO do próprio gatilho (o carro do
+			#    esconderijo) não bloqueia: antes dava para ficar ao lado do carro, dentro da zona, sem a dica [E] aparecer
+			var qb := PhysicsRayQueryParameters3D.create(from, ha["position"])
+			qb.collide_with_areas = false
+			qb.exclude = [get_rid()]
+			var hb := space.intersect_ray(qb)
+			if not hb.is_empty() and from.distance_to(hb["position"]) < from.distance_to(ha["position"]) - 0.03:
+				var qp := PhysicsPointQueryParameters3D.new()
+				qp.position = hb["position"]
+				qp.collide_with_bodies = false
+				qp.collide_with_areas = true
+				var dentro := false
+				for r in space.intersect_point(qp, 8):
+					if r["collider"] == found:
+						dentro = true
+				if not dentro:
+					found = null
+		if found == null:
+			var q := PhysicsRayQueryParameters3D.create(from, to)
+			q.collide_with_areas = true
+			q.exclude = [get_rid()]
+			var hit := space.intersect_ray(q)
+			if not hit.is_empty():
+				var c := hit["collider"] as Node
+				if c != null and c.is_in_group("interagivel"):
+					found = c
 	if found != _target:
 		_target = found
 		interact_hint.emit("" if found == null else "[E] %s" % str(found.get("texto_interacao")))
