@@ -1018,7 +1018,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	# caibros aparentes sob o beiral (as pontas das vigas do telhado)
 	var zc := -w / 2.0 + 0.35
 	while zc < w / 2.0 - 0.2:
-		b.box("madeira_escura", Vector3(0.78, 0.07, 0.08), Vector3(-0.52, height + 0.01, zc))
+		b.box("madeira_escura", Vector3(0.78, 0.07, 0.08), Vector3(-0.52, height + 0.075, zc))
 		zc += 0.55
 	# reboco caído mostrando a alvenaria de pedra por baixo (entre as aberturas)
 	for i in range(maxi(cols - 1, 0)):

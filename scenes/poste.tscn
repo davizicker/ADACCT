@@ -11,20 +11,21 @@ size = Vector2(2.6, 2.6)
 height = 3.9
 radius = 0.11
 
-[node name="Poste" type="Node3D" unique_id=1531954456]
+[node name="Poste" type="Node3D" unique_id=1221943424]
 metadata/bb = AABB(-0.35215375, 0, -0.19329101, 0.7043075, 3.8705308, 0.38658202)
 metadata/bulb_mi = NodePath("Modelo/street_lamp_012/street_lamp_01")
 metadata/bulb_idx = 2
 metadata/bulb_pos = Vector3(2.8464943e-05, 3.2643323, 4.1536987e-07)
 
-[node name="Modelo" type="Node3D" parent="." unique_id=1341460485]
+[node name="Modelo" type="Node3D" parent="." unique_id=512430822]
 
 [node name="street_lamp_012" type="Node3D" parent="Modelo" unique_id=1857754890 instance=ExtResource("1_5wqr3")]
 
-[node name="Luz" type="OmniLight3D" parent="." unique_id=1195091740 groups=["lampioes"]]
+[node name="Luz" type="OmniLight3D" parent="." unique_id=1286030616 groups=["lampioes"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
 light_color = Color(1, 0.72, 0.35, 1)
 light_energy = 0.95
+light_volumetric_fog_energy = 1.8
 distance_fade_enabled = true
 distance_fade_begin = 50.0
 distance_fade_length = 15.0
@@ -32,14 +33,14 @@ omni_range = 8.0
 script = ExtResource("2_gyati")
 forca = 0.08
 
-[node name="Halo" type="MeshInstance3D" parent="." unique_id=1057759277]
+[node name="Halo" type="MeshInstance3D" parent="." unique_id=1551212278]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
 material_override = ExtResource("3_uvx8k")
 cast_shadow = 0
 mesh = SubResource("QuadMesh_bgagc")
 
-[node name="Colisao" type="StaticBody3D" parent="." unique_id=1069795873]
+[node name="Colisao" type="StaticBody3D" parent="." unique_id=297487085]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
 
-[node name="@CollisionShape3D@679" type="CollisionShape3D" parent="Colisao" unique_id=772060190]
+[node name="@CollisionShape3D@666" type="CollisionShape3D" parent="Colisao" unique_id=1143617803]
 shape = SubResource("CylinderShape3D_x7vxa")
