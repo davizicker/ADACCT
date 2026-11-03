@@ -48,11 +48,11 @@ func _ready() -> void:
 			var mat := m.mesh.surface_get_material(si)
 			if mat is StandardMaterial3D:
 				var d := mat.duplicate() as StandardMaterial3D
-				d.albedo_color = pele
+				d.albedo_color = pele * (Color(0.82, 0.78, 0.76) if Config.quality >= 2 else Color(1, 1, 1))
 				d.roughness = 0.75
 				d.emission_enabled = true          # um pouco de luz própria: a lanterna fica à frente dos braços e eles ficariam só silhueta
 				d.emission = Color(0.28, 0.17, 0.13)
-				d.emission_energy_multiplier = 0.2
+				d.emission_energy_multiplier = 0.05 if Config.quality >= 2 else 0.2    # com iluminação global a mão já recebe luz da lanterna: sem brilho próprio ela não fica chapada
 				m.set_surface_override_material(si, d)
 
 
