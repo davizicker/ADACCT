@@ -124,8 +124,8 @@ static func _apply_high_end(main: Node) -> void:
 	e.volumetric_fog_albedo = Color(0.55, 0.62, 0.8)
 	e.volumetric_fog_gi_inject = 1.0 if cine else 0.0
 	if hi:
-		e.sdfgi_cascades = 4 if cine else 3
-		e.sdfgi_min_cell_size = 0.3 if cine else 0.5
+		e.sdfgi_cascades = 3
+		e.sdfgi_min_cell_size = 0.4 if cine else 0.5
 		e.sdfgi_use_occlusion = true
 		e.sdfgi_bounce_feedback = 0.6
 		e.sdfgi_energy = 1.4 if cine else 1.0
