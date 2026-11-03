@@ -3047,6 +3047,7 @@ func _props_rua() -> Node3D:
 		# esconderijo atrás do carro, do lado da parede
 		var toward_wall := Route.right(s) * sg
 		var ec := _esconderijo(root, "EsconderijoCarro_%d" % int(s), c + toward_wall * 0.2 + Vector3(0, 0.9, 0), Vector3(3.0, 1.8, 5.2), c + toward_wall * 1.45 + Vector3(0, 0.05, 0), _yaw_to(toward_wall))
+		ec.rotation.y = _yaw_to(Route.tangent(s))        # o gatilho acompanha o carro (antes ficava alinhado ao mundo: só servia em ruas retas no eixo Z)
 	# --- banquinhos e baldes junto às portas, com um lampião de querosene esquecido em um deles
 	for cfg in [[30.0, 1.0], [96.0, -1.0], [212.0, 1.0], [264.0, -1.0], [304.0, 1.0]]:
 		var sp := _spot(cfg[1], cfg[0], 0.55)
