@@ -362,7 +362,7 @@ func _test_esconder() -> void:
 			rq.collide_with_areas = true
 			var rh := space.intersect_ray(rq)
 			var alcanca: bool = (not rh.is_empty()) and rh["collider"] == sp
-			print("[esconder] %s: raio alcança o gatilho antes do carro: %s%s" % [sp.name, str(alcanca), "" if alcanca or rh.is_empty() else "  (barrado por %s)" % str((rh["collider"] as Node).get_path())])
+			print("[esconder] %s: raio alcança o gatilho antes do carro: %s%s" % [sp.name, str(alcanca), "" if alcanca else ("  (vazio; origem %s, gatilho %s, rotY %.0f, dir %s)" % [str(o), str(sp.global_position), sp.global_rotation_degrees.y, str(dir)] if rh.is_empty() else "  (barrado por %s)" % str((rh["collider"] as Node).get_path()))])
 			ok1 = ok1 and alcanca
 		# grito com o jogador escondido: não pode aproximar o Bradador
 		screams.enabled = true
