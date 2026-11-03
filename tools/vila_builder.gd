@@ -63,6 +63,7 @@ var _cego_atual := ""
 var _entrada_atual: Dictionary = {}
 var _entradas_feitas: Dictionary = {}
 var _ocupados: Array = []     # [Vector3, raio]: lugares já usados por portas/barris/bancos (nada se sobrepõe)
+var _beco_vizinho: Dictionary = {}          # caixa do beco que vem logo depois da casa em construção
 var _casas_postas: Array[Dictionary] = []   # {xf, depth, w} das casas já colocadas (para não se atravessarem nas curvas)
 var _flutuando: Array[String] = []   # peças que não encostam em nada (auditoria feita no bake)
 var _spots: Array[Vector2] = []
@@ -749,7 +750,15 @@ func _frontage(root: Node3D) -> void:
 					kind = "quintal"
 			match kind:
 				"casa":
+					_beco_vizinho = {}
+					for ai2 in ALLEYS.size():       # a casa logo antes de um beco: guarda onde o beco vai ficar para não invadir a escada
+						var a2: Array = ALLEYS[ai2]
+						if a2[1] == sigma and not done_alley.has(ai2) and s2 >= a2[0] - 4.0:
+							var fb2 := lot_frame(sigma, s2, _advance(sigma, s2, 3.6))
+							_beco_vizinho = {"xf": fb2["xf"], "depth": (36 if a2.size() <= 2 else 14) * 0.45 + 0.8, "w": 3.6 + 0.4}
+							break
 					_lot_casa(casas, f, sigma, w_street)
+					_beco_vizinho = {}
 				"quintal":
 					_lot_quintal(muros, f)
 				"talude":
@@ -806,8 +815,12 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
 	var xf0: Transform3D = f["xf"]
 	xf0.origin += xf0.basis.x * 0.05
+	if not _beco_vizinho.is_empty():
+		_casas_postas.append(_beco_vizinho)
 	while depth > 2.6 and _casa_atravessa(xf0, depth, float(f["w"]) + 0.24):
 		depth -= 0.3
+	if not _beco_vizinho.is_empty():
+		_casas_postas.pop_back()
 	_casas_postas.append({"xf": xf0, "depth": depth, "w": float(f["w"]) + 0.24})
 	var casa := make_casa(f["w"] + 0.24, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
 		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted, _entrada_atual)
