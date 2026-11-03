@@ -2168,6 +2168,13 @@ func _near_trees(root: Node3D) -> void:
 				break
 		if blocked:
 			continue
+		for o in _casas_postas:            # nada de árvore dentro do volume de uma casa
+			var qc: Vector3 = (o["xf"] as Transform3D).affine_inverse() * p
+			if qc.x > -1.5 and qc.x < float(o["depth"]) + 1.5 and absf(qc.z) < float(o["w"]) / 2.0 + 1.5:
+				blocked = true
+				break
+		if blocked:
+			continue
 		var r := _rng.randf()
 		var key := "arvore_%d" % _rng.randi_range(0, 2)
 		var sc := _rng.randf_range(1.0, 1.7)
