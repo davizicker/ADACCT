@@ -598,6 +598,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_terrain())
 	root.add_child(_road())
 	_frontage(root)
+	_tira_plantas_dentro_das_casas(root)
 	root.add_child(Realismo.new().vidros_e_plantas(self, root))
 	root.add_child(_lamps())
 	root.add_child(_adornos())
@@ -795,6 +796,11 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		var ahead := float(al[0]) - float(f["sm"])
 		if ahead > -3.0 and ahead < 9.0:
 			near_alley = true
+	for G in _pass_geo:                       # as bocas dos becos de atalho também colam nas casas vizinhas
+		for fk: String in ["fa", "fb"]:
+			var ahead_p := float((G[fk] as Dictionary)["s_m"]) - float(f["sm"])
+			if ahead_p > -3.0 and ahead_p < 9.0:
+				near_alley = true
 	var depth := _rng.randf_range(5.6, 6.8) if near_alley else _rng.randf_range(10.0, 13.0)
 	_porta_central = near_alley
 	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
@@ -2613,10 +2619,41 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 			_cont(parent, "Jug1" if _rng.randf() < 0.5 else "Jug2", p + Basis(Vector3.UP, yaw) * (desl[k] as Vector3), _rng.randf() * TAU)
 	else:
 		_cont(parent, "Sack1" if _rng.randf() < 0.5 else "Sack2", p, _rng.randf() * TAU)
-		_cont(parent, "Bucket1", p + Basis(Vector3.UP, yaw) * Vector3(0.55, 0, 0), _rng.randf() * TAU)
+		_cont(parent, "Bucket1", p + Basis(Vector3.UP, yaw) * Vector3(0.9, 0, 0), _rng.randf() * TAU)
 
 
 ## Bueiros, barris, caixotes, bancos, carroça, varais e bandeirinhas.
+## Plantas de quintal e de talude que ficaram dentro do volume de uma casa vizinha (agora as casas têm fundo de verdade).
+func _tira_plantas_dentro_das_casas(root: Node3D) -> void:
+	var grupo := root.get_node_or_null("MurosEQuintais")
+	if grupo == null:
+		return
+	var tirados := 0
+	var prefixos := ["arvore_", "palmeira", "bananeira", "arbusto", "samambaia", "capim"]
+	for lot in grupo.get_children():
+		if not (lot is Node3D):
+			continue
+		for n in (lot as Node3D).get_children().duplicate():
+			if not (n is Node3D):
+				continue
+			var nome := str(n.name)
+			var eh_planta := false
+			for pf in prefixos:
+				if nome.begins_with(pf):
+					eh_planta = true
+			if not eh_planta:
+				continue
+			var mundo: Vector3 = (lot as Node3D).transform * (n as Node3D).position
+			for o in _casas_postas:
+				var q: Vector3 = (o["xf"] as Transform3D).affine_inverse() * mundo
+				if q.x > 0.1 and q.x < float(o["depth"]) - 0.1 and absf(q.z) < float(o["w"]) / 2.0 - 0.1:
+					lot.remove_child(n)
+					n.free()
+					tirados += 1
+					break
+	print("[vila] plantas removidas por estarem dentro de casas: ", tirados)
+
+
 ## Remove caixote/barril/escada que ficou com o corpo dentro de uma casa (a casa pode avançar um pouco sobre a calçada).
 func _tira_props_dentro_das_casas(root: Node3D) -> void:
 	var tirados := 0
