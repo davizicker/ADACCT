@@ -1378,7 +1378,9 @@ func _lot_talude(parent: Node3D, f: Dictionary) -> void:
 	_mesh_node(g, "Detalhes", b.commit())
 	_wall_ivy(g, w, ht, -0.03)
 	_wall_ivy(g, w, ht * 0.7, -0.05)
-	if _rng.randf() < 0.65 and w > 6.0:
+	var xf_alto: Transform3D = (f["xf"] as Transform3D) * Transform3D(Basis.IDENTITY, Vector3(2.6, 0.0, 0.0))
+	if _rng.randf() < 0.65 and w > 6.0 and not _casa_penetra(xf_alto, 8.0, w * 0.85):
+		_casas_postas.append({"xf": xf_alto, "depth": 8.0, "w": w * 0.85})        # as casas seguintes encurtam para não entrar nesta
 		var casa := make_casa(w * 0.85, 1, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], 8.0, false, 0.4, true)
 		casa.name = "CasaDoAlto"
 		casa.position = Vector3(2.6, ht - 0.3, 0)
@@ -1754,7 +1756,13 @@ func _lamps() -> Node3D:
 			var w := Route.width(ps)
 			var p := make_poste()
 			p.name = "Poste_%d_%d" % [int(ps), int(sigma)]
-			p.position = Route.pos(ps) + Route.right(ps) * sigma * (w * 0.5 + SW * 0.5) + Vector3(0, SW_H, 0)
+			var ps2: float = ps
+			for off: float in [0.0, 1.6, -1.6, 3.2, -3.2, 4.8, -4.8]:      # o poste não pode ficar na frente de uma porta
+				var pt := Route.pos(ps + off) + Route.right(ps + off) * sigma * (Route.width(ps + off) * 0.5 + SW * 0.5)
+				if not _perto_de_porta(pt, 1.7):
+					ps2 = ps + off
+					break
+			p.position = Route.pos(ps2) + Route.right(ps2) * sigma * (Route.width(ps2) * 0.5 + SW * 0.5) + Vector3(0, SW_H, 0)
 			_reservar(p.position, 0.9)
 			root.add_child(p)
 	root.add_child(_string_lights())
