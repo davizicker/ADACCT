@@ -98,24 +98,57 @@ def texto_para_imagem_hf(prompt, cfg, saida):
              "e ENVIE a imagem no site, que a etapa imagem -> 3D é grátis." % " | ".join(erros))
 
 
-def imagem_para_3d_hf(imagem, cfg, pasta, fundo=0.85, resolucao=256):
-    """Imagem -> 3D numa GPU gratuita do Hugging Face (Space do TripoSR), via gradio_client. O Space também remove o fundo."""
+def _spaces_candidatos(cfg):
+    """Lista de Spaces de imagem->3D para tentar, em ordem: o configurado, os conhecidos e, por fim, uma busca por Spaces TripoSR que estejam RODANDO."""
+    lista = [x for x in str(cfg["hf_space"]).split(",") if x.strip()]
+    for x in ("VAST-AI/TripoSR", "stabilityai/TripoSR"):
+        if x not in lista:
+            lista.append(x)
     try:
-        from gradio_client import Client, handle_file
+        from huggingface_hub import HfApi
+        api = HfApi(token=cfg["hf_token"] or None)
+        for sp in api.list_spaces(search="TripoSR", sort="likes", direction=-1, limit=12):
+            if sp.id not in lista:
+                lista.append(sp.id)
+    except Exception:
+        pass
+    return lista
+
+
+def _gerar_no_space(space, imagem, cfg, fundo, resolucao):
+    from gradio_client import Client, handle_file
+    kw = {"token": cfg["hf_token"]} if cfg["hf_token"] else {}
+    cli = Client(space, **kw)
+    pre = cli.predict(handle_file(os.path.abspath(imagem)), True, fundo, api_name="/preprocess")
+    try:
+        return cli.predict(pre, resolucao, api_name="/generate")
+    except TypeError:
+        return cli.predict(pre, resolucao, ["obj", "glb"], api_name="/generate")      # versão nova do Space pede a lista de formatos
+
+
+def imagem_para_3d_hf(imagem, cfg, pasta, fundo=0.85, resolucao=256):
+    """Imagem -> 3D numa GPU gratuita do Hugging Face (Space do TripoSR), via gradio_client. Se um Space estiver quebrado ou
+    com a fila cheia, tenta o próximo da lista automaticamente. O Space também remove o fundo."""
+    try:
+        import gradio_client  # noqa: F401
     except ImportError:
         sys.exit("Falta: pip install gradio_client")
-    kw = {"token": cfg["hf_token"]} if cfg["hf_token"] else {}
-    try:
-        cli = Client(cfg["hf_space"], **kw)
-        pre = cli.predict(handle_file(os.path.abspath(imagem)), True, fundo, api_name="/preprocess")
-        res = cli.predict(pre, resolucao, api_name="/generate")
-    except Exception as e:
-        sys.exit("O Space do Hugging Face falhou (%s). Causas comuns: fila cheia, limite diário grátis (crie um token e defina HF_TOKEN), "
-                 "ou o Space mudou de API. Tente de novo em alguns minutos." % e)
-    achados = [x for x in (res if isinstance(res, (list, tuple)) else [res]) if isinstance(x, str) and os.path.exists(x)]
+    erros, res = [], None
+    for space in _spaces_candidatos(cfg):
+        try:
+            print("  tentando o Space %s ..." % space, flush=True)
+            res = _gerar_no_space(space, imagem, cfg, fundo, resolucao)
+            achados = [x for x in (res if isinstance(res, (list, tuple)) else [res]) if isinstance(x, str) and os.path.exists(x)]
+            if not achados:
+                raise RuntimeError("respondeu sem arquivo 3D")
+            break
+        except Exception as e:
+            erros.append("%s: %s" % (space, str(e)[:110]))
+            res = None
+    if res is None:
+        sys.exit("Nenhum Space do Hugging Face conseguiu gerar o 3D agora:\n  - " + "\n  - ".join(erros) +
+                 "\nCausas comuns: Space quebrado, fila cheia ou limite diário grátis (crie um token e defina HF_TOKEN). Tente de novo em alguns minutos.")
     achados.sort(key=lambda x: 0 if x.endswith(".glb") else 1)
-    if not achados:
-        sys.exit("O Space respondeu sem arquivo 3D: %r" % (res,))
     os.makedirs(pasta, exist_ok=True)
     dst = os.path.join(pasta, "bruto" + os.path.splitext(achados[0])[1])
     shutil.copy(achados[0], dst)
