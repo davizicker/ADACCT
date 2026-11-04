@@ -21,6 +21,23 @@ const vec3 CORT[4] = vec3[4](vec3(0.85, 0.80, 0.68), vec3(0.62, 0.22, 0.24), vec
 float h1(float n) { return fract(sin(n * 91.3458) * 47453.5453); }
 float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
+// Interseção raio x caixa (método das lajes). Devolve a distância de entrada, ou 1e5 se errar; n = normal da face atingida.
+float caixa(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out vec3 n) {
+	vec3 inv = 1.0 / (rd + vec3(1e-6));
+	vec3 t0 = (bmin - ro) * inv;
+	vec3 t1 = (bmax - ro) * inv;
+	vec3 tmn = min(t0, t1);
+	vec3 tmx = max(t0, t1);
+	float tn = max(max(tmn.x, tmn.y), tmn.z);
+	float tf = min(min(tmx.x, tmx.y), tmx.z);
+	n = vec3(0.0);
+	if (tf < max(tn, 0.0)) return 1e5;
+	if (tn == tmn.x) n = vec3(-sign(rd.x), 0.0, 0.0);
+	else if (tn == tmn.y) n = vec3(0.0, -sign(rd.y), 0.0);
+	else n = vec3(0.0, 0.0, -sign(rd.z));
+	return tn;
+}
+
 void vertex() {
 	pos_loc = VERTEX;
 	dados = INSTANCE_CUSTOM;
@@ -49,7 +66,65 @@ void fragment() {
 	vec3 H = P + D * t;
 	vec3 reboco = PAL[int(floor(semente * 6.0)) % 6];
 	vec3 col;
-	if (eixo == 2) {
+	// mobília e moradores: caixas de verdade dentro da sala (mesa, cama, baú, estante) e, às vezes, uma silhueta parada no escuro
+	bool mov = false;
+	vec3 movcor = vec3(0.0);
+	vec3 nn;
+	float tm = 1e5;
+	int tipo = int(floor(h1(semente + 31.0) * 5.0));
+	float madeira = 0.75 + 0.5 * h1(semente + 33.0);
+	vec3 wood = vec3(0.30, 0.17, 0.09) * madeira;
+	float zc = -prof * (0.45 + 0.25 * h1(semente + 35.0));
+	if (tipo == 0) {                                         // mesa com um vaso e cadeira
+		float a = caixa(P, D, vec3(-0.55, y0 + 0.70, zc - 0.4), vec3(0.55, y0 + 0.76, zc + 0.4), nn);
+		if (a < tm) { tm = a; movcor = wood * (nn.y > 0.5 ? 1.25 : 0.9); }
+		a = caixa(P, D, vec3(-0.07, y0, zc - 0.07), vec3(0.07, y0 + 0.70, zc + 0.07), nn);
+		if (a < tm) { tm = a; movcor = wood * 0.7; }
+		a = caixa(P, D, vec3(-0.12, y0 + 0.76, zc - 0.12), vec3(0.12, y0 + 1.0, zc + 0.12), nn);
+		if (a < tm) { tm = a; movcor = vec3(0.45, 0.2, 0.15); }
+		a = caixa(P, D, vec3(0.65, y0 + 0.45, zc - 0.25), vec3(1.05, y0 + 0.5, zc + 0.15), nn);
+		if (a < tm) { tm = a; movcor = wood * 0.9; }
+		a = caixa(P, D, vec3(0.65, y0 + 0.5, zc + 0.12), vec3(1.05, y0 + 1.0, zc + 0.17), nn);
+		if (a < tm) { tm = a; movcor = wood * 0.8; }
+	} else if (tipo == 1) {                                   // cama de ferro colada numa parede lateral
+		float xs = (h1(semente + 37.0) < 0.5) ? 1.0 : -1.0;
+		float xa = xs * (rw * 0.5 - 0.5);
+		float a = caixa(P, D, vec3(xa - 0.5, y0 + 0.25, -prof * 0.85), vec3(xa + 0.5, y0 + 0.55, -prof * 0.85 + 1.9), nn);
+		if (a < tm) { tm = a; movcor = (nn.y > 0.5 ? vec3(0.62, 0.58, 0.5) : vec3(0.35, 0.3, 0.26)); }
+		a = caixa(P, D, vec3(xa - 0.4, y0 + 0.55, -prof * 0.85 + 1.5), vec3(xa + 0.4, y0 + 0.65, -prof * 0.85 + 1.85), nn);
+		if (a < tm) { tm = a; movcor = vec3(0.8, 0.78, 0.72); }
+		a = caixa(P, D, vec3(xa - 0.5, y0 + 0.25, -prof * 0.85 + 1.88), vec3(xa + 0.5, y0 + 1.1, -prof * 0.85 + 1.95), nn);
+		if (a < tm) { tm = a; movcor = vec3(0.12, 0.1, 0.09); }
+	} else if (tipo == 2) {                                   // estante alta com livros, na parede do fundo
+		float a = caixa(P, D, vec3(-0.8, y0, -prof + 0.05), vec3(0.8, y0 + 2.0, -prof + 0.45), nn);
+		if (a < tm) {
+			tm = a;
+			vec3 q = P + D * a;
+			float lin = floor((q.y - y0) / 0.4);
+			movcor = (nn.z > 0.5) ? mix(wood * 0.6, vec3(0.45 + 0.4 * h1(lin + floor(q.x * 8.0)), 0.18, 0.12), step(0.12, fract((q.y - y0) / 0.4)) * step(0.35, h1(floor(q.x * 8.0) + lin * 7.0))) : wood;
+		}
+	} else if (tipo == 3) {                                   // baú aos pés e banquinho
+		float a = caixa(P, D, vec3(-0.6, y0, zc - 0.3), vec3(0.6, y0 + 0.5, zc + 0.3), nn);
+		if (a < tm) { tm = a; movcor = wood * (nn.y > 0.5 ? 1.1 : 0.75); }
+		a = caixa(P, D, vec3(0.8, y0, zc - 0.2), vec3(1.15, y0 + 0.42, zc + 0.15), nn);
+		if (a < tm) { tm = a; movcor = wood * 0.85; }
+	}
+	if (acesa && h1(semente + 41.0) < 0.11) {                  // silhueta de alguém em pé, de costas para a janela
+		float fx = (h1(semente + 43.0) - 0.5) * rw * 0.5;
+		float fz = -prof * 0.68;
+		float a = caixa(P, D, vec3(fx - 0.26, y0, fz - 0.14), vec3(fx + 0.26, y0 + 1.45, fz + 0.14), nn);
+		if (a < tm) { tm = a; movcor = vec3(0.012); }
+		a = caixa(P, D, vec3(fx - 0.14, y0 + 1.45, fz - 0.13), vec3(fx + 0.14, y0 + 1.75, fz + 0.13), nn);
+		if (a < tm) { tm = a; movcor = vec3(0.008); }
+	}
+	if (tm < t) {
+		t = tm;
+		H = P + D * t;
+		mov = true;
+	}
+	if (mov) {
+		col = movcor;
+	} else if (eixo == 2) {
 		// parede do fundo
 		vec2 q = vec2((H.x + rw * 0.5) / rw, (H.y - y0) / pe_direito);
 		col = reboco * (0.88 + 0.12 * h2(floor(q * 40.0)));

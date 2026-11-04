@@ -284,6 +284,7 @@ func _na_passagem(x: float, z: float, m: float) -> bool:
 func _setup(veg_scenes: Dictionary) -> void:
 	_veg = veg_scenes
 	_rng.seed = 1789
+	_rng_f.seed = 77
 	_noise_lo = FastNoiseLite.new()
 	_noise_lo.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	_noise_lo.frequency = 0.0055
@@ -619,6 +620,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(det.construir(self))
 	print("[vila] detalhes: ", det.contagem)
 	print("[vila] entradas: ", _entradas_feitas)
+	_separa_lampioes(root)
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
 	# a neblina (densidade 0,03) já apaga tudo a ~100 m: não desenhar além disso economiza centenas de chamadas
 	for name in ["Casas", "MurosEQuintais", "FundoDaRua", "Ponte"]:
@@ -1224,8 +1226,31 @@ func _emblem(b: MeshBatch, kind: String, bx: float, z: float) -> void:
 			b.box("ferro", Vector3(0.015, 0.14, 0.015), Vector3(bx, y + 0.28, z))
 
 
+var _rng_f := RandomNumberGenerator.new()      # sorteio próprio das flores: não mexe na sequência que define o desenho da vila
+const FLORES := ["flor_vermelha", "flor_rosa", "flor_amarela", "flor_mix"]
+
+
+## Cachos de flores coloridas (buquês de bolinhas com miolo claro) e folhas pendentes: dão cor às janelas além das folhagens do kit.
+func _flores(b: MeshBatch, centro: Vector3, larg: float, prof: float, n: int, pende := false) -> void:
+	var cor := FLORES[_rng_f.randi() % FLORES.size()]
+	var cor2 := FLORES[_rng_f.randi() % FLORES.size()]
+	for k in n:
+		var q := Vector3(centro.x + _rng_f.randf_range(-prof, prof) * 0.5, centro.y + _rng_f.randf_range(0.05, 0.3), centro.z + _rng_f.randf_range(-larg, larg) * 0.5)
+		var r := _rng_f.randf_range(0.03, 0.055)
+		b.sphere(cor if _rng_f.randf() < 0.65 else cor2, r, q, 5, 3)
+		if _rng_f.randf() < 0.45:
+			b.sphere("flor_amarela", r * 0.4, q + Vector3(-0.025, 0.01, 0.0), 4, 2)      # miolo
+	if pende:
+		for k in maxi(2, int(larg * 3.0)):
+			var zz := centro.z + _rng_f.randf_range(-larg, larg) * 0.5
+			var comp := _rng_f.randf_range(0.14, 0.34)
+			b.box("verde_vaso", Vector3(0.018, comp, 0.05), Vector3(centro.x - prof * 0.55, centro.y - 0.08 - comp * 0.5, zz), Vector3(0, 0, _rng_f.randf_range(-0.2, 0.2)))
+			b.sphere(cor, 0.028, Vector3(centro.x - prof * 0.55, centro.y - 0.1 - comp, zz), 4, 2)
+
+
 func _pot(b: MeshBatch, p: Vector3) -> void:
 	b.cylinder("vaso", 0.11, 0.08, 0.16, p + Vector3(0, 0.08, 0), Vector3.ZERO, 8)
+	_flores(b, p + Vector3(0, 0.15, 0), 0.2, 0.2, 5)
 	_pl_atual.append({"pos": p + Vector3(0, 0.15, 0), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.2)})
 
 
@@ -1281,6 +1306,8 @@ func _venezianas(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String)
 ## Jardineira de madeira sob a janela, com folhagem e flores.
 func _jardineira(b: MeshBatch, p: Vector3, wid: float) -> void:
 	b.box("madeira_escura", Vector3(0.26, 0.16, wid * 0.9), p + Vector3(0, 0.08, 0))
+	b.box("madeira_natural", Vector3(0.02, 0.05, wid * 0.9), p + Vector3(-0.13, 0.12, 0))        # friso de acabamento na frente
+	_flores(b, p + Vector3(0, 0.17, 0), wid * 0.84, 0.2, int(wid * 9.0) + 4, true)
 	for k in maxi(2, int(wid * 2.2)):
 		var z := p.z - wid * 0.38 + k * (wid * 0.76) / maxf(1.0, int(wid * 2.2) - 1)
 		_pl_atual.append({"pos": Vector3(p.x, p.y + 0.15, z), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.3)})
@@ -1736,6 +1763,55 @@ func _lantern_wall(pos: Vector3, yaw: float) -> Node3D:
 	_lamp_light(m, bpos, 0.85)
 	_halo(m, bpos, 1.8)
 	return m
+
+
+## Posição no mundo de um nó que ainda não está na árvore (compõe as transformações locais).
+func _pos_mundo(n: Node) -> Vector3:
+	var xf := Transform3D.IDENTITY
+	var cur: Node = n
+	while cur != null:
+		if cur is Node3D:
+			xf = (cur as Node3D).transform * xf
+		cur = cur.get_parent()
+	return xf.origin
+
+
+## Lampiões e postes nunca ficam a menos de LAMP_MIN um do outro (antes: lampião de porta colado no de parede, poste ao lado de lampião).
+## Prioridade de quem fica: lampião da porta (marca casa visitável) > chafariz e postes > lampião de parede da rua.
+const LAMP_MIN := 6.5
+func _separa_lampioes(root: Node3D) -> void:
+	var itens: Array = []
+	for n in root.find_children("*", "Node3D", true, false):
+		var nm := String(n.name)
+		var prio := 0
+		if nm.begins_with("Poste") or nm.begins_with("LampiaoDoChafariz"):
+			prio = 3
+		elif nm.begins_with("LampiaoDaPorta"):
+			prio = 4                      # marca as casas visitáveis (objetivo do jogo): nunca é removido
+		elif nm.begins_with("LampiaoParede"):
+			prio = 1
+		else:
+			continue
+		var pw := _pos_mundo(n)
+		if pw.x > 1500.0:
+			continue                      # interiores
+		itens.append({"n": n, "p": pw, "prio": prio})
+	itens.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["prio"]) > int(b["prio"]))
+	var ficam: Array = []
+	var removidos := 0
+	for it in itens:
+		var ok := true
+		for f in ficam:
+			if int(it["prio"]) < 4 and (it["p"] as Vector3).distance_to(f["p"]) < LAMP_MIN:
+				ok = false
+				break
+		if ok:
+			ficam.append(it)
+		else:
+			(it["n"] as Node).get_parent().remove_child(it["n"])
+			(it["n"] as Node).queue_free()
+			removidos += 1
+	print("[vila] lampiões: ficam %d, removidos por ficarem a menos de %.1f m de outro: %d" % [ficam.size(), LAMP_MIN, removidos])
 
 
 func _lamps() -> Node3D:

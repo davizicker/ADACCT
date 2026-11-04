@@ -515,23 +515,7 @@ func _sala_igreja(g: Node3D) -> void:
 				_bb.box("madeira_escura", Vector3(0.06, 0.45, 0.4), Vector3(x0 + lx, 0.22, z))
 		b._blocker(g, "ColBanco_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(2.5, 0.45, z))
 		b._blocker(g, "ColBancoD_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(7.5, 0.45, z))
-	# presbitério: degraus, altar de pedra, retábulo dourado com cruz e velas
-	_bb.box("cantaria", Vector3(9.4, 0.3, 3.8), Vector3(5.0, 0.15, 19.9))
-	_bb.box("cantaria", Vector3(9.4, 0.3, 2.6), Vector3(5.0, 0.45, 20.5))
-	b._blocker(g, "ColDegrau", Vector3(9.4, 0.6, 3.8), Vector3(5.0, 0.3, 19.9))
-	_bb.box("cantaria", Vector3(2.6, 1.05, 0.95), Vector3(5.0, 1.12, 20.2))
-	_bb.box("cantaria", Vector3(2.9, 0.08, 1.1), Vector3(5.0, 1.68, 20.2))
-	b._blocker(g, "ColAltar", Vector3(2.7, 1.2, 1.05), Vector3(5.0, 1.2, 20.2))
-	_bb.box("ouro_velho", Vector3(7.5, 6.0, 0.5), Vector3(5.0, 4.0, 21.75))
-	for k in [-1.0, 1.0]:
-		_bb.box("ouro_velho", Vector3(0.5, 6.4, 0.7), Vector3(5.0 + k * 3.4, 3.8, 21.5))
-		_bb.cylinder("cantaria", 0.28, 0.28, 5.6, Vector3(5.0 + k * 2.6, 3.3, 21.2), Vector3.ZERO, 10)
-	_bb.box("ferro", Vector3(0.18, 2.4, 0.12), Vector3(5.0, 4.6, 21.45))
-	_bb.box("ferro", Vector3(1.2, 0.18, 0.12), Vector3(5.0, 5.2, 21.45))
-	_bb.box("bradador_palido", Vector3(0.28, 1.1, 0.1), Vector3(5.0, 4.5, 21.38))
-	for k in [-1.0, 1.0]:
-		for j in 2:
-			_vela(5.0 + k * (0.7 + j * 0.45), 1.72, 20.2, j == 0)
+	_presbiterio(g)
 	# janelas altas com luar e arcos
 	for k in 3:
 		_janela("O", 5.0 + k * 5.5, 5.0, 1.0, 2.4)
@@ -548,6 +532,123 @@ func _sala_igreja(g: Node3D) -> void:
 	al.set("texto_interacao", "Ler os nomes em voz alta")
 	al.set("requer", "livro")
 	_fim()
+
+
+## Arco em pé (plano X-Y, olhando para -Z): anel de caixas ao redor de `c`.
+func _arco_xy(mat: String, c: Vector3, r: float, esp: float, prof: float, segs := 12) -> void:
+	for k in segs:
+		var t0 := PI * float(k) / segs
+		var t1 := PI * float(k + 1) / segs
+		var tm := (t0 + t1) * 0.5
+		var corda := 2.0 * r * sin((t1 - t0) * 0.5) + 0.03
+		_bb.box(mat, Vector3(corda, esp, prof), c + Vector3(cos(tm) * r, sin(tm) * r, 0), Vector3(0, 0, tm + PI / 2.0))
+
+
+## Coluna torça (salomônica) dourada: pilhas de caixas girando, com base e capitel.
+func _coluna_torsa(x: float, z: float, y0: float, alt: float) -> void:
+	_bb.box("ouro_velho", Vector3(0.62, 0.22, 0.62), Vector3(x, y0 + 0.11, z))
+	_bb.box("cantaria", Vector3(0.5, 0.12, 0.5), Vector3(x, y0 + 0.28, z))
+	var n := int((alt - 0.7) / 0.18)
+	for k in n:
+		var yy := y0 + 0.34 + 0.18 * k + 0.09
+		_bb.box("ouro_velho", Vector3(0.34, 0.2, 0.34), Vector3(x, yy, z), Vector3(0, k * 0.42, 0))
+		_bb.box("ouro_velho", Vector3(0.34, 0.2, 0.34), Vector3(x, yy, z), Vector3(0, k * 0.42 + PI / 4.0, 0))
+	_bb.cylinder("madeira_escura", 0.13, 0.13, alt - 0.7, Vector3(x, y0 + 0.34 + (alt - 0.7) * 0.5, z), Vector3.ZERO, 8)
+	_bb.box("ouro_velho", Vector3(0.62, 0.22, 0.62), Vector3(x, y0 + alt - 0.11, z))
+	_bb.sphere("ouro_velho", 0.2, Vector3(x, y0 + alt + 0.05, z), 8, 4)
+
+
+func _castical(x: float, y: float, z: float, alt: float, luz := false) -> void:
+	_bb.cylinder("ouro_velho", 0.16, 0.16, 0.05, Vector3(x, y + 0.025, z), Vector3.ZERO, 10)
+	_bb.cylinder("ouro_velho", 0.035, 0.05, alt, Vector3(x, y + 0.05 + alt * 0.5, z), Vector3.ZERO, 8)
+	_bb.sphere("ouro_velho", 0.065, Vector3(x, y + 0.05 + alt * 0.45, z), 6, 4)
+	_bb.cylinder("ouro_velho", 0.075, 0.04, 0.05, Vector3(x, y + 0.05 + alt, z), Vector3.ZERO, 8)
+	_vela(x, y + 0.075 + alt, z, luz)
+
+
+## Presbitério barroco: três degraus, grade da comunhão, altar com toalha, sacrário e castiçais, e o retábulo dourado
+## (colunas torças, nicho com santa, glória de raios, crucifixo) encostado na parede do fundo.
+func _presbiterio(g: Node3D) -> void:
+	# degraus (o topo, a 0,6 m, é onde o altar fica; os blocos de colisão cobrem o conjunto)
+	_bb.box("cantaria", Vector3(9.4, 0.2, 4.4), Vector3(5.0, 0.1, 19.8))
+	_bb.box("cantaria", Vector3(9.4, 0.2, 3.5), Vector3(5.0, 0.3, 20.25))
+	_bb.box("cantaria", Vector3(9.4, 0.2, 2.6), Vector3(5.0, 0.5, 20.7))
+	b._blocker(g, "ColDegrau", Vector3(9.4, 0.6, 3.8), Vector3(5.0, 0.3, 19.9))
+	# grade da comunhão: balaústres torneados com corrimão, aberta no meio
+	for lado in [-1.0, 1.0]:
+		var x0 := 5.0 + lado * 0.9
+		for k in 7:
+			var xx := x0 + lado * (0.25 + k * 0.55)
+			_bb.cylinder("madeira_escura", 0.05, 0.05, 0.5, Vector3(xx, 0.45, 17.75), Vector3.ZERO, 6)
+			_bb.sphere("ouro_velho", 0.06, Vector3(xx, 0.72, 17.75), 5, 3)
+		var cx := 5.0 + lado * (0.9 + 2.0)
+		_bb.box("madeira_escura", Vector3(4.2, 0.07, 0.16), Vector3(cx, 0.76, 17.75))
+		_bb.box("madeira_escura", Vector3(4.2, 0.08, 0.2), Vector3(cx, 0.2, 17.75))
+		b._blocker(g, "ColGrade_%d" % int(lado), Vector3(4.2, 0.9, 0.3), Vector3(cx, 0.45, 17.75))
+	# altar: mesa de pedra com painéis dourados na frente, tampo, toalha branca com franja
+	_bb.box("cantaria", Vector3(2.6, 1.05, 0.95), Vector3(5.0, 1.12, 20.2))
+	for k in 3:
+		var px := 5.0 + (k - 1) * 0.82
+		_bb.box("ouro_velho", Vector3(0.7, 0.8, 0.03), Vector3(px, 1.1, 19.715))
+		_bb.box("madeira_escura", Vector3(0.6, 0.7, 0.04), Vector3(px, 1.1, 19.712))
+		_bb.sphere("ouro_velho", 0.09, Vector3(px, 1.1, 19.69), 6, 4)
+	_bb.box("cantaria", Vector3(2.9, 0.08, 1.1), Vector3(5.0, 1.68, 20.2))
+	_bb.box("pano_cru", Vector3(3.3, 0.04, 1.2), Vector3(5.0, 1.73, 20.2))
+	_bb.box("pano_cru", Vector3(2.3, 0.78, 0.03), Vector3(5.0, 1.3, 19.69))               # frontal pendurado
+	_bb.box("ouro_velho", Vector3(2.3, 0.06, 0.04), Vector3(5.0, 0.9, 19.685))
+	_bb.box("ouro_velho", Vector3(3.3, 0.03, 0.05), Vector3(5.0, 1.72, 19.6))
+	b._blocker(g, "ColAltar", Vector3(2.7, 1.2, 1.05), Vector3(5.0, 1.2, 20.2))
+	# sobre o altar: sacrário dourado com cúpula e cruz, castiçais de alturas diferentes e vasos de flores
+	_bb.box("ouro_velho", Vector3(0.6, 0.62, 0.42), Vector3(5.0, 2.05, 20.55))
+	_bb.box("madeira_escura", Vector3(0.38, 0.44, 0.03), Vector3(5.0, 2.05, 20.33))
+	_bb.sphere("ouro_velho", 0.05, Vector3(5.0, 2.05, 20.31), 5, 3)
+	_bb.sphere("ouro_velho", 0.3, Vector3(5.0, 2.36, 20.55), 8, 4)
+	_bb.box("ouro_velho", Vector3(0.04, 0.3, 0.04), Vector3(5.0, 2.78, 20.55))
+	_bb.box("ouro_velho", Vector3(0.18, 0.04, 0.04), Vector3(5.0, 2.82, 20.55))
+	for k in [-1.0, 1.0]:
+		_castical(5.0 + k * 0.62, 1.77, 20.35, 0.36, true)
+		_castical(5.0 + k * 1.02, 1.77, 20.35, 0.52)
+		_castical(5.0 + k * 1.34, 1.77, 20.35, 0.30)
+		_bb.cylinder("vaso", 0.08, 0.06, 0.2, Vector3(5.0 + k * 0.82, 1.87, 20.7), Vector3.ZERO, 8)
+		_bb.sphere("flor_rosa", 0.16, Vector3(5.0 + k * 0.82, 2.05, 20.7), 6, 4)
+	# retábulo dourado encostado na parede do fundo (z = 22)
+	_bb.box("ouro_velho", Vector3(8.0, 7.0, 0.3), Vector3(5.0, 4.1, 21.85))
+	_bb.box("madeira_escura", Vector3(2.4, 3.2, 0.12), Vector3(5.0, 3.9, 21.66))              # fundo do nicho
+	_bb.box("ouro_velho", Vector3(2.7, 0.18, 0.26), Vector3(5.0, 2.2, 21.62))                 # base do nicho
+	_bb.box("ouro_velho", Vector3(0.18, 3.0, 0.26), Vector3(3.75, 3.7, 21.62))
+	_bb.box("ouro_velho", Vector3(0.18, 3.0, 0.26), Vector3(6.25, 3.7, 21.62))
+	_arco_xy("ouro_velho", Vector3(5.0, 5.2, 21.62), 1.25, 0.18, 0.26, 14)
+	_bb.box("madeira_escura", Vector3(2.4, 0.5, 0.12), Vector3(5.0, 5.35, 21.66))
+	_bb.sphere("ouro_velho", 0.16, Vector3(5.0, 6.55, 21.6), 6, 4)                           # fecho do arco
+	# santa no nicho: manto azul, véu claro, auréola dourada
+	_bb.cylinder("pano_azul", 0.5, 0.2, 1.6, Vector3(5.0, 3.1, 21.45), Vector3.ZERO, 10)
+	_bb.box("pano_azul", Vector3(0.9, 0.16, 0.3), Vector3(5.0, 3.5, 21.45))
+	_bb.sphere("pano_cru", 0.2, Vector3(5.0, 4.12, 21.45), 8, 5)
+	_bb.cylinder("ouro_velho", 0.3, 0.3, 0.03, Vector3(5.0, 4.15, 21.62), Vector3(PI / 2.0, 0, 0), 14)
+	# colunas torças dos dois lados e entablamento
+	for k in [-1.0, 1.0]:
+		_coluna_torsa(5.0 + k * 2.2, 21.2, 0.6, 5.8)
+		_coluna_torsa(5.0 + k * 3.35, 21.4, 0.6, 5.2)
+		_bb.box("ouro_velho", Vector3(0.9, 6.0, 0.35), Vector3(5.0 + k * 4.05, 3.7, 21.7))
+	_bb.box("ouro_velho", Vector3(8.4, 0.35, 0.9), Vector3(5.0, 6.65, 21.35))
+	_bb.box("cantaria", Vector3(8.6, 0.1, 1.0), Vector3(5.0, 6.88, 21.3))
+	_bb.box("ouro_velho", Vector3(8.8, 0.18, 1.1), Vector3(5.0, 7.0, 21.25))
+	# glória: raios dourados em leque sobre o nicho, com o crucifixo (e a figura pálida) no centro
+	for k in 11:
+		var ang := PI * (0.12 + 0.76 * float(k) / 10.0)
+		var dir := Vector2(cos(ang), sin(ang))
+		_bb.box("ouro_velho", Vector3(0.07, 1.25, 0.05), Vector3(5.0 + dir.x * 0.95, 7.35 + dir.y * 0.95, 21.55), Vector3(0, 0, ang - PI / 2.0))
+	_bb.box("ferro", Vector3(0.14, 1.5, 0.1), Vector3(5.0, 7.3, 21.5))
+	_bb.box("ferro", Vector3(0.95, 0.14, 0.1), Vector3(5.0, 7.7, 21.5))
+	_bb.box("bradador_palido", Vector3(0.26, 1.0, 0.08), Vector3(5.0, 7.3, 21.43))
+	# lâmpada do santíssimo: pendurada à frente do altar, chama vermelha
+	_bb.cylinder("ferro", 0.012, 0.012, 2.2, Vector3(5.0, 6.7, 19.0), Vector3.ZERO, 4)
+	_bb.cylinder("ouro_velho", 0.14, 0.09, 0.2, Vector3(5.0, 5.5, 19.0), Vector3.ZERO, 8)
+	_bb.sphere("gema", 0.09, Vector3(5.0, 5.52, 19.0), 6, 4)
+	b._halo(g, Vector3(5.0, 5.52, 19.0), 0.9, "halo_quente")
+	# castiçais altos de chão dos dois lados
+	for k in [-1.0, 1.0]:
+		_castical(5.0 + k * 3.9, 0.6, 19.2, 1.6)
 
 
 func _sala_carpintaria(g: Node3D) -> void:
