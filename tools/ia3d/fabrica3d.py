@@ -21,6 +21,7 @@ def carregar_config():
            "hf_space": os.environ.get("HF_SPACE", "stabilityai/TripoSR"),
            "hf_token": os.environ.get("HF_TOKEN", ""),
            "hf_texto2img": os.environ.get("HF_TEXTO2IMG", "black-forest-labs/FLUX.1-schnell"),
+           "hf_space_texto": os.environ.get("HF_SPACE_TEXTO", "black-forest-labs/FLUX.1-schnell"),
            "triposr_dir": "", "python_triposr": sys.executable, "python_bpy": sys.executable,
            "modelo_texto2img": "stabilityai/stable-diffusion-xl-base-1.0", "pasta_saida": os.path.join(RAIZ, "tools", "ia3d", "saida")}
     p = os.path.join(AQUI, "fabrica3d.json")
@@ -47,15 +48,54 @@ def texto_para_imagem(prompt, cfg, saida):
     return saida
 
 
-def texto_para_imagem_hf(prompt, cfg, saida):
-    """Texto -> imagem pela API de inferência do Hugging Face (precisa de HF_TOKEN gratuito)."""
-    if not cfg["hf_token"]:
-        sys.exit("Para gerar a partir de TEXTO na nuvem defina HF_TOKEN (token grátis em huggingface.co/settings/tokens). "
-                 "Ou envie uma IMAGEM, que não precisa de token.")
-    from huggingface_hub import InferenceClient
-    img = InferenceClient(token=cfg["hf_token"]).text_to_image(TEMPLATE.format(p=prompt), model=cfg["hf_texto2img"])
-    img.save(saida)
+def _texto_space(prompt, cfg, saida):
+    """Texto -> imagem no Space grátis do FLUX.1-schnell (GPU do Hugging Face, sem créditos), via gradio_client."""
+    from gradio_client import Client
+    kw = {"token": cfg["hf_token"]} if cfg["hf_token"] else {}
+    cli = Client(cfg["hf_space_texto"], **kw)
+    res = cli.predict(TEMPLATE.format(p=prompt), 0, True, 1024, 1024, 4, api_name="/infer")
+    arq = res[0] if isinstance(res, (list, tuple)) else res
+    if isinstance(arq, dict):
+        arq = arq.get("path") or arq.get("url")
+    if not isinstance(arq, str) or not os.path.exists(arq):
+        raise RuntimeError("o Space respondeu sem imagem: %r" % (res,))
+    shutil.copy(arq, saida)
     return saida
+
+
+def _texto_pollinations(prompt, cfg, saida):
+    """Texto -> imagem pelo serviço grátis Pollinations (sem chave)."""
+    import urllib.parse, urllib.request
+    url = "https://image.pollinations.ai/prompt/%s?width=1024&height=1024&nologo=true&model=flux&seed=%d" % (
+        urllib.parse.quote(TEMPLATE.format(p=prompt)), int.from_bytes(os.urandom(3), "big"))
+    req = urllib.request.Request(url, headers={"User-Agent": "fabrica3d"})
+    dados = urllib.request.urlopen(req, timeout=120).read()
+    if len(dados) < 2000:
+        raise RuntimeError("resposta vazia")
+    open(saida, "wb").write(dados)
+    return saida
+
+
+def texto_para_imagem_hf(prompt, cfg, saida):
+    """Texto -> imagem SEM créditos: tenta o Space grátis do FLUX no Hugging Face e depois o Pollinations.
+    (A API paga 'Inference Providers' do Hugging Face devolve erro 402 sem créditos; por isso não é mais usada, a menos que HF_USAR_API=1.)"""
+    erros = []
+    if os.environ.get("HF_USAR_API") == "1" and cfg["hf_token"]:
+        try:
+            from huggingface_hub import InferenceClient
+            InferenceClient(token=cfg["hf_token"]).text_to_image(TEMPLATE.format(p=prompt), model=cfg["hf_texto2img"]).save(saida)
+            return saida
+        except Exception as e:
+            erros.append("API do Hugging Face: %s" % str(e)[:120])
+    for nome, f in (("Space FLUX", _texto_space), ("Pollinations", _texto_pollinations)):
+        try:
+            print("  tentando %s..." % nome, flush=True)
+            return f(prompt, cfg, saida)
+        except Exception as e:
+            erros.append("%s: %s" % (nome, str(e)[:120]))
+    sys.exit("Não consegui gerar a imagem a partir do texto de graça agora (%s).\n"
+             "SOLUÇÃO SIMPLES: gere a imagem em outro lugar (Bing Image Creator, Gemini, ChatGPT, craiyon.com) "
+             "e ENVIE a imagem no site, que a etapa imagem -> 3D é grátis." % " | ".join(erros))
 
 
 def imagem_para_3d_hf(imagem, cfg, pasta, fundo=0.85, resolucao=256):
