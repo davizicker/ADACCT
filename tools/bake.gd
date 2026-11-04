@@ -254,9 +254,9 @@ func _materials() -> void:
 	_mista_pbr("madeira_escura", "Wood028", "Ground054", Color(1, 1, 1), Color(0.55, 0.45, 0.38), 0.7, 0.22, 0.45)      # tábuas com poeira e barro seco
 	_flat("vaso", Color(0.55, 0.26, 0.16), 0.9)
 	_flat("verde_vaso", Color(0.10, 0.28, 0.09), 1.0)
-	_flat("flor_vermelha", Color(0.75, 0.08, 0.08), 0.8)
-	_flat("flor_rosa", Color(0.85, 0.35, 0.5), 0.8)
-	_flat("flor_amarela", Color(0.9, 0.75, 0.15), 0.8)
+	_flat("flor_vermelha", Color(0.85, 0.10, 0.10), 0.8, 0.0, 0.45)
+	_flat("flor_rosa", Color(0.95, 0.40, 0.58), 0.8, 0.0, 0.45)
+	_flat("flor_amarela", Color(1.0, 0.82, 0.18), 0.8, 0.0, 0.45)
 	_flat("vela", Color(0.9, 0.85, 0.7), 0.9)
 	_flat("chama", Color(1.0, 0.7, 0.3), 0.5, 0.0, 3.5, true)
 	_flat("bandeira_a", Color(0.8, 0.15, 0.12), 1.0)

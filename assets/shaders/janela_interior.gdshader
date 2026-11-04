@@ -165,9 +165,9 @@ void fragment() {
 	float luz = 1.0 / (1.0 + 0.2 * d * d);
 	vec3 quente;
 	if (acesa) {
-		quente = col * cor_luz * (0.22 + 2.4 * luz);
+		quente = col * cor_luz * (0.30 + 2.8 * luz);
 		ALBEDO = vec3(0.01);
-		EMISSION = quente * 0.9;
+		EMISSION = quente * 1.0;
 	} else {
 		// penumbra: a luz que entra pela própria janela clareia o fundo perto do vidro e some com a profundidade
 		float entrada = 0.35 + 0.65 * exp(-0.55 * d * 0.5);
