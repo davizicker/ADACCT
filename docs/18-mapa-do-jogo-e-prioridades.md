@@ -55,6 +55,10 @@ Uma noite de 1961 numa vila mineira inspirada em Ouro Preto. O jogador sobe uma 
 7. **Mão esquerda com os dedos dobrando para trás**: agora dobra para a palma (`curvatura_dedos_esq`).
 8. **O querosene no alto dos becos não aparecia para pegar**: a zona invisível de refúgio interceptava o raio da tecla E. Agora ela só detecta o jogador.
 9. **O teste da Mula nunca julgava o jogador em quadros lentos** (ela "pulava" por cima dele): agora também conta ter cruzado a posição dele, o que vale no jogo real em quedas de FPS. Resultado do teste agora real: na rua morre, no refúgio escuro sobrevive.
+10. **Beco_02 travava o jogador** (parede da casa vizinha entrava na escada): a casa logo antes de um beco agora encurta para não invadi-lo. Todos os becos passam no teste.
+11. **4 portas com a quina da parede do beco na frente** (Casa_58, 82, 136, 175): a parede começa 0,4 m dentro da fachada. Auditoria de portas: 0 bloqueadas.
+12. **Paredes dos becos em 4 degraus grandes (cara de Minecraft)**: agora são 14 degraus baixos.
+13. Gatilho do esconderijo de carro girado com a rua, raio de interação (E) que ignora o corpo do próprio carro e visual "Cinematográfico" como padrão (SDFGI, SSIL, SSR, neblina volumétrica, foco, correção de cor).
 
 ## 4. Aberto (em ordem de prioridade)
 
