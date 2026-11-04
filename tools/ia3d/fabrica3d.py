@@ -101,7 +101,7 @@ def texto_para_imagem_hf(prompt, cfg, saida):
 def _spaces_candidatos(cfg):
     """Lista de Spaces de imagem->3D para tentar, em ordem: o configurado, os conhecidos e, por fim, uma busca por Spaces TripoSR que estejam RODANDO."""
     lista = [x for x in str(cfg["hf_space"]).split(",") if x.strip()]
-    for x in ("VAST-AI/TripoSR", "stabilityai/TripoSR"):
+    for x in ("stabilityai/TripoSR", "Nymbo/TripoSR", "mrdas/TripoSR", "JeffreyXiang/TRELLIS"):
         if x not in lista:
             lista.append(x)
     try:
@@ -115,10 +115,30 @@ def _spaces_candidatos(cfg):
     return lista
 
 
+def _gerar_trellis(cli, imagem):
+    """Space do TRELLIS (Microsoft): imagem -> estrutura 3D -> .glb. Os parâmetros que faltam usam os valores padrão do Space."""
+    from gradio_client import handle_file
+    img = handle_file(os.path.abspath(imagem))
+    try:
+        img = cli.predict(img, api_name="/preprocess_image")
+    except Exception:
+        pass
+    try:
+        cli.predict(img, [], 0, True, 7.5, 12, 3.0, 12, "stochastic", api_name="/image_to_3d")
+    except Exception:
+        cli.predict(image=img, api_name="/image_to_3d")
+    try:
+        return cli.predict(0.95, 1024, api_name="/extract_glb")
+    except Exception:
+        return cli.predict(api_name="/extract_glb")
+
+
 def _gerar_no_space(space, imagem, cfg, fundo, resolucao):
     from gradio_client import Client, handle_file
     kw = {"token": cfg["hf_token"]} if cfg["hf_token"] else {}
     cli = Client(space, **kw)
+    if "trellis" in space.lower():
+        return _gerar_trellis(cli, imagem)
     pre = cli.predict(handle_file(os.path.abspath(imagem)), True, fundo, api_name="/preprocess")
     try:
         return cli.predict(pre, resolucao, api_name="/generate")
