@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode blend_add, unshaded, cull_disabled, depth_draw_never, shadows_disabled;
+render_mode blend_add, unshaded, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
 // Brilho de luz (lampião, vela): um quadrado virado para a câmera com queda radial CALCULADA (sem textura), sempre suave, de perto e de longe.
 uniform vec4 cor : source_color = vec4(1.0, 0.7, 0.32, 0.55);
 uniform float expoente = 2.4;

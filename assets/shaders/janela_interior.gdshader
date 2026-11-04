@@ -162,12 +162,12 @@ void fragment() {
 	// luz do quarto: lâmpada no teto, queda suave com a distância
 	vec3 L = vec3(0.0, y1 - 0.25, -prof * 0.5);
 	float d = length(H - L);
-	float luz = 1.0 / (1.0 + 0.09 * d * d);
+	float luz = 1.0 / (1.0 + 0.2 * d * d);
 	vec3 quente;
 	if (acesa) {
-		quente = col * cor_luz * (0.55 + 3.2 * luz);
+		quente = col * cor_luz * (0.22 + 2.4 * luz);
 		ALBEDO = vec3(0.01);
-		EMISSION = quente * 1.25;
+		EMISSION = quente * 0.9;
 	} else {
 		// penumbra: a luz que entra pela própria janela clareia o fundo perto do vidro e some com a profundidade
 		float entrada = 0.35 + 0.65 * exp(-0.55 * d * 0.5);
