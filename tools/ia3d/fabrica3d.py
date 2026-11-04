@@ -99,19 +99,36 @@ def texto_para_imagem_hf(prompt, cfg, saida):
 
 
 def _spaces_candidatos(cfg):
-    """Lista de Spaces de imagem->3D para tentar, em ordem: o configurado, os conhecidos e, por fim, uma busca por Spaces TripoSR que estejam RODANDO."""
+    """Spaces de imagem->3D para tentar: os configurados/conhecidos e, depois, os que a busca do Hugging Face acha e que estão RODANDO agora
+    (Spaces grátis quebram toda hora, então a lista é montada na hora do pedido)."""
     lista = [x for x in str(cfg["hf_space"]).split(",") if x.strip()]
-    for x in ("stabilityai/TripoSR", "Nymbo/TripoSR", "mrdas/TripoSR", "JeffreyXiang/TRELLIS"):
+    for x in ("stabilityai/TripoSR", "JeffreyXiang/TRELLIS", "tencent/Hunyuan3D-2"):
         if x not in lista:
             lista.append(x)
     try:
         from huggingface_hub import HfApi
         api = HfApi(token=cfg["hf_token"] or None)
-        for sp in api.list_spaces(search="TripoSR", sort="likes", direction=-1, limit=12):
-            if sp.id not in lista:
-                lista.append(sp.id)
-    except Exception:
-        pass
+        achados = []
+        for termo in ("TRELLIS", "TripoSR", "image to 3d"):
+            try:
+                for sp in api.list_spaces(search=termo, sort="likes", limit=15):
+                    if sp.id not in lista and sp.id not in achados:
+                        achados.append(sp.id)
+            except Exception as e:
+                print("  (busca de Spaces '%s' falhou: %s)" % (termo, str(e)[:80]), flush=True)
+        vivos = []
+        for sid in achados:
+            try:
+                if api.get_space_runtime(sid).stage == "RUNNING":
+                    vivos.append(sid)
+            except Exception:
+                pass
+            if len(vivos) >= 6:
+                break
+        print("  Spaces achados na busca e rodando agora: %s" % (vivos or "nenhum"), flush=True)
+        lista += vivos
+    except Exception as e:
+        print("  (não consegui buscar outros Spaces: %s)" % str(e)[:80], flush=True)
     return lista
 
 
@@ -137,8 +154,14 @@ def _gerar_no_space(space, imagem, cfg, fundo, resolucao):
     from gradio_client import Client, handle_file
     kw = {"token": cfg["hf_token"]} if cfg["hf_token"] else {}
     cli = Client(space, **kw)
-    if "trellis" in space.lower():
+    try:
+        eps = set((cli.view_api(return_format="dict", print_info=False) or {}).get("named_endpoints", {}).keys())
+    except Exception:
+        eps = set()
+    if "/image_to_3d" in eps and "/extract_glb" in eps or (not eps and "trellis" in space.lower()):
         return _gerar_trellis(cli, imagem)
+    if eps and not ("/preprocess" in eps and "/generate" in eps):
+        raise RuntimeError("API desconhecida (endpoints: %s)" % sorted(eps)[:6])
     pre = cli.predict(handle_file(os.path.abspath(imagem)), True, fundo, api_name="/preprocess")
     try:
         return cli.predict(pre, resolucao, api_name="/generate")
