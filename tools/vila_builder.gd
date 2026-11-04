@@ -1427,10 +1427,10 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 	var ang := atan2(total, run_len)
 	# paredes de pedra dos dois lados, em degraus, depois das casas vizinhas
 	for sz: float in [-1.0, 1.0]:
-		for k in 4:
-			var x0 := k * run_len / 4.0
-			var seg := run_len / 4.0
-			var top := (k + 1) * total / 4.0 + 2.6
+		for k in 14:                                  # muitos degraus baixos (0,5 m) em vez de 4 grandes: a parede acompanha a escada sem "cara de Minecraft"
+			var x0 := k * run_len / 14.0
+			var seg := run_len / 14.0
+			var top := (k + 1) * total / 14.0 + 2.6
 			b.box("muro", Vector3(seg + 0.05, top + 1.0, 0.5), Vector3(x0 + seg / 2.0, top / 2.0 - 0.5, sz * (wb / 2.0 + 0.25)))
 			b.box("cantaria", Vector3(seg + 0.05, 0.12, 0.7), Vector3(x0 + seg / 2.0, top + 0.06, sz * (wb / 2.0 + 0.25)))
 	_mesh_node(g, "Degraus", b.commit())
