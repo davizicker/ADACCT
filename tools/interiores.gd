@@ -575,13 +575,13 @@ func _presbiterio(g: Node3D) -> void:
 	_bb.box("cantaria", Vector3(9.4, 0.2, 2.6), Vector3(5.0, 0.5, 20.7))
 	b._blocker(g, "ColDegrau", Vector3(9.4, 0.6, 3.8), Vector3(5.0, 0.3, 19.9))
 	# grade da comunhão: balaústres torneados com corrimão, aberta no meio
-	for lado in [-1.0, 1.0]:
-		var x0 := 5.0 + lado * 0.9
+	for lado: float in [-1.0, 1.0]:
+		var x0: float = 5.0 + lado * 0.9
 		for k in 7:
-			var xx := x0 + lado * (0.25 + k * 0.55)
+			var xx: float = x0 + lado * (0.25 + k * 0.55)
 			_bb.cylinder("madeira_escura", 0.05, 0.05, 0.5, Vector3(xx, 0.45, 17.75), Vector3.ZERO, 6)
 			_bb.sphere("ouro_velho", 0.06, Vector3(xx, 0.72, 17.75), 5, 3)
-		var cx := 5.0 + lado * (0.9 + 2.0)
+		var cx: float = 5.0 + lado * (0.9 + 2.0)
 		_bb.box("madeira_escura", Vector3(4.2, 0.07, 0.16), Vector3(cx, 0.76, 17.75))
 		_bb.box("madeira_escura", Vector3(4.2, 0.08, 0.2), Vector3(cx, 0.2, 17.75))
 		b._blocker(g, "ColGrade_%d" % int(lado), Vector3(4.2, 0.9, 0.3), Vector3(cx, 0.45, 17.75))
@@ -605,7 +605,7 @@ func _presbiterio(g: Node3D) -> void:
 	_bb.sphere("ouro_velho", 0.3, Vector3(5.0, 2.36, 20.55), 8, 4)
 	_bb.box("ouro_velho", Vector3(0.04, 0.3, 0.04), Vector3(5.0, 2.78, 20.55))
 	_bb.box("ouro_velho", Vector3(0.18, 0.04, 0.04), Vector3(5.0, 2.82, 20.55))
-	for k in [-1.0, 1.0]:
+	for k: float in [-1.0, 1.0]:
 		_castical(5.0 + k * 0.62, 1.77, 20.35, 0.36, true)
 		_castical(5.0 + k * 1.02, 1.77, 20.35, 0.52)
 		_castical(5.0 + k * 1.34, 1.77, 20.35, 0.30)
@@ -626,7 +626,7 @@ func _presbiterio(g: Node3D) -> void:
 	_bb.sphere("pano_cru", 0.2, Vector3(5.0, 4.12, 21.45), 8, 5)
 	_bb.cylinder("ouro_velho", 0.3, 0.3, 0.03, Vector3(5.0, 4.15, 21.62), Vector3(PI / 2.0, 0, 0), 14)
 	# colunas torças dos dois lados e entablamento
-	for k in [-1.0, 1.0]:
+	for k: float in [-1.0, 1.0]:
 		_coluna_torsa(5.0 + k * 2.2, 21.2, 0.6, 5.8)
 		_coluna_torsa(5.0 + k * 3.35, 21.4, 0.6, 5.2)
 		_bb.box("ouro_velho", Vector3(0.9, 6.0, 0.35), Vector3(5.0 + k * 4.05, 3.7, 21.7))
@@ -647,7 +647,7 @@ func _presbiterio(g: Node3D) -> void:
 	_bb.sphere("gema", 0.09, Vector3(5.0, 5.52, 19.0), 6, 4)
 	b._halo(g, Vector3(5.0, 5.52, 19.0), 0.9, "halo_quente")
 	# castiçais altos de chão dos dois lados
-	for k in [-1.0, 1.0]:
+	for k: float in [-1.0, 1.0]:
 		_castical(5.0 + k * 3.9, 0.6, 19.2, 1.6)
 
 

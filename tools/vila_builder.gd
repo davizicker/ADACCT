@@ -1232,8 +1232,8 @@ const FLORES := ["flor_vermelha", "flor_rosa", "flor_amarela", "flor_mix"]
 
 ## Cachos de flores coloridas (buquês de bolinhas com miolo claro) e folhas pendentes: dão cor às janelas além das folhagens do kit.
 func _flores(b: MeshBatch, centro: Vector3, larg: float, prof: float, n: int, pende := false) -> void:
-	var cor := FLORES[_rng_f.randi() % FLORES.size()]
-	var cor2 := FLORES[_rng_f.randi() % FLORES.size()]
+	var cor: String = FLORES[_rng_f.randi() % FLORES.size()]
+	var cor2: String = FLORES[_rng_f.randi() % FLORES.size()]
 	for k in n:
 		var q := Vector3(centro.x + _rng_f.randf_range(-prof, prof) * 0.5, centro.y + _rng_f.randf_range(0.05, 0.3), centro.z + _rng_f.randf_range(-larg, larg) * 0.5)
 		var r := _rng_f.randf_range(0.03, 0.055)
