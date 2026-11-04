@@ -291,17 +291,9 @@ func _materials() -> void:
 	_flat("pano_rosa", Color(0.58, 0.40, 0.40), 1.0)
 	_flat("pano_cru", Color(0.60, 0.55, 0.43), 1.0)
 	for hl in [["halo_quente", Color(1.0, 0.70, 0.32, 0.55)], ["halo_vela", Color(1.0, 0.52, 0.18, 0.65)]]:
-		var hm := StandardMaterial3D.new()
-		hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		hm.albedo_texture = _tex("ponto_luz.png")
-		hm.albedo_color = hl[1]
-		hm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		hm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-		hm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-		hm.billboard_keep_scale = true
-		hm.cull_mode = BaseMaterial3D.CULL_DISABLED
-		hm.no_depth_test = false
-		hm.disable_receive_shadows = true
+		var hm := ShaderMaterial.new()
+		hm.shader = load("res://assets/shaders/halo.gdshader")
+		hm.set_shader_parameter("cor", hl[1])
 		ResourceSaver.save(hm, MATS + hl[0] + ".tres")
 	var aq := ShaderMaterial.new()
 	aq.shader = load("res://assets/shaders/agua_queda.gdshader")

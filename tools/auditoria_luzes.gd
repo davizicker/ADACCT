@@ -17,7 +17,7 @@ func _init() -> void:
 		if nm.begins_with("Lampiao") or nm.begins_with("Poste"):
 			lamps.append([nm, p])
 		elif n is OmniLight3D or n is SpotLight3D:
-			luzes.append([nm, p])
+			luzes.append([nm, p, String(n.get_parent().name)])
 	var ruins := 0
 	for i in lamps.size():
 		for j in range(i + 1, lamps.size()):
@@ -31,5 +31,6 @@ func _init() -> void:
 			var d2: float = (luzes[i][1] as Vector3).distance_to(luzes[j][1])
 			if d2 < MIN_LUZ:
 				perto_luz += 1
+				print("[luzes] luzes perto: %s/%s x %s/%s a %.1f m @%s" % [luzes[i][2], luzes[i][0], luzes[j][2], luzes[j][0], d2, snapped(luzes[i][1], Vector3(0.1, 0.1, 0.1))])
 	print("[luzes] lampiões/postes=%d perto demais=%d | luzes=%d pares a menos de %.0f m=%d" % [lamps.size(), ruins, luzes.size(), MIN_LUZ, perto_luz])
 	quit()

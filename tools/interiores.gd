@@ -151,6 +151,7 @@ func _lamparina(x: float, y: float, z: float, energia := 0.85) -> void:
 
 func _vela(x: float, y: float, z: float, luz := false) -> void:
 	_bb.cylinder("vela", 0.018, 0.018, 0.14, Vector3(x, y + 0.07, z), Vector3.ZERO, 6)
+	_bb.sphere("chama", 0.022, Vector3(x, y + 0.165, z), 5, 3)
 	b._halo(_g, Vector3(x, y + 0.17, z), 0.35, "halo_vela")
 	if luz:
 		var l := b._lamp_light(_g, Vector3(x, y + 0.3, z), 0.5)
@@ -610,7 +611,8 @@ func _presbiterio(g: Node3D) -> void:
 		_castical(5.0 + k * 1.02, 1.77, 20.35, 0.52)
 		_castical(5.0 + k * 1.34, 1.77, 20.35, 0.30)
 		_bb.cylinder("vaso", 0.08, 0.06, 0.2, Vector3(5.0 + k * 0.82, 1.87, 20.7), Vector3.ZERO, 8)
-		_bb.sphere("flor_rosa", 0.16, Vector3(5.0 + k * 0.82, 2.05, 20.7), 6, 4)
+		for fl in 5:
+			_bb.sphere("flor_rosa" if fl % 2 == 0 else "flor_amarela", 0.045, Vector3(5.0 + k * 0.82 + (fl - 2) * 0.035, 1.99 + (fl % 3) * 0.05, 20.7 + ((fl * 7) % 3 - 1) * 0.03), 5, 3)
 	# retábulo dourado encostado na parede do fundo (z = 22)
 	_bb.box("ouro_velho", Vector3(8.0, 7.0, 0.3), Vector3(5.0, 4.1, 21.85))
 	_bb.box("madeira_escura", Vector3(2.4, 3.2, 0.12), Vector3(5.0, 3.9, 21.66))              # fundo do nicho

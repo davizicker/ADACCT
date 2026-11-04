@@ -1811,6 +1811,30 @@ func _separa_lampioes(root: Node3D) -> void:
 			(it["n"] as Node).get_parent().remove_child(it["n"])
 			(it["n"] as Node).queue_free()
 			removidos += 1
+	# luzes redundantes: a luz de uma vela de nicho ou a do beco colada a uma luz de lampião some (a vela e o lampião continuam visíveis)
+	var luzes_lamp: Array = []
+	for n in root.find_children("Luz", "OmniLight3D", true, false):
+		var pn := n.get_parent()
+		if pn != null and (String(pn.name).begins_with("Lampiao") or String(pn.name).begins_with("Poste")):
+			luzes_lamp.append(_pos_mundo(n))
+	var luzes_fora := 0
+	for n in root.find_children("*", "OmniLight3D", true, false):
+		var pn2 := n.get_parent()
+		if pn2 == null:
+			continue
+		var pnome := String(pn2.name)
+		if not (String(n.name) == "LuzDaVela" or (pnome.begins_with("Beco_") and String(n.name) == "Luz")):
+			continue
+		var pw := _pos_mundo(n)
+		if pw.x > 1500.0:
+			continue
+		for lp in luzes_lamp:
+			if pw.distance_to(lp) < 3.2:
+				pn2.remove_child(n)
+				n.queue_free()
+				luzes_fora += 1
+				break
+	print("[vila] luzes redundantes removidas: %d" % luzes_fora)
 	print("[vila] lampiões: ficam %d, removidos por ficarem a menos de %.1f m de outro: %d" % [ficam.size(), LAMP_MIN, removidos])
 
 
