@@ -1447,7 +1447,7 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 	g.add_child(ramp)
 	for sz: float in [-1.0, 1.0]:
 		# a parede começa na linha da fachada (x = 0); se avançasse para a rua, nas curvas prenderia quem anda pela borda
-		_blocker(g, "Parede_%d" % int(sz), Vector3(run_len + 1.0, total + 6.0, 0.6), Vector3(run_len / 2.0 + 0.5, total / 2.0, sz * (wb / 2.0 + 0.3)))
+		_blocker(g, "Parede_%d" % int(sz), Vector3(run_len + 0.6, total + 6.0, 0.6), Vector3(run_len / 2.0 + 0.7, total / 2.0, sz * (wb / 2.0 + 0.3)))      # começa 0,4 m dentro: nas curvas a quina não invade a frente das portas vizinhas
 	var refuge := Area3D.new()
 	refuge.name = "Refugio"
 	refuge.add_to_group("refugio", true)
