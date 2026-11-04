@@ -1,14 +1,9 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/textures/ponto_luz.png" id="1_lbdpx"]
+[ext_resource type="Shader" path="res://assets/shaders/halo.gdshader" id="1_lbdpx"]
 
 [resource]
-transparency = 1
-blend_mode = 1
-cull_mode = 2
-shading_mode = 0
-albedo_color = Color(1, 0.52, 0.18, 0.65)
-albedo_texture = ExtResource("1_lbdpx")
-disable_receive_shadows = true
-billboard_mode = 1
-billboard_keep_scale = true
+render_priority = 0
+shader = ExtResource("1_lbdpx")
+shader_parameter/cor = Color(1, 0.52, 0.18, 0.65)
+shader_parameter/expoente = 2.4
