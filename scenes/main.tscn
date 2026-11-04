@@ -13,32 +13,32 @@
 [ext_resource type="Script" path="res://scripts/audio_director.gd" id="11_jscy8"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="12_pm3ni"]
 
-[node name="Main" type="Node3D" unique_id=596347426]
+[node name="Main" type="Node3D" unique_id=1512403652]
 script = ExtResource("1_eb6dy")
 
-[node name="Vila" type="Node3D" parent="." unique_id=1800706961 instance=ExtResource("2_trceg")]
+[node name="Vila" type="Node3D" parent="." unique_id=1318229502 instance=ExtResource("2_trceg")]
 
-[node name="Jogador" type="CharacterBody3D" parent="." unique_id=1303149528 instance=ExtResource("3_a8y0u")]
+[node name="Jogador" type="CharacterBody3D" parent="." unique_id=455213219 instance=ExtResource("3_a8y0u")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.30974296, 0.43562964, -1.9753197)
 script = ExtResource("4_jkv2x")
 
-[node name="Bradador" type="Node3D" parent="." unique_id=2064911480 instance=ExtResource("5_jbj1t")]
+[node name="Bradador" type="Node3D" parent="." unique_id=1342163144 instance=ExtResource("5_jbj1t")]
 visible = false
 
-[node name="Mula" type="Node3D" parent="." unique_id=213700440 instance=ExtResource("6_muem4")]
+[node name="Mula" type="Node3D" parent="." unique_id=1016480709 instance=ExtResource("6_muem4")]
 script = ExtResource("7_dp3eg")
 
-[node name="Gritos" type="Node" parent="." unique_id=1049033165]
+[node name="Gritos" type="Node" parent="." unique_id=2131031821]
 script = ExtResource("8_0ld40")
 
-[node name="Eventos" type="Node" parent="." unique_id=1625796673]
+[node name="Eventos" type="Node" parent="." unique_id=1496551653]
 script = ExtResource("9_gqmmt")
 
-[node name="Missao" type="Node" parent="." unique_id=1976560716]
+[node name="Missao" type="Node" parent="." unique_id=995594133]
 script = ExtResource("10_yc10j")
 
-[node name="Audio" type="Node" parent="." unique_id=1275907376]
+[node name="Audio" type="Node" parent="." unique_id=245145488]
 script = ExtResource("11_jscy8")
 
-[node name="Interface" type="CanvasLayer" parent="." unique_id=650766214]
+[node name="Interface" type="CanvasLayer" parent="." unique_id=1273880635]
 script = ExtResource("12_pm3ni")
