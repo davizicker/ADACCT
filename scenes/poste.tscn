@@ -41,17 +41,17 @@ size = Vector2(0.09, 0.09)
 height = 3.9
 radius = 0.11
 
-[node name="Poste" type="Node3D" unique_id=323155766]
+[node name="Poste" type="Node3D" unique_id=636890138]
 metadata/bb = AABB(-0.35215375, 0, -0.19329101, 0.7043075, 3.8705308, 0.38658202)
 metadata/bulb_mi = NodePath("Modelo/street_lamp_012/street_lamp_01")
 metadata/bulb_idx = 2
 metadata/bulb_pos = Vector3(2.8464943e-05, 3.2643323, 4.1536987e-07)
 
-[node name="Modelo" type="Node3D" parent="." unique_id=423718376]
+[node name="Modelo" type="Node3D" parent="." unique_id=827425326]
 
 [node name="street_lamp_012" type="Node3D" parent="Modelo" unique_id=1857754890 instance=ExtResource("1_gyati")]
 
-[node name="Luz" type="OmniLight3D" parent="." unique_id=365721424 groups=["lampioes"]]
+[node name="Luz" type="OmniLight3D" parent="." unique_id=924777601 groups=["lampioes"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
 light_color = Color(1, 0.72, 0.35, 1)
 light_energy = 0.95
@@ -63,13 +63,13 @@ omni_range = 8.0
 script = ExtResource("2_uvx8k")
 forca = 0.08
 
-[node name="Halo" type="MeshInstance3D" parent="." unique_id=1745188140]
+[node name="Halo" type="MeshInstance3D" parent="." unique_id=1381374482]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
 material_override = ExtResource("3_bgagc")
 cast_shadow = 0
 mesh = SubResource("QuadMesh_tjmks")
 
-[node name="Mariposas" type="GPUParticles3D" parent="." unique_id=1117158086]
+[node name="Mariposas" type="GPUParticles3D" parent="." unique_id=2130398536]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
 cast_shadow = 0
 visibility_range_end = 28.0
@@ -81,8 +81,8 @@ local_coords = true
 process_material = SubResource("ParticleProcessMaterial_ipqwq")
 draw_pass_1 = SubResource("QuadMesh_4b740")
 
-[node name="Colisao" type="StaticBody3D" parent="." unique_id=1862409785]
+[node name="Colisao" type="StaticBody3D" parent="." unique_id=319658258]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
 
-[node name="@CollisionShape3D@720" type="CollisionShape3D" parent="Colisao" unique_id=155529302]
+[node name="@CollisionShape3D@722" type="CollisionShape3D" parent="Colisao" unique_id=1917008096]
 shape = SubResource("CylinderShape3D_hbuhe")
