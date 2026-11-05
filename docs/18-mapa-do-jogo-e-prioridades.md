@@ -59,6 +59,11 @@ Uma noite de 1961 numa vila mineira inspirada em Ouro Preto. O jogador sobe uma 
 11. **4 portas com a quina da parede do beco na frente** (Casa_58, 82, 136, 175): a parede começa 0,4 m dentro da fachada. Auditoria de portas: 0 bloqueadas.
 12. **Paredes dos becos em 4 degraus grandes (cara de Minecraft)**: agora são 14 degraus baixos.
 13. Gatilho do esconderijo de carro girado com a rua, raio de interação (E) que ignora o corpo do próprio carro e visual "Cinematográfico" como padrão (SDFGI, SSIL, SSR, neblina volumétrica, foco, correção de cor).
+14. **Lampiões e postes colados** (lampião da porta a 0,6 m de outro, poste ao lado de lampião): agora há no mínimo 6,5 m entre eles (o lampião da porta, que marca as casas visitáveis, nunca é removido) e as luzes redundantes de nichos e becos somem. Auditoria de luzes (`tools/auditoria_luzes.gd`): 0 lampiões perto demais.
+15. **Altar da igreja feio**: refeito como um altar barroco (retábulo dourado com colunas torças, nicho com santa, glória de raios, grade da comunhão, toalha, sacrário, castiçais, vasos com flores, lâmpada do santíssimo).
+16. **Flores das janelas**: jardineiras e vasos ganharam cachos de flores coloridas e folhas pendentes.
+17. **Interior visto pelas janelas**: agora tem mobília de verdade (mesa com vaso e cadeira, cama, estante com livros, baú), às vezes uma silhueta de alguém em pé, e a luz é menos saturada.
+18. **Halos de luz viravam quadrados** de longe (e azulados na neblina): agora o brilho é calculado por shader e ignora a neblina. As velas ganharam chama.
 
 ## 4. Aberto (em ordem de prioridade)
 
