@@ -1,4 +1,4 @@
-# BRADADOR: novidades desta versão (v23) e avisos
+# BRADADOR: novidades desta versão (v24) e avisos
 
 ## O que mudou
 **Jogabilidade**
@@ -26,6 +26,14 @@
 **Gráficos e peso**
 - Texturas 3D com **compressão BC7 e mipmaps**: ~3 a 4x menos memória de vídeo e sem tremer de longe.
 - Halos de luz por shader (sem quadrados), velas com chama, flores com folhagem.
+
+**Refinamento final (v24)**
+- Objetos feitos por código mais redondos (mais lados em cilindros, esferas e arcos).
+- Reboco com grão de estuque, pinceladas e rachaduras em fio de cabelo.
+- Quadros pretos viraram retratos a óleo; bilhetes com brilho suave (sem quadrado branco).
+- Frascos de querosene dentro das casas não flutuam mais: ficam sobre móvel ou sobre um banquinho.
+- Cadeiras afastadas da mesa do Casarão, capacho em cada porta, frontão da igreja mais suave.
+- Auditorias novas: `tools/auditoria_moveis.gd` (flutuando/enterrado/se atravessando) e `tools/auditoria_texturas.gd`.
 
 **Modelos novos (Poly Haven, CC0 a confirmar)**: 27 modelos (castiçais, lamparina, vaso, cadeiras, mesas, estante, malas, rato, bússola, isqueiro...) e casca de árvore real. Veja `assets/CREDITOS.md`.
 
