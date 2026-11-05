@@ -1,27 +1,57 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://assets/models/poly/street_lamp_01.glb" id="1_5wqr3"]
-[ext_resource type="Script" path="res://scripts/luz_tremula.gd" id="2_gyati"]
-[ext_resource type="Material" path="res://assets/materials/halo_quente.tres" id="3_uvx8k"]
+[ext_resource type="PackedScene" path="res://assets/models/poly/street_lamp_01.glb" id="1_gyati"]
+[ext_resource type="Script" path="res://scripts/luz_tremula.gd" id="2_uvx8k"]
+[ext_resource type="Material" path="res://assets/materials/halo_quente.tres" id="3_bgagc"]
+[ext_resource type="Material" path="res://assets/materials/halo_vela.tres" id="4_x7vxa"]
 
-[sub_resource type="QuadMesh" id="QuadMesh_bgagc"]
+[sub_resource type="QuadMesh" id="QuadMesh_tjmks"]
 size = Vector2(2.6, 2.6)
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_x7vxa"]
+[sub_resource type="Gradient" id="Gradient_cm3ut"]
+offsets = PackedFloat32Array(0, 0.2, 0.8, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_32oli"]
+gradient = SubResource("Gradient_cm3ut")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ipqwq"]
+emission_shape = 1
+emission_sphere_radius = 0.8
+direction = Vector3(0, 0, 0)
+spread = 180.0
+initial_velocity_min = 0.25
+initial_velocity_max = 0.7
+gravity = Vector3(0, 0, 0)
+radial_accel_min = -0.8
+radial_accel_max = 0.4
+tangential_accel_min = -1.2
+tangential_accel_max = 1.2
+damping_min = 0.2
+damping_max = 0.6
+scale_min = 0.5
+scale_max = 1.1
+color_ramp = SubResource("GradientTexture1D_32oli")
+
+[sub_resource type="QuadMesh" id="QuadMesh_4b740"]
+material = ExtResource("4_x7vxa")
+size = Vector2(0.06, 0.06)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_hbuhe"]
 height = 3.9
 radius = 0.11
 
-[node name="Poste" type="Node3D" unique_id=1230408325]
+[node name="Poste" type="Node3D" unique_id=588096640]
 metadata/bb = AABB(-0.35215375, 0, -0.19329101, 0.7043075, 3.8705308, 0.38658202)
 metadata/bulb_mi = NodePath("Modelo/street_lamp_012/street_lamp_01")
 metadata/bulb_idx = 2
 metadata/bulb_pos = Vector3(2.8464943e-05, 3.2643323, 4.1536987e-07)
 
-[node name="Modelo" type="Node3D" parent="." unique_id=2003295537]
+[node name="Modelo" type="Node3D" parent="." unique_id=1629005313]
 
-[node name="street_lamp_012" type="Node3D" parent="Modelo" unique_id=1857754890 instance=ExtResource("1_5wqr3")]
+[node name="street_lamp_012" type="Node3D" parent="Modelo" unique_id=1857754890 instance=ExtResource("1_gyati")]
 
-[node name="Luz" type="OmniLight3D" parent="." unique_id=783659309 groups=["lampioes"]]
+[node name="Luz" type="OmniLight3D" parent="." unique_id=1933554955 groups=["lampioes"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
 light_color = Color(1, 0.72, 0.35, 1)
 light_energy = 0.95
@@ -30,17 +60,29 @@ distance_fade_enabled = true
 distance_fade_begin = 50.0
 distance_fade_length = 15.0
 omni_range = 8.0
-script = ExtResource("2_gyati")
+script = ExtResource("2_uvx8k")
 forca = 0.08
 
-[node name="Halo" type="MeshInstance3D" parent="." unique_id=949717459]
+[node name="Halo" type="MeshInstance3D" parent="." unique_id=1181468735]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
-material_override = ExtResource("3_uvx8k")
+material_override = ExtResource("3_bgagc")
 cast_shadow = 0
-mesh = SubResource("QuadMesh_bgagc")
+mesh = SubResource("QuadMesh_tjmks")
 
-[node name="Colisao" type="StaticBody3D" parent="." unique_id=361213187]
+[node name="Mariposas" type="GPUParticles3D" parent="." unique_id=1096958136]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464943e-05, 3.2643323, 4.1536987e-07)
+cast_shadow = 0
+visibility_range_end = 28.0
+amount = 5
+lifetime = 3.2
+preprocess = 3.2
+visibility_aabb = AABB(-1.5, -1.5, -1.5, 3, 3, 3)
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_ipqwq")
+draw_pass_1 = SubResource("QuadMesh_4b740")
+
+[node name="Colisao" type="StaticBody3D" parent="." unique_id=1333793791]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
 
-[node name="@CollisionShape3D@702" type="CollisionShape3D" parent="Colisao" unique_id=416538383]
-shape = SubResource("CylinderShape3D_x7vxa")
+[node name="@CollisionShape3D@702" type="CollisionShape3D" parent="Colisao" unique_id=1278289813]
+shape = SubResource("CylinderShape3D_hbuhe")
