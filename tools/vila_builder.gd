@@ -3279,10 +3279,7 @@ func _haunted_window(parent: Node3D, pos: Vector3) -> void:
 # ------------------------------------------------------------------ itens: óleo e bilhetes
 
 func _brilho(parent: Node3D, y: float, size: float) -> void:
-	var q := QuadMesh.new()
-	q.size = Vector2(size, size)
-	var mi := _mesh_node(parent, "Brilho", q, Vector3(0, y, 0))
-	mi.material_override = mat("luz_distante")
+	_halo(parent, Vector3(0, y, 0), size * 1.5, "halo_vela")      # brilho suave e redondo (antes era um quadrado branco estourado)
 
 
 func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, nota_id: int, label: String) -> void:

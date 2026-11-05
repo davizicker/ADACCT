@@ -265,7 +265,7 @@ func _materials() -> void:
 	_flat("bandeira_c", Color(0.15, 0.4, 0.75), 1.0)
 	_flat("bandeira_d", Color(0.2, 0.55, 0.28), 1.0)
 	_flat("pano", Color(0.62, 0.60, 0.54), 1.0)
-	_flat("papel", Color(0.93, 0.86, 0.66), 0.9, 0.0, 0.7)
+	_flat("papel", Color(0.93, 0.86, 0.66), 0.9, 0.0, 0.22)
 	var tvm := ShaderMaterial.new()
 	tvm.shader = load("res://assets/shaders/tv_estatica.gdshader")
 	ResourceSaver.save(tvm, MATS + "tv_tela.tres")
