@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dgsmdqghu36pb"
-path="res://.godot/imported/ruido_mistura.png-c08f0ca5d4f4818a4e683c8adbddc9de.ctex"
+path.bptc="res://.godot/imported/ruido_mistura.png-c08f0ca5d4f4818a4e683c8adbddc9de.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ruido_mistura.png"
-dest_files=["res://.godot/imported/ruido_mistura.png-c08f0ca5d4f4818a4e683c8adbddc9de.ctex"]
+dest_files=["res://.godot/imported/ruido_mistura.png-c08f0ca5d4f4818a4e683c8adbddc9de.bptc.ctex"]
 
 [params]
 

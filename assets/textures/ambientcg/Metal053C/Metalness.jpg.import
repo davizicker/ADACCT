@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://onex4g5qiq22"
-path="res://.godot/imported/Metalness.jpg-4989a9402a09a0383008470d5bbac336.ctex"
+path.bptc="res://.godot/imported/Metalness.jpg-4989a9402a09a0383008470d5bbac336.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Metal053C/Metalness.jpg"
-dest_files=["res://.godot/imported/Metalness.jpg-4989a9402a09a0383008470d5bbac336.ctex"]
+dest_files=["res://.godot/imported/Metalness.jpg-4989a9402a09a0383008470d5bbac336.bptc.ctex"]
 
 [params]
 

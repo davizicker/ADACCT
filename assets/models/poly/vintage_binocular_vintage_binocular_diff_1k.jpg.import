@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp2vc2irfaxc0"
-path="res://.godot/imported/vintage_binocular_vintage_binocular_diff_1k.jpg-d1672662498a3e11b020347ef29e210d.ctex"
+path.bptc="res://.godot/imported/vintage_binocular_vintage_binocular_diff_1k.jpg-d1672662498a3e11b020347ef29e210d.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b3df2eec611b5036898c1e9c044d1234"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/vintage_binocular_vintage_binocular_diff_1k.jpg"
-dest_files=["res://.godot/imported/vintage_binocular_vintage_binocular_diff_1k.jpg-d1672662498a3e11b020347ef29e210d.ctex"]
+dest_files=["res://.godot/imported/vintage_binocular_vintage_binocular_diff_1k.jpg-d1672662498a3e11b020347ef29e210d.bptc.ctex"]
 
 [params]
 

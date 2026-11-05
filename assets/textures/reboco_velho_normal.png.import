@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://t1esu4eddpmc"
-path="res://.godot/imported/reboco_velho_normal.png-6ca627eda4283bd1efb73bf08a063484.ctex"
+path.bptc="res://.godot/imported/reboco_velho_normal.png-6ca627eda4283bd1efb73bf08a063484.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/reboco_velho_normal.png"
-dest_files=["res://.godot/imported/reboco_velho_normal.png-6ca627eda4283bd1efb73bf08a063484.ctex"]
+dest_files=["res://.godot/imported/reboco_velho_normal.png-6ca627eda4283bd1efb73bf08a063484.bptc.ctex"]
 
 [params]
 

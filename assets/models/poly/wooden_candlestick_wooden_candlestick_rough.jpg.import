@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://71jqtrbh2pnk"
-path="res://.godot/imported/wooden_candlestick_wooden_candlestick_rough.jpg-c65ed11692d910916f663e462aef8b17.ctex"
+path.bptc="res://.godot/imported/wooden_candlestick_wooden_candlestick_rough.jpg-c65ed11692d910916f663e462aef8b17.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "cebf78c5d51062e00caf4ae3e092f118"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/wooden_candlestick_wooden_candlestick_rough.jpg"
-dest_files=["res://.godot/imported/wooden_candlestick_wooden_candlestick_rough.jpg-c65ed11692d910916f663e462aef8b17.ctex"]
+dest_files=["res://.godot/imported/wooden_candlestick_wooden_candlestick_rough.jpg-c65ed11692d910916f663e462aef8b17.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvlbxh56n7q32"
-path="res://.godot/imported/lightbulb_01_lightbulb_01_emissive_1k.png-efb32f60c598b3e260dc18ce76352dd1.ctex"
+path.bptc="res://.godot/imported/lightbulb_01_lightbulb_01_emissive_1k.png-efb32f60c598b3e260dc18ce76352dd1.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "3d1da9d5a24120477bed3bef1fbd2bac"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/lightbulb_01_lightbulb_01_emissive_1k.png"
-dest_files=["res://.godot/imported/lightbulb_01_lightbulb_01_emissive_1k.png-efb32f60c598b3e260dc18ce76352dd1.ctex"]
+dest_files=["res://.godot/imported/lightbulb_01_lightbulb_01_emissive_1k.png-efb32f60c598b3e260dc18ce76352dd1.bptc.ctex"]
 
 [params]
 

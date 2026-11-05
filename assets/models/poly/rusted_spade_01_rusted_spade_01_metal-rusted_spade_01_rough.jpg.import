@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://byup5uukw6wbb"
-path="res://.godot/imported/rusted_spade_01_rusted_spade_01_metal-rusted_spade_01_rough.jpg-a2588a75a22f9863c35ba80eedd0a386.ctex"
+path.bptc="res://.godot/imported/rusted_spade_01_rusted_spade_01_metal-rusted_spade_01_rough.jpg-a2588a75a22f9863c35ba80eedd0a386.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "e3d78bef02dfe6b69c512254ee1ad529"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/rusted_spade_01_rusted_spade_01_metal-rusted_spade_01_rough.jpg"
-dest_files=["res://.godot/imported/rusted_spade_01_rusted_spade_01_metal-rusted_spade_01_rough.jpg-a2588a75a22f9863c35ba80eedd0a386.ctex"]
+dest_files=["res://.godot/imported/rusted_spade_01_rusted_spade_01_metal-rusted_spade_01_rough.jpg-a2588a75a22f9863c35ba80eedd0a386.bptc.ctex"]
 
 [params]
 

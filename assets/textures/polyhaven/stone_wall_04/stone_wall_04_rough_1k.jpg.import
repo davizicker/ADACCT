@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c28ccy1v4ws3p"
-path="res://.godot/imported/stone_wall_04_rough_1k.jpg-beed4d66af805fd69da6aa779e8842f8.ctex"
+path.bptc="res://.godot/imported/stone_wall_04_rough_1k.jpg-beed4d66af805fd69da6aa779e8842f8.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/polyhaven/stone_wall_04/stone_wall_04_rough_1k.jpg"
-dest_files=["res://.godot/imported/stone_wall_04_rough_1k.jpg-beed4d66af805fd69da6aa779e8842f8.ctex"]
+dest_files=["res://.godot/imported/stone_wall_04_rough_1k.jpg-beed4d66af805fd69da6aa779e8842f8.bptc.ctex"]
 
 [params]
 

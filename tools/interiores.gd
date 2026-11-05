@@ -88,6 +88,16 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	var a := _area("Saida", Vector3(w / 2.0, 1.2, 0.8), Vector3(1.9, 2.4, 1.5), "res://scripts/porta.gd")
 	a.set("destino", "")
 	a.set("texto_interacao", "Sair para a rua")
+	# sonda de reflexo da sala: o latão, o vidro e a madeira envernizada refletem o próprio cômodo (e não só o céu da rua)
+	var rp := ReflectionProbe.new()
+	rp.name = "SondaDeReflexo"
+	rp.position = Vector3(w / 2.0, h * 0.5, d / 2.0)
+	rp.size = Vector3(w, h, d)
+	rp.interior = true
+	rp.box_projection = true
+	rp.update_mode = ReflectionProbe.UPDATE_ONCE
+	rp.intensity = 1.0
+	_g.add_child(rp)
 
 
 func _area(nome: String, pos: Vector3, size: Vector3, script: String) -> Area3D:
@@ -343,6 +353,7 @@ func _sala_benedita(g: Node3D) -> void:
 	_nota(5.0, 0.86, 3.15, 25, "Ler o papel atrás do retrato")
 	_prop_c("painted_wooden_nightstand", 2.35, 5.6, PI, 1.0)
 	_prop("planter_pot_clay", 6.5, 0.7, 0.0, 1.3, 0.0)
+	_prop("anthurium_botany_01", 6.5, 0.7, 0.3, 0.2, 0.28)
 	_item("terco", Vector3(3.2, 1.07, 5.55), "Pegar o terço de Dona Benedita")
 	_oleo(6.3, 0.95, 3.3)
 	_oleo(0.6, 1.4, 4.2)
@@ -405,6 +416,7 @@ func _sala_venda(g: Node3D) -> void:
 	_quadro(5.0, 1.9, 5.82, "N", 0.6, 0.5)
 	_nota(5.8, 1.1, 4.6, 6, "Ler o bilhete do Seu Zé")
 	_prop_c("cardboard_box_01", 6.2, 5.35, 0.3, 1.0)
+	_prop("vintage_lighter", 3.5, 4.55, 1.0, 1.0, 1.1)
 	_prop("cardboard_box_01", 6.25, 5.35, 0.7, 1.0, 0.34)
 	_prop("lightbulb_01", 4.2, 2.2, 0.0, 1.0, 2.52)                                              # lâmpada apagada pendurada pelo fio
 	_bb.cylinder("ferro", 0.008, 0.008, 0.55, Vector3(4.2, 2.85, 2.2), Vector3.ZERO, 4)
@@ -496,11 +508,14 @@ func _sala_casarao(g: Node3D) -> void:
 	# escrivaninha do capataz no canto: o livro está aqui
 	_mesa(1.4, 6.7, 1.6, 0.8, 0.78, "madeira_escura")
 	_prop_c("chinese_armchair", 1.4, 5.95, 0.0, 0.72)                                                  # poltrona de espaldar alto na escrivaninha
+	_prop("planter_pot_clay", 9.3, 0.8, 0.0, 1.4, 0.0)
+	_prop("anthurium_botany_01", 9.3, 0.8, 0.9, 0.22, 0.30)
 	_vela(1.0, 0.82, 6.9, true)
 	_item("livro", Vector3(1.8, 0.88, 6.7), "Pegar o livro de registros dos Vaz")
 	_nota(3.8, 0.84, 3.7, 21, "Ler o telegrama da Companhia")
 	_nota(6.0, 0.84, 3.95, 22, "Ler o rascunho amassado")
 	_nota(1.1, 0.83, 6.75, 26, "Ler o diário de Eulália Vaz")
+	_prop("seadogs_compass", 2.05, 6.45, 0.4, 1.0, 0.78)                                             # bússola de latão do capataz, sobre a escrivaninha
 	_oleo(8.8, 0.9, 6.9)
 	_janela("L", 5.5, 1.9, 1.0, 1.6)
 	_janela("O", 1.8, 1.9, 1.0, 1.6)
@@ -537,6 +552,9 @@ func _sala_igreja(g: Node3D) -> void:
 	_bb.cylinder("ferro", 0.45, 0.45, 0.05, Vector3(5.0, 6.2, 10.0), Vector3.ZERO, 10)
 	_bb.cylinder("ferro", 0.015, 0.015, 1.6, Vector3(5.0, 7.2, 10.0), Vector3.ZERO, 5)
 	_oleo(1.0, 0.95, 3.0)
+	_prop_c("WoodenTable_01", 0.95, 1.4, PI / 2.0, 1.2)
+	_prop("wooden_candlestick", 0.95, 1.1, 0.0, 1.3, 0.66)
+	_vela(0.95, 0.93, 1.1, true)
 	_nota(5.0, 1.78, 19.8, 2, "Ler o que a Irmandade deixou no altar")
 	var al := _area("Altar", Vector3(5.0, 1.2, 18.9), Vector3(3.2, 2.4, 1.6), "res://scripts/altar.gd")
 	al.set("texto_interacao", "Ler os nomes em voz alta")
@@ -764,6 +782,7 @@ func _sala_pensao(g: Node3D) -> void:
 	_janela("O", 4.0)
 	_nota(3.6, 0.88, 5.0, 16, "Ler o livro de hóspedes")
 	_prop_c("painted_wooden_nightstand", 2.0, 5.55, PI, 1.0)
+	_prop("vintage_lighter", 3.55, 5.5, 0.5, 1.0, 0.8)
 	_prop_c("painted_wooden_nightstand", 5.0, 5.55, PI, 1.0)
 	_prop("vintage_suitcase", 5.6, 2.1, 0.5, 0.75, 0.0)                                              # as malas do Dr. Anselmo, esquecidas no quarto
 	_oleo(6.5, 0.95, 1.0)

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dv3vgpu2tvqhv"
-path="res://.godot/imported/can_rusted_can_rusted_metal-can_rusted_rough.jpg-01c87f030ad0590e55bc5fe10226a3d6.ctex"
+path.bptc="res://.godot/imported/can_rusted_can_rusted_metal-can_rusted_rough.jpg-01c87f030ad0590e55bc5fe10226a3d6.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "64b34a021ccf20f94db0037ac3a50659"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/can_rusted_can_rusted_metal-can_rusted_rough.jpg"
-dest_files=["res://.godot/imported/can_rusted_can_rusted_metal-can_rusted_rough.jpg-01c87f030ad0590e55bc5fe10226a3d6.ctex"]
+dest_files=["res://.godot/imported/can_rusted_can_rusted_metal-can_rusted_rough.jpg-01c87f030ad0590e55bc5fe10226a3d6.bptc.ctex"]
 
 [params]
 

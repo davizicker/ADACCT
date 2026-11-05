@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b1xjo621fchi1"
-path="res://.godot/imported/Color.jpg-697c8ea7ace6e01f3f61d49ce4989545.ctex"
+path.bptc="res://.godot/imported/Color.jpg-697c8ea7ace6e01f3f61d49ce4989545.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Wood035/Color.jpg"
-dest_files=["res://.godot/imported/Color.jpg-697c8ea7ace6e01f3f61d49ce4989545.ctex"]
+dest_files=["res://.godot/imported/Color.jpg-697c8ea7ace6e01f3f61d49ce4989545.bptc.ctex"]
 
 [params]
 

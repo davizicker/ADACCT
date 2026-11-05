@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnw4j0r5nwavt"
-path="res://.godot/imported/planter_pot_clay_planter_pot_clay_nor_gl.jpg-3a154843ed857a8ba62dcc4de8e43a81.ctex"
+path.bptc="res://.godot/imported/planter_pot_clay_planter_pot_clay_nor_gl.jpg-3a154843ed857a8ba62dcc4de8e43a81.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "9c2b478214dfdd0457a81111857db8d7"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/planter_pot_clay_planter_pot_clay_nor_gl.jpg"
-dest_files=["res://.godot/imported/planter_pot_clay_planter_pot_clay_nor_gl.jpg-3a154843ed857a8ba62dcc4de8e43a81.ctex"]
+dest_files=["res://.godot/imported/planter_pot_clay_planter_pot_clay_nor_gl.jpg-3a154843ed857a8ba62dcc4de8e43a81.bptc.ctex"]
 
 [params]
 

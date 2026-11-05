@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bp1h2nhef4df5"
-path="res://.godot/imported/round_wooden_table_02_round_wooden_table_02_nor_gl.jpg-d433cc930551a567b74e1c104a76973b.ctex"
+path.bptc="res://.godot/imported/round_wooden_table_02_round_wooden_table_02_nor_gl.jpg-d433cc930551a567b74e1c104a76973b.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c000841bc6385d910346ff17607a169f"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/round_wooden_table_02_round_wooden_table_02_nor_gl.jpg"
-dest_files=["res://.godot/imported/round_wooden_table_02_round_wooden_table_02_nor_gl.jpg-d433cc930551a567b74e1c104a76973b.ctex"]
+dest_files=["res://.godot/imported/round_wooden_table_02_round_wooden_table_02_nor_gl.jpg-d433cc930551a567b74e1c104a76973b.bptc.ctex"]
 
 [params]
 

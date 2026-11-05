@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxpw0fymk71aq"
-path="res://.godot/imported/Color.jpg-4618491fc6e53b36c05527c52a4d862b.ctex"
+path.bptc="res://.godot/imported/Color.jpg-4618491fc6e53b36c05527c52a4d862b.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Bark014/Color.jpg"
-dest_files=["res://.godot/imported/Color.jpg-4618491fc6e53b36c05527c52a4d862b.ctex"]
+dest_files=["res://.godot/imported/Color.jpg-4618491fc6e53b36c05527c52a4d862b.bptc.ctex"]
 
 [params]
 

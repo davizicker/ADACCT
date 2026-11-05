@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bsd78sq47srjs"
-path="res://.godot/imported/pedra_albedo.png-c28d56020e8d7075c0e37aa6e9f69c65.ctex"
+path.bptc="res://.godot/imported/pedra_albedo.png-c28d56020e8d7075c0e37aa6e9f69c65.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/pedra_albedo.png"
-dest_files=["res://.godot/imported/pedra_albedo.png-c28d56020e8d7075c0e37aa6e9f69c65.ctex"]
+dest_files=["res://.godot/imported/pedra_albedo.png-c28d56020e8d7075c0e37aa6e9f69c65.bptc.ctex"]
 
 [params]
 

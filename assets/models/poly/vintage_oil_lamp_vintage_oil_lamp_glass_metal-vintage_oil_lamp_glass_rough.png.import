@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ddi5kxb18bsgx"
-path="res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_metal-vintage_oil_lamp_glass_rough.png-17c4e75d29de22363e9f765f5dfb4cf0.ctex"
+path.bptc="res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_metal-vintage_oil_lamp_glass_rough.png-17c4e75d29de22363e9f765f5dfb4cf0.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "00bd740dffcc73ca2f7d5177b40fb8a8"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/vintage_oil_lamp_vintage_oil_lamp_glass_metal-vintage_oil_lamp_glass_rough.png"
-dest_files=["res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_metal-vintage_oil_lamp_glass_rough.png-17c4e75d29de22363e9f765f5dfb4cf0.ctex"]
+dest_files=["res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_metal-vintage_oil_lamp_glass_rough.png-17c4e75d29de22363e9f765f5dfb4cf0.bptc.ctex"]
 
 [params]
 

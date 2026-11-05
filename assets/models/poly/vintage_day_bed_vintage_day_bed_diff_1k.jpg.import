@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dfml38dgotbp7"
-path="res://.godot/imported/vintage_day_bed_vintage_day_bed_diff_1k.jpg-fe7a0958f9658895fb31708649c41009.ctex"
+path.bptc="res://.godot/imported/vintage_day_bed_vintage_day_bed_diff_1k.jpg-fe7a0958f9658895fb31708649c41009.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5e1913645b6a337c9d50c82b727b66ad"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/vintage_day_bed_vintage_day_bed_diff_1k.jpg"
-dest_files=["res://.godot/imported/vintage_day_bed_vintage_day_bed_diff_1k.jpg-fe7a0958f9658895fb31708649c41009.ctex"]
+dest_files=["res://.godot/imported/vintage_day_bed_vintage_day_bed_diff_1k.jpg-fe7a0958f9658895fb31708649c41009.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://l74kxcbrhqs8"
-path="res://.godot/imported/containers_WickerRound.jpg-f298be754225d057bb48cd417e010d53.ctex"
+path.bptc="res://.godot/imported/containers_WickerRound.jpg-f298be754225d057bb48cd417e010d53.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "08c74bae7c52637ae6f660aeebc72fdf"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/containers_WickerRound.jpg"
-dest_files=["res://.godot/imported/containers_WickerRound.jpg-f298be754225d057bb48cd417e010d53.ctex"]
+dest_files=["res://.godot/imported/containers_WickerRound.jpg-f298be754225d057bb48cd417e010d53.bptc.ctex"]
 
 [params]
 

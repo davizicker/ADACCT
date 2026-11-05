@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1ulymyvg52bu"
-path="res://.godot/imported/plantas_lod_dead_tree_trunk_diff_1k.jpg-53fe0a4393b30448d983603db44af9ad.ctex"
+path.bptc="res://.godot/imported/plantas_lod_dead_tree_trunk_diff_1k.jpg-53fe0a4393b30448d983603db44af9ad.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "ea80ef76f5e6a8c345698a228cc83b4e"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/plantas_lod_dead_tree_trunk_diff_1k.jpg"
-dest_files=["res://.godot/imported/plantas_lod_dead_tree_trunk_diff_1k.jpg-53fe0a4393b30448d983603db44af9ad.ctex"]
+dest_files=["res://.godot/imported/plantas_lod_dead_tree_trunk_diff_1k.jpg-53fe0a4393b30448d983603db44af9ad.bptc.ctex"]
 
 [params]
 

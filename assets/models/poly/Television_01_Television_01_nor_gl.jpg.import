@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://mr25vplhyauk"
-path="res://.godot/imported/Television_01_Television_01_nor_gl.jpg-db9edc3b92eed95a4a548376152eab1a.ctex"
+path.bptc="res://.godot/imported/Television_01_Television_01_nor_gl.jpg-db9edc3b92eed95a4a548376152eab1a.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "f4d2b429af21252816a401cb8f4855e1"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/Television_01_Television_01_nor_gl.jpg"
-dest_files=["res://.godot/imported/Television_01_Television_01_nor_gl.jpg-db9edc3b92eed95a4a548376152eab1a.ctex"]
+dest_files=["res://.godot/imported/Television_01_Television_01_nor_gl.jpg-db9edc3b92eed95a4a548376152eab1a.bptc.ctex"]
 
 [params]
 

@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vm7w148oadjd"
-path="res://.godot/imported/vela_albedo.png-f4492c806aa62aca48aa057b6cf78c2e.ctex"
+path.bptc="res://.godot/imported/vela_albedo.png-f4492c806aa62aca48aa057b6cf78c2e.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/vela_albedo.png"
-dest_files=["res://.godot/imported/vela_albedo.png-f4492c806aa62aca48aa057b6cf78c2e.ctex"]
+dest_files=["res://.godot/imported/vela_albedo.png-f4492c806aa62aca48aa057b6cf78c2e.bptc.ctex"]
 
 [params]
 

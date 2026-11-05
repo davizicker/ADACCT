@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxihjb442x0dx"
-path="res://.godot/imported/NormalGL.jpg-eb0eea778357d765c5740763f8b0e929.ctex"
+path.bptc="res://.godot/imported/NormalGL.jpg-eb0eea778357d765c5740763f8b0e929.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Ground054/NormalGL.jpg"
-dest_files=["res://.godot/imported/NormalGL.jpg-eb0eea778357d765c5740763f8b0e929.ctex"]
+dest_files=["res://.godot/imported/NormalGL.jpg-eb0eea778357d765c5740763f8b0e929.bptc.ctex"]
 
 [params]
 

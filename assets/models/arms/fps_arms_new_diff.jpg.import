@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://n6ofd3tc5dwx"
-path="res://.godot/imported/fps_arms_new_diff.jpg-2f05639a537ede00b2d099d241db863d.ctex"
+path.bptc="res://.godot/imported/fps_arms_new_diff.jpg-2f05639a537ede00b2d099d241db863d.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d814016b2bf93c6de1fd5bce2192a4df"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/arms/fps_arms_new_diff.jpg"
-dest_files=["res://.godot/imported/fps_arms_new_diff.jpg-2f05639a537ede00b2d099d241db863d.ctex"]
+dest_files=["res://.godot/imported/fps_arms_new_diff.jpg-2f05639a537ede00b2d099d241db863d.bptc.ctex"]
 
 [params]
 

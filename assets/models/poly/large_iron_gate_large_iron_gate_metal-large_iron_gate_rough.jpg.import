@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dgpnpxnk0bd3g"
-path="res://.godot/imported/large_iron_gate_large_iron_gate_metal-large_iron_gate_rough.jpg-ec24af9e08ea8a288a1b05c6fc00a6d6.ctex"
+path.bptc="res://.godot/imported/large_iron_gate_large_iron_gate_metal-large_iron_gate_rough.jpg-ec24af9e08ea8a288a1b05c6fc00a6d6.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "ab90fc95f6613468a0ae34be106ed35b"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/large_iron_gate_large_iron_gate_metal-large_iron_gate_rough.jpg"
-dest_files=["res://.godot/imported/large_iron_gate_large_iron_gate_metal-large_iron_gate_rough.jpg-ec24af9e08ea8a288a1b05c6fc00a6d6.ctex"]
+dest_files=["res://.godot/imported/large_iron_gate_large_iron_gate_metal-large_iron_gate_rough.jpg-ec24af9e08ea8a288a1b05c6fc00a6d6.bptc.ctex"]
 
 [params]
 

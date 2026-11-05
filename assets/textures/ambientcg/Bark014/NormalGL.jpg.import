@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ca6j25mqh4wtd"
-path="res://.godot/imported/NormalGL.jpg-5aa1f272eb7212a7ef884e7ba48a7f68.ctex"
+path.bptc="res://.godot/imported/NormalGL.jpg-5aa1f272eb7212a7ef884e7ba48a7f68.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Bark014/NormalGL.jpg"
-dest_files=["res://.godot/imported/NormalGL.jpg-5aa1f272eb7212a7ef884e7ba48a7f68.ctex"]
+dest_files=["res://.godot/imported/NormalGL.jpg-5aa1f272eb7212a7ef884e7ba48a7f68.bptc.ctex"]
 
 [params]
 

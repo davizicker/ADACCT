@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://2v3ui75us854"
-path="res://.godot/imported/Color.jpg-ce0601e2510d7e62d0d6d76d63f2adde.ctex"
+path.bptc="res://.godot/imported/Color.jpg-ce0601e2510d7e62d0d6d76d63f2adde.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Metal047B/Color.jpg"
-dest_files=["res://.godot/imported/Color.jpg-ce0601e2510d7e62d0d6d76d63f2adde.ctex"]
+dest_files=["res://.godot/imported/Color.jpg-ce0601e2510d7e62d0d6d76d63f2adde.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dl84ap4ycl8fu"
-path="res://.godot/imported/GothicCabinet_01_GothicCabinet_01_metallic-GothicCabinet_01_roughness.jpg-8c4960567476695cbd16aa9734e14389.ctex"
+path.bptc="res://.godot/imported/GothicCabinet_01_GothicCabinet_01_metallic-GothicCabinet_01_roughness.jpg-8c4960567476695cbd16aa9734e14389.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "6d3f98bff4a596a23a93b2ff770a5f52"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/GothicCabinet_01_GothicCabinet_01_metallic-GothicCabinet_01_roughness.jpg"
-dest_files=["res://.godot/imported/GothicCabinet_01_GothicCabinet_01_metallic-GothicCabinet_01_roughness.jpg-8c4960567476695cbd16aa9734e14389.ctex"]
+dest_files=["res://.godot/imported/GothicCabinet_01_GothicCabinet_01_metallic-GothicCabinet_01_roughness.jpg-8c4960567476695cbd16aa9734e14389.bptc.ctex"]
 
 [params]
 

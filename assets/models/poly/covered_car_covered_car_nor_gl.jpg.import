@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c50ds6n5d0574"
-path="res://.godot/imported/covered_car_covered_car_nor_gl.jpg-e1c2efe3f5c8103cb9f6e69da01fc3fd.ctex"
+path.bptc="res://.godot/imported/covered_car_covered_car_nor_gl.jpg-e1c2efe3f5c8103cb9f6e69da01fc3fd.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "aa063166e81a1efd30227ad1914a206c"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/covered_car_covered_car_nor_gl.jpg"
-dest_files=["res://.godot/imported/covered_car_covered_car_nor_gl.jpg-e1c2efe3f5c8103cb9f6e69da01fc3fd.ctex"]
+dest_files=["res://.godot/imported/covered_car_covered_car_nor_gl.jpg-e1c2efe3f5c8103cb9f6e69da01fc3fd.bptc.ctex"]
 
 [params]
 

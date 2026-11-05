@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dqhn2pbqwo8th"
-path="res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_flame_diff_1k.png-cf984f162fb7072c13b342a0faa9d9c1.ctex"
+path.bptc="res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_flame_diff_1k.png-cf984f162fb7072c13b342a0faa9d9c1.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b8556a49341a9fa81c9e0b55bb1254a9"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/vintage_oil_lamp_vintage_oil_lamp_flame_diff_1k.png"
-dest_files=["res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_flame_diff_1k.png-cf984f162fb7072c13b342a0faa9d9c1.ctex"]
+dest_files=["res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_flame_diff_1k.png-cf984f162fb7072c13b342a0faa9d9c1.bptc.ctex"]
 
 [params]
 

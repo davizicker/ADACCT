@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ba63pgmbl0btl"
-path="res://.godot/imported/lightbulb_01_lightbulb_01_diff_1k.jpg-3b424a23d7ff8bc802e0df99d77d0dca.ctex"
+path.bptc="res://.godot/imported/lightbulb_01_lightbulb_01_diff_1k.jpg-3b424a23d7ff8bc802e0df99d77d0dca.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5d3ab8d1eacb3a5df73bd47ab4b8236c"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/lightbulb_01_lightbulb_01_diff_1k.jpg"
-dest_files=["res://.godot/imported/lightbulb_01_lightbulb_01_diff_1k.jpg-3b424a23d7ff8bc802e0df99d77d0dca.ctex"]
+dest_files=["res://.godot/imported/lightbulb_01_lightbulb_01_diff_1k.jpg-3b424a23d7ff8bc802e0df99d77d0dca.bptc.ctex"]
 
 [params]
 

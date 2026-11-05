@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bd85or1bbst8x"
-path="res://.godot/imported/plantas_lod_wild_rooibos_bush_diff_1k.jpg-71992cb6b77ac6b11ff7c88a13f90387.ctex"
+path.bptc="res://.godot/imported/plantas_lod_wild_rooibos_bush_diff_1k.jpg-71992cb6b77ac6b11ff7c88a13f90387.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "ebe62a4ffd4f11c5d25cca187aa67106"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/plantas_lod_wild_rooibos_bush_diff_1k.jpg"
-dest_files=["res://.godot/imported/plantas_lod_wild_rooibos_bush_diff_1k.jpg-71992cb6b77ac6b11ff7c88a13f90387.ctex"]
+dest_files=["res://.godot/imported/plantas_lod_wild_rooibos_bush_diff_1k.jpg-71992cb6b77ac6b11ff7c88a13f90387.bptc.ctex"]
 
 [params]
 

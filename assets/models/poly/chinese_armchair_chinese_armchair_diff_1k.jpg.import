@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d3q1wnmey2j7k"
-path="res://.godot/imported/chinese_armchair_chinese_armchair_diff_1k.jpg-98d788e87b9fc7f53f1a00d65fc4970e.ctex"
+path.bptc="res://.godot/imported/chinese_armchair_chinese_armchair_diff_1k.jpg-98d788e87b9fc7f53f1a00d65fc4970e.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "4a605947bdf81d3747be5f28cec68918"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/chinese_armchair_chinese_armchair_diff_1k.jpg"
-dest_files=["res://.godot/imported/chinese_armchair_chinese_armchair_diff_1k.jpg-98d788e87b9fc7f53f1a00d65fc4970e.ctex"]
+dest_files=["res://.godot/imported/chinese_armchair_chinese_armchair_diff_1k.jpg-98d788e87b9fc7f53f1a00d65fc4970e.bptc.ctex"]
 
 [params]
 

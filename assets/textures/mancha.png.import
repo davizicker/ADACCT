@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwqr7wmeh0v60"
-path="res://.godot/imported/mancha.png-bdf08677457b369708b779ff21e0e168.ctex"
+path.bptc="res://.godot/imported/mancha.png-bdf08677457b369708b779ff21e0e168.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/mancha.png"
-dest_files=["res://.godot/imported/mancha.png-bdf08677457b369708b779ff21e0e168.ctex"]
+dest_files=["res://.godot/imported/mancha.png-bdf08677457b369708b779ff21e0e168.bptc.ctex"]
 
 [params]
 

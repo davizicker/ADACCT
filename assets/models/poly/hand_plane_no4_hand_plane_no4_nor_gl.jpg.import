@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cm6brgpxljjqp"
-path="res://.godot/imported/hand_plane_no4_hand_plane_no4_nor_gl.jpg-ef57f7f705fb42858500965b84e68c36.ctex"
+path.bptc="res://.godot/imported/hand_plane_no4_hand_plane_no4_nor_gl.jpg-ef57f7f705fb42858500965b84e68c36.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "fe2c1705f54714bd4ded0042238053ae"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/hand_plane_no4_hand_plane_no4_nor_gl.jpg"
-dest_files=["res://.godot/imported/hand_plane_no4_hand_plane_no4_nor_gl.jpg-ef57f7f705fb42858500965b84e68c36.ctex"]
+dest_files=["res://.godot/imported/hand_plane_no4_hand_plane_no4_nor_gl.jpg-ef57f7f705fb42858500965b84e68c36.bptc.ctex"]
 
 [params]
 

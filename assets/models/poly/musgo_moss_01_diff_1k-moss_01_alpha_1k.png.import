@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmptygllbn3u3"
-path="res://.godot/imported/musgo_moss_01_diff_1k-moss_01_alpha_1k.png-f6ec6f18068ac8700112b1404528d191.ctex"
+path.bptc="res://.godot/imported/musgo_moss_01_diff_1k-moss_01_alpha_1k.png-f6ec6f18068ac8700112b1404528d191.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "88ec259a16f63642254d73c9c9ffd8a6"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/musgo_moss_01_diff_1k-moss_01_alpha_1k.png"
-dest_files=["res://.godot/imported/musgo_moss_01_diff_1k-moss_01_alpha_1k.png-f6ec6f18068ac8700112b1404528d191.ctex"]
+dest_files=["res://.godot/imported/musgo_moss_01_diff_1k-moss_01_alpha_1k.png-f6ec6f18068ac8700112b1404528d191.bptc.ctex"]
 
 [params]
 

@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cektaoelthm3w"
-path="res://.godot/imported/vidro_luz.png-c0255db10d5af3097348cb3bda701790.ctex"
+path.bptc="res://.godot/imported/vidro_luz.png-c0255db10d5af3097348cb3bda701790.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/vidro_luz.png"
-dest_files=["res://.godot/imported/vidro_luz.png-c0255db10d5af3097348cb3bda701790.ctex"]
+dest_files=["res://.godot/imported/vidro_luz.png-c0255db10d5af3097348cb3bda701790.bptc.ctex"]
 
 [params]
 

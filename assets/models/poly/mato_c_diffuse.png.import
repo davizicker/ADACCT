@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c1p0weh31lj0g"
-path="res://.godot/imported/mato_c_diffuse.png-1422da377a4b50e57728b8aa5abc67d7.ctex"
+path.bptc="res://.godot/imported/mato_c_diffuse.png-1422da377a4b50e57728b8aa5abc67d7.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "311b73f45ddd581a8460c317b0d07a45"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/mato_c_diffuse.png"
-dest_files=["res://.godot/imported/mato_c_diffuse.png-1422da377a4b50e57728b8aa5abc67d7.ctex"]
+dest_files=["res://.godot/imported/mato_c_diffuse.png-1422da377a4b50e57728b8aa5abc67d7.bptc.ctex"]
 
 [params]
 

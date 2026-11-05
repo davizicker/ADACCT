@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c731houdogavl"
-path="res://.godot/imported/containers_Rope.jpg-09b55339a1d79c8dd394057333a1891f.ctex"
+path.bptc="res://.godot/imported/containers_Rope.jpg-09b55339a1d79c8dd394057333a1891f.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "332bfbecb6b8f2d8c4479462aed5e87b"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/containers_Rope.jpg"
-dest_files=["res://.godot/imported/containers_Rope.jpg-09b55339a1d79c8dd394057333a1891f.ctex"]
+dest_files=["res://.godot/imported/containers_Rope.jpg-09b55339a1d79c8dd394057333a1891f.bptc.ctex"]
 
 [params]
 

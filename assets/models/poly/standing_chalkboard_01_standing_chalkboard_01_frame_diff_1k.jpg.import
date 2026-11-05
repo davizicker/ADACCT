@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ctt78dkmh0yy8"
-path="res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_diff_1k.jpg-9d95e4e2a124b721689c1c9feebeb903.ctex"
+path.bptc="res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_diff_1k.jpg-9d95e4e2a124b721689c1c9feebeb903.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b198accc0562f3d3518c4c374a40f4e4"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/standing_chalkboard_01_standing_chalkboard_01_frame_diff_1k.jpg"
-dest_files=["res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_diff_1k.jpg-9d95e4e2a124b721689c1c9feebeb903.ctex"]
+dest_files=["res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_diff_1k.jpg-9d95e4e2a124b721689c1c9feebeb903.bptc.ctex"]
 
 [params]
 

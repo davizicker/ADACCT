@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d4cs8vcbi1ara"
-path="res://.godot/imported/Roughness.jpg-ae874542945ed046b57b0e490252c8b4.ctex"
+path.bptc="res://.godot/imported/Roughness.jpg-ae874542945ed046b57b0e490252c8b4.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Bark014/Roughness.jpg"
-dest_files=["res://.godot/imported/Roughness.jpg-ae874542945ed046b57b0e490252c8b4.ctex"]
+dest_files=["res://.godot/imported/Roughness.jpg-ae874542945ed046b57b0e490252c8b4.bptc.ctex"]
 
 [params]
 

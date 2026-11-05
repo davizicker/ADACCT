@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b6pb6do2pjo01"
-path="res://.godot/imported/Roughness.jpg-feac7e1ee18b461309c94af132b35282.ctex"
+path.bptc="res://.godot/imported/Roughness.jpg-feac7e1ee18b461309c94af132b35282.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Wood028/Roughness.jpg"
-dest_files=["res://.godot/imported/Roughness.jpg-feac7e1ee18b461309c94af132b35282.ctex"]
+dest_files=["res://.godot/imported/Roughness.jpg-feac7e1ee18b461309c94af132b35282.bptc.ctex"]
 
 [params]
 

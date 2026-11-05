@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bugiei5ltuqhb"
-path="res://.godot/imported/sujeira_base.png-93f958b856208f452838f0c5940b3626.ctex"
+path.bptc="res://.godot/imported/sujeira_base.png-93f958b856208f452838f0c5940b3626.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/sujeira_base.png"
-dest_files=["res://.godot/imported/sujeira_base.png-93f958b856208f452838f0c5940b3626.ctex"]
+dest_files=["res://.godot/imported/sujeira_base.png-93f958b856208f452838f0c5940b3626.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://n2mgxy1c8ula"
-path="res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png-3f8f882141b75f1b687dab473b76a025.ctex"
+path.bptc="res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png-3f8f882141b75f1b687dab473b76a025.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "a16372bf865a1f39d78375a8c63aa15b"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/vintage_oil_lamp_vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png"
-dest_files=["res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png-3f8f882141b75f1b687dab473b76a025.ctex"]
+dest_files=["res://.godot/imported/vintage_oil_lamp_vintage_oil_lamp_glass_diff-vintage_oil_lamp_glass_alpha.png-3f8f882141b75f1b687dab473b76a025.bptc.ctex"]
 
 [params]
 

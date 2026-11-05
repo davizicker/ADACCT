@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://u6nb53xdagbr"
-path="res://.godot/imported/wooden_bucket_01_wooden_bucket_01_nor_gl.jpg-13e9971cae97bd2538632f02199dd305.ctex"
+path.bptc="res://.godot/imported/wooden_bucket_01_wooden_bucket_01_nor_gl.jpg-13e9971cae97bd2538632f02199dd305.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "aef3460e94b54749b4834d1aea782f5b"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/wooden_bucket_01_wooden_bucket_01_nor_gl.jpg"
-dest_files=["res://.godot/imported/wooden_bucket_01_wooden_bucket_01_nor_gl.jpg-13e9971cae97bd2538632f02199dd305.ctex"]
+dest_files=["res://.godot/imported/wooden_bucket_01_wooden_bucket_01_nor_gl.jpg-13e9971cae97bd2538632f02199dd305.bptc.ctex"]
 
 [params]
 

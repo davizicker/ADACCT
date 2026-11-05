@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hvwwaw3cgt8j"
-path="res://.godot/imported/Color.jpg-509deeb74c7137dab6bc5b62806ef73c.ctex"
+path.bptc="res://.godot/imported/Color.jpg-509deeb74c7137dab6bc5b62806ef73c.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Ground037/Color.jpg"
-dest_files=["res://.godot/imported/Color.jpg-509deeb74c7137dab6bc5b62806ef73c.ctex"]
+dest_files=["res://.godot/imported/Color.jpg-509deeb74c7137dab6bc5b62806ef73c.bptc.ctex"]
 
 [params]
 

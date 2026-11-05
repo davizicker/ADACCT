@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmefnwx34vmdi"
-path="res://.godot/imported/large_iron_gate_large_iron_gate_nor_gl.jpg-0630f0a9ba3dd181ebebe56e889d7c0f.ctex"
+path.bptc="res://.godot/imported/large_iron_gate_large_iron_gate_nor_gl.jpg-0630f0a9ba3dd181ebebe56e889d7c0f.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "f7d1935533273ac4339d7e40376c9257"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/large_iron_gate_large_iron_gate_nor_gl.jpg"
-dest_files=["res://.godot/imported/large_iron_gate_large_iron_gate_nor_gl.jpg-0630f0a9ba3dd181ebebe56e889d7c0f.ctex"]
+dest_files=["res://.godot/imported/large_iron_gate_large_iron_gate_nor_gl.jpg-0630f0a9ba3dd181ebebe56e889d7c0f.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bylrtj5ch8wif"
-path="res://.godot/imported/football_football_rough.jpg-760ca80d19f316a1002bfb2aedfd6519.ctex"
+path.bptc="res://.godot/imported/football_football_rough.jpg-760ca80d19f316a1002bfb2aedfd6519.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c314a3f99daaa36d79a095cc4fd4fc44"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/football_football_rough.jpg"
-dest_files=["res://.godot/imported/football_football_rough.jpg-760ca80d19f316a1002bfb2aedfd6519.ctex"]
+dest_files=["res://.godot/imported/football_football_rough.jpg-760ca80d19f316a1002bfb2aedfd6519.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://witt3ybay3rw"
-path="res://.godot/imported/cardboard_box_01_cardboard_box_01_diff_1k.jpg-bc331f0807c8f5ea9b63df907acc3325.ctex"
+path.bptc="res://.godot/imported/cardboard_box_01_cardboard_box_01_diff_1k.jpg-bc331f0807c8f5ea9b63df907acc3325.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "f196eac3cb3cc6c5de9e3736848168c3"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/cardboard_box_01_cardboard_box_01_diff_1k.jpg"
-dest_files=["res://.godot/imported/cardboard_box_01_cardboard_box_01_diff_1k.jpg-bc331f0807c8f5ea9b63df907acc3325.ctex"]
+dest_files=["res://.godot/imported/cardboard_box_01_cardboard_box_01_diff_1k.jpg-bc331f0807c8f5ea9b63df907acc3325.bptc.ctex"]
 
 [params]
 

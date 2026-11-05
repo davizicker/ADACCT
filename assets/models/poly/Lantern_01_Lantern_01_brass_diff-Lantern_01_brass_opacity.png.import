@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bbrxp2eecw2rx"
-path="res://.godot/imported/Lantern_01_Lantern_01_brass_diff-Lantern_01_brass_opacity.png-3625293b92e6bd4a62edf8f48256b733.ctex"
+path.bptc="res://.godot/imported/Lantern_01_Lantern_01_brass_diff-Lantern_01_brass_opacity.png-3625293b92e6bd4a62edf8f48256b733.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "06a729ae33f5a9b7bbb385b5db892caa"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/Lantern_01_Lantern_01_brass_diff-Lantern_01_brass_opacity.png"
-dest_files=["res://.godot/imported/Lantern_01_Lantern_01_brass_diff-Lantern_01_brass_opacity.png-3625293b92e6bd4a62edf8f48256b733.ctex"]
+dest_files=["res://.godot/imported/Lantern_01_Lantern_01_brass_diff-Lantern_01_brass_opacity.png-3625293b92e6bd4a62edf8f48256b733.bptc.ctex"]
 
 [params]
 

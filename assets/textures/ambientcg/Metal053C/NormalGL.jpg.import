@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bf3atsl123xqv"
-path="res://.godot/imported/NormalGL.jpg-e369cfd9abb670d14fa7d2814acc9726.ctex"
+path.bptc="res://.godot/imported/NormalGL.jpg-e369cfd9abb670d14fa7d2814acc9726.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Metal053C/NormalGL.jpg"
-dest_files=["res://.godot/imported/NormalGL.jpg-e369cfd9abb670d14fa7d2814acc9726.ctex"]
+dest_files=["res://.godot/imported/NormalGL.jpg-e369cfd9abb670d14fa7d2814acc9726.bptc.ctex"]
 
 [params]
 

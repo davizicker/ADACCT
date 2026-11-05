@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdfub2eacspsn"
-path="res://.godot/imported/covered_car_covered_car_metal-covered_car_rough.jpg-c178634f33c38449552d4b45e6d4c80f.ctex"
+path.bptc="res://.godot/imported/covered_car_covered_car_metal-covered_car_rough.jpg-c178634f33c38449552d4b45e6d4c80f.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5bd6e44b95b8451f866116c014a9b9f0"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/covered_car_covered_car_metal-covered_car_rough.jpg"
-dest_files=["res://.godot/imported/covered_car_covered_car_metal-covered_car_rough.jpg-c178634f33c38449552d4b45e6d4c80f.ctex"]
+dest_files=["res://.godot/imported/covered_car_covered_car_metal-covered_car_rough.jpg-c178634f33c38449552d4b45e6d4c80f.bptc.ctex"]
 
 [params]
 

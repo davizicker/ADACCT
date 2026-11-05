@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bqbxb0q768p6c"
-path="res://.godot/imported/Roughness.jpg-9711ae3bef9987b5e6bf0e84b2139f7c.ctex"
+path.bptc="res://.godot/imported/Roughness.jpg-9711ae3bef9987b5e6bf0e84b2139f7c.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Metal053C/Roughness.jpg"
-dest_files=["res://.godot/imported/Roughness.jpg-9711ae3bef9987b5e6bf0e84b2139f7c.ctex"]
+dest_files=["res://.godot/imported/Roughness.jpg-9711ae3bef9987b5e6bf0e84b2139f7c.bptc.ctex"]
 
 [params]
 

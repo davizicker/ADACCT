@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://p8ayt8rqdh8c"
-path="res://.godot/imported/worn_metal_rack_worn_metal_rack_metal-worn_metal_rack_rough.jpg-0d8625ea9027306293466f7840686319.ctex"
+path.bptc="res://.godot/imported/worn_metal_rack_worn_metal_rack_metal-worn_metal_rack_rough.jpg-0d8625ea9027306293466f7840686319.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7e2b11eb8a4514dff2545a2b37b003e3"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/worn_metal_rack_worn_metal_rack_metal-worn_metal_rack_rough.jpg"
-dest_files=["res://.godot/imported/worn_metal_rack_worn_metal_rack_metal-worn_metal_rack_rough.jpg-0d8625ea9027306293466f7840686319.ctex"]
+dest_files=["res://.godot/imported/worn_metal_rack_worn_metal_rack_metal-worn_metal_rack_rough.jpg-0d8625ea9027306293466f7840686319.bptc.ctex"]
 
 [params]
 

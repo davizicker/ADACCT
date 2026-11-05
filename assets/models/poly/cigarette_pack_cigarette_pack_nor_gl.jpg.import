@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dcrmtxd7npoaa"
-path="res://.godot/imported/cigarette_pack_cigarette_pack_nor_gl.jpg-65da93d2a922c00424b7ce27b54188b0.ctex"
+path.bptc="res://.godot/imported/cigarette_pack_cigarette_pack_nor_gl.jpg-65da93d2a922c00424b7ce27b54188b0.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "173aa6ca4d8cb0a82386f26b762e77e3"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/cigarette_pack_cigarette_pack_nor_gl.jpg"
-dest_files=["res://.godot/imported/cigarette_pack_cigarette_pack_nor_gl.jpg-65da93d2a922c00424b7ce27b54188b0.ctex"]
+dest_files=["res://.godot/imported/cigarette_pack_cigarette_pack_nor_gl.jpg-65da93d2a922c00424b7ce27b54188b0.bptc.ctex"]
 
 [params]
 

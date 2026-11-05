@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1mg73umy1o7b"
-path="res://.godot/imported/WoodenTable_02_WoodenTable_02_metallic-WoodenTable_02_roughness.jpg-6d16a1c45f4f3907c291b4e4442c0bbc.ctex"
+path.bptc="res://.godot/imported/WoodenTable_02_WoodenTable_02_metallic-WoodenTable_02_roughness.jpg-6d16a1c45f4f3907c291b4e4442c0bbc.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "1b412c58b414177c6800d781de9506e0"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/WoodenTable_02_WoodenTable_02_metallic-WoodenTable_02_roughness.jpg"
-dest_files=["res://.godot/imported/WoodenTable_02_WoodenTable_02_metallic-WoodenTable_02_roughness.jpg-6d16a1c45f4f3907c291b4e4442c0bbc.ctex"]
+dest_files=["res://.godot/imported/WoodenTable_02_WoodenTable_02_metallic-WoodenTable_02_roughness.jpg-6d16a1c45f4f3907c291b4e4442c0bbc.bptc.ctex"]
 
 [params]
 

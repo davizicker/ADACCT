@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bo8xxnxur4ddk"
-path="res://.godot/imported/NormalGL.jpg-e20aec56bf8f03e2cf2c86a68b33c05f.ctex"
+path.bptc="res://.godot/imported/NormalGL.jpg-e20aec56bf8f03e2cf2c86a68b33c05f.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Wood035/NormalGL.jpg"
-dest_files=["res://.godot/imported/NormalGL.jpg-e20aec56bf8f03e2cf2c86a68b33c05f.ctex"]
+dest_files=["res://.godot/imported/NormalGL.jpg-e20aec56bf8f03e2cf2c86a68b33c05f.bptc.ctex"]
 
 [params]
 

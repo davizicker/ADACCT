@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dsowqcq3y5ddu"
-path="res://.godot/imported/long_life_food_long_life_food_metal-long_life_food_rough.jpg-168e5ce5823351c1add097a18af242c4.ctex"
+path.bptc="res://.godot/imported/long_life_food_long_life_food_metal-long_life_food_rough.jpg-168e5ce5823351c1add097a18af242c4.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "61d508a5f3e05a117fc8ef387155c2f1"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/long_life_food_long_life_food_metal-long_life_food_rough.jpg"
-dest_files=["res://.godot/imported/long_life_food_long_life_food_metal-long_life_food_rough.jpg-168e5ce5823351c1add097a18af242c4.ctex"]
+dest_files=["res://.godot/imported/long_life_food_long_life_food_metal-long_life_food_rough.jpg-168e5ce5823351c1add097a18af242c4.bptc.ctex"]
 
 [params]
 

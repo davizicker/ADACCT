@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://5mevc1tquvkf"
-path="res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_metal-standing_chalkboard_01_frame_rough.jpg-6f6857a5d54c344df225823abb85bfa2.ctex"
+path.bptc="res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_metal-standing_chalkboard_01_frame_rough.jpg-6f6857a5d54c344df225823abb85bfa2.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "08d749a596183bb22a85a5794eaeda0d"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/standing_chalkboard_01_standing_chalkboard_01_frame_metal-standing_chalkboard_01_frame_rough.jpg"
-dest_files=["res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_metal-standing_chalkboard_01_frame_rough.jpg-6f6857a5d54c344df225823abb85bfa2.ctex"]
+dest_files=["res://.godot/imported/standing_chalkboard_01_standing_chalkboard_01_frame_metal-standing_chalkboard_01_frame_rough.jpg-6f6857a5d54c344df225823abb85bfa2.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b0hruebcy5p34"
-path="res://.godot/imported/WoodenChair_01_WoodenChair_01_nor_gl.jpg-f4fad03e7333acca8e76dafcace8a5bb.ctex"
+path.bptc="res://.godot/imported/WoodenChair_01_WoodenChair_01_nor_gl.jpg-f4fad03e7333acca8e76dafcace8a5bb.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "05b9ce0379c9323453c8d32a352bbf90"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/WoodenChair_01_WoodenChair_01_nor_gl.jpg"
-dest_files=["res://.godot/imported/WoodenChair_01_WoodenChair_01_nor_gl.jpg-f4fad03e7333acca8e76dafcace8a5bb.ctex"]
+dest_files=["res://.godot/imported/WoodenChair_01_WoodenChair_01_nor_gl.jpg-f4fad03e7333acca8e76dafcace8a5bb.bptc.ctex"]
 
 [params]
 

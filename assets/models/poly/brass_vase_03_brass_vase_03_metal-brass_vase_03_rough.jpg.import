@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://3x55atmb7y6b"
-path="res://.godot/imported/brass_vase_03_brass_vase_03_metal-brass_vase_03_rough.jpg-c9b8c9121a58ac5b40f1b9d478e66532.ctex"
+path.bptc="res://.godot/imported/brass_vase_03_brass_vase_03_metal-brass_vase_03_rough.jpg-c9b8c9121a58ac5b40f1b9d478e66532.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "cfde988590ae0ac3d9d0f6ecca8422b6"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/brass_vase_03_brass_vase_03_metal-brass_vase_03_rough.jpg"
-dest_files=["res://.godot/imported/brass_vase_03_brass_vase_03_metal-brass_vase_03_rough.jpg-c9b8c9121a58ac5b40f1b9d478e66532.ctex"]
+dest_files=["res://.godot/imported/brass_vase_03_brass_vase_03_metal-brass_vase_03_rough.jpg-c9b8c9121a58ac5b40f1b9d478e66532.bptc.ctex"]
 
 [params]
 

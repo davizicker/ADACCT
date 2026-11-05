@@ -35,6 +35,8 @@ PROPS = {
     "planter_pot_clay":     (3000, False),
     "can_rusted":           (1200, False),
     "vintage_suitcase":     (4000, False),
+    "vintage_lighter":      (1500, False),
+    "seadogs_compass":      (3000, True),
 }
 
 

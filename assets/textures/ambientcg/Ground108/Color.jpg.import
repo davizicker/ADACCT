@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b5up8l8jyho8v"
-path="res://.godot/imported/Color.jpg-2b4855b75e429adafe862aae13bae3d5.ctex"
+path.bptc="res://.godot/imported/Color.jpg-2b4855b75e429adafe862aae13bae3d5.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/ambientcg/Ground108/Color.jpg"
-dest_files=["res://.godot/imported/Color.jpg-2b4855b75e429adafe862aae13bae3d5.ctex"]
+dest_files=["res://.godot/imported/Color.jpg-2b4855b75e429adafe862aae13bae3d5.bptc.ctex"]
 
 [params]
 

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://btj713opejvj1"
-path="res://.godot/imported/can_rusted_can_rusted_nor_gl.jpg-46049321e70271312d9e5afe37e198a0.ctex"
+path.bptc="res://.godot/imported/can_rusted_can_rusted_nor_gl.jpg-46049321e70271312d9e5afe37e198a0.bptc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "42f926b7bfaf6c620285ab31ca951d7f"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/can_rusted_can_rusted_nor_gl.jpg"
-dest_files=["res://.godot/imported/can_rusted_can_rusted_nor_gl.jpg-46049321e70271312d9e5afe37e198a0.ctex"]
+dest_files=["res://.godot/imported/can_rusted_can_rusted_nor_gl.jpg-46049321e70271312d9e5afe37e198a0.bptc.ctex"]
 
 [params]
 
