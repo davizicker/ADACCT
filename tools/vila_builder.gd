@@ -2028,17 +2028,6 @@ func _church_plaza() -> Node3D:
 			_mesh_node(bg, "Malha", bb.commit())
 			_blocker(bg, "Colisao", Vector3(1.9, 0.6, 0.6), Vector3(0, 0.3, 0))
 			_reservar(Vector3(bp.x, bp.y, bp.z), 1.3)
-	var nev := FogVolume.new()
-	nev.name = "NeblinaDoAdro"
-	nev.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
-	nev.size = Vector3(34.0, 4.0, 34.0)
-	var nmat := FogMaterial.new()
-	nmat.density = 0.14
-	nmat.albedo = Color(0.62, 0.68, 0.84)
-	nmat.edge_fade = 0.35
-	nev.material = nmat
-	nev.position = Route.pos(CHURCH_S) - Route.tangent(CHURCH_S) * 14.0 + Vector3(0, 2.2, 0)
-	root.add_child(nev)
 	# vasos de barro com arbustos ladeando a porta da igreja
 	var igt := Transform3D(Basis(Route.tangent(CHURCH_S), Vector3.UP, Route.tangent(CHURCH_S).cross(Vector3.UP)), Route.pos(CHURCH_S))
 	for sz2: float in [-1.0, 1.0]:

@@ -155,6 +155,24 @@ static func _apply_high_end(main: Node) -> void:
 			ca.dof_blur_far_transition = 60.0
 			ca.dof_blur_amount = 0.04
 			jog.attributes = ca
+	# neblina baixa em frente à igreja (só existe no Forward+ com névoa volumétrica; no OpenGL daria erro de shader)
+	var adro := main.get_node_or_null("Vila/Adro")
+	if adro != null:
+		var antiga := adro.get_node_or_null("NeblinaDoAdro")
+		if cine and antiga == null:
+			var nev := FogVolume.new()
+			nev.name = "NeblinaDoAdro"
+			nev.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+			nev.size = Vector3(34.0, 4.0, 34.0)
+			var nmat := FogMaterial.new()
+			nmat.density = 0.14
+			nmat.albedo = Color(0.62, 0.68, 0.84)
+			nmat.edge_fade = 0.35
+			nev.material = nmat
+			nev.position = Route.pos(Route.CHURCH_S) - Route.tangent(Route.CHURCH_S) * 14.0 + Vector3(0, 2.2, 0)
+			adro.add_child(nev)
+		elif not cine and antiga != null:
+			antiga.queue_free()
 	RenderingServer.environment_set_ssao_quality([RenderingServer.ENV_SSAO_QUALITY_VERY_LOW, RenderingServer.ENV_SSAO_QUALITY_LOW, RenderingServer.ENV_SSAO_QUALITY_MEDIUM, RenderingServer.ENV_SSAO_QUALITY_HIGH][clampi(quality, 0, 3)], true, 0.5, 2, 50.0, 300.0)
 	RenderingServer.environment_set_ssil_quality(RenderingServer.ENV_SSIL_QUALITY_HIGH if cine else RenderingServer.ENV_SSIL_QUALITY_MEDIUM, true, 0.5, 4, 50.0, 300.0)
 	main.get_viewport().use_taa = hi

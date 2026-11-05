@@ -74,6 +74,24 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	_bb.box("madeira_escura", Vector3(w, 0.14, 0.04), Vector3(w / 2.0, 0.07, d - 0.02))
 	_bb.box("madeira_escura", Vector3(0.04, 0.14, d), Vector3(0.02, 0.07, d / 2.0))
 	_bb.box("madeira_escura", Vector3(0.04, 0.14, d), Vector3(w - 0.02, 0.07, d / 2.0))
+	# lambri de madeira (1 m) em volta da sala e sanca no teto: acabamento de casa de verdade
+	if h < 5.0:
+		var lamb := "madeira_escura"
+		_bb.box(lamb, Vector3(0.03, 0.95, d), Vector3(0.015, 0.5, d / 2.0))
+		_bb.box(lamb, Vector3(0.03, 0.95, d), Vector3(w - 0.015, 0.5, d / 2.0))
+		_bb.box(lamb, Vector3(w, 0.95, 0.03), Vector3(w / 2.0, 0.5, d - 0.015))
+		_bb.box(lamb, Vector3(w / 2.0 - 0.85, 0.95, 0.03), Vector3((w / 2.0 - 0.85) / 2.0, 0.5, 0.015))
+		_bb.box(lamb, Vector3(w / 2.0 - 0.85, 0.95, 0.03), Vector3(w - (w / 2.0 - 0.85) / 2.0, 0.5, 0.015))
+		_bb.box("madeira_natural", Vector3(0.06, 0.04, d), Vector3(0.03, 0.97, d / 2.0))              # corrimão do lambri
+		_bb.box("madeira_natural", Vector3(0.06, 0.04, d), Vector3(w - 0.03, 0.97, d / 2.0))
+		_bb.box("madeira_natural", Vector3(w, 0.04, 0.06), Vector3(w / 2.0, 0.97, d - 0.03))
+		for k in int(d / 0.9):                                                                                # frisos verticais do lambri
+			_bb.box("madeira_natural", Vector3(0.035, 0.9, 0.025), Vector3(0.02, 0.5, 0.45 + k * 0.9))
+			_bb.box("madeira_natural", Vector3(0.035, 0.9, 0.025), Vector3(w - 0.02, 0.5, 0.45 + k * 0.9))
+		_bb.box("cantaria", Vector3(0.14, 0.12, d), Vector3(0.07, h - 0.06, d / 2.0))                       # sanca de gesso
+		_bb.box("cantaria", Vector3(0.14, 0.12, d), Vector3(w - 0.07, h - 0.06, d / 2.0))
+		_bb.box("cantaria", Vector3(w, 0.12, 0.14), Vector3(w / 2.0, h - 0.06, d - 0.07))
+		_bb.box("cantaria", Vector3(w, 0.12, 0.14), Vector3(w / 2.0, h - 0.06, 0.07))
 	# colisões (a sala é uma caixa fechada)
 	b._blocker(_g, "Piso", Vector3(w + 4.0, 0.6, d + 4.0), Vector3(w / 2.0, -0.3, d / 2.0))
 	b._blocker(_g, "Teto", Vector3(w + 4.0, 0.6, d + 4.0), Vector3(w / 2.0, h + 0.3, d / 2.0))
@@ -142,6 +160,16 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 	var along := side.abs()
 	_bb.box("madeira_escura", Vector3(0.03 + along.x * w, 0.04, 0.03 + along.z * w), pos + dir * 0.03)
 	_bb.box("madeira_escura", Vector3(0.04, h, 0.04), pos + dir * 0.03)
+	# peitoril de pedra, varão e cortinas (as cores variam por janela)
+	var pano: String = ["pano_rosa", "pano_azul", "pano_cru", "pano_rosa"][int(p * 3.0 + y * 5.0) % 4]
+	var sill := Vector3(0.16, 0.05, w + 0.3) if lado != "N" else Vector3(w + 0.3, 0.05, 0.16)
+	_bb.box("cantaria", sill, pos + dir * 0.09 + Vector3(0, -h / 2.0 - 0.03, 0))
+	var rod := Vector3(0.03, 0.03, w + 0.8) if lado != "N" else Vector3(w + 0.8, 0.03, 0.03)
+	_bb.box("ferro", rod, pos + dir * 0.10 + Vector3(0, h / 2.0 + 0.3, 0))
+	var csz := Vector3(0.03, h + 0.45, 0.3) if lado != "N" else Vector3(0.3, h + 0.45, 0.03)
+	for k in [-1.0, 1.0]:
+		for dobra in 2:
+			_bb.box(pano, csz, pos + dir * (0.08 + 0.02 * dobra) + side * k * (w / 2.0 + 0.14 - 0.09 * dobra) + Vector3(0, 0.02, 0))
 	# luar frio entrando (sem sombra): pequena luz azul
 	var l := OmniLight3D.new()
 	l.position = pos + dir * 0.8
@@ -485,6 +513,8 @@ func _sala_sineiro(g: Node3D) -> void:
 func _sala_casarao(g: Node3D) -> void:
 	_casca("Casarão dos Vaz", 10.0, 8.0, 3.8, "reboco_ocre", "madeira_escura")
 	# mesa de jantar comprida com cadeiras (uma caída), castiçal apagado
+	_bb.box("listra_vermelha", Vector3(3.4, 0.012, 2.3), Vector3(5.0, 0.008, 3.8))                    # tapete grande sob a mesa
+	_bb.box("ouro_velho", Vector3(3.5, 0.010, 2.4), Vector3(5.0, 0.006, 3.8))                          # barra dourada
 	_prop_c("dining_table", 5.0, 3.8, 0.0, 1.0)                                                      # mesa de jantar com toalha xadrez (Poly Haven, CC0)
 	for k in 3:
 		_cadeira(3.9 + k * 1.1, 4.6, PI)
@@ -772,6 +802,7 @@ func _sala_pensao(g: Node3D) -> void:
 	_prop_c("old_bed_frame", 1.0, 4.6, 0.0, 1.0)
 	_prop_c("old_bed_frame", 6.0, 4.6, 0.0, 1.0)
 	_prop_c("vintage_day_bed", 3.5, 0.9, 0.0, 1.0)
+	_bb.box("listra_azul", Vector3(2.4, 0.012, 1.6), Vector3(3.5, 0.008, 2.6))                         # tapete sob a mesinha
 	_prop_c("gothic_coffee_table", 3.5, 2.6, 0.0, 1.0)
 	_prop("vintage_binocular", 3.2, 2.6, 0.4, 1.0, 0.56)
 	_prop("cigarette_pack", 3.9, 2.4, 1.0, 1.5, 0.56)
