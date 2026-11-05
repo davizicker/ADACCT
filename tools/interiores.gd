@@ -175,13 +175,8 @@ func _mesa(x: float, z: float, w := 1.5, dd := 0.85, h := 0.78, mat := "madeira_
 		b._blocker(_g, "ColMesa", Vector3(dd, h, w), Vector3(x, h / 2.0, z))
 
 
-func _cadeira(x: float, z: float, yaw := 0.0, mat := "madeira_natural") -> void:
-	var c := Vector3(x, 0, z)
-	_bx(mat, c, yaw, Vector3(0, 0.46, 0), Vector3(0.44, 0.04, 0.44))
-	for sx in [-1.0, 1.0]:
-		for sz in [-1.0, 1.0]:
-			_bx(mat, c, yaw, Vector3(sx * 0.19, 0.23, sz * 0.19), Vector3(0.04, 0.46, 0.04))
-	_bx(mat, c, yaw, Vector3(0, 0.78, 0.2), Vector3(0.44, 0.5, 0.04))
+func _cadeira(x: float, z: float, yaw := 0.0, _mat := "madeira_natural") -> void:
+	_prop("painted_wooden_chair_02", x, z, yaw + PI, 1.0)      # cadeira pintada e descascada (Poly Haven, CC0); sem colisão, para não travar o caminho
 
 
 func _cama(x: float, z: float, yaw := 0.0, colcha := "pano_azul") -> void:
@@ -346,6 +341,8 @@ func _sala_benedita(g: Node3D) -> void:
 	_quadro(0.04, 1.8, 3.5, "O", 0.4, 0.5)
 	_nota(4.3, 0.85, 2.7, 1, "Ler a carta de Dona Benedita")
 	_nota(5.0, 0.86, 3.15, 25, "Ler o papel atrás do retrato")
+	_prop_c("painted_wooden_nightstand", 2.35, 5.6, PI, 1.0)
+	_prop("planter_pot_clay", 6.5, 0.7, 0.0, 1.3, 0.0)
 	_item("terco", Vector3(3.2, 1.07, 5.55), "Pegar o terço de Dona Benedita")
 	_oleo(6.3, 0.95, 3.3)
 	_oleo(0.6, 1.4, 4.2)
@@ -729,6 +726,8 @@ func _sala_ferraria(g: Node3D) -> void:
 	_lamparina(2.4, 0.01, 4.6, 0.7)
 	_janela("L", 2.0)
 	_oleo(6.4, 1.05, 1.0)
+	_prop("can_rusted", 2.0, 0.6, 0.5, 1.4, 0.0)
+	_prop("can_rusted", 2.25, 0.75, 1.5, 1.4, 0.0)
 	_nota(2.4, 0.2, 4.4, 14, "Ler a encomenda do ferreiro")
 	_fim()
 
@@ -764,6 +763,9 @@ func _sala_pensao(g: Node3D) -> void:
 	_janela("L", 4.0)
 	_janela("O", 4.0)
 	_nota(3.6, 0.88, 5.0, 16, "Ler o livro de hóspedes")
+	_prop_c("painted_wooden_nightstand", 2.0, 5.55, PI, 1.0)
+	_prop_c("painted_wooden_nightstand", 5.0, 5.55, PI, 1.0)
+	_prop("vintage_suitcase", 5.6, 2.1, 0.5, 0.75, 0.0)                                              # as malas do Dr. Anselmo, esquecidas no quarto
 	_oleo(6.5, 0.95, 1.0)
 	_fim()
 
@@ -799,6 +801,7 @@ func _sala_deposito(g: Node3D) -> void:
 	_saco(5.4, 3.8)
 	_saco(5.9, 4.2, 0.5)
 	_saco(6.4, 3.7)
+	_prop("can_rusted", 3.0, 4.5, 0.3, 1.4, 0.0)
 	# caixotes, cestos e jarros do depósito (kit Medieval Containers, CC0)
 	var cx := _cont("Crate3", 2.4, 0.6, 0.1)
 	_cont("Crate3", 2.4, 0.6, 0.5, (cx.get_meta("bb") as AABB).size.y, 0.9, false)

@@ -30,6 +30,11 @@ PROPS = {
     "wooden_bookshelf_worn": (7000, False),
     "WoodenTable_01":       (4500, False),
     "WoodenTable_02":       (4500, False),
+    "painted_wooden_nightstand": (4000, False),
+    "painted_wooden_chair_02":   (4500, False),
+    "planter_pot_clay":     (3000, False),
+    "can_rusted":           (1200, False),
+    "vintage_suitcase":     (4000, False),
 }
 
 

@@ -2036,6 +2036,13 @@ func _church_plaza() -> Node3D:
 	nev.material = nmat
 	nev.position = Route.pos(CHURCH_S) - Route.tangent(CHURCH_S) * 14.0 + Vector3(0, 2.2, 0)
 	root.add_child(nev)
+	# vasos de barro com arbustos ladeando a porta da igreja
+	var igt := Transform3D(Basis(Route.tangent(CHURCH_S), Vector3.UP, Route.tangent(CHURCH_S).cross(Vector3.UP)), Route.pos(CHURCH_S))
+	for sz2: float in [-1.0, 1.0]:
+		var vp: Vector3 = igt * Vector3(-3.2, 0.0, sz2 * 5.6)
+		var vaso := _prop(root, "planter_pot_clay", vp, 0.0, 2.6)
+		vaso.name = "VasoDaIgreja_%d" % int(sz2)
+		_plant(root, "arbusto", vp + Vector3(0, 0.45, 0), 0.0, 1.0)
 	# palmeiras do adro
 	for sigma: float in [-1.0, 1.0]:
 		for ss: float in [S_END + 8.0, S_END + 28.0]:
