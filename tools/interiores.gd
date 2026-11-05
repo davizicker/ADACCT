@@ -103,6 +103,8 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	_bb.box("cantaria", Vector3(1.5, 2.55, 0.12), Vector3(w / 2.0, 1.27, 0.06))
 	_bb.box("madeira_escura", Vector3(1.2, 2.3, 0.1), Vector3(w / 2.0, 1.15, 0.11))
 	_bb.box("ferro", Vector3(0.05, 0.12, 0.06), Vector3(w / 2.0 + 0.42, 1.05, 0.2))
+	_bb.box("pano_cru", Vector3(1.0, 0.02, 0.6), Vector3(w / 2.0, 0.01, 0.55))                          # capacho
+	_bb.box("madeira_escura", Vector3(1.04, 0.015, 0.64), Vector3(w / 2.0, 0.006, 0.55))
 	var a := _area("Saida", Vector3(w / 2.0, 1.2, 0.8), Vector3(1.9, 2.4, 1.5), "res://scripts/porta.gd")
 	a.set("destino", "")
 	a.set("texto_interacao", "Sair para a rua")
@@ -344,6 +346,12 @@ func _item(id: String, pos: Vector3, label: String) -> Area3D:
 
 
 func _oleo(x: float, y: float, z: float) -> void:
+	# o frasco de querosene nunca fica no ar: só fica na altura dada se está sobre o balcão da venda (1,1 m);
+	# nos outros lugares ele vai sobre um banquinho de madeira
+	var sobre_balcao := absf(y - 1.1) < 0.03 and str(_g.get_meta("nome", "")).begins_with("Venda")
+	if not sobre_balcao:
+		_prop("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)
+		y = 0.47
 	b._coletavel(_g, "Oleo_%d" % _g.get_child_count(), Vector3(x, y, z), "oleo", 0, "Pegar querosene")
 
 
@@ -519,9 +527,9 @@ func _sala_casarao(g: Node3D) -> void:
 	_bb.box("ouro_velho", Vector3(3.5, 0.010, 2.4), Vector3(5.0, 0.006, 3.8))                          # barra dourada
 	_prop_c("dining_table", 5.0, 3.8, 0.0, 1.0)                                                      # mesa de jantar com toalha xadrez (Poly Haven, CC0)
 	for k in 3:
-		_cadeira(3.9 + k * 1.1, 4.6, PI)
+		_cadeira(3.9 + k * 1.1, 4.78, PI)
 	for k in 2:
-		_cadeira(3.9 + k * 1.1, 3.0, 0.0)
+		_cadeira(3.9 + k * 1.1, 2.82, 0.0)
 	_bx("madeira_natural", Vector3(7.4, 0, 3.8), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
 	_prop("brass_candleholders", 5.0, 3.8, 0.0, 0.5, 0.89)                                          # conjunto de candelabros de latão sobre a mesa
 	var lcd := b._lamp_light(_g, Vector3(5.0, 1.45, 3.8), 0.5)
