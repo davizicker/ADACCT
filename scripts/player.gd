@@ -11,6 +11,7 @@ const WALK_SPEED := 2.8
 const SPRINT_SPEED := 4.8
 const CROUCH_SPEED := 1.4
 const GRAVITY := 20.0
+const JUMP_V := 3.3          # pulinho: ~27 cm de altura (v² / 2g)
 const OIL_MAX := 180.0
 const STAND_H := 1.6
 const CROUCH_H := 1.05
@@ -45,6 +46,8 @@ var _lantern_glass: StandardMaterial3D = null
 var _lantern_rot := Vector3.ZERO
 var _bob_phase := 0.0
 var _last_step_sign := 1.0
+var _estava_no_chao := true
+var _t_ar := 0.0
 var _target: Node = null
 var _t := 0.0
 
@@ -110,11 +113,19 @@ func _physics_process(delta: float) -> void:
 	var dir := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
 	velocity.x = dir.x * speed
 	velocity.z = dir.z * speed
-	if is_on_floor():
+	var no_chao := is_on_floor()
+	if no_chao:
 		velocity.y = 0.0
+		if Input.is_action_just_pressed("jump") and not frozen and not crouching and not hidden:
+			velocity.y = JUMP_V
+			footstep.emit(0.9)                # o salto faz barulho no chão de pedra
 	else:
 		velocity.y -= GRAVITY * delta
 	move_and_slide()
+	if is_on_floor() and not _estava_no_chao and _t_ar > 0.18:
+		footstep.emit(1.0)                    # aterrissagem
+	_t_ar = 0.0 if is_on_floor() else _t_ar + delta
+	_estava_no_chao = is_on_floor()
 	var real := get_real_velocity()
 	move_speed = Vector2(real.x, real.z).length()
 	_resgate_de_queda(delta)

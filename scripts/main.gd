@@ -69,6 +69,8 @@ func _ready() -> void:
 		mode = "save"
 	elif "--selftest-esconder" in args:
 		mode = "esconder"
+	elif "--selftest-pulo" in args:
+		mode = "pulo"
 	var mula_case := ""
 	for a in args:
 		if a.begins_with("--selftest-mula="):
@@ -186,6 +188,9 @@ func _ready() -> void:
 	elif mode == "esconder":
 		screams.enabled = false
 		_test_esconder()
+	elif mode == "pulo":
+		screams.enabled = false
+		_test_pulo()
 	elif mode == "casas":
 		Engine.time_scale = 1.0
 		screams.enabled = false
@@ -204,7 +209,7 @@ func _setup_input() -> void:
 		"move_forward": [KEY_W], "move_back": [KEY_S], "move_left": [KEY_A], "move_right": [KEY_D],
 		"lantern": [KEY_F], "shout": [KEY_R], "threshold_down": [KEY_BRACKETLEFT],
 		"threshold_up": [KEY_BRACKETRIGHT], "restart": [KEY_ENTER],
-		"sprint": [KEY_SHIFT], "crouch": [KEY_CTRL, KEY_C], "interact": [KEY_E], "diario": [KEY_J], "fps": [KEY_F3],
+		"sprint": [KEY_SHIFT], "crouch": [KEY_CTRL, KEY_C], "jump": [KEY_SPACE], "interact": [KEY_E], "diario": [KEY_J], "fps": [KEY_F3],
 	}
 	for action: String in map:
 		if not InputMap.has_action(action):
@@ -347,6 +352,45 @@ func _process(delta: float) -> void:
 
 
 ## Teste dos esconderijos: entra, confere que o grito não penaliza, sai e volta ao lugar.
+## Teste do pulo: pula parado e andando; mede a altura, confere que volta ao chão e que agachado não pula.
+func _test_pulo() -> void:
+	eventos.enabled = false
+	_place_player(60.0, 0.0, 0.0)
+	for k in 600:                                    # espera pousar de verdade (em software o jogo roda a ~1 quadro/s)
+		await get_tree().physics_frame
+		if player.is_on_floor() and k > 10:
+			break
+	for k in 6:
+		await get_tree().physics_frame
+	var chao := player.global_position.y
+	var maximo := chao
+	Input.action_press("jump")
+	var quadros := 0
+	while quadros < 400:
+		await get_tree().physics_frame
+		quadros += 1
+		if quadros == 2:
+			Input.action_release("jump")
+		maximo = maxf(maximo, player.global_position.y)
+		if quadros > 12 and player.is_on_floor():
+			break
+	var altura := maximo - chao
+	var voltou := player.is_on_floor() and absf(player.global_position.y - chao) < 0.08
+	# agachado: não pula
+	Input.action_press("crouch")
+	await get_tree().create_timer(0.3, true, false, true).timeout
+	var y0 := player.global_position.y
+	Input.action_press("jump")
+	for k in 10:
+		await get_tree().physics_frame
+	Input.action_release("jump")
+	var agachado_subiu := player.global_position.y - y0 > 0.05
+	Input.action_release("crouch")
+	var ok := altura > 0.15 and altura < 0.6 and voltou and not agachado_subiu
+	print("[pulo] altura=%.2f m (esperado 0,2 a 0,5) | voltou ao chão=%s | agachado pula=%s -> %s" % [altura, str(voltou), str(agachado_subiu), "OK" if ok else "FALHOU"])
+	get_tree().quit()
+
+
 func _test_esconder() -> void:
 	eventos.enabled = false
 	await get_tree().create_timer(0.6, true, false, true).timeout
