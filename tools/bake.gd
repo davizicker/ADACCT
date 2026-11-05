@@ -349,7 +349,7 @@ func _materials() -> void:
 	serra.vertex_color_use_as_albedo = true
 	serra.disable_fog = true
 	ResourceSaver.save(serra, MATS + "serra.tres")
-	_real("casca", "Bark014", Color(0.9, 0.88, 0.85), 1.0, 1.3)
+	_poly("casca", "bark_brown_02", Color(0.95, 0.93, 0.9), 0.7, 1.2)      # casca de árvore real (Poly Haven bark_brown_02, CC0)
 	_real("rocha", "Ground028", Color(0.66, 0.66, 0.68), 0.45, 1.3)          # pedras soltas das encostas e da beira da rua
 	var poca := StandardMaterial3D.new()
 	poca.albedo_color = Color(0.05, 0.065, 0.09, 0.55)

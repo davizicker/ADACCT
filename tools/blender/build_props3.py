@@ -37,6 +37,8 @@ PROPS = {
     "vintage_suitcase":     (4000, False),
     "vintage_lighter":      (1500, False),
     "seadogs_compass":      (3000, True),
+    "street_rat":           (3500, False),
+    "dining_table":         (5000, False),
 }
 
 

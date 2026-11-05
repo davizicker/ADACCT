@@ -606,6 +606,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_adornos())
 	root.add_child(_nichos())
 	root.add_child(_props_rua())
+	root.add_child(_ratos())
 	_tira_props_dentro_das_casas(root)
 	root.add_child(_coletaveis())
 	_bridge(root)
@@ -3452,6 +3453,24 @@ func _yaw_to(dir: Vector3) -> float:
 
 
 ## Objetos de rua de 1961: um bar com TV ligada, carros cobertos, banquinhos, baldes, aros de roda, bola, estátua.
+## Ratos de rua parados junto às paredes (fogem quando o jogador chega perto: scripts/rato.gd).
+func _ratos() -> Node3D:
+	var root := Node3D.new()
+	root.name = "Ratos"
+	var i := 0
+	for s: float in [34.0, 87.0, 126.0, 181.0, 226.0, 261.0, 299.0, 333.0]:
+		var sigma := -1.0 if i % 2 == 0 else 1.0
+		var sp := _spot(sigma, s, 0.45)
+		var rato := PropKit.make("street_rat", 1.7)
+		rato.name = "Rato_%d" % i
+		rato.position = sp["pos"]
+		rato.rotation.y = float(i) * 1.7
+		rato.set_script(load("res://scripts/rato.gd"))
+		root.add_child(rato)
+		i += 1
+	return root
+
+
 func _props_rua() -> Node3D:
 	var root := Node3D.new()
 	root.name = "Props"

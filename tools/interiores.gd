@@ -485,13 +485,13 @@ func _sala_sineiro(g: Node3D) -> void:
 func _sala_casarao(g: Node3D) -> void:
 	_casca("Casarão dos Vaz", 10.0, 8.0, 3.8, "reboco_ocre", "madeira_escura")
 	# mesa de jantar comprida com cadeiras (uma caída), castiçal apagado
-	_mesa(5.0, 3.8, 3.6, 1.1, 0.8, "madeira_escura")
+	_prop_c("dining_table", 5.0, 3.8, 0.0, 1.0)                                                      # mesa de jantar com toalha xadrez (Poly Haven, CC0)
 	for k in 3:
 		_cadeira(3.9 + k * 1.1, 4.6, PI)
 	for k in 2:
 		_cadeira(3.9 + k * 1.1, 3.0, 0.0)
 	_bx("madeira_natural", Vector3(7.4, 0, 3.8), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
-	_prop("brass_candleholders", 5.0, 3.8, 0.0, 0.55, 0.8)                                          # conjunto de candelabros de latão sobre a mesa
+	_prop("brass_candleholders", 5.0, 3.8, 0.0, 0.5, 0.89)                                          # conjunto de candelabros de latão sobre a mesa
 	var lcd := b._lamp_light(_g, Vector3(5.0, 1.45, 3.8), 0.5)
 	lcd.omni_range = 5.0
 	_prop_c("WoodenChair_01", 2.55, 3.8, PI / 2.0, 0.5)                                                # cadeira gótica na cabeceira
@@ -512,8 +512,8 @@ func _sala_casarao(g: Node3D) -> void:
 	_prop("anthurium_botany_01", 9.3, 0.8, 0.9, 0.22, 0.30)
 	_vela(1.0, 0.82, 6.9, true)
 	_item("livro", Vector3(1.8, 0.88, 6.7), "Pegar o livro de registros dos Vaz")
-	_nota(3.8, 0.84, 3.7, 21, "Ler o telegrama da Companhia")
-	_nota(6.0, 0.84, 3.95, 22, "Ler o rascunho amassado")
+	_nota(4.1, 0.9, 3.55, 21, "Ler o telegrama da Companhia")
+	_nota(5.95, 0.9, 4.05, 22, "Ler o rascunho amassado")
 	_nota(1.1, 0.83, 6.75, 26, "Ler o diário de Eulália Vaz")
 	_prop("seadogs_compass", 2.05, 6.45, 0.4, 1.0, 0.78)                                             # bússola de latão do capataz, sobre a escrivaninha
 	_oleo(8.8, 0.9, 6.9)
