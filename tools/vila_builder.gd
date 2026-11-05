@@ -2035,12 +2035,91 @@ func _church_plaza() -> Node3D:
 		var vaso := _prop(root, "planter_pot_clay", vp, 0.0, 2.6)
 		vaso.name = "VasoDaIgreja_%d" % int(sz2)
 		_plant(root, "arbusto", vp + Vector3(0, 0.45, 0), 0.0, 1.0)
+	_adro_detalhes(root, igt)
 	# palmeiras do adro
 	for sigma: float in [-1.0, 1.0]:
 		for ss: float in [S_END + 8.0, S_END + 28.0]:
 			var p := Route.pos(ss) + Route.right(ss) * sigma * (Route.width(ss) * 0.5 + SW + 2.6)
 			_plant(root, "palmeira", Vector3(p.x, p.y - 0.4, p.z), _rng.randf() * TAU, _rng.randf_range(0.95, 1.2))
 	return root
+
+
+## Complementos do adro (quadro da igreja: +X para dentro, fachada em x=0): lajedo de pedra, chafariz, castiçais no portal,
+## degraus-soleira, quadro de avisos da Irmandade e ex-votos (velas) ao pé das paredes.
+func _adro_detalhes(root: Node3D, igt: Transform3D) -> void:
+	var g := _group(root, "AdroDetalhes", igt)
+	# 1) lajedo: tapete de pedra de cantaria em frente ao portal, com faixa ocre em cruz e borda (0,03 m acima da rua)
+	var b := _batch()
+	var w := 7.0
+	b.box("cantaria", Vector3(9.0, 0.035, 2.0 * w), Vector3(-5.0, 0.02, 0))
+	b.box("cantaria_ocre", Vector3(9.0, 0.04, 0.5), Vector3(-5.0, 0.022, 0))
+	b.box("cantaria_ocre", Vector3(0.5, 0.04, 2.0 * w), Vector3(-5.0, 0.022, 0))
+	for zz: float in [-1.0, 1.0]:
+		b.box("cantaria_ocre", Vector3(9.2, 0.045, 0.3), Vector3(-5.0, 0.024, zz * (w + 0.1)))
+	b.box("cantaria_ocre", Vector3(0.3, 0.045, 2.0 * w + 0.5), Vector3(-9.6, 0.024, 0))
+	# degraus-soleira em frente ao portal (altura total 0,28 m: dá para subir andando)
+	for k in 2:
+		b.box("cantaria", Vector3(1.2 - k * 0.5, 0.12 + 0.0 * k, 4.4 - k * 0.8), Vector3(-0.7 + k * 0.35 - 0.2, 0.06 + k * 0.12, 0))
+	_mesh_node(g, "Lajedo", b.commit())
+	# 2) castiçais de latão sobre pedestais, de cada lado do portal
+	for sz: float in [-1.0, 1.0]:
+		var pb := _batch()
+		pb.box("cantaria_ocre", Vector3(0.55, 0.85, 0.55), Vector3(0, 0.425, 0))
+		pb.box("cantaria", Vector3(0.7, 0.1, 0.7), Vector3(0, 0.9, 0))
+		var pg := _group(g, "PedestalVotivo_%d" % int(sz), Transform3D(Basis.IDENTITY, Vector3(-1.4, 0.0, sz * 3.3)))
+		_mesh_node(pg, "Malha", pb.commit())
+		_blocker(pg, "Colisao", Vector3(0.6, 0.95, 0.6), Vector3(0, 0.47, 0))
+		_prop(pg, "brass_candleholders", Vector3(0, 0.95, 0), 0.0, 0.5)
+		_brilho_em(pg, Vector3(0, 1.45, 0), 0.9)
+	# 3) ex-votos: velas acesas e cera ao pé da parede, ao lado do portal
+	for sz2: float in [-1.0, 1.0]:
+		var vb := _batch()
+		for i in 7:
+			var vx := -0.5 - _rng.randf() * 0.25
+			var vz: float = sz2 * (1.2 + float(i) * 0.33)
+			var vh := 0.10 + _rng.randf() * 0.14
+			vb.cylinder("vela", 0.03, 0.028, vh, Vector3(vx, 0.05 + vh * 0.5, vz), Vector3.ZERO, 12)
+			vb.sphere("chama", 0.022, Vector3(vx, 0.06 + vh + 0.02, vz), 10, 6)
+		_mesh_node(g, "Votivas_%d" % int(sz2), vb.commit())
+	# 4) chafariz de pedra no lado esquerdo do adro, com bacia, pé, taça e remate
+	var cf := _group(g, "Chafariz", Transform3D(Basis.IDENTITY, Vector3(-17.0, 0.0, -6.6)))
+	var fb := _batch()
+	fb.cylinder("cantaria", 1.8, 1.8, 0.12, Vector3(0, 0.06, 0), Vector3.ZERO, 24)
+	for k in 16:
+		var a := TAU * float(k) / 16.0
+		var bl := TAU * 1.5 / 16.0 + 0.04
+		fb.box("cantaria_ocre", Vector3(0.4, 0.62, bl), Vector3(cos(a) * 1.5, 0.43, sin(a) * 1.5), Vector3(0, -a, 0))
+	fb.cylinder("cantaria", 1.7, 1.7, 0.05, Vector3(0, 0.74, 0), Vector3.ZERO, 24)
+	fb.cylinder("agua_chafariz", 1.3, 1.3, 0.03, Vector3(0, 0.46, 0), Vector3.ZERO, 24)
+	fb.cylinder("cantaria_ocre", 0.35, 0.22, 1.0, Vector3(0, 0.95, 0), Vector3.ZERO, 14)
+	fb.cylinder("cantaria", 0.28, 0.28, 0.1, Vector3(0, 1.5, 0), Vector3.ZERO, 14)
+	fb.cylinder("cantaria_ocre", 0.3, 0.75, 0.3, Vector3(0, 1.65, 0), Vector3.ZERO, 20)
+	fb.cylinder("agua_chafariz", 0.6, 0.6, 0.02, Vector3(0, 1.8, 0), Vector3.ZERO, 20)
+	fb.cylinder("cantaria_ocre", 0.2, 0.1, 0.7, Vector3(0, 2.15, 0), Vector3.ZERO, 14)
+	fb.sphere("cantaria_ocre", 0.2, Vector3(0, 2.62, 0), 12, 8)
+	fb.box("cantaria", Vector3(0.06, 0.4, 0.06), Vector3(0, 3.0, 0))
+	fb.box("cantaria", Vector3(0.3, 0.06, 0.06), Vector3(0, 3.08, 0))
+	_mesh_node(cf, "Malha", fb.commit())
+	_blocker(cf, "Colisao", Vector3(3.4, 1.0, 3.4), Vector3(0, 0.5, 0))
+	_reservar(igt * Vector3(-17.0, 0.0, -6.6), 3.0)
+	# 5) quadro de avisos da Irmandade (duas colunas de madeira, tabuleiro e papéis)
+	var qa := _group(g, "QuadroDeAvisos", Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(-12.0, 0.0, 8.7)))
+	var qb := _batch()
+	for zq: float in [-0.9, 0.9]:
+		qb.box("madeira_escura", Vector3(0.14, 2.3, 0.14), Vector3(0, 1.15, zq))
+	qb.box("madeira_escura", Vector3(0.08, 1.2, 2.0), Vector3(0, 1.55, 0))
+	qb.box("madeira_escura", Vector3(0.22, 0.1, 2.2), Vector3(0, 2.3, 0))
+	for k in 4:
+		var pz := -0.65 + k * 0.45
+		qb.box("papel", Vector3(0.012, 0.42 - (k % 2) * 0.1, 0.3), Vector3(-0.045, 1.6 + (k % 3) * 0.12, pz), Vector3(0.0, 0.0, 0.0))
+	_mesh_node(qa, "Malha", qb.commit())
+	_blocker(qa, "Colisao", Vector3(0.3, 2.3, 2.0), Vector3(0, 1.15, 0))
+	_reservar(igt * Vector3(-12.0, 0.0, 8.7), 1.6)
+
+
+## Brilho (halo) em um ponto local de um grupo.
+func _brilho_em(parent: Node3D, pos: Vector3, size: float) -> void:
+	_halo(parent, pos, size * 1.5, "halo_vela")
 
 
 ## Igreja barroca mineira (inspiração): fachada branca com cantaria, portal em arco, óculo, frontão com volutas e torres cilíndricas.
