@@ -14,8 +14,13 @@ var fear_boost := 0.0
 
 var _rng := RandomNumberGenerator.new()
 var _steps: Array[AudioStreamWAV] = []
+var _steps_soft: Array[AudioStreamWAV] = []
+var _steps_wood: Array[AudioStreamWAV] = []
 var _step_players: Array[AudioStreamPlayer] = []
 var _step_i := 0
+var _step_ultimo := -1
+var _owl: AudioStreamPlayer3D
+var _owl_t := 40.0
 var _wind: AudioStreamPlayer
 var _crickets: AudioStreamPlayer
 var _drone: AudioStreamPlayer
@@ -79,9 +84,13 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	screams = p_screams
 	_rng.randomize()
 	ensure_buses()
+	for i in 8:
+		_steps.append(Synth.step(i))                 # passos leves na pedra (8 variações para nunca soarem iguais)
 	for i in 4:
-		_steps.append(Synth.step(i))
-	for i in 2:
+		_steps_soft.append(Synth.step(20 + i, true)) # agachado: mais baixo e abafado
+	for i in 6:
+		_steps_wood.append(Synth.step_wood(i))       # dentro das casas: assoalho de madeira
+	for i in 3:
 		var sp := AudioStreamPlayer.new()
 		sp.bus = "Efeitos"
 		add_child(sp)
@@ -100,6 +109,7 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	_sting.bus = "Efeitos"
 	_sting.volume_db = -2.0
 	add_child(_sting)
+	_owl = _player3d(Synth.owl(), "Ambiente", -9.0, 40.0)
 	_dog = _player3d(Synth.dog(), "Ambiente", -8.0, 30.0)
 	_bell = _player3d(Synth.bell(), "Ambiente", -2.0, 60.0)
 	_creak = _player3d(Synth.creak(), "Efeitos", -4.0, 12.0)
@@ -130,10 +140,22 @@ func bump_fear(amount: float) -> void:
 func _on_step(loudness: float) -> void:
 	var p := _step_players[_step_i]
 	_step_i = (_step_i + 1) % _step_players.size()
-	p.stream = _steps[_rng.randi() % _steps.size()]
-	p.volume_db = lerpf(-26.0, -5.0, loudness)
-	p.pitch_scale = _rng.randf_range(0.92, 1.08) * (0.9 if loudness < 0.3 else 1.0)
+	var lista: Array[AudioStreamWAV] = _steps
+	var dentro := player.global_position.x > 1500.0          # interiores ficam longe da rua: madeira em vez de pedra
+	if dentro:
+		lista = _steps_wood
+	elif loudness < 0.3:
+		lista = _steps_soft
+	var k := _rng.randi() % lista.size()
+	if k == _step_ultimo and lista.size() > 1:                # nunca o mesmo som duas vezes seguidas
+		k = (k + 1 + _rng.randi() % (lista.size() - 1)) % lista.size()
+	_step_ultimo = k
+	p.stream = lista[k]
+	p.volume_db = lerpf(-34.0, -13.0, loudness) + _rng.randf_range(-1.5, 1.0)       # passo leve; correr é bem mais audível
+	p.pitch_scale = _rng.randf_range(0.93, 1.07) * (0.94 if loudness < 0.3 else 1.0)
 	p.play()
+	if dentro and loudness > 0.25 and _rng.randf() < 0.10:
+		play_creak(player.global_position + Vector3(0, 0.0, 0))     # a tábua range de vez em quando
 
 
 ## Rangido de madeira vindo de uma posição (porta, janela...).
@@ -192,6 +214,13 @@ func _process(delta: float) -> void:
 		_dog.global_position = player.global_position + Vector3(cos(a), 0.0, sin(a)) * _rng.randf_range(70.0, 130.0) + Vector3(0, 3, 0)
 		_dog.pitch_scale = _rng.randf_range(0.85, 1.2)
 		_dog.play()
+	_owl_t -= delta
+	if _owl_t <= 0.0:
+		_owl_t = _rng.randf_range(45.0, 110.0)
+		var ao := _rng.randf() * TAU
+		_owl.global_position = player.global_position + Vector3(cos(ao), 0.0, sin(ao)) * _rng.randf_range(45.0, 90.0) + Vector3(0, 8, 0)
+		_owl.pitch_scale = _rng.randf_range(0.9, 1.12)
+		_owl.play()
 	_bell_t -= delta
 	if _bell_t <= 0.0:
 		_bell_t = _rng.randf_range(50.0, 90.0)
