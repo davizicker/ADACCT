@@ -142,11 +142,10 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 
 
 func _lamparina(x: float, y: float, z: float, energia := 0.85) -> void:
-	_bb.cylinder("vidro_oleo", 0.05, 0.06, 0.12, Vector3(x, y + 0.06, z), Vector3.ZERO, 8)
-	_bb.cylinder("ferro", 0.04, 0.04, 0.03, Vector3(x, y + 0.14, z), Vector3.ZERO, 8)
-	var l := b._lamp_light(_g, Vector3(x, y + 0.3, z), energia)
+	_prop("vintage_oil_lamp", x, z, float(int(x * 10.0 + z * 7.0) % 6) * 1.05, 0.40, y)      # lamparina de óleo de verdade (Poly Haven, CC0)
+	var l := b._lamp_light(_g, Vector3(x, y + 0.36, z), energia)
 	l.omni_range = 6.5
-	b._halo(_g, Vector3(x, y + 0.14, z), 0.9, "halo_vela")
+	b._halo(_g, Vector3(x, y + 0.24, z), 0.9, "halo_vela")
 
 
 func _vela(x: float, y: float, z: float, luz := false) -> void:
@@ -408,6 +407,10 @@ func _sala_venda(g: Node3D) -> void:
 	_janela("O", 3.0)
 	_quadro(5.0, 1.9, 5.82, "N", 0.6, 0.5)
 	_nota(5.8, 1.1, 4.6, 6, "Ler o bilhete do Seu Zé")
+	_prop_c("cardboard_box_01", 6.2, 5.35, 0.3, 1.0)
+	_prop("cardboard_box_01", 6.25, 5.35, 0.7, 1.0, 0.34)
+	_prop("lightbulb_01", 4.2, 2.2, 0.0, 1.0, 2.52)                                              # lâmpada apagada pendurada pelo fio
+	_bb.cylinder("ferro", 0.008, 0.008, 0.55, Vector3(4.2, 2.85, 2.2), Vector3.ZERO, 4)
 	_nota(4.5, 1.1, 4.7, 23, "Ler a confissão do Seu Zé")
 	_item("chave_casarao", Vector3(3.3, 1.1, 4.6), "Abrir a gaveta: pegar a chave do casarão")
 	_oleo(6.2, 1.1, 4.7)
@@ -479,7 +482,10 @@ func _sala_casarao(g: Node3D) -> void:
 	for k in 2:
 		_cadeira(3.9 + k * 1.1, 3.0, 0.0)
 	_bx("madeira_natural", Vector3(7.4, 0, 3.8), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
-	_bb.cylinder("ouro_velho", 0.04, 0.04, 0.3, Vector3(5.0, 0.99, 3.8), Vector3.ZERO, 6)
+	_prop("brass_candleholders", 5.0, 3.8, 0.0, 0.55, 0.8)                                          # conjunto de candelabros de latão sobre a mesa
+	var lcd := b._lamp_light(_g, Vector3(5.0, 1.45, 3.8), 0.5)
+	lcd.omni_range = 5.0
+	_prop_c("WoodenChair_01", 2.55, 3.8, PI / 2.0, 0.5)                                                # cadeira gótica na cabeceira
 	# retratos escuros, um espelho quebrado, lustre apagado
 	for k in 4:
 		_quadro(1.6 + k * 2.2, 2.2, 7.95, "N", 0.7, 0.9)
@@ -492,7 +498,7 @@ func _sala_casarao(g: Node3D) -> void:
 	b._blocker(g, "ColEscada", Vector3(1.2, 1.5, 2.4), Vector3(9.2, 0.75, 2.2))
 	# escrivaninha do capataz no canto: o livro está aqui
 	_mesa(1.4, 6.7, 1.6, 0.8, 0.78, "madeira_escura")
-	_cadeira(1.4, 6.0, 0.0)
+	_prop_c("chinese_armchair", 1.4, 5.95, 0.0, 0.72)                                                  # poltrona de espaldar alto na escrivaninha
 	_vela(1.0, 0.82, 6.9, true)
 	_item("livro", Vector3(1.8, 0.88, 6.7), "Pegar o livro de registros dos Vaz")
 	_nota(3.8, 0.84, 3.7, 21, "Ler o telegrama da Companhia")
@@ -616,9 +622,9 @@ func _presbiterio(g: Node3D) -> void:
 		_castical(5.0 + k * 0.62, 1.77, 20.35, 0.36, true)
 		_castical(5.0 + k * 1.02, 1.77, 20.35, 0.52)
 		_castical(5.0 + k * 1.34, 1.77, 20.35, 0.30)
-		_bb.cylinder("vaso", 0.08, 0.06, 0.2, Vector3(5.0 + k * 0.82, 1.87, 20.7), Vector3.ZERO, 8)
-		for fl in 5:
-			_bb.sphere("flor_rosa" if fl % 2 == 0 else "flor_amarela", 0.045, Vector3(5.0 + k * 0.82 + (fl - 2) * 0.035, 1.99 + (fl % 3) * 0.05, 20.7 + ((fl * 7) % 3 - 1) * 0.03), 5, 3)
+		_prop("brass_vase_03", 5.0 + k * 0.82, 20.7, 0.0, 1.5, 1.74)                                  # vaso de latão trabalhado (Poly Haven, CC0)
+		for fl in 6:
+			_bb.sphere("flor_rosa" if fl % 2 == 0 else "flor_amarela", 0.05, Vector3(5.0 + k * 0.82 + (fl % 3 - 1) * 0.04, 2.06 + (fl % 2) * 0.06, 20.7 + ((fl * 7) % 3 - 1) * 0.035), 5, 3)
 	# retábulo dourado encostado na parede do fundo (z = 22)
 	_bb.box("ouro_velho", Vector3(8.0, 7.0, 0.3), Vector3(5.0, 4.1, 21.85))
 	_bb.box("madeira_escura", Vector3(2.4, 3.2, 0.12), Vector3(5.0, 3.9, 21.66))              # fundo do nicho
@@ -651,8 +657,7 @@ func _presbiterio(g: Node3D) -> void:
 	_bb.box("bradador_palido", Vector3(0.26, 1.0, 0.08), Vector3(5.0, 7.3, 21.43))
 	# lâmpada do santíssimo: pendurada à frente do altar, chama vermelha
 	_bb.cylinder("ferro", 0.012, 0.012, 2.2, Vector3(5.0, 6.7, 19.0), Vector3.ZERO, 4)
-	_bb.cylinder("ouro_velho", 0.14, 0.09, 0.2, Vector3(5.0, 5.5, 19.0), Vector3.ZERO, 8)
-	_bb.sphere("gema", 0.09, Vector3(5.0, 5.52, 19.0), 6, 4)
+	_prop("brass_diya_lantern", 5.0, 19.0, 0.0, 1.5, 5.0)                                          # lampião diya de latão pendurado (Poly Haven, CC0)
 	b._halo(g, Vector3(5.0, 5.52, 19.0), 0.9, "halo_quente")
 	# castiçais altos de chão dos dois lados
 	for k: float in [-1.0, 1.0]:
@@ -676,6 +681,8 @@ func _sala_carpintaria(g: Node3D) -> void:
 	_janela("L", 2.0)
 	_nota(2.6, 0.95, 4.6, 12, "Ler o bilhete do Seu Mateus")
 	_nota(4.0, 0.93, 4.2, 27, "Ler a encomenda da Companhia")
+	_prop("rusted_spade_01", 0.45, 5.6, 0.0, 1.0, 0.0).rotation.z = 0.10
+	_prop("trowel_01", 4.95, 4.5, 0.7, 1.0, 0.94)
 	_oleo(6.9, 0.95, 0.9)
 	_prop("watering_can_metal_01", 7.2, 5.2, 0.3, 1.0)
 	_fim()
@@ -696,6 +703,7 @@ func _sala_escola(g: Node3D) -> void:
 	_lamparina(5.2, 0.84, 4.9)
 	_janela("O", 3.0)
 	_nota(6.0, 0.9, 4.8, 13, "Ler o caderno de caligrafia")
+	_prop_c("wooden_bookshelf_worn", 6.62, 1.0, -PI / 2.0, 1.0)
 	_oleo(0.6, 0.95, 5.3)
 	_fim()
 
@@ -736,6 +744,8 @@ func _sala_casa_vazia(g: Node3D) -> void:
 	_vela(4.9, 0.82, 4.0, true)
 	_janela("L", 2.5)
 	_nota(4.2, 0.85, 3.6, 15, "Ler o diário abandonado")
+	_prop_c("wooden_bookshelf_worn", 3.6, 0.34, 0.0, 1.0)
+	_prop("WoodenTable_02", 2.1, 2.3, 0.4, 1.0)
 	_oleo(5.5, 0.95, 1.0)
 	_fim()
 

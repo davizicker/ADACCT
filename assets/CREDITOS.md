@@ -65,3 +65,7 @@ shaders em `assets/shaders/`). O restante vem de terceiros, **todos CC0** (domí
 | assets/models/poly/mato_a/b/c.glb, hera.glb (Tiny Weeds 3: ervas e peças de hera, convertidos de OBJ+TGA) | Nobiax (nobiax.deviantart.com) | Nobiax | CC0 1.0 |
 | assets/models/poly/containers.glb (Medieval Containers: 45 barris, cestos, caixotes, baldes, jarros, potes e sacos; texturas religadas) | [BlendSwap 76295](http://www.blendswap.com/blends/view/76295) | Daniel74 | CC0 1.0 |
 | assets/models/arms/fps_arms.glb (FPS ARMS RIG 1: braços em primeira pessoa, 50 ossos) | enviado pelo autor do jogo, **sem arquivo de licença no pacote** | desconhecido | **CONFIRMAR a licença antes de publicar** |
+
+## Terceira leva de modelos (enviados pelo usuário)
+Modelos no estilo Poly Haven (CC0, a confirmar na página de cada um antes de publicar): brass_diya_lantern, brass_vase_03, brass_candleholders, wooden_candlestick, vintage_oil_lamp, lightbulb_01, cardboard_box_01, anthurium_botany_01 (convertido, ainda não usado), WoodenChair_01, chinese_armchair, rusted_spade_01, trowel_01, wooden_bookshelf_worn, WoodenTable_01 (ainda não usada), WoodenTable_02. Convertidos e reduzidos com `tools/blender/build_props3.py`.
+Textura de cera da vela (`assets/textures/vela_albedo.png`, `vela_normal.png`): recorte do pacote "Candle_Textures_2K" enviado pelo usuário. Licença: CONFIRMAR com quem enviou o pacote.
