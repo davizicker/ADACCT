@@ -345,11 +345,20 @@ func _item(id: String, pos: Vector3, label: String) -> Area3D:
 	return a
 
 
+## Há uma caixa de móvel (mesa, balcão, prateleira) logo abaixo do ponto? Então o objeto já está apoiado.
+func _tem_apoio(x: float, y: float, z: float) -> bool:
+	for e in _bb._boxes:
+		var bb: AABB = e[1]
+		if bb.size.y < 0.1:
+			continue
+		if x >= bb.position.x and x <= bb.end.x and z >= bb.position.z and z <= bb.end.z and absf(bb.end.y - (y - 0.05)) < 0.12:
+			return true
+	return false
+
+
 func _oleo(x: float, y: float, z: float) -> void:
-	# o frasco de querosene nunca fica no ar: só fica na altura dada se está sobre o balcão da venda (1,1 m);
-	# nos outros lugares ele vai sobre um banquinho de madeira
-	var sobre_balcao := absf(y - 1.1) < 0.03 and str(_g.get_meta("nome", "")).begins_with("Venda")
-	if not sobre_balcao:
+	# o frasco de querosene nunca fica no ar: se há móvel embaixo (mesa, balcão), ele fica lá; se não há, vai sobre um banquinho
+	if y > 0.15 and not _tem_apoio(x, y, z):
 		_prop("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)
 		y = 0.47
 	b._coletavel(_g, "Oleo_%d" % _g.get_child_count(), Vector3(x, y, z), "oleo", 0, "Pegar querosene")
