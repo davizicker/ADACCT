@@ -349,8 +349,8 @@ func _item(id: String, pos: Vector3, label: String) -> Area3D:
 func _tem_apoio(x: float, y: float, z: float) -> bool:
 	for e in _bb._boxes:
 		var bb: AABB = e[1]
-		if bb.size.y < 0.1:
-			continue
+		if bb.size.x < 0.3 or bb.size.z < 0.3:
+			continue                                    # pernas e peças pequenas não são superfície de apoio; o tampo fino da mesa é
 		if x >= bb.position.x and x <= bb.end.x and z >= bb.position.z and z <= bb.end.z and absf(bb.end.y - (y - 0.05)) < 0.12:
 			return true
 	return false
