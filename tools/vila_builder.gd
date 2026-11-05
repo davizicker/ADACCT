@@ -1235,8 +1235,10 @@ func _flores(b: MeshBatch, centro: Vector3, larg: float, prof: float, n: int, pe
 	var cor: String = FLORES[_rng_f.randi() % FLORES.size()]
 	var cor2: String = FLORES[_rng_f.randi() % FLORES.size()]
 	for k in n:
-		var q := Vector3(centro.x + _rng_f.randf_range(-prof, prof) * 0.5, centro.y + _rng_f.randf_range(0.05, 0.3), centro.z + _rng_f.randf_range(-larg, larg) * 0.5)
-		var r := _rng_f.randf_range(0.03, 0.055)
+		var q := Vector3(centro.x + _rng_f.randf_range(-prof, prof) * 0.5, centro.y + _rng_f.randf_range(0.02, 0.15), centro.z + _rng_f.randf_range(-larg, larg) * 0.5)
+		var r := _rng_f.randf_range(0.03, 0.05)
+		if k % 2 == 0:
+			b.sphere("verde_vaso", r * 2.2, q + Vector3(0.0, -0.06, 0.0), 6, 4)         # folhagem sob as flores: elas não ficam soltas no ar
 		b.sphere(cor if _rng_f.randf() < 0.65 else cor2, r, q, 5, 3)
 		if _rng_f.randf() < 0.45:
 			b.sphere("flor_amarela", r * 0.4, q + Vector3(-0.025, 0.01, 0.0), 4, 2)      # miolo
@@ -3200,10 +3202,10 @@ func _nicho_cruz(b: MeshBatch) -> void:
 	b.box("reboco_creme", Vector3(0.05, 2.05, 0.62), Vector3(-0.13, 2.30, 0))
 	b.box("cantaria", Vector3(0.12, 0.10, 0.90), Vector3(-0.08, 3.50, 0))
 	b.prism("cantaria_ocre", Vector3(0.20, 0.34, 0.86), Vector3(-0.04, 3.72, 0))
-	b.box("madeira_escura", Vector3(0.09, 1.50, 0.09), Vector3(-0.22, 2.35, 0))                   # cruz
-	b.box("madeira_escura", Vector3(0.09, 0.09, 0.70), Vector3(-0.22, 2.80, 0))
-	b.box("pano_azul", Vector3(0.05, 0.62, 0.20), Vector3(-0.27, 2.55, 0.28), Vector3(0.0, 0.0, 0.0))   # pano pendurado no braço
-	b.box("pano_azul", Vector3(0.05, 0.45, 0.16), Vector3(-0.27, 2.62, -0.24))
+	b.box("madeira_natural", Vector3(0.10, 1.50, 0.10), Vector3(-0.22, 2.35, 0))                  # cruz de madeira clara
+	b.box("madeira_natural", Vector3(0.10, 0.10, 0.70), Vector3(-0.22, 2.80, 0))
+	b.box("pano_rosa", Vector3(0.05, 0.62, 0.20), Vector3(-0.27, 2.55, 0.28), Vector3(0.0, 0.0, 0.0))   # pano roxo-rosado pendurado no braço
+	b.box("pano_rosa", Vector3(0.05, 0.45, 0.16), Vector3(-0.27, 2.62, -0.24))
 	b.box("papel", Vector3(0.02, 0.06, 0.20), Vector3(-0.27, 3.12, 0))                            # placa
 	for k in 10:                                                                                   # coroa de espinhos
 		var a := TAU * k / 10.0
@@ -3218,15 +3220,15 @@ func _nicho_alminhas(b: MeshBatch) -> void:
 	b.box("bradador_preto", Vector3(0.05, 1.12, 0.66), Vector3(-0.20, 2.20, 0))                   # painel escuro
 	b.half_disc("bradador_preto", Vector3(-0.20, 2.76, 0), 0.33, 12)
 	b.arch("cantaria", Vector3(-0.22, 2.76, 0), 0.38, 0.09, 0.12, 12)
-	for k in 7:                                                                                    # chamas
+	for k in 7:                                                                                    # chamas em cone
 		var z := -0.27 + k * 0.09
-		b.prism("fogo", Vector3(0.04, 0.22 + 0.07 * float(k % 3), 0.07), Vector3(-0.235, 1.78 + 0.05 * float(k % 2), z))
+		b.cylinder("chama", 0.0, 0.035, 0.20 + 0.07 * float(k % 3), Vector3(-0.235, 1.80 + 0.10 * float(k % 3), z), Vector3.ZERO, 6)
 	for k in 3:                                                                                    # almas de braços erguidos
 		var z2 := -0.16 + k * 0.16
-		b.cylinder("bradador_palido", 0.025, 0.045, 0.28, Vector3(-0.245, 2.10, z2), Vector3.ZERO, 6)
-		b.sphere("bradador_palido", 0.04, Vector3(-0.245, 2.30, z2), 5, 3)
-		b.box("bradador_palido", Vector3(0.02, 0.18, 0.02), Vector3(-0.245, 2.30, z2 - 0.06), Vector3(0.0, 0.0, 0.4))
-		b.box("bradador_palido", Vector3(0.02, 0.18, 0.02), Vector3(-0.245, 2.30, z2 + 0.06), Vector3(0.0, 0.0, -0.4))
+		b.cylinder("pano_cru", 0.025, 0.045, 0.28, Vector3(-0.245, 2.10, z2), Vector3.ZERO, 6)
+		b.sphere("pano_cru", 0.04, Vector3(-0.245, 2.30, z2), 6, 4)
+		b.box("pano_cru", Vector3(0.025, 0.17, 0.025), Vector3(-0.245, 2.28, z2 - 0.06), Vector3(0.0, 0.0, 0.4))
+		b.box("pano_cru", Vector3(0.025, 0.17, 0.025), Vector3(-0.245, 2.28, z2 + 0.06), Vector3(0.0, 0.0, -0.4))
 	b.box("ouro_velho", Vector3(0.03, 0.14, 0.14), Vector3(-0.245, 2.95, 0))                      # figura de Cristo no alto
 	b.box("ouro_velho", Vector3(0.03, 0.04, 0.30), Vector3(-0.245, 2.98, 0))
 	b.box("telha", Vector3(0.62, 0.06, 1.12), Vector3(-0.22, 3.30, 0), Vector3(0.0, 0.0, 0.20))   # telhadinho em água

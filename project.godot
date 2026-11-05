@@ -18,6 +18,8 @@ window/size/viewport_height=720
 
 [rendering]
 
+textures/vram_compression/import_s3tc_bptc=true
+
 rendering_device/fallback_to_opengl3=true
 rendering_device/fallback_to_vulkan=true
 
