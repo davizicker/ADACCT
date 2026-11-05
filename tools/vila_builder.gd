@@ -2094,11 +2094,14 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	b.arch(ced, Vector3(-0.31, py, 0), pr + 0.26, 0.52, 0.62, 14)
 	b.box(ced, Vector3(0.78, 0.62, 0.55), Vector3(-0.34, py + pr + 0.28, 0))                  # fecho do arco
 	b.box(ced, Vector3(0.50, 0.30, 2.0 * pr + 1.6), Vector3(-0.30, py + pr + 0.90, 0))          # cornija do portal
+	var pb := _batch()                      # a porta é um nó à parte: no lote grande os triângulos dela se perdiam (mesmo bug das casas)
 	for sz: float in [-1.0, 1.0]:
-		b.box(porta_mat, Vector3(0.14, py - 0.05, pr - 0.04), Vector3(-0.50, py / 2.0, sz * (pr / 2.0)))
+		pb.box(porta_mat, Vector3(0.14, py - 0.05, pr - 0.04), Vector3(-0.50, py / 2.0, sz * (pr / 2.0)))
 		for yy: float in [0.9, 2.2, 3.5]:
-			b.box("ferro", Vector3(0.05, 0.14, pr - 0.16), Vector3(-0.59, yy, sz * (pr / 2.0)))          # ferragens
-		b.box("ferro", Vector3(0.09, 0.50, 0.09), Vector3(-0.62, 2.2, sz * 0.22))                          # puxador
+			pb.box("ferro", Vector3(0.05, 0.14, pr - 0.16), Vector3(-0.59, yy, sz * (pr / 2.0)))          # ferragens
+		pb.box("ferro", Vector3(0.09, 0.50, 0.09), Vector3(-0.62, 2.2, sz * 0.22))                          # puxador
+	var pmi := _mesh_node(c, "PortaMalha", pb.commit())
+	pmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	b.half_disc("porta_igreja", Vector3(-0.52, py, 0), pr - 0.04, 14)                                     # leque com a luz do interior
 	for k in 3:                                                                                           # degraus do adro
 		b.box(ced, Vector3(0.8, 0.14 * (3 - k), width * 0.7), Vector3(-1.4 - k * 0.8, 0.07 * (3 - k), 0))
