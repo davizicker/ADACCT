@@ -13,6 +13,6 @@ void fragment() {
 	float d = clamp(length(UV - vec2(0.5)) * 2.0, 0.0, 1.0);
 	float f = pow(1.0 - d, expoente);
 	f *= 1.0 - smoothstep(0.85, 1.0, d);
-	ALBEDO = cor.rgb * f * cor.a * 1.6;
+	ALBEDO = cor.rgb * f * cor.a * 1.6 * COLOR.a;      // COLOR.a vem das partículas (mariposas piscando); fica 1 nos halos comuns
 	ALPHA = 1.0;
 }

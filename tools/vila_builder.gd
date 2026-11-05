@@ -1735,6 +1735,48 @@ func _halo(parent: Node3D, pos: Vector3, size: float, mat_name := "halo_quente")
 	mi.material_override = mat(mat_name)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi
+## Mariposas girando em volta de uma luz: poucas partículas, brilhando e sumindo (só perto do jogador: alcance de visibilidade curto).
+func _mariposas(parent: Node3D, pos: Vector3, raio := 0.55) -> void:
+	var ps := GPUParticles3D.new()
+	ps.name = "Mariposas"
+	ps.position = pos
+	ps.amount = 5
+	ps.lifetime = 3.2
+	ps.preprocess = 3.2
+	ps.local_coords = true
+	ps.visibility_aabb = AABB(Vector3(-1.5, -1.5, -1.5), Vector3(3, 3, 3))
+	ps.visibility_range_end = 28.0
+	ps.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	pm.emission_sphere_radius = raio
+	pm.direction = Vector3.ZERO
+	pm.spread = 180.0
+	pm.initial_velocity_min = 0.25
+	pm.initial_velocity_max = 0.7
+	pm.gravity = Vector3.ZERO
+	pm.damping_min = 0.2
+	pm.damping_max = 0.6
+	pm.tangential_accel_min = -1.2
+	pm.tangential_accel_max = 1.2
+	pm.radial_accel_min = -0.8
+	pm.radial_accel_max = 0.4
+	pm.scale_min = 0.5
+	pm.scale_max = 1.1
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.0, 0.2, 0.8, 1.0])
+	grad.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0)])
+	var gt := GradientTexture1D.new()
+	gt.gradient = grad
+	pm.color_ramp = gt
+	ps.process_material = pm
+	var qm := QuadMesh.new()
+	qm.size = Vector2(0.06, 0.06)
+	qm.material = mat("halo_vela")
+	ps.draw_pass_1 = qm
+	parent.add_child(ps)
+
+
 func make_poste() -> Node3D:
 	# poste de ferro fundido (Poly Haven street_lamp_01, CC0) com a lâmpada emissiva; a luz sai do bulbo
 	var m := PropKit.make("street_lamp_01", 1.0)
@@ -1743,6 +1785,7 @@ func make_poste() -> Node3D:
 	var bpos: Vector3 = m.get_meta("bulb_pos", Vector3(0, 3.5, 0))
 	_lamp_light(m, bpos, 0.95)
 	_halo(m, bpos, 2.6)
+	_mariposas(m, bpos, 0.8)
 	_prop_collision(m, "cil", Vector3(0.22, 3.9, 0.22), Vector3(0, 1.95, 0))
 	return m
 
@@ -1762,6 +1805,7 @@ func _lantern_wall(pos: Vector3, yaw: float) -> Node3D:
 	var bpos: Vector3 = m.get_meta("bulb_pos", Vector3(0, 0.8, 0.3))
 	_lamp_light(m, bpos, 0.85)
 	_halo(m, bpos, 1.8)
+	_mariposas(m, bpos + Vector3(0, 0.0, 0.25))
 	return m
 
 
