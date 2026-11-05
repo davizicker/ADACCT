@@ -203,7 +203,28 @@ func flash(color: Color, seconds: float) -> void:
 func end_screen(title: String, subtitle: String, color: Color) -> void:
 	_overlay.color = color
 	_flash_t = 0.0
-	_title.text = "%s\n\n[Enter] recomeçar\n%s" % [title, subtitle]
+	if subtitle.length() < 120:
+		_title.text = "%s\n\n[Enter] recomeçar\n%s" % [title, subtitle]
+		return
+	# final longo (vários parágrafos): título no alto e o texto numa caixa com quebra de linha
+	_title.anchor_top = 0.05
+	_title.anchor_bottom = 0.28
+	_title.text = "%s\n[Enter] recomeçar" % title
+	var corpo := Label.new()
+	corpo.anchor_left = 0.12
+	corpo.anchor_right = 0.88
+	corpo.anchor_top = 0.30
+	corpo.anchor_bottom = 0.97
+	corpo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	corpo.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	corpo.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	corpo.add_theme_font_size_override("font_size", 22)
+	corpo.add_theme_color_override("font_color", Color(0.95, 0.9, 0.78))
+	corpo.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	corpo.add_theme_constant_override("outline_size", 6)
+	corpo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	corpo.text = subtitle
+	add_child(corpo)
 
 
 func _process(delta: float) -> void:

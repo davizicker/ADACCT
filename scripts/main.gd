@@ -264,7 +264,24 @@ func vitoria() -> void:
 	screams.enabled = false
 	player.frozen = true
 	print("[game] WIN at z=%.1f y=%.2f (rua %.2f)" % [player.global_position.z, player.global_position.y, Route.ground_near(player.global_position)])
-	hud.end_screen("Amanheceu.", "Os nomes foram lidos. A terra calou.\n(fim da primeira noite)", Color(0.9, 0.8, 0.55, 0.85))
+	hud.end_screen("Amanheceu.", _texto_final(), Color(0.9, 0.8, 0.55, 0.85))
+
+
+## Final conforme o que o jogador leu: cada documento achado acrescenta um parágrafo (rejogar para ver todos).
+func _texto_final() -> String:
+	var l: Array[int] = missao.lidas
+	var t := "Os nomes foram lidos, um por um: Maria Conga, Antônio Cabinda, Rosa Mina, Domingos Angola, Luzia Benguela, Gaspar Moçambique, Joana Cassanje, Benedito Rebolo. A terra calou."
+	if l.has(21) or l.has(27) or l.has(23):
+		t += "\n\nDepois, os trinta e um da Galeria Três. Pela primeira vez, nenhum ficou sem nome."
+	if l.has(25) or l.has(27):
+		t += " O último foi o de Joaquim Aragão. A voz de Tomé não falhou, e a de Dona Benedita, ao lado dele, finalmente chorou alto."
+	if l.has(22):
+		t += "\n\nO Livro provou a fraude da Lavra. A concessão da Companhia caiu. O doutor Anselmo Vaz nunca mais foi visto na vila."
+	if l.has(26):
+		t += "\n\nNa torre, o sino parou. Dizem que alguém ouviu, no vale, um homem chorando baixinho, e depois mais nada."
+	if l.size() >= 16:
+		t += "\n\nVocê leu tudo o que a vila escondia. Hoje, a vila fala."
+	return t + "\n\n(fim da primeira noite)"
 
 
 ## Teste da Mula: "rua" (deve morrer), "refugio" (lampião apagado: salvo), "refugio_aceso" (penalidade).
