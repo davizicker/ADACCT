@@ -193,6 +193,7 @@ func prism(mat: String, size: Vector3, pos: Vector3, yaw := 0.0) -> void:
 
 ## Arco de pedra (meia coroa) no plano Y-Z, voltado para -X. `r` = raio médio, `thick` = espessura radial.
 func arch(mat: String, center: Vector3, r: float, thick: float, depth: float, segs := 8) -> void:
+	segs = maxi(segs, 14)                      # arcos mais suaves
 	for k in segs:
 		var t0 := PI * float(k) / segs
 		var t1 := PI * float(k + 1) / segs
@@ -221,6 +222,7 @@ func half_disc(mat: String, center: Vector3, r: float, segs := 10, uv := Vector2
 
 ## Cilindro (eixo Y local; use `rot` para deitar). Serve para barris, rodas, bueiros, colunas.
 func cylinder(mat: String, r_bottom: float, r_top: float, h: float, pos: Vector3, rot := Vector3.ZERO, segs := 10) -> void:
+	segs = maxi(segs, 12)                      # nada de cilindro "quadradão": no mínimo 12 lados
 	var xf := Transform3D(Basis.from_euler(rot), pos)
 	var st := _tool(mat)
 	var hh := h * 0.5
@@ -242,6 +244,8 @@ func cylinder(mat: String, r_bottom: float, r_top: float, h: float, pos: Vector3
 
 ## Esfera de baixa resolução (folhagem de vaso, flores, bolas de pedra).
 func sphere(mat: String, r: float, pos: Vector3, segs := 8, rings := 5) -> void:
+	segs = maxi(segs, 10)                      # esferas (flores, bolas de pedra, cabeças) menos facetadas
+	rings = maxi(rings, 6)
 	var st := _tool(mat)
 	for j in rings:
 		var p0 := PI * float(j) / rings

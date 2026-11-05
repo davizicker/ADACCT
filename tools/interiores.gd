@@ -295,6 +295,8 @@ func _quadro(x: float, y: float, z: float, lado: String, w := 0.5, h := 0.65, ma
 		_:
 			yaw = 0.0
 	dir = Vector3(sin(yaw), 0, cos(yaw))
+	if mat == "placa_preta":
+		mat = "retrato_a" if int(x * 7.0 + z * 3.0) % 2 == 0 else "retrato_b"      # os quadros escuros viram retratos a óleo
 	_bb.box("ouro_velho", Vector3(w + 0.08, h + 0.08, 0.03), p + dir * 0.02, Vector3(0, yaw, 0))
 	_bb.quad(mat, Vector2(w, h), p + dir * 0.04, yaw)
 

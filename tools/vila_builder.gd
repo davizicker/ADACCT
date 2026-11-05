@@ -2055,7 +2055,7 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	var porta_mat: String = "madeira_verde" if twin else "madeira_natural"      # porta e janelas verdes, como na São Francisco de Assis
 	var jan_mat: String = "madeira_verde" if twin else "madeira_escura"
 	var half := width / 2.0
-	_box(c, "Nave", Vector3(nave_len, nh + 3.0, width), Vector3(nave_len / 2.0, (nh - 3.0) / 2.0, 0), wall, collide)
+	_box(c, "Nave", Vector3(nave_len - 0.06, nh + 3.0, width), Vector3(nave_len / 2.0 + 0.03, (nh - 3.0) / 2.0, 0), wall, collide)
 	_box(c, "Fachada", Vector3(1.6, fh + 3.0, width), Vector3(0.8, (fh - 3.0) / 2.0, 0), wall, collide)
 	# telhado da nave: telhas no sentido do caimento, cumeeira ao longo de X, forro sob o beiral
 	var rise := (width + 1.2) * 0.3
@@ -2251,7 +2251,7 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 ## janela grande em arco com caixilhos, janelas altas com sacada de ferro, portal com concha e volutas, pináculos com estrela.
 func _fachada_barroca(b: MeshBatch, width: float, fh: float, py: float, pr: float, half: float, ced: String, wall: String) -> void:
 	# frontão em S: lajes finas que estreitam em curva suave, com borda ocre acompanhando o contorno
-	var n := 14
+	var n := 30
 	var alt := 4.6
 	for k in n:
 		var u := (float(k) + 0.5) / n

@@ -24,6 +24,7 @@ func _init() -> void:
 	_folha_seca()
 	_reboco_caido()
 	_ponto_luz()
+	_retratos()
 	_silhueta()
 	_janelas()
 	print("[tex] pronto")
@@ -301,6 +302,10 @@ func _reboco() -> void:
 	var b_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.006, 21, 4))
 	var f_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.35, 22))
 	var m_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.04, 23, 3))
+	var g_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX, 0.95, 24, 2))          # grão fino de estuque
+	var s_img := _simg(_noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 0.02, 25, 3))   # pinceladas largas de desempenado
+	var vor := _voronoi(6, 26, 0.95)                                              # rachaduras: bordas de placas de reboco
+	var dd: PackedFloat32Array = vor["d"]
 	var albedo := _new_rgb()
 	var height := _new_h()
 	for y in SIZE:
@@ -308,11 +313,16 @@ func _reboco() -> void:
 			var b := b_img.get_pixel(x, y).r
 			var f := f_img.get_pixel(x, y).r
 			var m := m_img.get_pixel(x, y).r
-			var tone := 0.82 + (b - 0.5) * 0.30 + (f - 0.5) * 0.08
+			var g := g_img.get_pixel(x, y).r
+			var sv := s_img.get_pixel(x, y).r
+			var tone := 0.82 + (b - 0.5) * 0.30 + (f - 0.5) * 0.08 + (g - 0.5) * 0.10
 			tone *= 1.0 - clampf((m - 0.62) * 2.0, 0.0, 0.5) * 0.25
+			var crack := 1.0 - smoothstep(0.0, 1.6, dd[y * SIZE + x] - 0.2)           # 1 na linha da rachadura
+			var fio := crack * smoothstep(0.50, 0.62, m)                              # só em algumas regiões: fios de cabelo
+			tone *= 1.0 - fio * 0.35
 			albedo.set_pixel(x, y, Color(tone, tone * 0.98, tone * 0.93))
-			_h(height, x, y, 0.5 + (m - 0.5) * 0.4 + (f - 0.5) * 0.3)
-	_save("reboco", albedo, height, 2.5)
+			_h(height, x, y, 0.5 + (m - 0.5) * 0.4 + (f - 0.5) * 0.3 + (g - 0.5) * 0.35 + (sv - 0.5) * 0.25 - fio * 0.30)
+	_save("reboco", albedo, height, 3.2)
 
 
 ## Reboco antigo: caiação descascada deixando ver a taipa (barro) e a pedra por baixo.
@@ -727,3 +737,47 @@ func _ruido() -> void:
 			var v := clampf(img.get_pixel(x, y).r * 1.15, 0.0, 1.0)
 			out.set_pixel(x, y, Color(v, v, v))
 	out.save_png(OUT + "ruido_mistura.png")
+
+
+## Retratos a óleo escurecidos (dois modelos) para os quadros das salas: antes eram retângulos pretos.
+func _retratos() -> void:
+	for v in 2:
+		var W := 256
+		var H := 320
+		var img := Image.create(W, H, false, Image.FORMAT_RGB8)
+		var cra := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.09, 91 + v, 3)
+		var cab: Color = Color(0.10, 0.07, 0.05) if v == 0 else Color(0.55, 0.52, 0.50)
+		var roupa: Color = Color(0.05, 0.045, 0.045) if v == 0 else Color(0.30, 0.11, 0.14)
+		for y in H:
+			for x in W:
+				var u := (float(x) - W * 0.5) / (W * 0.5)
+				var w := (float(y) - H * 0.5) / (H * 0.5)
+				var col := Color(0.18, 0.12, 0.08).lerp(Color(0.36, 0.26, 0.15), clampf(1.0 - (u * u + w * w) * 0.9, 0.0, 1.0))
+				var ombro := float(y) > H * 0.66 and absf(u) < 0.2 + (float(y) - H * 0.66) / (H * 0.34) * 0.72
+				if ombro:
+					col = roupa
+					if float(y) < H * 0.75 and absf(u) < 0.17:
+						col = Color(0.80, 0.76, 0.68)                                  # colarinho branco
+				if float(y) > H * 0.55 and float(y) < H * 0.68 and absf(u) < 0.12:
+					col = Color(0.62, 0.50, 0.40)                                      # pescoço
+				var fu := u / 0.33
+				var fv := (w + 0.14) / 0.43
+				var d := fu * fu + fv * fv
+				if d < 1.0:
+					col = Color(0.80, 0.66, 0.55) * (0.80 + 0.22 * (1.0 - d)) - Color(0.10, 0.09, 0.08) * clampf(fu, 0.0, 1.0)
+					if fv < -0.38:
+						col = cab * (0.8 + 0.4 * (cra.get_noise_2d(x * 2.0, y * 2.0) * 0.5 + 0.5))           # cabelo
+					var olho := (absf(fu) > 0.30 and absf(fu) < 0.62 and absf(fv + 0.04) < 0.07)
+					if olho:
+						col = Color(0.10, 0.07, 0.06)
+					if absf(fu) < 0.28 and absf(fv - 0.50) < 0.035:
+						col = Color(0.55, 0.28, 0.25)                                   # boca
+				elif v == 1 and (u * u * 3.0 + (w + 0.62) * (w + 0.62) * 9.0) < 0.5:
+					col = cab                                                          # coque
+				elif d < 1.35 and fv < -0.3:
+					col = cab * 0.9                                                    # volume do cabelo
+				var vig := 1.0 - clampf((absf(u) * absf(u) + absf(w) * absf(w)) * 0.35, 0.0, 0.5)
+				var cr := 0.90 + 0.18 * (cra.get_noise_2d(x * 1.3, y * 1.3) * 0.5 + 0.5)    # craquelê do verniz
+				img.set_pixel(x, y, Color(col.r * vig * cr, col.g * vig * cr, col.b * vig * cr))
+		img.save_png(OUT + "retrato_" + ["a", "b"][v] + ".png")
+		print("[tex] retrato_", ["a", "b"][v])
