@@ -18,6 +18,7 @@ var _g: Node3D
 var _w := 0.0
 var _d := 0.0
 var _h := 0.0
+var _n_casca := 0                      # quantas caixas de _bb são da casca da sala (o resto é mobília)
 
 
 func construir(builder: VilaBuilder) -> Node3D:
@@ -108,6 +109,7 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	var a := _area("Saida", Vector3(w / 2.0, 1.2, 0.8), Vector3(1.9, 2.4, 1.5), "res://scripts/porta.gd")
 	a.set("destino", "")
 	a.set("texto_interacao", "Sair para a rua")
+	_n_casca = _bb._boxes.size()
 	# sonda de reflexo da sala: o latão, o vidro e a madeira envernizada refletem o próprio cômodo (e não só o céu da rua)
 	var rp := ReflectionProbe.new()
 	rp.name = "SondaDeReflexo"
@@ -134,7 +136,113 @@ func _area(nome: String, pos: Vector3, size: Vector3, script: String) -> Area3D:
 	return a
 
 
+## Objeto para examinar (E): uma frase da história ou um arrepio. Várias frases separadas por " | " alternam a cada exame.
+func _examinar(x: float, y: float, z: float, rotulo: String, texto: String, som := "papel", medo := 0.0, tam := Vector3(0.9, 0.9, 0.9)) -> void:
+	var a := _area("Examinar_%d" % _g.get_child_count(), Vector3(x, y, z), tam, "res://scripts/examinar.gd")
+	a.set("texto_interacao", rotulo)
+	a.set("texto", texto)
+	a.set("som", som)
+	a.set("medo", medo)
+
+
+## Algo (mobília ou item) já ocupa esta caixa? A casca da sala não conta; a porta de saída e os itens coletáveis contam.
+func _ocupado(a: AABB) -> bool:
+	for i in range(_n_casca, _bb._boxes.size()):
+		if (_bb._boxes[i][1] as AABB).intersects(a):
+			return true
+	for n in _g.get_children():
+		if n is Node3D and n.has_meta("bb"):
+			var bb: AABB = n.get_meta("bb")
+			var t := n as Node3D
+			var c: Vector3 = t.position + t.transform.basis * bb.get_center()
+			var r := maxf(bb.size.x, bb.size.z) * 0.5
+			if AABB(c - Vector3(r, bb.size.y * 0.5, r), Vector3(r * 2.0, bb.size.y, r * 2.0)).intersects(a):
+				return true
+		elif n is Area3D:
+			if a.grow(0.25).has_point((n as Node3D).position):
+				return true
+	# entrada: corredor livre do portal até o centro da sala
+	if AABB(Vector3(_w * 0.5 - 1.1, 0.0, 0.0), Vector3(2.2, 3.0, 2.2)).intersects(a):
+		return true
+	return false
+
+
+## Detalhes automáticos de acabamento em TODAS as salas: tapete, vasos nos cantos, quadros e relógio nas paredes, crucifixo e teias.
+## Só entra onde o espaço está livre (não sobrepõe móvel nem item).
+func _decorar() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(String(_g.name)) + 77
+	# 1) tapete no meio da sala (ou o primeiro lugar livre)
+	var tapetes := ["listra_vermelha", "pano_azul", "pano_rosa"]
+	var cands := [Vector2(_w * 0.5, _d * 0.5), Vector2(_w * 0.5, _d * 0.68), Vector2(_w * 0.35, _d * 0.5), Vector2(_w * 0.65, _d * 0.45)]
+	for c in cands:
+		var lx := minf(2.0, _w * 0.34)
+		var lz := minf(1.3, _d * 0.26)
+		if not _ocupado(AABB(Vector3(c.x - lx * 0.5, 0.02, c.y - lz * 0.5), Vector3(lx, 0.7, lz))):
+			var m: String = tapetes[rng.randi() % tapetes.size()]
+			_bb.box("ouro_velho", Vector3(lx + 0.10, 0.008, lz + 0.10), Vector3(c.x, 0.005, c.y))
+			_bb.box(m, Vector3(lx, 0.012, lz), Vector3(c.x, 0.008, c.y))
+			_bb.box("pano_cru", Vector3(lx * 0.72, 0.014, lz * 0.62), Vector3(c.x, 0.009, c.y))
+			break
+	# 2) vasos de barro com antúrio nos cantos livres (até dois)
+	var vasos := 0
+	var cantos := [Vector2(0.5, _d - 0.5), Vector2(_w - 0.5, _d - 0.5), Vector2(0.5, 1.9), Vector2(_w - 0.5, 1.9)]
+	cantos.shuffle()
+	for c in cantos:
+		if vasos >= 2:
+			break
+		if not _ocupado(AABB(Vector3(c.x - 0.32, 0.0, c.y - 0.32), Vector3(0.64, 1.0, 0.64))):
+			var yaw := rng.randf() * TAU
+			_prop_c("planter_pot_clay", c.x, c.y, yaw, 1.3, 0.0)
+			_parte("anthurium_botany_01", [["anthurium_botany_01_a", "anthurium_botany_04_d", "anthurium_botany_05_e", "anthurium_botany_06_f"][vasos % 4]], c.x, c.y, yaw, 0.2, 0.28)
+			vasos += 1
+	# 3) quadros nas paredes (retratos a óleo): até 3, em lugares livres
+	var quadros := 0
+	var tentativas := [["O", 0.04, 0.0], ["L", _w - 0.04, 0.0], ["N", 0.0, _d - 0.04], ["O", 0.04, 0.0], ["L", _w - 0.04, 0.0]]
+	for t in tentativas:
+		if quadros >= 3:
+			break
+		var lado: String = t[0]
+		var ext := _d if lado == "O" or lado == "L" else _w
+		var pos := ext * rng.randf_range(0.22, 0.78)
+		var qx: float = float(t[1]) if lado == "O" or lado == "L" else pos
+		var qz: float = pos if lado == "O" or lado == "L" else float(t[2])
+		var caixa := AABB(Vector3(qx - (0.35 if lado == "N" else 0.25), 1.35, qz - (0.35 if lado != "N" else 0.25)), Vector3(0.7 if lado == "N" else 0.5, 0.9, 0.7 if lado != "N" else 0.5))
+		if not _ocupado(caixa):
+			_quadro(qx, 1.8, qz, lado, 0.42, 0.55)
+			quadros += 1
+	# 4) relógio de parede na parede norte, se houver espaço
+	if _h > 2.8:
+		var rx := _w * rng.randf_range(0.3, 0.7)
+		if not _ocupado(AABB(Vector3(rx - 0.3, 1.5, _d - 0.4), Vector3(0.6, 1.2, 0.4))):
+			_bb.cylinder("ouro_velho", 0.19, 0.19, 0.05, Vector3(rx, 2.15, _d - 0.05), Vector3(PI / 2.0, 0, 0), 18)
+			_bb.cylinder("pano_cru", 0.16, 0.16, 0.055, Vector3(rx, 2.15, _d - 0.058), Vector3(PI / 2.0, 0, 0), 18)
+			_bb.box("ferro", Vector3(0.015, 0.12, 0.01), Vector3(rx, 2.19, _d - 0.09), Vector3(0, 0, 0.5))
+			_bb.box("ferro", Vector3(0.012, 0.09, 0.01), Vector3(rx, 2.15, _d - 0.09), Vector3(0, 0, -1.1))
+			_bb.box("madeira_escura", Vector3(0.025, 0.42, 0.02), Vector3(rx, 1.8, _d - 0.05))
+			_bb.sphere("ouro_velho", 0.05, Vector3(rx, 1.58, _d - 0.05), 8, 5)
+	# 5) crucifixo sobre a porta de saída
+	if _h > 3.1:
+		_bb.box("madeira_escura", Vector3(0.05, 0.36, 0.03), Vector3(_w * 0.5, 2.9, 0.04))
+		_bb.box("madeira_escura", Vector3(0.24, 0.05, 0.03), Vector3(_w * 0.5, 2.98, 0.04))
+		_bb.sphere("ouro_velho", 0.025, Vector3(_w * 0.5, 2.98, 0.06), 6, 4)
+	# 6) teias de aranha nos cantos do teto (fios finos): sala velha, casa abandonada
+	for cx: float in [0.0, _w]:
+		for cz: float in [0.0, _d]:
+			var sx := 1.0 if cx < 1.0 else -1.0
+			var sz := 1.0 if cz < 1.0 else -1.0
+			var cy := _h - 0.15
+			for k in 4:
+				var f := 0.12 + 0.11 * float(k)
+				_bb.box("pano_cru", Vector3(0.004, 0.004, f * 1.6), Vector3(cx + sx * 0.02, cy - f * 0.2, cz + sz * f * 0.8))
+				_bb.box("pano_cru", Vector3(f * 1.6, 0.004, 0.004), Vector3(cx + sx * f * 0.8, cy - f * 0.2, cz + sz * 0.02))
+			for k in 3:
+				var a := 0.18 + 0.15 * float(k)
+				_bb.box("pano_cru", Vector3(0.004, 0.004, 0.55 - 0.1 * float(k)), Vector3(cx + sx * a * 0.5, cy - a * 0.5, cz + sz * (0.3 - 0.05 * float(k))), Vector3(0, 0, 0))
+
+
 func _fim() -> void:
+	_decorar()
 	b._mesh_node(_g, "Mobilia", _bb.commit())
 
 
@@ -447,6 +555,10 @@ func _sala_benedita(g: Node3D) -> void:
 	_item("terco", Vector3(3.2, 1.07, 5.55), "Pegar o terço de Dona Benedita")
 	_oleo(6.3, 0.95, 3.3)
 	_oleo(0.6, 1.4, 4.2)
+	_examinar(1.2, 0.9, 4.7, "Examinar a cama", "A cama está feita, com a colcha dobrada ao pé. Ninguém dormiu aqui depois que o último trem de minério partiu. | Sob o travesseiro, um terço quebrado e um recibo da Companhia: 'indenização recusada'.")
+	_examinar(3.6, 1.2, 5.6, "Examinar o oratório", "O oratório tem quarenta e duas fitinhas amarradas. Quarenta e duas famílias, e nenhuma resposta.", "clink")
+	_examinar(6.0, 1.0, 5.2, "Examinar o fogão", "As cinzas ainda estão mornas. Não foi Dona Benedita que acendeu o fogo. | Há uma panela com café coado, intocada. A xícara tem batom, mas a casa nunca recebeu visita.", "creak", 0.12)
+	_examinar(0.5, 1.0, 2.2, "Abrir o armário", "Vestidos de luto, todos do mesmo tamanho, todos com uma flor de papel presa na gola. Dona Benedita ensaiava os velórios antes que acontecessem.", "creak")
 	_prop("wooden_bucket_01", 6.4, 1.2, 0.5)
 	_prop("wooden_stool_01", 5.4, 4.2, 0.3)
 	_prop_c("round_wooden_table_02", 1.5, 1.2, 0.0, 1.0)
@@ -466,6 +578,8 @@ func _sala_padaria(g: Node3D) -> void:
 	lf.light_color = Color(1.0, 0.42, 0.12)
 	lf.omni_range = 6.0
 	b._blocker(g, "ColForno", Vector3(1.4, 1.7, 2.0), Vector3(5.3, 0.85, 3.4))
+	_examinar(5.0, 1.0, 3.4, "Examinar o forno", "O forno de lenha está morno, com pães de ontem ainda dentro. Dizem que a padeira nunca saiu: ela assa para quem não tem mais boca.", "creak", 0.1)
+	_examinar(2.0, 1.1, 3.4, "Examinar o balcão", "Uma caderneta de fiado aberta: nomes, valores, e uma coluna riscada com a letra do Capataz. 'Quitado em sangue.'")
 	_balcao(2.0, 3.4, 2.6, PI / 2.0)
 	_prateleira(0.35, 1.6, 1.4, 1.6, PI / 2.0)
 	for k in 5:
@@ -577,6 +691,8 @@ func _sala_casarao(g: Node3D) -> void:
 	# mesa de jantar comprida com cadeiras (uma caída), castiçal apagado
 	_bb.box("listra_vermelha", Vector3(3.4, 0.012, 2.3), Vector3(5.0, 0.008, 3.8))                    # tapete grande sob a mesa
 	_bb.box("ouro_velho", Vector3(3.5, 0.010, 2.4), Vector3(5.0, 0.006, 3.8))                          # barra dourada
+	_examinar(7.4, 0.5, 3.8, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
+	_examinar(5.0, 0.95, 3.8, "Examinar a mesa", "Sete lugares postos. Seis cadeiras. Quem faltava à mesa dos Vaz? | O castiçal central tem sete velas. Seis derreteram até o fim; a sétima nunca foi acesa.")
 	_prop_c("dining_table", 5.0, 3.8, 0.0, 1.0)                                                      # mesa de jantar com toalha xadrez (Poly Haven, CC0)
 	for k in 3:
 		_cadeira(3.9 + k * 1.1, 4.78, PI)
@@ -907,6 +1023,8 @@ func _sala_costureira(g: Node3D) -> void:
 
 func _sala_deposito(g: Node3D) -> void:
 	_casca("Depósito", 7.0, 5.0, 3.2, "reboco_branco", "cantaria")
+	_examinar(0.8, 1.2, 2.4, "Examinar as prateleiras", "Latas sem rótulo. Na única que tem, lê-se 'Companhia Minas do Ouro Preto, ração de campanha, 1958'. A data da carta é a mesma.")
+	_examinar(6.0, 1.0, 1.5, "Examinar os barris", "O vinho nos barris virou vinagre há anos. Alguém escreveu a giz na madeira: 'Eles contaram os mortos errado.'", "clink", 0.08)
 	_prop_c("worn_metal_rack", 0.4, 1.6, PI / 2.0, 1.0)
 	_prop_c("worn_metal_rack", 0.4, 3.2, PI / 2.0, 1.0)
 	for k in 4:                       # só onde há prateleira embaixo (as duas últimas latas ficavam no ar)

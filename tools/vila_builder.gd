@@ -942,6 +942,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	rb.box("madeira_escura", Vector3(0.10, 0.16, w + 0.50), Vector3(rcx - (depth + 1.4) / 2.0 + 0.04, ry - 0.05, 0))
 	rb.box("madeira_escura", Vector3(0.10, 0.16, w + 0.50), Vector3(rcx + (depth + 1.4) / 2.0 - 0.04, ry - 0.05, 0))
 	_mesh_node(c, "Telhado", rb.commit())
+	_telhado_colisao(c, Vector3(rcx, ry + rise / 2.0, 0), depth + 1.4, rise, w + 0.5, 0.0)      # o telhado também é sólido (antes dava para atravessá-lo pelo morro)
 
 	var b := _batch()
 	var ncor := maxi(1, int(ceil(w)))
@@ -2224,6 +2225,7 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	rb.roof("telha_uv", wall, Vector3(width + 1.2, rise, nave_len + 1.0), Vector3(nave_len / 2.0, nh + rise / 2.0, 0), PI / 2.0, 3.6, "madeira_escura")
 	rb.box("telha_cumeeira", Vector3(nave_len + 1.1, 0.28, 0.42), Vector3(nave_len / 2.0, nh + rise + 0.05, 0))
 	_mesh_node(c, "TelhadoNave", rb.commit())
+	_telhado_colisao(c, Vector3(nave_len / 2.0, nh + rise / 2.0, 0), width + 1.2, rise, nave_len + 1.0, PI / 2.0)
 
 	var b := _batch()
 	# pilastras e cornijas da fachada
@@ -2470,6 +2472,7 @@ func _igreja_laterais(c: Node3D, b: MeshBatch, width: float, nave_len: float, nh
 	rb.roof("telha_uv", wall, Vector3(cw + 1.0, rise2, cl + 1.0), Vector3(nave_len + cl / 2.0 - 0.1, ch + rise2 / 2.0, 0), PI / 2.0, 3.6, "madeira_escura")
 	rb.box("telha_cumeeira", Vector3(cl + 1.1, 0.26, 0.4), Vector3(nave_len + cl / 2.0 - 0.1, ch + rise2 + 0.05, 0))
 	_mesh_node(c, "TelhadoCapela", rb.commit())
+	_telhado_colisao(c, Vector3(nave_len + cl / 2.0 - 0.1, ch + rise2 / 2.0, 0), cw + 1.0, rise2, cl + 1.0, PI / 2.0)
 	var ab := _batch()
 	for sz: float in [-1.0, 1.0]:
 		ab.box(ced, Vector3(cl, 0.3, 0.5), Vector3(nave_len + cl / 2.0 - 0.1, ch - 0.15, sz * (cw / 2.0 + 0.1)))
@@ -3390,6 +3393,16 @@ func _nichos() -> Node3D:
 		l.set("velocidade", 9.0)
 		g.add_child(l)
 		_halo(g, Vector3(-0.34, 1.85, 0), 0.9, "halo_vela")
+		var av := Area3D.new()                         # acender uma vela no altar (scripts/vela_votiva.gd)
+		av.name = "AcenderVela"
+		av.position = Vector3(-0.5, 1.5, 0)
+		av.set_script(load("res://scripts/vela_votiva.gd"))
+		var cv := CollisionShape3D.new()
+		var bv := BoxShape3D.new()
+		bv.size = Vector3(1.3, 1.5, 1.6)
+		cv.shape = bv
+		av.add_child(cv)
+		g.add_child(av)
 		last_s = s
 		picked += 1
 	print("[vila] nichos: ", picked)
@@ -3485,9 +3498,22 @@ func _nicho_oferendas(b: MeshBatch, variante: int) -> void:
 		b.cylinder("vela", 0.04, 0.04, 0.025, Vector3(-0.34, y0 + 0.012, zs[k]), Vector3.ZERO, 7)             # poça de cera
 	if variante != 2:
 		for sz: float in [-1.0, 1.0]:                                                                           # vasos de flores dos dois lados
-			b.cylinder("vaso", 0.06, 0.045, 0.14, Vector3(-0.42, 1.60, sz * 0.52), Vector3.ZERO, 8)
-			for f in 6:
-				b.sphere(FLORES[f % FLORES.size()], 0.04, Vector3(-0.42 + (f % 3 - 1) * 0.03, 1.72 + (f % 2) * 0.05, sz * 0.52 + (f % 3 - 1) * 0.035), 5, 3)
+			var vx := -0.42
+			var vz: float = sz * 0.52
+			b.cylinder("cantaria", 0.075, 0.05, 0.10, Vector3(vx, 1.57, vz), Vector3.ZERO, 14)                  # jarra de louça branca
+			b.cylinder("ouro_velho", 0.082, 0.082, 0.018, Vector3(vx, 1.625, vz), Vector3.ZERO, 14)              # friso dourado na boca
+			b.cylinder("ouro_velho", 0.052, 0.052, 0.012, Vector3(vx, 1.515, vz), Vector3.ZERO, 14)              # pé
+			for f in 7:                                                                                          # folhagem em leque e hastes
+				var a := TAU * float(f) / 7.0
+				b.sphere("verde_vaso", 0.05, Vector3(vx + cos(a) * 0.06, 1.70 + 0.02 * float(f % 3), vz + sin(a) * 0.06), 8, 5)
+			for f in 5:                                                                                          # lírios brancos com miolo amarelo
+				var a2 := TAU * float(f) / 5.0 + 0.4
+				var fx := vx + cos(a2) * 0.035
+				var fz := vz + sin(a2) * 0.035
+				var fy := 1.78 + 0.03 * float(f % 3)
+				b.cylinder("verde_vaso", 0.006, 0.006, fy - 1.64, Vector3(fx * 0.5 + vx * 0.5, (fy + 1.64) * 0.5, fz * 0.5 + vz * 0.5), Vector3.ZERO, 12)
+				b.sphere("flor_branca", 0.034, Vector3(fx, fy, fz), 8, 5)
+				b.sphere("flor_amarela", 0.012, Vector3(fx - 0.012, fy + 0.012, fz), 6, 4)
 	for k in 6:                                                                                                  # ex-votos de lata e cera na parede
 		var zz := -0.55 + k * 0.22
 		b.box("ouro_velho", Vector3(0.015, 0.09, 0.07), Vector3(-0.03, 1.15 + 0.07 * float(k % 3), zz), Vector3(0.0, 0.0, 0.2 * float(k % 2)))
@@ -3590,6 +3616,26 @@ func _prop(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0, al
 	p.rotation.y = yaw
 	parent.add_child(p)
 	return p
+
+
+## Colisão de telhado de duas águas (prisma): cumeeira ao longo de Z (antes de girar `yaw`), `pos` = centro do prisma.
+func _telhado_colisao(parent: Node3D, pos: Vector3, sx: float, rise: float, sz: float, yaw: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = "ColisaoTelhado"
+	body.position = pos
+	body.rotation.y = yaw
+	var cs := CollisionShape3D.new()
+	var shape := ConvexPolygonShape3D.new()
+	var pts := PackedVector3Array()
+	for sx2: float in [-0.5, 0.5]:
+		for sz2: float in [-0.5, 0.5]:
+			pts.append(Vector3(sx2 * sx, -rise * 0.5, sz2 * sz))
+	for sz3: float in [-0.5, 0.5]:
+		pts.append(Vector3(0.0, rise * 0.5, sz3 * sz))
+	shape.points = pts
+	cs.shape = shape
+	body.add_child(cs)
+	parent.add_child(body)
 
 
 ## Uma peça isolada de um .glb que é "folha de catálogo" (ver PropKit.make_filtrado).

@@ -258,6 +258,7 @@ func _materials() -> void:
 	_flat("verde_vaso", Color(0.10, 0.28, 0.09), 1.0)
 	_flat("flor_vermelha", Color(0.85, 0.10, 0.10), 0.8, 0.0, 0.45)
 	_flat("flor_rosa", Color(0.95, 0.40, 0.58), 0.8, 0.0, 0.45)
+	_flat("flor_branca", Color(0.95, 0.93, 0.86), 0.7, 0.0, 0.30)
 	_flat("flor_amarela", Color(1.0, 0.82, 0.18), 0.8, 0.0, 0.45)
 	_surf("vela", "vela", Color(1.0, 0.97, 0.88), 14.0, 0.55, 0.8)      # cera de vela real (pacote de texturas enviado pelo usuário, recortado do atlas)
 	_flat("chama", Color(1.0, 0.7, 0.3), 0.5, 0.0, 3.5, true)

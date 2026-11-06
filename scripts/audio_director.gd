@@ -151,6 +151,11 @@ func get_bpm() -> float:
 	return 60.0 * (_heart.pitch_scale if _heart else 1.0)
 
 
+func acalmar(amount: float) -> void:
+	fear_boost = maxf(0.0, fear_boost - amount)
+	fear = maxf(0.0, fear - amount * 0.5)
+
+
 func bump_fear(amount: float) -> void:
 	fear_boost = minf(1.0, fear_boost + amount)
 
