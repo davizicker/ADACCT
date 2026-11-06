@@ -784,7 +784,7 @@ func _frontage(root: Node3D) -> void:
 				"passagem":
 					_lot_passagem(becos, f, int(boca["idx"]), bool(boca["ini"]))
 			if kind == "casa" or kind == "quintal" or kind == "talude":
-				_joints.append({"sigma": sigma, "s": s})
+				_joints.append({"sigma": sigma, "s": s, "xf": f["xf"]})      # guarda o quadro do lote: o altar se alinha à parede dele, não à tangente da rua
 			prev_special = kind != "casa"
 			s = s2
 
@@ -3444,7 +3444,17 @@ func _nichos() -> Node3D:
 		var sigma: float = j["sigma"]
 		var x_axis := Route.right(s) * sigma
 		var origin := facade(sigma, s) + Vector3(0, SW_H, 0)
-		var g := _group(root, "Nicho_%03d" % int(s), Transform3D(Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP)), origin))
+		var nbasis := Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP))
+		if j.has("xf"):
+			# alinha à parede do lote vizinho: mesmo plano e mesma direção (antes seguia a tangente da rua e ficava torto nas curvas)
+			var lxf: Transform3D = j["xf"]
+			var a0 := facade(sigma, s)
+			var zt := (a0 - lxf.origin).dot(lxf.basis.z)
+			var dirz := 1.0 if zt < 0.0 else -1.0            # sentido do centro do lote
+			origin = lxf.origin + lxf.basis.z * (zt + dirz * 0.7)
+			origin.y = Route.height(s) + SW_H
+			nbasis = lxf.basis
+		var g := _group(root, "Nicho_%03d" % int(s), Transform3D(nbasis, origin))
 		var b := _batch()
 		var variante := picked % 3
 		match variante:
