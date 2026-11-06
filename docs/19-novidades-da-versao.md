@@ -1,4 +1,4 @@
-# BRADADOR: novidades desta versão (v25) e avisos
+# BRADADOR: novidades desta versão (v26) e avisos
 
 ## O que mudou
 **Jogabilidade**
@@ -26,6 +26,13 @@
 **Gráficos e peso**
 - Texturas 3D com **compressão BC7 e mipmaps**: ~3 a 4x menos memória de vídeo e sem tremer de longe.
 - Halos de luz por shader (sem quadrados), velas com chama, flores com folhagem.
+
+**Mapa e clima (v26)**
+- Curva grande no começo da rua: a subida deixou de ser reta (a rua ficou 25 m mais longa; as distâncias do resto foram deslocadas por `Route.SHIFT`).
+- Clima de terror: neblina mais fria e escura, menos cor, mais contraste; bruma rasteira que acompanha o jogador (`scripts/bruma.gd`).
+- Adro: coreto de ferro e telha, ciprestes atrás dos muros; igreja com portal em pedra-sabão, relevos, laterais com pilastras e janelas, capela-mor e lampiões de parede.
+- Objetos pequenos (notas, lamparinas, frascos) assentam no tampo da mesa em vez de pairar.
+- A chuva só existe se o jogador ligar a opção "Chuva" (não chove sozinha).
 
 **Adro da igreja (v25)**
 - Lajedo de pedra com faixa ocre em cruz diante do portal e degraus-soleira.
