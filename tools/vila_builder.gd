@@ -1489,6 +1489,7 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 			b.box("muro", Vector3(seg + 0.05, top + 1.0, 0.5), Vector3(x0 + seg / 2.0, top / 2.0 - 0.5, sz * (wb / 2.0 + 0.25)))
 			b.box("cantaria", Vector3(seg + 0.05, 0.12, 0.7), Vector3(x0 + seg / 2.0, top + 0.06, sz * (wb / 2.0 + 0.25)))
 	_mesh_node(g, "Degraus", b.commit())
+	_beco_detalhes(g, run_len, wb, total)
 	# colisão: rampa sob os degraus + paredes
 	var ramp := StaticBody3D.new()
 	ramp.name = "Rampa"
@@ -1582,6 +1583,7 @@ func _lot_passagem(parent: Node3D, f: Dictionary, idx: int, ini: bool) -> void:
 		b.box("cantaria", Vector3(0.9, 0.45, wb + 1.5), Vector3(ax, by + 3.5, 0))
 		b.box("cantaria", Vector3(1.1, 0.14, wb + 1.7), Vector3(ax, by + 3.78, 0))
 	_mesh_node(g, "Degraus", b.commit())
+	_beco_detalhes(g, D, wb, rise, tops)
 	# colisão: rampa lisa sob os degraus (o jogador sobe como nos outros becos) + paredes
 	var ang := atan2(rise, D)
 	var ramp := StaticBody3D.new()
@@ -1616,6 +1618,81 @@ func _lot_passagem(parent: Node3D, f: Dictionary, idx: int, ini: bool) -> void:
 		g.add_child(_lantern_wall(Vector3(lx, ly, sg * (wb / 2.0)), PI if li == 0 else 0.0))
 		_plant(g, "samambaia", Vector3(lx + 2.0, ly + 0.4, -sg * (wb / 2.0 + 0.6)), 0.0, 1.2)
 	_plant(g, "samambaia", Vector3(D * 0.5, tops[n / 2] + 2.8, wb / 2.0 + 0.6), 0.0, 1.3)
+
+
+## Acabamento dos becos e passagens em escada: janelinhas gradeadas (algumas acesas), portas pequenas de madeira colorida, remendos de reboco,
+## arcos de pedra de lado a lado, varal com roupas, vasos de barro nos degraus e lampiões de ferro extras. `tops` = altura do degrau por trecho
+## (vazio: rampa linear de 0 a `total`).
+func _beco_detalhes(g: Node3D, run_len: float, wb: float, total: float, tops := PackedFloat32Array()) -> void:
+	var b := _batch()
+	var n := maxi(tops.size(), 1)
+	var hx := func(x: float) -> float:
+		if tops.size() > 0:
+			return tops[mini(tops.size() - 1, maxi(0, int(x / run_len * float(tops.size()))))]
+		return clampf(x / maxf(run_len, 0.1), 0.0, 1.0) * total
+	var cores_porta := ["madeira_azul", "madeira_verde", "madeira_vermelha", "madeira_escura"]
+	var rebocos := ["reboco_creme", "reboco_ocre", "reboco_amarelo", "reboco_branco"]
+	var x := 2.0
+	var lado := 1.0
+	while x < run_len - 1.5:
+		var y0: float = hx.call(x)
+		var zi := lado * (wb * 0.5 - 0.005)                 # face interna da parede
+		var din := -lado                                     # sentido "para dentro" do corredor (z)
+		var tipo := _rng_f.randi() % 4
+		if tipo == 0:                                       # janelinha gradeada, às vezes acesa
+			var acesa := _rng_f.randf() < 0.4
+			b.box("cantaria", Vector3(0.72, 0.9, 0.10), Vector3(x, y0 + 2.0, zi + din * 0.03))
+			b.box("janela_acesa" if acesa else "janela_escura", Vector3(0.5, 0.68, 0.11), Vector3(x, y0 + 2.0, zi + din * 0.04))
+			for k in 4:
+				b.box("ferro", Vector3(0.025, 0.7, 0.04), Vector3(x - 0.18 + k * 0.12, y0 + 2.0, zi + din * 0.07))
+			b.box("cantaria", Vector3(0.8, 0.07, 0.2), Vector3(x, y0 + 1.52, zi + din * 0.08))
+		elif tipo == 1:                                     # portinha de madeira com verga de pedra
+			var cp: String = cores_porta[_rng_f.randi() % cores_porta.size()]
+			b.box("cantaria", Vector3(1.05, 2.1, 0.12), Vector3(x, y0 + 1.05, zi + din * 0.03))
+			b.box(cp, Vector3(0.82, 1.95, 0.08), Vector3(x, y0 + 0.98, zi + din * 0.06))
+			b.box("ferro", Vector3(0.06, 0.06, 0.05), Vector3(x + 0.27, y0 + 1.0, zi + din * 0.11))
+			b.box("cantaria", Vector3(1.2, 0.12, 0.2), Vector3(x, y0 + 2.14, zi + din * 0.08))
+		elif tipo == 2:                                     # remendo de reboco caiado sobre a pedra
+			var rp: String = rebocos[_rng_f.randi() % rebocos.size()]
+			b.box(rp, Vector3(1.5, 1.2, 0.05), Vector3(x, y0 + 1.7, zi + din * 0.02))
+			b.box("cantaria", Vector3(1.5, 0.06, 0.07), Vector3(x, y0 + 1.1, zi + din * 0.03))
+		else:                                               # cruz de madeira e nichozinho com vela
+			b.box("cantaria", Vector3(0.46, 0.7, 0.16), Vector3(x, y0 + 2.0, zi + din * 0.05))
+			b.box("madeira_escura", Vector3(0.36, 0.58, 0.1), Vector3(x, y0 + 2.0, zi + din * 0.07))
+			b.box("madeira_natural", Vector3(0.04, 0.34, 0.03), Vector3(x, y0 + 2.04, zi + din * 0.11))
+			b.box("madeira_natural", Vector3(0.18, 0.04, 0.03), Vector3(x, y0 + 2.12, zi + din * 0.11))
+			b.cylinder("vela", 0.02, 0.02, 0.1, Vector3(x, y0 + 1.76, zi + din * 0.1), Vector3.ZERO, 12)
+			b.sphere("chama", 0.018, Vector3(x, y0 + 1.84, zi + din * 0.1), 6, 4)
+		lado = -lado
+		x += _rng_f.randf_range(2.6, 3.6)
+	# arcos de pedra de lado a lado (dois ou três ao longo do beco)
+	for fx: float in [0.30, 0.62, 0.9]:
+		var ax := run_len * fx
+		if ax < 3.0 or ax > run_len - 2.0:
+			continue
+		var ya: float = hx.call(ax)
+		b.box("cantaria", Vector3(0.5, 0.5, wb + 0.2), Vector3(ax, ya + 3.55, 0))
+		b.box("cantaria", Vector3(0.7, 0.14, wb + 0.3), Vector3(ax, ya + 3.85, 0))
+		for sz: float in [-1.0, 1.0]:
+			b.box("cantaria", Vector3(0.42, 0.5, 0.35), Vector3(ax, ya + 3.1, sz * (wb * 0.5 - 0.15)))    # mísulas
+	# varal com roupas atravessando o beco
+	var vx := run_len * 0.45
+	var yv: float = hx.call(vx)
+	b.box("ferro", Vector3(0.012, 0.012, wb + 0.2), Vector3(vx, yv + 3.1, 0))
+	var panos := ["pano_rosa", "pano_azul", "pano_cru", "listra_branca"]
+	for k in 4:
+		b.box(panos[k % panos.size()], Vector3(0.5, 0.65 - 0.08 * float(k % 2), 0.012), Vector3(vx + 0.02 * float(k), yv + 2.75, -wb * 0.32 + k * wb * 0.2), Vector3(0, PI / 2.0, 0.04 * float(k % 3)))
+	_mesh_node(g, "Detalhes", b.commit())
+	# vasos de barro com antúrio nos cantos dos degraus (nós separados, modelos enviados pelo dono)
+	var px := 3.5
+	var ls := 1.0
+	while px < run_len - 2.0:
+		var yp: float = hx.call(px)
+		var pz := ls * (wb * 0.5 - 0.3)
+		_prop(g, "planter_pot_clay", Vector3(px, yp, pz), _rng_f.randf() * TAU, 1.3)
+		_parte(g, "anthurium_botany_01", ["anthurium_botany_01_a"], Vector3(px, yp + 0.28, pz), _rng_f.randf() * TAU, 0.2)
+		ls = -ls
+		px += _rng_f.randf_range(5.0, 7.0)
 
 
 func _lot_chafariz(parent: Node3D, f: Dictionary) -> void:
