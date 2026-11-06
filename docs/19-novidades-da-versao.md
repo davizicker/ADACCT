@@ -1,4 +1,4 @@
-# BRADADOR: novidades desta versão (v24) e avisos
+# BRADADOR: novidades desta versão (v25) e avisos
 
 ## O que mudou
 **Jogabilidade**
@@ -26,6 +26,12 @@
 **Gráficos e peso**
 - Texturas 3D com **compressão BC7 e mipmaps**: ~3 a 4x menos memória de vídeo e sem tremer de longe.
 - Halos de luz por shader (sem quadrados), velas com chama, flores com folhagem.
+
+**Adro da igreja (v25)**
+- Lajedo de pedra com faixa ocre em cruz diante do portal e degraus-soleira.
+- Chafariz de pedra (bacia, pé, taça e remate com cruz) no lado esquerdo do adro.
+- Pedestais votivos com castiçais de latão e velas acesas ao pé da parede.
+- Quadro de avisos da Irmandade, de madeira, na beira do adro.
 
 **Refinamento final (v24)**
 - Objetos feitos por código mais redondos (mais lados em cilindros, esferas e arcos).
