@@ -251,5 +251,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_debug.text = ""
 	if _note_panel != null and _note_panel.visible and (event.is_action_pressed("interact") or event.is_action_pressed("ui_cancel")):
 		hide_note()
+		get_tree().call_group("audio", "play_papel")
 		get_tree().call_group("jogador", "set", "frozen", false)
 		get_viewport().set_input_as_handled()

@@ -34,6 +34,14 @@ var _whisper: AudioStreamPlayer3D
 var _water: AudioStreamPlayer3D
 var _clink: AudioStreamPlayer
 var _fountain: AudioStreamPlayer3D
+var _passo_b: AudioStreamPlayer3D
+var _arranha: AudioStreamPlayer3D
+var _rosna: AudioStreamPlayer3D
+var _papel: AudioStreamPlayer
+var _passos_b: Array[AudioStreamWAV] = []
+var _t_passo_b := 3.0
+var _t_arranha := 15.0
+var _t_rosna := 25.0
 var _dog_t := 18.0
 var _bell_t := 35.0
 
@@ -125,6 +133,16 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	_fountain = _player3d(Synth.water(), "Ambiente", -2.0, 9.0)
 	_fountain.global_position = Route.pos(Route.FOUNTAIN_S) + Route.right(Route.FOUNTAIN_S) * Route.FOUNTAIN_SIDE * (Route.width(Route.FOUNTAIN_S) * 0.5 + 1.5) + Vector3(0, 1.0, 0)
 	_fountain.play()
+	for k in 4:
+		_passos_b.append(Synth.passo_pesado(k))
+	_passo_b = _player3d(_passos_b[0], "Efeitos", -3.0, 22.0)
+	_arranha = _player3d(Synth.arranhao(), "Efeitos", -5.0, 14.0)
+	_rosna = _player3d(Synth.rosnado(), "Efeitos", -4.0, 12.0)
+	_papel = AudioStreamPlayer.new()
+	_papel.stream = Synth.papel()
+	_papel.bus = "Efeitos"
+	_papel.volume_db = -9.0
+	add_child(_papel)
 	player.footstep.connect(_on_step)
 	Config.apply(get_parent())
 
@@ -174,6 +192,45 @@ func play_clink() -> void:
 	_clink.play()
 
 
+func play_papel() -> void:
+	_papel.pitch_scale = _rng.randf_range(0.92, 1.08)
+	_papel.play()
+
+
+## Presença sonora do Bradador: passos pesados vindos dele, arranhões nas paredes e rosnado quando está perto.
+func _presenca_bradador(delta: float) -> void:
+	if screams == null or screams.stage < 1 or screams.bradador == null or screams.hold:
+		return
+	if screams._em_casa():
+		return
+	var st := screams.stage
+	var origem: Vector3 = screams.bradador.global_position
+	var dist := origem.distance_to(player.global_position)
+	_t_passo_b -= delta
+	if _t_passo_b <= 0.0:
+		_t_passo_b = _rng.randf_range(2.4, 3.8) / (0.6 + 0.4 * float(st))
+		_passo_b.stream = _passos_b[_rng.randi() % _passos_b.size()]
+		_passo_b.global_position = origem + Vector3(0, 0.1, 0)
+		_passo_b.volume_db = lerpf(-14.0, -1.0, clampf(1.0 - dist / 90.0, 0.0, 1.0))
+		_passo_b.pitch_scale = _rng.randf_range(0.9, 1.08)
+		_passo_b.play()
+	_t_arranha -= delta
+	if _t_arranha <= 0.0:
+		_t_arranha = _rng.randf_range(11.0, 24.0) / (0.5 + 0.5 * float(st))
+		var a := _rng.randf() * TAU
+		_arranha.global_position = player.global_position + Vector3(cos(a), 0.6, sin(a)) * _rng.randf_range(5.0, 12.0)
+		_arranha.pitch_scale = _rng.randf_range(0.85, 1.15)
+		_arranha.play()
+	if st >= 3:
+		_t_rosna -= delta
+		if _t_rosna <= 0.0:
+			_t_rosna = _rng.randf_range(18.0, 34.0)
+			var d2 := -player.global_transform.basis.z
+			_rosna.global_position = player.global_position - d2 * _rng.randf_range(4.0, 8.0) + Vector3(0, 1.2, 0)
+			_rosna.pitch_scale = _rng.randf_range(0.9, 1.1)
+			_rosna.play()
+
+
 func play_whisper() -> void:
 	var dir := Vector3(_rng.randf_range(-1, 1), 0, _rng.randf_range(-1, 1)).normalized()
 	_whisper.global_position = player.global_position + dir * 1.6 + Vector3(0, 1.6, 0)
@@ -207,6 +264,7 @@ func _process(delta: float) -> void:
 		_breath.pitch_scale = _rng.randf_range(0.95, 1.1)
 		_breath.play()
 
+	_presenca_bradador(delta)
 	_dog_t -= delta
 	if _dog_t <= 0.0:
 		_dog_t = _rng.randf_range(25.0, 60.0)

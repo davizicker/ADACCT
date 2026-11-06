@@ -148,6 +148,7 @@ func _process(delta: float) -> void:
 			_play_echo_behind()
 
 	_update_gaze(delta)
+	_check_leitura(delta)
 
 	match state:
 		State.WAIT:
@@ -323,6 +324,29 @@ func _kill() -> void:
 
 
 var _noise_t := 0.0
+var _leitura_t := 0.0
+var _leitura_aviso := false
+
+
+## Ler um bilhete ao ar livre é arriscado: o Bradador ouve você parado e se aproxima. Em casa ou escondido, a leitura é segura.
+func _check_leitura(delta: float) -> void:
+	var lendo := hud != null and hud.note_open() and not _seguro()
+	if not lendo:
+		_leitura_t = maxf(0.0, _leitura_t - delta * 2.0)
+		if _leitura_t <= 0.0:
+			_leitura_aviso = false
+		return
+	_leitura_t += delta
+	if not _leitura_aviso and _leitura_t > 4.5:
+		_leitura_aviso = true
+		if audio != null:
+			audio.play_whisper()
+			audio.bump_fear(0.25)
+		hud.show_prompt("Algo se mexe atrás de você... feche o bilhete e se esconda.", 3.5)
+	if _leitura_t > 9.0:
+		_leitura_t = 0.0
+		_leitura_aviso = false
+		penalize(1, "leitura ao ar livre")
 
 ## Correr enquanto ele grita ou espera a resposta: ele ouve os passos no chão de pedra.
 func _check_noise(delta: float) -> void:

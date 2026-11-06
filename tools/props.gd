@@ -54,6 +54,37 @@ static func make(key: String, scale := 1.0, align := "chao") -> Node3D:
 	return holder
 
 
+## Como `make`, mas guarda só as malhas cujo nome começa com algum dos prefixos de `manter`. Vários .glb do Poly Haven são "folhas de catálogo"
+## (lápis empilhados, 4 latas lado a lado, 2 malas juntas...): aqui cada peça pode ser usada sozinha, no lugar certo.
+static func make_filtrado(key: String, manter: Array, scale := 1.0, align := "chao") -> Node3D:
+	var inst := scene(key).instantiate() as Node3D
+	for mi in inst.find_children("*", "MeshInstance3D", true, false):
+		var ok := false
+		for pre in manter:
+			if String(mi.name).begins_with(String(pre)):
+				ok = true
+				break
+		if not ok:
+			mi.get_parent().remove_child(mi)
+			mi.free()
+	var holder := Node3D.new()
+	holder.name = key
+	var wrap := Node3D.new()
+	wrap.name = "Modelo"
+	holder.add_child(wrap)
+	wrap.add_child(inst)
+	var bb := bounds(inst)
+	inst.scale = Vector3.ONE * scale
+	var sb := AABB(bb.position * scale, bb.size * scale)
+	var c := sb.get_center()
+	if align == "parede":
+		inst.position = Vector3(-c.x, -sb.position.y, -sb.position.z)
+	else:
+		inst.position = Vector3(-c.x, -sb.position.y, -c.z)
+	holder.set_meta("bb", AABB(sb.position + inst.position, sb.size))
+	return holder
+
+
 ## Kits: um .glb com várias malhas (um nó por variação) -> Mesh por nome. Usado por containers.glb e hera.glb.
 static var _kits: Dictionary = {}
 

@@ -541,3 +541,101 @@ static func tv_static() -> AudioStreamWAV:
 	for i in fade:
 		out[i] = lerpf(out[n - fade + i], out[i], float(i) / fade)
 	return _to_wav(out, true)
+
+
+## Passo PESADO e arrastado (o Bradador): pancada grave, arrasto de bota na pedra e um estalo úmido no fim.
+static func passo_pesado(variant: int) -> AudioStreamWAV:
+	var n := int(RATE * 0.75)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 900 + variant * 31
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var f0 := rng.randf_range(48.0, 66.0)
+	var drag_t := rng.randf_range(0.10, 0.16)
+	var lp := 0.0
+	var lp2 := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var x := _noise(rng)
+		lp += 0.08 * (x - lp)
+		lp2 += 0.35 * (x - lp2)
+		var thud := sin(TAU * f0 * t * (1.0 - 0.25 * t)) * exp(-t * 11.0) * 0.95
+		var body := lp * exp(-t * 14.0) * 0.8
+		var td := t - drag_t
+		var drag := 0.0
+		if td > 0.0:
+			drag = (lp2 - lp) * sin(PI * clampf(td / 0.42, 0.0, 1.0)) * 0.55 * (0.7 + 0.3 * sin(TAU * 31.0 * td))
+		var slap := 0.0
+		var ts := t - 0.50
+		if ts > 0.0:
+			slap = (lp2 - lp) * exp(-ts * 60.0) * 0.5 + sin(TAU * 90.0 * ts) * exp(-ts * 25.0) * 0.35
+		out[i] = thud + body + drag + slap
+	return _to_wav(out, false)
+
+
+## Unhas arranhando madeira/pedra: três riscos curtos, cada um com ruído agudo modulado (som de coisa tentando entrar).
+static func arranhao() -> AudioStreamWAV:
+	var n := int(RATE * 1.5)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 931
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var lp := 0.0
+	var starts := [0.05, 0.50, 0.92]
+	for i in n:
+		var t := float(i) / RATE
+		var x := _noise(rng)
+		lp += 0.55 * (x - lp)
+		var hp := x - lp
+		var env := 0.0
+		for st in starts:
+			var d: float = t - float(st)
+			if d > 0.0 and d < 0.38:
+				env = maxf(env, sin(PI * d / 0.38) * (0.6 + 0.4 * sin(TAU * 47.0 * d)))
+		out[i] = hp * env * 0.55
+	return _to_wav(out, false)
+
+
+## Rosnado grave e úmido, com tremor de garganta (rouquidão) e um fio de respiração.
+static func rosnado() -> AudioStreamWAV:
+	var n := int(RATE * 2.2)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 947
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var st1 := [0.0, 0.0]
+	var st2 := [0.0, 0.0]
+	var ph := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var f := 68.0 + 14.0 * sin(TAU * 0.9 * t) - 10.0 * t
+		ph += TAU * f / RATE
+		var saw := fmod(ph / TAU, 1.0) * 2.0 - 1.0
+		var trem := 0.55 + 0.45 * sin(TAU * 23.0 * t + 1.7 * sin(TAU * 3.0 * t))
+		var src := saw * trem + _noise(rng) * 0.25
+		var a := _formante(src, st1, 260.0 + 80.0 * sin(TAU * 1.3 * t), 0.14)
+		var b := _formante(src, st2, 720.0, 0.10)
+		var env := sin(PI * clampf(t / 2.2, 0.0, 1.0))
+		out[i] = (a * 0.85 + b * 0.35) * env * 0.9
+	return _to_wav(out, false)
+
+
+## Papel sendo desdobrado/amassado (ao abrir ou fechar um bilhete).
+static func papel() -> AudioStreamWAV:
+	var n := int(RATE * 0.55)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 971
+	var out := PackedFloat32Array()
+	out.resize(n)
+	var lp := 0.0
+	var burst := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var x := _noise(rng)
+		lp += 0.30 * (x - lp)
+		if rng.randf() < 0.0035:
+			burst = rng.randf_range(0.4, 1.0)
+		burst *= 0.9985
+		var env := sin(PI * clampf(t / 0.55, 0.0, 1.0))
+		out[i] = ((x - lp) * 0.25 + (x - lp) * burst * 0.5) * env
+	return _to_wav(out, false)

@@ -37,5 +37,6 @@ func interagir(player: Player) -> void:
 	else:
 		var n: Array = Notas.TEXTOS[clampi(nota_id, 0, Notas.TEXTOS.size() - 1)]
 		get_tree().call_group("missao", "registrar_nota", nota_id)
+		get_tree().call_group("audio", "play_papel")
 		get_tree().call_group("hud", "show_note", n[0], n[1])
 		player.frozen = true

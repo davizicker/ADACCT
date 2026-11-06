@@ -586,8 +586,15 @@ func _moon() -> DirectionalLight3D:
 	l.transform = Transform3D(Basis.looking_at(-moon_dir, Vector3.UP), Vector3.ZERO)
 	l.shadow_enabled = true
 	l.shadow_opacity = 0.78           # a sombra da lua deixa um pouco de luz (menos "preto chapado")
-	l.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL    # 1 passada de sombra (em vez de 4)
-	l.directional_shadow_max_distance = 60.0
+	l.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS   # 2 cascatas: sombras nítidas perto do jogador e ainda presentes ao longe
+	l.directional_shadow_split_1 = 0.22
+	l.directional_shadow_blend_splits = true                                  # sem faixa visível na troca de cascata
+	l.directional_shadow_max_distance = 85.0
+	l.directional_shadow_fade_start = 0.82
+	l.shadow_bias = 0.03                                                       # menos "acne" (listras) nas paredes sem descolar a sombra dos pés
+	l.shadow_normal_bias = 1.1
+	l.shadow_blur = 1.6                                                        # borda macia, como luz de lua de verdade
+	l.light_angular_distance = 0.45                                            # sombras que suavizam com a distância (Forward+)
 	return l
 
 
@@ -977,7 +984,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	# a porta nunca tem a cor da parede: tons claros/ocre viram madeira escura, para ela se destacar da fachada
 	var wood_porta := wood
 	if wood == "madeira_ocre" or wood == "madeira_branca" or wood == "madeira_natural":
-		wood_porta = "madeira_escura"
+		# portas coloniais mineiras são coloridas (azul, verde, vermelho-sangue); madeira escura demais virava um buraco preto sob a luz fraca
+		wood_porta = ["madeira_azul", "madeira_verde", "madeira_vermelha", "madeira_escura"][_rng_f.randi() % 4]
 	if arched:
 		var dr := 0.72
 		var dh := 3.0
@@ -985,7 +993,15 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			pb.box("cantaria", Vector3(0.2, dh - dr + 0.1, 0.22), Vector3(-0.08, (dh - dr) / 2.0, dz + sz * (dr + 0.11)))
 		pb.arch("cantaria", Vector3(-0.08, dh - dr, dz), dr + 0.11, 0.22, 0.2, 9)
 		pb.box(wood_porta, Vector3(0.08, dh - dr, dr * 2.0), Vector3(-0.18, (dh - dr) / 2.0, dz))
-		pb.half_disc(wood_porta, Vector3(-0.225, dh - dr, dz), dr)
+		pb.half_disc("vidro_luz", Vector3(-0.225, dh - dr, dz), dr * 0.86)                                       # bandeira em arco com vidro aceso
+		for k in 5:                                                                                               # raios de ferro da bandeira
+			var ak := PI * (float(k) + 0.5) / 5.0
+			pb.box("ferro", Vector3(0.02, 0.025, dr * 0.84), Vector3(-0.232, dh - dr + sin(ak) * dr * 0.42, dz + cos(ak) * dr * 0.42), Vector3(ak, 0, 0))
+		for k in 4:                                                                                               # tábuas verticais em relevo + cintas de ferro
+			pb.box("madeira_escura", Vector3(0.025, dh - dr - 0.1, 0.035), Vector3(-0.232, (dh - dr) / 2.0, dz - 0.54 + k * 0.36))
+		for yy: float in [0.55, 1.45, 2.2]:
+			pb.box("ferro", Vector3(0.03, 0.09, dr * 2.0 - 0.1), Vector3(-0.236, yy, dz))
+		pb.sphere("ouro_velho", 0.07, Vector3(-0.255, 1.25, dz + 0.16), 8, 5)                                    # argola/maçaneta
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz - 0.34))
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 0.7, dz + 0.34))
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
@@ -1167,9 +1183,9 @@ func _sign(c: Node3D, b: MeshBatch, z: float) -> void:
 		l.font = _sign_font()
 		l.font_size = 96
 		l.pixel_size = clampf(0.72 / (text.length() * 0.62 * 96.0), 0.0011, 0.0026)
-		l.modulate = Color(0.97, 0.84, 0.50)
-		l.outline_modulate = Color(0.06, 0.03, 0.0)
-		l.outline_size = 14
+		l.modulate = Color(0.98, 0.86, 0.52)
+		l.outline_modulate = Color(0.10, 0.045, 0.01)
+		l.outline_size = 10
 		l.shaded = true
 		l.double_sided = false
 		l.alpha_cut = Label3D.ALPHA_CUT_OPAQUE_PREPASS
@@ -1179,14 +1195,19 @@ func _sign(c: Node3D, b: MeshBatch, z: float) -> void:
 	_emblem(b, String(d[2]), bx, z)
 
 
-var _font_cache: SystemFont = null
+var _font_cache: Font = null
 
-func _sign_font() -> SystemFont:
+## Fonte das placas: Playfair Display SC (OFL) vem junto no projeto, então a letra é a mesma em qualquer computador.
+func _sign_font() -> Font:
 	if _font_cache == null:
-		_font_cache = SystemFont.new()
-		# fonte com serifa, se o computador tiver; senão a engine usa a fonte padrão
-		_font_cache.font_names = PackedStringArray(["Georgia", "Palatino Linotype", "Book Antiqua", "Times New Roman", "serif"])
-		_font_cache.font_weight = 700
+		var ff := load("res://assets/fonts/playfair-display-sc-latin-700-normal.woff2") as Font
+		if ff != null:
+			_font_cache = ff
+		else:
+			var sf := SystemFont.new()
+			sf.font_names = PackedStringArray(["Georgia", "Palatino Linotype", "Book Antiqua", "Times New Roman", "serif"])
+			sf.font_weight = 700
+			_font_cache = sf
 	return _font_cache
 
 
@@ -1254,9 +1275,10 @@ func _flores(b: MeshBatch, centro: Vector3, larg: float, prof: float, n: int, pe
 
 
 func _pot(b: MeshBatch, p: Vector3) -> void:
-	b.cylinder("vaso", 0.11, 0.08, 0.16, p + Vector3(0, 0.08, 0), Vector3.ZERO, 8)
-	_flores(b, p + Vector3(0, 0.15, 0), 0.2, 0.2, 5)
-	_pl_atual.append({"pos": p + Vector3(0, 0.15, 0), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.2)})
+	# vaso de barro de verdade (planter_pot_clay, enviado pelo dono): entra como instância (tipo -1) em Realismo.vidros_e_plantas
+	_pl_atual.append({"pos": p, "tipo": -1, "esc": _rng.randf_range(0.9, 1.15), "vaso": true})
+	_flores(b, p + Vector3(0, 0.2, 0), 0.2, 0.2, 5)
+	_pl_atual.append({"pos": p + Vector3(0, 0.19, 0), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.2)})
 
 
 func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false) -> void:
@@ -2071,7 +2093,7 @@ func _adro_detalhes(root: Node3D, igt: Transform3D) -> void:
 		var pg := _group(g, "PedestalVotivo_%d" % int(sz), Transform3D(Basis.IDENTITY, Vector3(-1.4, 0.0, sz * 3.3)))
 		_mesh_node(pg, "Malha", pb.commit())
 		_blocker(pg, "Colisao", Vector3(0.6, 0.95, 0.6), Vector3(0, 0.47, 0))
-		_prop(pg, "brass_candleholders", Vector3(0, 0.95, 0), 0.0, 0.5)
+		_parte(pg, "brass_candleholders", ["brass_candleholder_03"], Vector3(0, 0.95, 0), 0.0, 0.6)
 		_brilho_em(pg, Vector3(0, 1.45, 0), 0.9)
 	# 3) ex-votos: velas acesas e cera ao pé da parede, ao lado do portal
 	for sz2: float in [-1.0, 1.0]:
@@ -3563,6 +3585,17 @@ func _coletaveis() -> Node3D:
 func _prop(parent: Node, key: String, pos: Vector3, yaw := 0.0, scale := 1.0, align := "chao") -> Node3D:
 	var p := PropKit.make(key, scale, align)
 	p.name = "%s_%03d" % [key, _n]
+	_n += 1
+	p.position = pos
+	p.rotation.y = yaw
+	parent.add_child(p)
+	return p
+
+
+## Uma peça isolada de um .glb que é "folha de catálogo" (ver PropKit.make_filtrado).
+func _parte(parent: Node, key: String, manter: Array, pos: Vector3, yaw := 0.0, scale := 1.0) -> Node3D:
+	var p := PropKit.make_filtrado(key, manter, scale, "chao")
+	p.name = "%s_%03d" % [manter[0], _n]
 	_n += 1
 	p.position = pos
 	p.rotation.y = yaw

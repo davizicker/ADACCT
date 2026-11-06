@@ -218,6 +218,7 @@ func vidros_e_plantas(builder: VilaBuilder, root: Node3D) -> Node3D:
 	out.name = "VidrosEPlantas"
 	var panes: Array = []        # [Transform3D, seed, lit]
 	var plantas: Array = [[], [], [], [], []]
+	var vasos: Array = []        # vasos de barro (modelo enviado pelo dono) nos peitoris e sacadas
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 6161
 	for g_name in ["Casas", "FundoDaRua"]:
@@ -241,7 +242,10 @@ func vidros_e_plantas(builder: VilaBuilder, root: Node3D) -> Node3D:
 			for pl in alvo.get_meta("plantas_janela", []):
 				var tipo: int = int(pl["tipo"])
 				var rot := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * float(pl["esc"]))
-				(plantas[tipo] as Array).append(base_xf * Transform3D(rot, pl["pos"]))
+				if tipo < 0:
+					vasos.append(base_xf * Transform3D(rot, pl["pos"]))
+				else:
+					(plantas[tipo] as Array).append(base_xf * Transform3D(rot, pl["pos"]))
 	# vidros
 	var q := QuadMesh.new()
 	q.size = Vector2(1, 1)
@@ -283,5 +287,21 @@ func vidros_e_plantas(builder: VilaBuilder, root: Node3D) -> Node3D:
 		for i in xs.size():
 			xfp.append((xs[i] as Transform3D) * Transform3D(Basis().scaled(Vector3.ONE * k), Vector3.ZERO) * rel)
 		out.add_child(Quadras.dividir("Plantas_%s" % PLANTAS_JANELA[t], mesh, xfp, 60.0))
+	if not vasos.is_empty():
+		var hv := PropKit.make("planter_pot_clay")
+		var bbv: AABB = hv.get_meta("bb")
+		var miv := hv.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		var relv := Transform3D.IDENTITY
+		var ndv: Node = miv
+		while ndv != hv and ndv != null:
+			relv = (ndv as Node3D).transform * relv
+			ndv = ndv.get_parent()
+		var kv := 0.2 / maxf(bbv.size.y, 0.05)             # vaso de ~20 cm de altura
+		var meshv := miv.mesh
+		hv.free()
+		var xfv: Array = []
+		for xv in vasos:
+			xfv.append((xv as Transform3D) * Transform3D(Basis().scaled(Vector3.ONE * kv), Vector3.ZERO) * relv)
+		out.add_child(Quadras.dividir("Vasos_barro", meshv, xfv, 60.0))
 	print("[vila] vidros com interior: %d | plantas de janela: %d" % [panes.size(), (plantas[0] as Array).size() + (plantas[1] as Array).size() + (plantas[2] as Array).size() + (plantas[3] as Array).size() + (plantas[4] as Array).size()])
 	return out

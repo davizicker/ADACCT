@@ -395,6 +395,30 @@ func _prop_c(key: String, x: float, z: float, yaw := 0.0, escala := 1.0, y := 0.
 	return p
 
 
+func _parte(key: String, manter: Array, x: float, z: float, yaw := 0.0, escala := 1.0, y := 0.0) -> Node3D:
+	return b._parte(_g, key, manter, Vector3(x, y, z), yaw, escala)
+
+
+## Papelaria sobre uma mesa: copo de lápis, borracha e canetas/lápis soltos (cada peça separada, deitada no tampo, em ângulos diferentes).
+func _papelaria(x: float, z: float, y: float, yaw := 0.0) -> void:
+	y = _topo(x, y, z)
+	var c := cos(yaw)
+	var s := sin(yaw)
+	_parte("stationery_supplies", ["stationery_supplies_pencilcup"], x, z, yaw, 1.3, y)
+	_parte("stationery_supplies", ["stationery_supplies_eraser"], x + 0.17 * c, z + 0.1 * s, yaw + 0.6, 1.3, y)
+	var nomes := ["pen_red", "pencil_new_a", "pen_fancy", "pencil_used", "pen_blue"]
+	for k in 3:
+		var ang := yaw + 0.9 + float(k) * 1.15 + float(int(x * 10.0 + z * 3.0) % 5) * 0.2
+		_parte("stationery_supplies", ["stationery_supplies_" + String(nomes[(k + int(x * 7.0)) % nomes.size()])], x - 0.16 + 0.09 * k, z + 0.17 - 0.07 * k, ang, 1.3, y)
+
+
+## Lata de comida isolada (leite, tomate, feijão ou sardinha, conforme a posição).
+func _lata(x: float, z: float, y: float, yaw := 0.0) -> void:
+	var nomes := ["milk", "tomatoes", "beans", "sardines"]
+	var n: String = nomes[int(absf(x * 13.0 + z * 7.0)) % nomes.size()]
+	_parte("long_life_food", ["long_life_food_" + n], x, z, yaw, 1.0, _topo(x, y, z))
+
+
 func _prop(key: String, x: float, z: float, yaw := 0.0, escala := 1.0, y := 0.0) -> Node3D:
 	return b._prop(_g, key, Vector3(x, y, z), yaw, escala)
 
@@ -419,16 +443,16 @@ func _sala_benedita(g: Node3D) -> void:
 	_nota(5.0, 0.86, 3.15, 25, "Ler o papel atrás do retrato")
 	_prop_c("painted_wooden_nightstand", 2.35, 5.6, PI, 1.0)
 	_prop("planter_pot_clay", 6.5, 0.7, 0.0, 1.3, 0.0)
-	_prop("anthurium_botany_01", 6.5, 0.7, 0.3, 0.2, 0.28)
+	_parte("anthurium_botany_01", ["anthurium_botany_01_a"], 6.5, 0.7, 0.3, 0.2, 0.28)
 	_item("terco", Vector3(3.2, 1.07, 5.55), "Pegar o terço de Dona Benedita")
 	_oleo(6.3, 0.95, 3.3)
 	_oleo(0.6, 1.4, 4.2)
 	_prop("wooden_bucket_01", 6.4, 1.2, 0.5)
 	_prop("wooden_stool_01", 5.4, 4.2, 0.3)
 	_prop_c("round_wooden_table_02", 1.5, 1.2, 0.0, 1.0)
-	_prop("long_life_food", 4.95, 3.2, 0.6, 1.0, 0.82)
+	_lata(4.95, 3.2, 0.82, 0.6)
 	_prop("watering_can_metal_01", 6.4, 0.9, 2.5, 1.0)
-	_prop("stationery_supplies", 1.5, 1.2, 0.3, 1.0, 0.75)
+	_papelaria(1.5, 1.2, 0.75, 0.3)
 	_fim()
 
 
@@ -456,7 +480,7 @@ func _sala_padaria(g: Node3D) -> void:
 	_nota(2.0, 1.15, 4.1, 10, "Ler o caderno de fiado")
 	_oleo(3.1, 0.95, 1.9)
 	_prop("wooden_bucket_01", 1.2, 4.4, 0.0)
-	_prop("long_life_food", 2.0, 3.5, 1.2, 1.0, 1.05)
+	_lata(2.0, 3.5, 1.05, 1.2)
 	_prop("watering_can_metal_01", 4.4, 4.5, 0.4, 1.0)
 	_fim()
 
@@ -490,8 +514,8 @@ func _sala_venda(g: Node3D) -> void:
 	_item("chave_casarao", Vector3(3.3, 1.1, 4.6), "Abrir a gaveta: pegar a chave do casarão")
 	_oleo(6.2, 1.1, 4.7)
 	_prop("cigarette_pack", 4.9, 4.45, 0.4, 1.5, 1.05)
-	_prop("long_life_food", 3.0, 4.9, 0.0, 1.0, 1.05)
-	_prop("long_life_food", 5.2, 4.9, 0.5, 1.0, 1.05)
+	_lata(3.0, 4.9, 1.05, 0.0)
+	_lata(5.2, 4.9, 1.05, 0.5)
 	_prop_c("worn_metal_rack", 7.4, 0.8, -PI / 2.0, 1.0)
 	_prop_c("standing_chalkboard_01", 6.2, 1.2, 0.3, 1.0)
 	_fim()
@@ -559,7 +583,9 @@ func _sala_casarao(g: Node3D) -> void:
 	for k in 2:
 		_cadeira(3.9 + k * 1.1, 2.82, 0.0)
 	_bx("madeira_natural", Vector3(7.4, 0, 3.8), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
-	_prop("brass_candleholders", 5.0, 3.8, 0.0, 0.5, 0.89)                                          # conjunto de candelabros de latão sobre a mesa
+	_parte("brass_candleholders", ["brass_candleholder_01"], 4.3, 3.8, 0.0, 0.55, 0.89)
+	_parte("brass_candleholders", ["brass_candleholder_02"], 5.0, 3.8, 0.0, 0.55, 0.89)
+	_parte("brass_candleholders", ["brass_candleholder_03"], 5.7, 3.8, 0.0, 0.55, 0.89)                                          # conjunto de candelabros de latão sobre a mesa
 	var lcd := b._lamp_light(_g, Vector3(5.0, 1.45, 3.8), 0.5)
 	lcd.omni_range = 5.0
 	_prop_c("WoodenChair_01", 2.55, 3.8, PI / 2.0, 0.5)                                                # cadeira gótica na cabeceira
@@ -577,7 +603,7 @@ func _sala_casarao(g: Node3D) -> void:
 	_mesa(1.4, 6.7, 1.6, 0.8, 0.78, "madeira_escura")
 	_prop_c("chinese_armchair", 1.4, 5.95, 0.0, 0.72)                                                  # poltrona de espaldar alto na escrivaninha
 	_prop("planter_pot_clay", 9.3, 0.8, 0.0, 1.4, 0.0)
-	_prop("anthurium_botany_01", 9.3, 0.8, 0.9, 0.22, 0.30)
+	_parte("anthurium_botany_01", ["anthurium_botany_04_d"], 9.3, 0.8, 0.9, 0.22, 0.30)
 	_vela(1.0, 0.82, 6.9, true)
 	_item("livro", Vector3(1.8, 0.88, 6.7), "Pegar o livro de registros dos Vaz")
 	_nota(4.1, 0.9, 3.55, 21, "Ler o telegrama da Companhia")
@@ -590,7 +616,7 @@ func _sala_casarao(g: Node3D) -> void:
 	_prop_c("GothicCabinet_01", 6.0, 7.35, PI, 1.0)
 	_prop_c("vintage_day_bed", 2.0, 0.75, 0.0, 1.0)
 	_prop_c("gothic_coffee_table", 2.0, 2.6, 0.5, 1.0)
-	_prop("stationery_supplies", 1.55, 6.5, 0.4, 1.0, 0.82)
+	_papelaria(1.55, 6.5, 0.82, 0.4)
 	_fim()
 	# poeira: nada de lamparina acesa aqui, só a vela do escritório e o luar
 
@@ -782,7 +808,7 @@ func _sala_escola(g: Node3D) -> void:
 			_mesa(x, z, 1.0, 0.5, 0.7, "madeira_natural")
 			_cadeira(x, z - 0.55, PI, "madeira_escura")
 	_mesa(5.6, 4.8, 1.4, 0.7, 0.8, "madeira_escura")                # mesa da professora
-	_prop("stationery_supplies", 5.6, 4.8, 0.4, 1.0, 0.84)
+	_papelaria(5.6, 4.8, 0.84, 0.4)
 	_lamparina(5.2, 0.84, 4.9)
 	_janela("O", 3.0)
 	_nota(6.0, 0.9, 4.8, 13, "Ler o caderno de caligrafia")
@@ -845,7 +871,7 @@ func _sala_pensao(g: Node3D) -> void:
 	_prop("vintage_binocular", 3.2, 2.6, 0.4, 1.0, 0.56)
 	_prop("cigarette_pack", 3.9, 2.4, 1.0, 1.5, 0.56)
 	_mesa(3.5, 5.3, 1.2, 0.7, 0.8, "madeira_escura")
-	_prop("stationery_supplies", 3.2, 5.3, 0.4, 1.0, 0.84)
+	_papelaria(3.2, 5.3, 0.84, 0.4)
 	_lamparina(3.9, 0.84, 5.3)
 	_janela("L", 4.0)
 	_janela("O", 4.0)
@@ -853,7 +879,8 @@ func _sala_pensao(g: Node3D) -> void:
 	_prop_c("painted_wooden_nightstand", 2.0, 5.55, PI, 1.0)
 	_prop("vintage_lighter", 3.55, 5.5, 0.5, 1.0, 0.8)
 	_prop_c("painted_wooden_nightstand", 5.0, 5.55, PI, 1.0)
-	_prop("vintage_suitcase", 5.6, 2.1, 0.5, 0.75, 0.0)                                              # as malas do Dr. Anselmo, esquecidas no quarto
+	_parte("vintage_suitcase", ["vintage_suitcase_01_"], 5.6, 2.1, 0.5, 0.75, 0.0)
+	_parte("vintage_suitcase", ["vintage_suitcase_02_"], 6.25, 2.55, -0.4, 0.75, 0.0)                                              # as malas do Dr. Anselmo, esquecidas no quarto
 	_oleo(6.5, 0.95, 1.0)
 	_fim()
 
@@ -862,7 +889,7 @@ func _sala_costureira(g: Node3D) -> void:
 	_casca("Casa da costureira", 6.0, 5.0, 2.9, "reboco_azul", "madeira_natural")
 	_mesa(3.0, 3.6, 1.8, 0.9, 0.8, "madeira_natural")                           # mesa de corte
 	_bb.box("pano_rosa", Vector3(1.4, 0.03, 0.8), Vector3(3.0, 0.83, 3.6))
-	_prop("stationery_supplies", 3.8, 3.4, 0.6, 1.0, 0.84)
+	_papelaria(3.8, 3.4, 0.84, 0.6)
 	# manequim: tronco de cone + esfera
 	_bb.cylinder("pano_cru", 0.24, 0.14, 0.7, Vector3(5.2, 1.2, 3.8), Vector3.ZERO, 10)
 	_bb.cylinder("madeira_escura", 0.03, 0.03, 0.85, Vector3(5.2, 0.42, 3.8), Vector3.ZERO, 6)
@@ -883,7 +910,7 @@ func _sala_deposito(g: Node3D) -> void:
 	_prop_c("worn_metal_rack", 0.4, 1.6, PI / 2.0, 1.0)
 	_prop_c("worn_metal_rack", 0.4, 3.2, PI / 2.0, 1.0)
 	for k in 4:                       # só onde há prateleira embaixo (as duas últimas latas ficavam no ar)
-		_prop("long_life_food", 0.45, 1.0 + k * 0.5, PI / 2.0, 1.0, 0.95 if k % 2 == 0 else 1.45)
+		_lata(0.45, 1.0 + k * 0.5, 0.95 if k % 2 == 0 else 1.45, PI / 2.0)
 	_prop_c("wine_barrel_01", 6.3, 1.0, 0.0, 1.0)
 	_prop_c("wine_barrel_01", 6.3, 2.0, 1.0, 1.0)
 	_saco(5.4, 3.8)

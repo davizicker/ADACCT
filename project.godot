@@ -27,7 +27,9 @@ limits/opengl/max_renderable_lights=128
 occlusion_culling/use_occlusion_culling=true
 environment/volumetric_fog/volume_size=48
 environment/volumetric_fog/volume_depth=48
-lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/size=4096
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
+lights_and_shadows/positional_shadow/soft_shadow_filter_quality=2
 
 renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="forward_plus"
