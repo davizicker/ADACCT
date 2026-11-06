@@ -3379,6 +3379,13 @@ func _nichos() -> Node3D:
 				_nicho_alminhas(b)
 		_nicho_oferendas(b, variante)
 		_mesh_node(g, "Malha", b.commit())
+		if variante != 1:                                  # santa de pedra no nicho (mesmo modelo dos santos da igreja)
+			var spr := PropKit.make("gothic_statue", 1.0)
+			var sbb2: AABB = spr.get_meta("bb")
+			spr.free()
+			var alt := 0.95 if variante == 0 else 0.85
+			var st := _prop(g, "gothic_statue", Vector3(-0.2, 1.58 if variante == 0 else 1.66, 0.0), -PI / 2.0, alt / maxf(sbb2.size.y, 0.1))
+			st.name = "Santa"
 		var l := OmniLight3D.new()
 		l.name = "LuzDaVela"
 		l.position = Vector3(-0.55, 1.95, 0)
@@ -3467,15 +3474,6 @@ func _nicho_alminhas(b: MeshBatch) -> void:
 	b.box("bradador_preto", Vector3(0.05, 1.12, 0.66), Vector3(-0.20, 2.20, 0))                   # painel escuro
 	b.half_disc("bradador_preto", Vector3(-0.20, 2.76, 0), 0.33, 12)
 	b.arch("cantaria", Vector3(-0.22, 2.76, 0), 0.38, 0.09, 0.12, 12)
-	for k in 7:                                                                                    # chamas em cone
-		var z := -0.27 + k * 0.09
-		b.cylinder("chama", 0.0, 0.035, 0.20 + 0.07 * float(k % 3), Vector3(-0.235, 1.80 + 0.10 * float(k % 3), z), Vector3.ZERO, 6)
-	for k in 3:                                                                                    # almas de braços erguidos
-		var z2 := -0.16 + k * 0.16
-		b.cylinder("pano_cru", 0.025, 0.045, 0.28, Vector3(-0.245, 2.10, z2), Vector3.ZERO, 6)
-		b.sphere("pano_cru", 0.04, Vector3(-0.245, 2.30, z2), 6, 4)
-		b.box("pano_cru", Vector3(0.025, 0.17, 0.025), Vector3(-0.245, 2.28, z2 - 0.06), Vector3(0.0, 0.0, 0.4))
-		b.box("pano_cru", Vector3(0.025, 0.17, 0.025), Vector3(-0.245, 2.28, z2 + 0.06), Vector3(0.0, 0.0, -0.4))
 	b.box("ouro_velho", Vector3(0.03, 0.14, 0.14), Vector3(-0.245, 2.95, 0))                      # figura de Cristo no alto
 	b.box("ouro_velho", Vector3(0.03, 0.04, 0.30), Vector3(-0.245, 2.98, 0))
 	b.box("telha", Vector3(0.62, 0.06, 1.12), Vector3(-0.22, 3.30, 0), Vector3(0.0, 0.0, 0.20))   # telhadinho em água
