@@ -39,11 +39,7 @@ func _ready() -> void:
 	_som.volume_db = -16.0
 	add_child(_som)
 	# zonas de chuva: o adro da igreja (a mais forte), o largo da fonte e a ponte do riacho
-	_zonas = [
-		[Route.pos(Route.CHURCH_S - 20.0), 40.0],
-		[Route.pos(Route.FOUNTAIN_S), 22.0],
-		[Route.pos(Route.BRIDGE_S), 18.0],
-	]
+	_zonas = []        # sem zonas de chuva: o jogo não chove por conta própria (só se o jogador ligar a opção "Chuva")
 	set_ligada(Config.chuva)
 
 

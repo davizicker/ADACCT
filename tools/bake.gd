@@ -198,7 +198,8 @@ func _materials() -> void:
 	ResourceSaver.save(pc, MATS + "pedra_chao.tres")
 	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.34, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
-	_surf("cantaria_ocre", "cantaria", Color(0.94, 0.77, 0.50), 0.5, 0.8, 1.0)      # cantaria ocre da igreja principal
+	_surf("cantaria_ocre", "cantaria", Color(0.94, 0.77, 0.50), 0.5, 0.8, 1.0)
+	_surf("pedra_sabao", "cantaria", Color(0.56, 0.60, 0.58), 0.5, 0.62, 1.1)      # pedra-sabão cinza-azulada (portal da igreja)      # cantaria ocre da igreja principal
 	_mista("reboco_branco", "reboco_velho", "reboco", Color(0.97, 0.95, 0.90), 0.22, 0.30, 0.22)
 	_mista("reboco_caiado", "reboco", "reboco_velho", Color(1.0, 0.985, 0.94), 0.22, 0.10, 0.04)          # igreja: cal fresca, quase sem sujeira
 	_mista("reboco_branco_novo", "reboco", "reboco_velho", Color(0.98, 0.97, 0.93), 0.22, 0.24, 0.2)

@@ -2224,14 +2224,15 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 			b.sphere(ced, 0.34, Vector3(-0.15, fh + 0.85, sz * (half - 0.3)), 8, 5)
 		b.box(ced, Vector3(0.3, 2.4, 0.3), Vector3(-0.05, fh + 5.0, 0))
 		b.box(ced, Vector3(0.3, 0.3, 1.3), Vector3(-0.05, fh + 5.6, 0))
-	# portal em arco de cantaria com porta de madeira e leque de luz
+	# portal em arco de pedra-sabão (cinza-azulada, como o de Aleijadinho em Ouro Preto) com porta de madeira e leque de luz
+	var pced: String = "pedra_sabao" if twin else ced
 	var pr := 1.9
 	var py := 4.4
 	for sz: float in [-1.0, 1.0]:
-		b.box(ced, Vector3(0.62, py, 0.52), Vector3(-0.31, py / 2.0, sz * (pr + 0.26)))
-	b.arch(ced, Vector3(-0.31, py, 0), pr + 0.26, 0.52, 0.62, 14)
-	b.box(ced, Vector3(0.78, 0.62, 0.55), Vector3(-0.34, py + pr + 0.28, 0))                  # fecho do arco
-	b.box(ced, Vector3(0.50, 0.30, 2.0 * pr + 1.6), Vector3(-0.30, py + pr + 0.90, 0))          # cornija do portal
+		b.box(pced, Vector3(0.62, py, 0.52), Vector3(-0.31, py / 2.0, sz * (pr + 0.26)))
+	b.arch(pced, Vector3(-0.31, py, 0), pr + 0.26, 0.52, 0.62, 14)
+	b.box(pced, Vector3(0.78, 0.62, 0.55), Vector3(-0.34, py + pr + 0.28, 0))                  # fecho do arco
+	b.box(pced, Vector3(0.50, 0.30, 2.0 * pr + 1.6), Vector3(-0.30, py + pr + 0.90, 0))          # cornija do portal
 	var pb := _batch()                      # a porta é um nó à parte: no lote grande os triângulos dela se perdiam (mesmo bug das casas)
 	for sz: float in [-1.0, 1.0]:
 		pb.box(porta_mat, Vector3(0.14, py - 0.05, pr - 0.04), Vector3(-0.50, py / 2.0, sz * (pr / 2.0)))
@@ -2257,18 +2258,18 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	# colunas do portal com capitel e entablamento, medalhão e nichos com santos (Ouro Preto: a portada é a joia da fachada)
 	for sz: float in [-1.0, 1.0]:
 		var zc := sz * (pr + 1.25)
-		b.cylinder(ced, 0.36, 0.42, py + pr + 0.7, Vector3(-0.62, (py + pr + 0.7) / 2.0, zc), Vector3.ZERO, 14)
-		b.box(ced, Vector3(0.95, 0.34, 0.95), Vector3(-0.62, 0.17, zc))
-		b.box(ced, Vector3(1.0, 0.36, 1.0), Vector3(-0.62, py + pr + 0.9, zc))
-		b.box(ced, Vector3(0.7, 0.2, 0.7), Vector3(-0.62, py + pr + 1.18, zc))
+		b.cylinder(pced, 0.36, 0.42, py + pr + 0.7, Vector3(-0.62, (py + pr + 0.7) / 2.0, zc), Vector3.ZERO, 14)
+		b.box(pced, Vector3(0.95, 0.34, 0.95), Vector3(-0.62, 0.17, zc))
+		b.box(pced, Vector3(1.0, 0.36, 1.0), Vector3(-0.62, py + pr + 0.9, zc))
+		b.box(pced, Vector3(0.7, 0.2, 0.7), Vector3(-0.62, py + pr + 1.18, zc))
 		# nicho com moldura e fundo escuro
 		var nz := sz * 5.35
 		b.box(ced, Vector3(0.34, 2.9, 1.6), Vector3(-0.17, 5.4, nz))
 		b.arch(ced, Vector3(-0.17, 6.85, nz), 0.8, 0.34, 0.2, 9)
 		b.box("janela_escura", Vector3(0.1, 2.5, 1.1), Vector3(-0.32, 5.35, nz))
 		b.box(ced, Vector3(0.5, 0.18, 1.3), Vector3(-0.36, 4.15, nz))
-	b.box(ced, Vector3(1.05, 0.5, 2.0 * (pr + 1.25) + 1.3), Vector3(-0.62, py + pr + 1.55, 0))
-	b.box(ced, Vector3(1.15, 0.2, 2.0 * (pr + 1.25) + 1.5), Vector3(-0.66, py + pr + 1.9, 0))
+	b.box(pced, Vector3(1.05, 0.5, 2.0 * (pr + 1.25) + 1.3), Vector3(-0.62, py + pr + 1.55, 0))
+	b.box(pced, Vector3(1.15, 0.2, 2.0 * (pr + 1.25) + 1.5), Vector3(-0.66, py + pr + 1.9, 0))
 	if not twin:
 		b.cylinder(ced, 1.0, 1.0, 0.34, Vector3(-0.40, py + pr + 3.2, 0), Vector3(0, 0, PI / 2.0), 20)          # medalhão
 		b.cylinder("ouro_velho", 0.72, 0.72, 0.38, Vector3(-0.44, py + pr + 3.2, 0), Vector3(0, 0, PI / 2.0), 20)
@@ -2277,6 +2278,8 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 		b.box(ced, Vector3(0.9, 0.16 * (4 - k), width * 0.9), Vector3(-1.9 - k * 0.9, 0.08 * (4 - k), 0))
 	if twin:
 		_fachada_barroca(b, width, fh, py, pr, half, ced, wall)
+		_igreja_relevos_portal(b, py, pr)
+		_igreja_laterais(c, b, width, nave_len, nh, ced, wall)
 	_mesh_node(c, "Detalhes", b.commit())
 	# santos nos nichos (Poly Haven gothic_statue, CC0)
 	var sprobe := PropKit.make("gothic_statue", 1.0)
@@ -2384,6 +2387,86 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 	c.add_child(light)
 	_halo(c, Vector3(-1.2, 5.0, 0), 3.2, "halo_quente")
 	return c
+
+
+## Relevos de pedra-sabão sobre o portal: festões (guirlandas) entre as colunas e querubins ao lado do medalhão.
+func _igreja_relevos_portal(b: MeshBatch, py: float, pr: float) -> void:
+	var zc := pr + 1.25
+	var yb := py + pr + 2.35
+	for sz: float in [-1.0, 1.0]:
+		for k in 9:                                                  # guirlanda pendurada em curva (catenária) de cada lado
+			var f := float(k) / 8.0
+			var zz := sz * lerpf(0.9, zc - 0.2, f)
+			var yy := yb - 0.34 * sin(f * PI)
+			b.sphere("pedra_sabao", 0.115, Vector3(-0.78, yy, zz), 8, 5)
+		for k in 3:                                                  # frutas maiores no meio do festão
+			var f2 := 0.25 + 0.25 * float(k)
+			b.sphere("pedra_sabao", 0.17, Vector3(-0.82, yb - 0.36 * sin(f2 * PI) - 0.1, sz * lerpf(0.9, zc - 0.2, f2)), 8, 5)
+		# querubim: cabecinha com duas asas, ao lado do medalhão
+		var qz := sz * 2.15
+		b.sphere("pedra_sabao", 0.2, Vector3(-0.8, py + pr + 3.3, qz), 10, 6)
+		b.box("pedra_sabao", Vector3(0.1, 0.12, 0.42), Vector3(-0.78, py + pr + 3.18, qz + sz * 0.3), Vector3(0, 0, sz * 0.5))
+		b.box("pedra_sabao", Vector3(0.1, 0.12, 0.42), Vector3(-0.78, py + pr + 3.18, qz - sz * 0.3), Vector3(0, 0, -sz * 0.5))
+	b.box("pedra_sabao", Vector3(0.22, 1.4, 1.1), Vector3(-0.74, py + pr + 3.0, 0))             # cartela sob o medalhão
+	b.sphere("ouro_velho", 0.16, Vector3(-0.9, py + pr + 3.0, 0), 10, 6)
+
+
+## Laterais da nave: embasamento de pedra, pilastras a cada 5 m, cornija com cachorros sob o beiral, óculos e janelas gradeadas,
+## capela-mor mais baixa nos fundos e lampiões de parede.
+func _igreja_laterais(c: Node3D, b: MeshBatch, width: float, nave_len: float, nh: float, ced: String, wall: String) -> void:
+	var half := width / 2.0
+	for sz: float in [-1.0, 1.0]:
+		var zw := sz * (half + 0.12)
+		b.box("muro", Vector3(nave_len - 1.0, 1.1, 0.32), Vector3(nave_len / 2.0 + 1.0, 0.45, zw))                 # embasamento de pedra
+		b.box(ced, Vector3(nave_len - 1.0, 0.14, 0.40), Vector3(nave_len / 2.0 + 1.0, 1.04, zw))
+		b.box(ced, Vector3(nave_len - 1.0, 0.34, 0.52), Vector3(nave_len / 2.0 + 1.0, nh - 0.2, sz * (half + 0.18)))   # cornija sob o beiral
+		var x := 2.2
+		while x < nave_len - 1.0:
+			b.box(ced, Vector3(0.46, nh, 0.36), Vector3(x, nh / 2.0, zw))                                           # pilastra
+			b.box(ced, Vector3(0.62, 0.3, 0.46), Vector3(x, nh - 0.05, zw))
+			# janela entre pilastras: moldura de cantaria, vidro escuro e grade de ferro; óculo redondo no alto
+			var xm := x + 2.5
+			if xm < nave_len - 1.4:
+				b.box(ced, Vector3(1.5, 2.5, 0.2), Vector3(xm, 2.9, zw + sz * 0.03))
+				b.box("janela_escura", Vector3(1.1, 2.1, 0.12), Vector3(xm, 2.9, zw + sz * 0.1))
+				for g in 4:
+					b.box("ferro", Vector3(0.04, 2.1, 0.05), Vector3(xm - 0.42 + g * 0.28, 2.9, zw + sz * 0.17))
+				b.cylinder(ced, 0.82, 0.82, 0.2, Vector3(xm, nh - 2.6, zw + sz * 0.03), Vector3(PI / 2.0, 0, 0), 18)
+				b.cylinder("janela_escura", 0.6, 0.6, 0.12, Vector3(xm, nh - 2.6, zw + sz * 0.12), Vector3(PI / 2.0, 0, 0), 18)
+			x += 5.0
+		var xc := 1.5
+		while xc < nave_len:                                                                                        # cachorros (consolos) sob o beiral
+			b.box(ced, Vector3(0.22, 0.28, 0.34), Vector3(xc, nh - 0.55, sz * (half + 0.3)))
+			xc += 0.95
+	# capela-mor: volume mais baixo e estreito nos fundos, com telhado próprio e cruz
+	var cw := width * 0.62
+	var cl := 8.0
+	var ch := nh - 2.8
+	_box(c, "CapelaMor", Vector3(cl, ch + 3.0, cw), Vector3(nave_len + cl / 2.0 - 0.1, (ch - 3.0) / 2.0, 0), wall, true)
+	var rb := _batch()
+	var rise2 := (cw + 1.0) * 0.3
+	rb.roof("telha_uv", wall, Vector3(cw + 1.0, rise2, cl + 1.0), Vector3(nave_len + cl / 2.0 - 0.1, ch + rise2 / 2.0, 0), PI / 2.0, 3.6, "madeira_escura")
+	rb.box("telha_cumeeira", Vector3(cl + 1.1, 0.26, 0.4), Vector3(nave_len + cl / 2.0 - 0.1, ch + rise2 + 0.05, 0))
+	_mesh_node(c, "TelhadoCapela", rb.commit())
+	var ab := _batch()
+	for sz: float in [-1.0, 1.0]:
+		ab.box(ced, Vector3(cl, 0.3, 0.5), Vector3(nave_len + cl / 2.0 - 0.1, ch - 0.15, sz * (cw / 2.0 + 0.1)))
+		ab.box("muro", Vector3(cl, 1.0, 0.3), Vector3(nave_len + cl / 2.0 - 0.1, 0.4, sz * (cw / 2.0 + 0.1)))
+		for xx: float in [nave_len + 1.6, nave_len + 5.4]:
+			ab.box(ced, Vector3(0.4, ch, 0.34), Vector3(xx, ch / 2.0, sz * (cw / 2.0 + 0.1)))
+	ab.box("ferro", Vector3(0.12, 1.8, 0.12), Vector3(nave_len + cl - 0.3, ch + rise2 + 0.9, 0))
+	ab.box("ferro", Vector3(0.8, 0.12, 0.12), Vector3(nave_len + cl - 0.3, ch + rise2 + 1.4, 0))
+	_mesh_node(c, "DetalhesCapela", ab.commit())
+	# lampiões de parede nos flancos (só brilho decorativo: sem luz extra)
+	for sz: float in [-1.0, 1.0]:
+		for xl: float in [nave_len * 0.3, nave_len * 0.7]:
+			var lg := _group(c, "LampiaoFlanco_%d_%d" % [int(sz), int(xl)], Transform3D(Basis.IDENTITY, Vector3(xl, 3.6, sz * (half + 0.55))))
+			var lb := _batch()
+			lb.box("ferro", Vector3(0.08, 0.08, 0.4), Vector3(0, 0, 0))
+			lb.box("ferro", Vector3(0.22, 0.34, 0.22), Vector3(0, -0.2, sz * 0.2))
+			lb.sphere("chama", 0.07, Vector3(0, -0.2, sz * 0.2), 8, 5)
+			_mesh_node(lg, "Malha", lb.commit())
+			_halo(lg, Vector3(0, -0.2, sz * 0.2), 1.4, "halo_vela")
 
 
 ## Fachada barroca da igreja principal (inspirada na foto de referência): frontão curvo em S com volutas, cartela e óculo,
