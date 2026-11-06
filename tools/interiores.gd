@@ -388,9 +388,9 @@ func _sala_benedita(g: Node3D) -> void:
 	_armario(0.4, 2.2, 1.3, 2.0, 0.55, PI / 2.0)
 	_fogao(6.0, 5.4, PI)
 	_mesa(4.6, 2.9, 1.6, 0.9)
-	_cadeira(3.8, 2.9, -PI / 2.0)
-	_cadeira(5.4, 2.9, PI / 2.0)
-	_cadeira(4.6, 2.1, 0.0)
+	_cadeira(3.4, 2.9, -PI / 2.0)
+	_cadeira(5.8, 2.9, PI / 2.0)
+	_cadeira(4.6, 2.0, 0.0)
 	_lamparina(4.6, 0.82, 3.1)
 	_oratorio(3.6, 5.75)
 	_bb.box("pano_azul", Vector3(2.4, 0.012, 1.6), Vector3(3.0, 0.008, 3.4))             # tapete
@@ -863,7 +863,7 @@ func _sala_deposito(g: Node3D) -> void:
 	_casca("Depósito", 7.0, 5.0, 3.2, "reboco_branco", "cantaria")
 	_prop_c("worn_metal_rack", 0.4, 1.6, PI / 2.0, 1.0)
 	_prop_c("worn_metal_rack", 0.4, 3.2, PI / 2.0, 1.0)
-	for k in 6:
+	for k in 4:                       # só onde há prateleira embaixo (as duas últimas latas ficavam no ar)
 		_prop("long_life_food", 0.45, 1.0 + k * 0.5, PI / 2.0, 1.0, 0.95 if k % 2 == 0 else 1.45)
 	_prop_c("wine_barrel_01", 6.3, 1.0, 0.0, 1.0)
 	_prop_c("wine_barrel_01", 6.3, 2.0, 1.0, 1.0)
