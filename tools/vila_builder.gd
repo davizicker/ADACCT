@@ -550,20 +550,22 @@ func _environment() -> WorldEnvironment:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.11, 0.14, 0.22)
-	env.ambient_light_energy = 0.38
+	env.ambient_light_color = Color(0.10, 0.13, 0.20)
+	env.ambient_light_energy = 0.34
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.10, 0.12, 0.19)
-	env.fog_density = 0.030
-	env.fog_sky_affect = 0.25
+	env.fog_light_color = Color(0.085, 0.11, 0.17)         # névoa fria, esverdeada e mais escura (clima de terror)
+	env.fog_density = 0.033
+	env.fog_sky_affect = 0.35
+	env.fog_aerial_perspective = 0.3                        # o longe esmaece em direção à cor do céu, mais natural
+	env.fog_sun_scatter = 0.06                              # a lua "vaza" na névoa
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.0
 	env.glow_enabled = true
 	env.glow_intensity = 0.8
 	env.glow_bloom = 0.1
 	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.08
-	env.adjustment_saturation = 0.95
+	env.adjustment_contrast = 1.11
+	env.adjustment_saturation = 0.86
 	# Só valem no renderizador Forward+ (Projeto > Configurações > Renderização).
 	env.ssao_enabled = true
 	env.ssao_intensity = 2.0
@@ -2115,6 +2117,64 @@ func _adro_detalhes(root: Node3D, igt: Transform3D) -> void:
 	_mesh_node(qa, "Malha", qb.commit())
 	_blocker(qa, "Colisao", Vector3(0.3, 2.3, 2.0), Vector3(0, 1.15, 0))
 	_reservar(igt * Vector3(-12.0, 0.0, 8.7), 1.6)
+	# 6) coreto na outra metade do adro e ciprestes atrás dos muros (altura e silhueta contra a neblina)
+	_coreto(g, Vector3(-36.0, 0.0, 5.8))
+	_reservar(igt * Vector3(-36.0, 0.0, 5.8), 4.2)
+	for sg2: float in [-1.0, 1.0]:
+		var sc2 := Route.S_END + 6.0
+		while sc2 < Route.CHURCH_S - 6.0:
+			var cp := Route.pos(sc2) + Route.right(sc2) * sg2 * (Route.width(sc2) * 0.5 + SW + 5.2 + _rng.randf_range(-0.6, 0.6))
+			_cipreste(root, Vector3(cp.x, cp.y - 0.4, cp.z), _rng.randf_range(7.0, 11.0), _rng.randf() * TAU)
+			sc2 += _rng.randf_range(7.0, 10.5)
+
+
+## Coreto de praça (octogonal, colunas de ferro, telhado de telha) e ciprestes: dão altura e silhueta ao adro.
+func _coreto(parent: Node3D, pos: Vector3) -> void:
+	var cg := _group(parent, "Coreto", Transform3D(Basis.IDENTITY, pos))
+	var cb := _batch()
+	cb.cylinder("cantaria", 3.5, 3.5, 0.3, Vector3(0, 0.15, 0), Vector3.ZERO, 16)
+	cb.cylinder("cantaria_ocre", 3.2, 3.2, 0.1, Vector3(0, 0.34, 0), Vector3.ZERO, 16)
+	for k in 8:
+		var a := TAU * float(k) / 8.0 + TAU / 16.0
+		var px := cos(a) * 2.9
+		var pz := sin(a) * 2.9
+		cb.cylinder("cantaria_ocre", 0.2, 0.2, 0.4, Vector3(px, 0.6, pz), Vector3.ZERO, 12)         # base da coluna
+		cb.cylinder("ferro", 0.065, 0.055, 3.0, Vector3(px, 2.3, pz), Vector3.ZERO, 12)
+		cb.sphere("ouro_velho", 0.09, Vector3(px, 3.84, pz), 10, 6)
+		var a2 := TAU * float(k + 1) / 8.0 + TAU / 16.0
+		if k != 0:                                                                    # guarda-corpo (a abertura k==0 é a entrada)
+			var mx := (px + cos(a2) * 2.9) * 0.5
+			var mz := (pz + sin(a2) * 2.9) * 0.5
+			var ln := Vector2(cos(a2) * 2.9 - px, sin(a2) * 2.9 - pz).length()
+			var yaw := atan2(-(sin(a2) * 2.9 - pz), cos(a2) * 2.9 - px)
+			cb.box("ferro", Vector3(ln, 0.045, 0.045), Vector3(mx, 1.38, mz), Vector3(0, yaw, 0))
+			cb.box("ferro", Vector3(ln, 0.03, 0.03), Vector3(mx, 0.95, mz), Vector3(0, yaw, 0))
+			for q in 6:
+				var f := (float(q) + 0.5) / 6.0
+				cb.cylinder("ferro", 0.014, 0.014, 0.45, Vector3(lerpf(px, cos(a2) * 2.9, f), 1.17, lerpf(pz, sin(a2) * 2.9, f)), Vector3.ZERO, 12)
+	cb.cylinder("madeira_escura", 3.3, 3.3, 0.22, Vector3(0, 3.95, 0), Vector3.ZERO, 16)               # viga em anel
+	cb.cylinder("telha", 3.7, 0.25, 1.5, Vector3(0, 4.8, 0), Vector3.ZERO, 16)                          # telhado cônico
+	cb.cylinder("ferro", 0.04, 0.02, 0.9, Vector3(0, 5.95, 0), Vector3.ZERO, 12)
+	cb.sphere("ouro_velho", 0.12, Vector3(0, 6.45, 0), 10, 6)
+	_mesh_node(cg, "Malha", cb.commit())
+	for k in 8:
+		var a := TAU * float(k) / 8.0 + TAU / 16.0
+		_blocker(cg, "ColColuna_%d" % k, Vector3(0.3, 3.0, 0.3), Vector3(cos(a) * 2.9, 1.5, sin(a) * 2.9))
+	_lamp_light(cg, Vector3(0, 3.2, 0), 1.0).omni_range = 7.5
+	_halo(cg, Vector3(0, 3.1, 0), 1.6, "halo_vela")
+
+
+func _cipreste(parent: Node3D, pos: Vector3, h: float, yaw := 0.0) -> void:
+	var cg := _group(parent, "Cipreste_%d" % _n, Transform3D(Basis(Vector3.UP, yaw), pos))
+	_n += 1
+	var cb := _batch()
+	var r := h * 0.11
+	cb.cylinder("madeira_escura", 0.16, 0.12, h * 0.25, Vector3(0, h * 0.125, 0), Vector3.ZERO, 12)
+	for k in 3:                                            # três cones sobrepostos e levemente desencontrados: silhueta irregular e escura
+		var kk := float(k)
+		cb.cylinder("cipreste", r * (1.0 - kk * 0.18), 0.04, h * (0.82 - kk * 0.12), Vector3(_rng.randf_range(-0.12, 0.12), h * 0.2 + h * (0.82 - kk * 0.12) * 0.5 + kk * h * 0.04, _rng.randf_range(-0.12, 0.12)), Vector3.ZERO, 12)
+	_mesh_node(cg, "Malha", cb.commit())
+	_blocker(cg, "Colisao", Vector3(0.5, h * 0.4, 0.5), Vector3(0, h * 0.2, 0))
 
 
 ## Brilho (halo) em um ponto local de um grupo.
@@ -2419,7 +2479,7 @@ func _hillside() -> Node3D:
 
 func _capelas(root: Node3D) -> void:
 	# capelas em morros altos, visíveis de longe (referência para o jogador)
-	for cs in [[78.0, -1.0, 58.0], [236.0, 1.0, 70.0]]:
+	for cs in [[78.0 + Route.SHIFT, -1.0, 58.0], [236.0 + Route.SHIFT, 1.0, 70.0]]:
 		var s: float = cs[0]
 		var sg: float = cs[1]
 		var p := Route.pos(s) + Route.right(s) * sg * float(cs[2])
@@ -3075,9 +3135,9 @@ func _adornos() -> Node3D:
 		var sn: float = n[0]
 		_reservar(facade(float(n[1]), sn) - Route.right(sn) * float(n[1]) * 0.4 + Vector3(0, SW_H, 0), 1.5)
 	# lugar do bar da TV (barril + TV + banquinhos): reservado antes dos barris e caixotes, para nada ficar dentro dele
-	_bar_spot = _spot_livre(-1.0, 148.5, 0.55, 1.4)
+	_bar_spot = _spot_livre(-1.0, 148.5 + Route.SHIFT, 0.55, 1.4)
 	if _bar_spot.is_empty():
-		_bar_spot = _spot(-1.0, 148.5, 0.55)
+		_bar_spot = _spot(-1.0, 148.5 + Route.SHIFT, 0.55)
 	_reservar(_bar_spot["pos"], 1.4)
 	# barris e caixotes junto às paredes
 	var count := 0
@@ -3097,7 +3157,7 @@ func _adornos() -> Node3D:
 		_recipientes(root, p, atan2(out.x, out.z))
 		count += 1
 	# bancos no largo
-	for bs: float in [146.0, 156.0, 170.0]:
+	for bs: float in [146.0 + Route.SHIFT, 156.0 + Route.SHIFT, 170.0 + Route.SHIFT]:
 		var sg := -1.0
 		var bp := facade(sg, bs) - Route.right(bs) * sg * 0.0 + Route.right(bs) * sg * 0.0
 		var out := -Route.right(bs) * sg
@@ -3391,7 +3451,7 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 
 
 const OIL_PTS := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [150.0, 1.0], [171.0, -1.0], [205.0, 1.0], [240.0, -1.0], [262.0, -1.0], [290.0, 1.0], [320.0, 1.0], [345.0, -1.0]]
-const NOTE_PTS := [[8.0, 1.0, 11], [76.0, -1.0, 0], [141.0, -1.0, 18], [210.0, 1.0, 19], [268.0, -1.0, 20], [340.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
+const NOTE_PTS := [[8.0, 1.0, 11], [101.0, -1.0, 0], [166.0, -1.0, 18], [235.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
 
 
 func _coletaveis() -> Node3D:
@@ -3545,7 +3605,7 @@ func _props_rua() -> Node3D:
 	_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
 	_tv(root, bar["pos"] + Vector3(0, 0.86, 0), _yaw_to(bar["out"]))
 	for k in 2:
-		var sb := _spot(-1.0, 147.0 + k * 3.0, 0.9)
+		var sb := _spot(-1.0, 147.0 + Route.SHIFT + k * 3.0, 0.9)
 		if not _livre(sb["pos"], 0.45, true):
 			continue
 		_reservar(sb["pos"], 0.45)
@@ -3590,7 +3650,7 @@ func _props_rua() -> Node3D:
 		_reservar(sp["pos"], 0.55)
 		var aro := _prop(root, "rusted_wheel_rim_02", sp["pos"], _yaw_to(sp["out"]) + _rng.randf_range(-0.25, 0.25), 1.0)
 		aro.rotation.x = -0.20      # inclinado, encostado na parede
-	var bola := _prop(root, "football", _spot(1.0, 157.0, 2.6)["pos"], _rng.randf() * TAU, 1.0)
+	var bola := _prop(root, "football", _spot(1.0, 157.0 + Route.SHIFT, 2.6)["pos"], _rng.randf() * TAU, 1.0)
 	bola.name = "BolaEsquecida"
 	# --- ferramentas e utilidades de 1961 encostadas nas paredes: escadas, machados, regadores, lousas de cardápio
 	for cfg in [[48.0, 1.0], [110.0, -1.0], [190.0, 1.0], [240.0, 1.0], [298.0, -1.0], [348.0, 1.0]]:

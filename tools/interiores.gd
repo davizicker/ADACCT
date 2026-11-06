@@ -182,6 +182,7 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 
 
 func _lamparina(x: float, y: float, z: float, energia := 0.85) -> void:
+	y = _topo(x, y, z)
 	_prop("vintage_oil_lamp", x, z, float(int(x * 10.0 + z * 7.0) % 6) * 1.05, 0.40, y)      # lamparina de óleo de verdade (Poly Haven, CC0)
 	var l := b._lamp_light(_g, Vector3(x, y + 0.36, z), energia)
 	l.omni_range = 6.5
@@ -356,8 +357,26 @@ func _tem_apoio(x: float, y: float, z: float) -> bool:
 	return false
 
 
+## Altura do tampo (de _bb) logo abaixo de (x, y, z): objetos pequenos "assentam" na superfície em vez de pairar a poucos cm dela.
+func _topo(x: float, y: float, z: float) -> float:
+	var melhor := y
+	var achou := false
+	for e in _bb._boxes:
+		var bb: AABB = e[1]
+		if bb.size.x < 0.3 or bb.size.z < 0.3:
+			continue
+		if x < bb.position.x or x > bb.end.x or z < bb.position.z or z > bb.end.z:
+			continue
+		var t: float = bb.end.y
+		if t <= y + 0.03 and t >= y - 0.30 and (not achou or t > melhor):
+			melhor = t
+			achou = true
+	return melhor
+
+
 func _oleo(x: float, y: float, z: float) -> void:
 	# o frasco de querosene nunca fica no ar: se há móvel embaixo (mesa, balcão), ele fica lá; se não há, vai sobre um banquinho
+	y = _topo(x, y, z) if y > 0.15 else y
 	if y > 0.15 and not _tem_apoio(x, y, z):
 		_prop("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)
 		y = 0.47
@@ -365,7 +384,7 @@ func _oleo(x: float, y: float, z: float) -> void:
 
 
 func _nota(x: float, y: float, z: float, id: int, label: String) -> void:
-	b._coletavel(_g, "Nota_%d" % id, Vector3(x, y, z), "nota", id, label)
+	b._coletavel(_g, "Nota_%d" % id, Vector3(x, _topo(x, y, z) + 0.01, z), "nota", id, label)
 
 
 ## Modelo real COM colisão em caixa (móveis grandes). `yaw`: 0 = frente para +z (parede sul); PI = frente para -z (parede norte).

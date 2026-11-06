@@ -133,6 +133,10 @@ func _ready() -> void:
 	chuva.name = "Chuva"
 	chuva.player = player
 	add_child(chuva)
+	var bruma := Bruma.new()
+	bruma.name = "Bruma"
+	bruma.player = player
+	add_child(bruma)
 	missao.modo_teste = mode != "" and mode != "casas"
 	missao.setup(player, hud, screams, eventos, ($Vila/Ambiente as WorldEnvironment).environment, mode == "")
 	eventos.enabled = (mode == "" or mode == "auto")

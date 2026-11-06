@@ -8,7 +8,8 @@ extends RefCounted
 
 ## Pontos (x, z) por onde a rua passa. A rua começa em (0,0) olhando para -Z.
 const CTRL_XZ: Array[Vector2] = [
-	Vector2(0, 14), Vector2(0, 0), Vector2(4, -22), Vector2(-4, -42), Vector2(-20, -56),
+	Vector2(0, 14), Vector2(0, 0), Vector2(7, -13), Vector2(15, -27), Vector2(17, -41), Vector2(9, -53),
+	Vector2(-5, -58), Vector2(-20, -56),
 	Vector2(-34, -78), Vector2(-30, -104), Vector2(-14, -122), Vector2(4, -134),
 	Vector2(20, -156), Vector2(30, -184),
 	# ladeira da igreja: zigue-zague com duas curvas de 180 graus (raio ~13 m); as pernas ficam ~26 m uma da outra
@@ -30,27 +31,29 @@ const CTRL_XZ: Array[Vector2] = [
 ]
 ## Altitude (m) em função da distância percorrida s (m).
 const CTRL_H: Array[Vector2] = [
-	Vector2(-20, -2), Vector2(0, 0), Vector2(30, 3.5), Vector2(60, 9.0), Vector2(90, 13.0),
-	Vector2(120, 17.5), Vector2(150, 19.5), Vector2(178, 19.9), Vector2(221.8, 26.0),
-	Vector2(268.6, 32.0), Vector2(315.5, 36.5), Vector2(375.0, 38.0), Vector2(455.0, 38.8),
+	Vector2(-20, -2), Vector2(0, 0), Vector2(30, 3.5), Vector2(85, 9.0), Vector2(115, 13.0),
+	Vector2(145, 17.5), Vector2(175, 19.5), Vector2(203, 19.9), Vector2(246.8, 26.0),
+	Vector2(293.6, 32.0), Vector2(340.5, 36.5), Vector2(400.0, 38.0), Vector2(480.0, 38.8),
 ]
 ## Largura do leito da rua (m, entre meios-fios) em função de s.
 const CTRL_W: Array[Vector2] = [
-	Vector2(0, 5.5), Vector2(22, 5.5), Vector2(45, 4.2), Vector2(68, 3.4), Vector2(92, 4.4),
-	Vector2(118, 5.5), Vector2(138, 6.0), Vector2(152, 12.0), Vector2(166, 13.0),
-	Vector2(180, 6.0), Vector2(212.4, 5.0), Vector2(237.3, 3.6), Vector2(271.8, 3.6),
-	Vector2(299.9, 5.0), Vector2(337.5, 5.5), Vector2(385.0, 6.0), Vector2(392.0, 11.0), Vector2(412.0, 19.0), Vector2(455.0, 20.0),
+	Vector2(0, 5.5), Vector2(22, 5.5), Vector2(70, 4.2), Vector2(93, 3.4), Vector2(117, 4.4),
+	Vector2(143, 5.5), Vector2(163, 6.0), Vector2(177, 12.0), Vector2(191, 13.0),
+	Vector2(205, 6.0), Vector2(237.4, 5.0), Vector2(262.3, 3.6), Vector2(296.8, 3.6),
+	Vector2(324.9, 5.0), Vector2(362.5, 5.5), Vector2(410.0, 6.0), Vector2(417.0, 11.0), Vector2(437.0, 19.0), Vector2(480.0, 20.0),
 ]
+## Deslocamento (m) das distâncias s depois da curva inicial (a rua ficou 25 m mais comprida no começo).
+const SHIFT := 25.0
 const STEP := 0.5
 const SIDEWALK := 0.7
 ## s onde termina o casario e começa o adro da igreja, e s da fachada da igreja.
-const S_END := 388.0
-const CHURCH_S := 445.0
+const S_END := 413.0
+const CHURCH_S := 470.0
 ## ponte de pedra sobre um riacho que cruza a rua em BRIDGE_S (metade do comprimento = BRIDGE_HALF)
-const BRIDGE_S := 118.0
+const BRIDGE_S := 143.0
 const BRIDGE_HALF := 4.6
 ## chafariz de pedra no largo (lado +1 = direita de quem sobe)
-const FOUNTAIN_S := 160.0
+const FOUNTAIN_S := 185.0
 const FOUNTAIN_SIDE := 1.0
 
 static var _built := false

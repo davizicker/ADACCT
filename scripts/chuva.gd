@@ -6,6 +6,8 @@ extends Node3D
 var player: Player
 var _gotas: CPUParticles3D
 var _som: AudioStreamPlayer
+var _zonas: Array = []          # [centro (Vector3), raio] onde chove mesmo com a opção "Chuva" desligada
+var _zona := 0.0                # 0..1: quanto o jogador está dentro de uma zona de chuva
 
 
 func _ready() -> void:
@@ -36,6 +38,12 @@ func _ready() -> void:
 	_som.bus = "Ambiente"
 	_som.volume_db = -16.0
 	add_child(_som)
+	# zonas de chuva: o adro da igreja (a mais forte), o largo da fonte e a ponte do riacho
+	_zonas = [
+		[Route.pos(Route.CHURCH_S - 20.0), 40.0],
+		[Route.pos(Route.FOUNTAIN_S), 22.0],
+		[Route.pos(Route.BRIDGE_S), 18.0],
+	]
 	set_ligada(Config.chuva)
 
 
@@ -55,8 +63,18 @@ func _process(_delta: float) -> void:
 	if m != null:
 		dentro = str(m.get("dentro")) != ""
 	global_position = player.global_position + Vector3(0, 9.0, 0)
-	_gotas.emitting = Config.chuva and not dentro
-	if Config.chuva:
-		_som.volume_db = lerpf(_som.volume_db, -30.0 if dentro else -16.0, 0.1)
+	var alvo := 0.0
+	for z: Array in _zonas:
+		var d := Vector2(player.global_position.x - (z[0] as Vector3).x, player.global_position.z - (z[0] as Vector3).z).length()
+		alvo = maxf(alvo, 1.0 - smoothstep(float(z[1]) * 0.6, float(z[1]), d))
+	_zona = lerpf(_zona, alvo, 0.04)
+	var chove := (Config.chuva or _zona > 0.15) and not dentro
+	_gotas.emitting = chove
+	var forca := 1.0 if Config.chuva else _zona
+	if Config.chuva or _zona > 0.02:
+		var alvo_db := lerpf(-52.0, -16.0, forca)
+		_som.volume_db = lerpf(_som.volume_db, (alvo_db - 14.0) if dentro else alvo_db, 0.1)
 		if not _som.playing:
 			_som.play()
+	elif _som.playing:
+		_som.stop()
