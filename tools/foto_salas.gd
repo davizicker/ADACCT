@@ -20,6 +20,9 @@ func _init() -> void:
 	(main.get_node("Eventos") as Node).set("enabled", false)
 	main.get_node("Interface").call("hide_note")
 	var inter := main.get_node("Vila/Interiores")
+	for ch in main.get_node("Vila").get_children():          # só as salas: o resto da vila (milhares de objetos) deixa a captura lentíssima
+		if not ["Interiores", "Ambiente", "Lua"].has(String(ch.name)):
+			(ch as Node3D).visible = false if ch is Node3D else true
 	for g in inter.get_children():
 		if so.size() > 0 and not so.has(String(g.name)):
 			continue
@@ -39,7 +42,7 @@ func _init() -> void:
 			p.global_position = pos - Vector3(0, 1.6, 0)
 			p.cam.look_at(alvo, Vector3.UP)
 			p.cam.fov = 78.0
-			for i in 6:
+			for i in 3:
 				await process_frame
 			root.get_viewport().get_texture().get_image().save_png("%s/%s_%d.png" % [saida, g.name, k + 1])
 		print("[salas] ", g.name)
