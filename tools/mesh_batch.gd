@@ -103,6 +103,22 @@ func quad(mat: String, size: Vector2, pos: Vector3, yaw := 0.0, uv0 := Vector2(0
 	tri_uv(st, p0, p2, p3, Vector2(uv0.x, uv1.y), Vector2(uv1.x, uv0.y), Vector2(uv0.x, uv0.y), en)
 
 
+## Quadro horizontal COM UV, voltado para cima (tapetes, pisos decorativos). `size` = (x, z). `yaw` gira em torno de Y.
+func quad_h(mat: String, size: Vector2, pos: Vector3, yaw := 0.0) -> void:
+	var xf := Transform3D(Basis(Vector3.UP, yaw), pos)
+	var st := _tool(mat)
+	var hx := size.x * 0.5
+	var hz := size.y * 0.5
+	var p0 := xf * Vector3(-hx, 0, -hz)
+	var p1 := xf * Vector3(hx, 0, -hz)
+	var p2 := xf * Vector3(hx, 0, hz)
+	var p3 := xf * Vector3(-hx, 0, hz)
+	var en := (xf.basis * Vector3.UP).normalized()
+	tri_uv(st, p0, p3, p2, Vector2(0, 0), Vector2(0, 1), Vector2(1, 1), en)
+	tri_uv(st, p0, p2, p1, Vector2(0, 0), Vector2(1, 1), Vector2(1, 0), en)
+	_boxes.append([mat, xf * AABB(Vector3(-hx, -0.002, -hz), Vector3(size.x, 0.004, size.y))])
+
+
 ## Telhado de duas águas COM UV: as telhas correm no sentido do caimento. Cumeeira ao longo de Z local.
 ## size = (vão X, altura da cumeeira Y, comprimento Z). Empenas (triângulos das pontas) usam `mat_gable`.
 func roof(mat_roof: String, mat_gable: String, size: Vector3, pos: Vector3, yaw := 0.0, tile := 3.6, mat_soffit := "") -> void:

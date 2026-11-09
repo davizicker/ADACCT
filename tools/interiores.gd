@@ -64,6 +64,7 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	_w0 = w
 	_d0 = d
 	_cadeiras = []
+	_tem_tapete = false
 	if nome != "Igreja Matriz":                      # a igreja já é grande
 		w = snappedf(w * K_SALA, 0.1)
 		d = snappedf(d * K_SALA, 0.1)
@@ -174,6 +175,22 @@ func _area(nome: String, pos: Vector3, size: Vector3, script: String) -> Area3D:
 	return a
 
 
+var _tem_tapete := false
+
+
+## Tapete persa com desenho (textura própria) e franjas; um por sala.
+func _tapete(x: float, z: float, lx: float, lz: float, qual := 0, yaw := 0.0) -> void:
+	_tem_tapete = true
+	var m := "tapete_a" if qual == 0 else "tapete_b"
+	_bb.quad_h(m, Vector2(lx, lz), Vector3(x, 0.012, z), yaw)
+	var c := cos(yaw)
+	var sn := sin(yaw)
+	for k in int(lx / 0.12):                                                  # franjas nas duas pontas menores
+		var t := -lx * 0.5 + 0.06 + k * 0.12
+		for sg: float in [-1.0, 1.0]:
+			_bb.box("pano_cru", Vector3(0.02, 0.004, 0.10), Vector3(x + c * t - sn * sg * (lz * 0.5 + 0.05), 0.007, z + sn * t + c * sg * (lz * 0.5 + 0.05)), Vector3(0, yaw, 0))
+
+
 ## Objeto para examinar (E): uma frase da história ou um arrepio. Várias frases separadas por " | " alternam a cada exame.
 func _examinar(x: float, y: float, z: float, rotulo: String, texto: String, som := "papel", medo := 0.0, tam := Vector3(0.9, 0.9, 0.9)) -> void:
 	var a := _area("Examinar_%d" % _g.get_child_count(), Vector3(x, y, z), tam, "res://scripts/examinar.gd")
@@ -210,17 +227,16 @@ func _ocupado(a: AABB) -> bool:
 func _decorar() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(String(_g.name)) + 77
-	# 1) tapete no meio da sala (ou o primeiro lugar livre)
-	var tapetes := ["listra_vermelha", "pano_azul", "pano_rosa"]
+	# 1) tapete persa no meio da sala (ou o primeiro lugar livre), se a sala ainda não tem um
+	var tapetes := ["tapete_a", "tapete_b"]
 	var cands := [Vector2(_w * 0.5, _d * 0.5), Vector2(_w * 0.5, _d * 0.68), Vector2(_w * 0.35, _d * 0.5), Vector2(_w * 0.65, _d * 0.45)]
 	for c in cands:
-		var lx := minf(2.0, _w * 0.34)
-		var lz := minf(1.3, _d * 0.26)
+		if _tem_tapete:
+			break
+		var lx := minf(2.4, _w * 0.34)
+		var lz := minf(1.6, _d * 0.26)
 		if not _ocupado(AABB(Vector3(c.x - lx * 0.5, 0.02, c.y - lz * 0.5), Vector3(lx, 0.7, lz))):
-			var m: String = tapetes[rng.randi() % tapetes.size()]
-			_bb.box("ouro_velho", Vector3(lx + 0.10, 0.008, lz + 0.10), Vector3(c.x, 0.005, c.y))
-			_bb.box(m, Vector3(lx, 0.012, lz), Vector3(c.x, 0.008, c.y))
-			_bb.box("pano_cru", Vector3(lx * 0.72, 0.014, lz * 0.62), Vector3(c.x, 0.009, c.y))
+			_tapete(c.x, c.y, lx, lz, rng.randi() % 2)
 			break
 	# 2) vasos de barro com antúrio nos cantos livres (até dois)
 	var vasos := 0
@@ -291,13 +307,12 @@ func _lencol(x: float, z: float) -> void:
 
 ## Vestígios de quem morou aqui: lençóis sobre cadeiras, quadro caído, caixas de mudança, relógio parado. Só onde há espaço.
 func _vida(rng: RandomNumberGenerator) -> void:
-	var cob := 0
-	for c in _cadeiras:
-		if cob >= 2:
+	# uma cadeira tombada no meio da sala, como se alguém tivesse se levantado às pressas
+	for t in [Vector2(_w * 0.5, _d * 0.55), Vector2(_w * 0.35, _d * 0.5), Vector2(_w * 0.62, _d * 0.45)]:
+		if not _ocupado(AABB(Vector3(t.x - 0.5, 0.0, t.y - 0.5), Vector3(1.0, 0.8, 1.0))):
+			var ch := _prop("painted_wooden_chair_02", t.x, t.y, rng.randf() * TAU, 1.0, 0.24)
+			ch.rotation.x = PI * 0.5
 			break
-		if rng.randf() < 0.65:
-			_lencol(c.x, c.y)
-			cob += 1
 	# relógio de lareira numa prateleirinha na parede norte
 	var pr := PropKit.make("mantel_clock_01", 1.0)
 	var hh := maxf((pr.get_meta("bb") as AABB).size.y, 0.05)
@@ -315,7 +330,7 @@ func _vida(rng: RandomNumberGenerator) -> void:
 		if not _ocupado(AABB(Vector3(t.x - 0.35, 0.0, t.y - 0.3), Vector3(0.7, 0.4, 0.6))):
 			var yw := rng.randf() * PI
 			_bb.box("ouro_velho", Vector3(0.52, 0.03, 0.42), Vector3(t.x, 0.02, t.y), Vector3(0, yw, 0))
-			_bb.box("retrato_a" if rng.randf() < 0.5 else "retrato_b", Vector3(0.42, 0.006, 0.32), Vector3(t.x, 0.038, t.y), Vector3(0, yw, 0))
+			_bb.box("pano_cru", Vector3(0.42, 0.006, 0.32), Vector3(t.x, 0.038, t.y), Vector3(0, yw, 0))
 			break
 	# caixas de mudança e uma mala num canto livre: alguém ia embora e nunca foi
 	for cn in [Vector2(_w - 0.6, _d - 0.6), Vector2(0.6, _d - 0.6), Vector2(_w - 0.6, 1.8)]:
@@ -494,7 +509,7 @@ func _quadro(x: float, y: float, z: float, lado: String, w := 0.5, h := 0.65, ma
 			yaw = 0.0
 	dir = Vector3(sin(yaw), 0, cos(yaw))
 	if mat == "placa_preta":
-		mat = "retrato_a" if int(x * 7.0 + z * 3.0) % 2 == 0 else "retrato_b"      # os quadros escuros viram retratos a óleo
+		mat = ["paisagem_a", "paisagem_b", "foto_antiga"][int(absf(x * 7.0 + z * 3.0)) % 3]      # paisagens a óleo e fotos antigas (sem rostos)
 	_bb.box("ouro_velho", Vector3(w + 0.08, h + 0.08, 0.03), p + dir * 0.02, Vector3(0, yaw, 0))
 	_bb.quad(mat, Vector2(w, h), p + dir * 0.04, yaw)
 
@@ -631,7 +646,7 @@ func _sala_benedita(g: Node3D) -> void:
 	_cadeira(_mx(4.6), _mz(2.0), 0.0)
 	_lamparina(_mx(4.6), 0.82, _mz(3.1))
 	_oratorio(_mx(3.6), _mz(5.75))
-	_bb.box("pano_azul", Vector3(2.4, 0.012, 1.6), Vector3(_mx(3.0), 0.008, _mz(3.4)))             # tapete
+	_tapete(_mx(3.0), _mz(3.4), 2.4, 1.6, 1)
 	_janela("L", _mz(3.2))
 	_quadro(_mx(0.04), 1.8, _mz(3.5), "O", 0.4, 0.5)
 	_nota(_mx(4.3), 0.85, _mz(2.7), 1, "Ler a carta de Dona Benedita")
@@ -776,8 +791,7 @@ func _sala_sineiro(g: Node3D) -> void:
 func _sala_casarao(g: Node3D) -> void:
 	_casca("Casarão dos Vaz", 10.0, 8.0, 3.8, "reboco_ocre", "madeira_escura")
 	# mesa de jantar comprida com cadeiras (uma caída), castiçal apagado
-	_bb.box("listra_vermelha", Vector3(3.4, 0.012, 2.3), Vector3(_mx(5.0), 0.008, _mz(3.8)))                    # tapete grande sob a mesa
-	_bb.box("ouro_velho", Vector3(3.5, 0.010, 2.4), Vector3(_mx(5.0), 0.006, _mz(3.8)))                          # barra dourada
+	_tapete(_mx(5.0), _mz(3.8), 3.4, 2.3, 0)
 	_examinar(_mx(7.4), 0.5, _mz(3.8), "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
 	_examinar(_mx(5.0), 0.95, _mz(3.8), "Examinar a mesa", "Sete lugares postos. Seis cadeiras. Quem faltava à mesa dos Vaz? | O castiçal central tem sete velas. Seis derreteram até o fim; a sétima nunca foi acesa.")
 	_prop_c("dining_table", _mx(5.0), _mz(3.8), 0.0, 1.0)                                                      # mesa de jantar com toalha xadrez (Poly Haven, CC0)
@@ -796,8 +810,7 @@ func _sala_casarao(g: Node3D) -> void:
 	for k in 4:
 		_quadro(_mx(1.6 + k * 2.2), 2.2, _mz(7.95), "N", 0.7, 0.9)
 	_quadro(_mx(0.04), 1.9, _mz(4.0), "O", 0.9, 1.3, "vidro_noite")
-	_bb.box("ouro_velho", Vector3(1.4, 0.05, 1.4), Vector3(_mx(5.0), 3.1, _mz(3.8)))
-	_bb.cylinder("ferro", 0.02, 0.02, 0.7, Vector3(_mx(5.0), 3.45, _mz(3.8)), Vector3.ZERO, 5)
+	_prop("brass_diya_lantern", _mx(5.0), _mz(3.8), 0.0, 2.2, _h - 2.2)                                 # lustre de latão pendurado do forro
 	# escada que sobe e para numa parede (a ala de cima está desabada)
 	for k in 8:
 		_bb.box("madeira_escura", Vector3(1.2, 0.18, 0.3), Vector3(_mx(9.2), 0.09 + k * 0.18, _mz(1.0 + k * 0.3)))
@@ -825,7 +838,7 @@ func _sala_casarao(g: Node3D) -> void:
 
 
 func _sala_igreja(g: Node3D) -> void:
-	_casca("Igreja Matriz", 10.0, 22.0, 8.0, "reboco_branco", "cantaria", "madeira_escura")
+	_casca("Igreja Matriz", 10.0, 22.0, 8.0, "reboco_branco", "piso_xadrez", "forro_ceu")
 	# fileiras de bancos dos dois lados do corredor central
 	for k in 8:
 		var z := 4.0 + k * 1.5
@@ -838,6 +851,7 @@ func _sala_igreja(g: Node3D) -> void:
 		b._blocker(g, "ColBanco_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(2.5, 0.45, z))
 		b._blocker(g, "ColBancoD_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(7.5, 0.45, z))
 	_presbiterio(g)
+	_igreja_exuberante(g)
 	# janelas altas com luar e arcos
 	for k in 3:
 		_janela("O", 5.0 + k * 5.5, 5.0, 1.0, 2.4)
@@ -857,6 +871,89 @@ func _sala_igreja(g: Node3D) -> void:
 	al.set("texto_interacao", "Ler os nomes em voz alta")
 	al.set("requer", "livro")
 	_fim()
+
+
+## Exuberância da igreja: tapete vermelho, lustres de velas, altares laterais com santos, vitrais coloridos, púlpito dourado e estandartes.
+func _igreja_exuberante(g: Node3D) -> void:
+	_tem_tapete = true
+	_tapete(5.0, 9.6, 1.7, 17.0, 0)                                                                  # passadeira vermelha do portal ao presbitério
+	# lustres de latão com velas (três ao longo da nave)
+	for zc: float in [5.5, 10.5, 15.5]:
+		var yl := 5.6
+		_bb.cylinder("ferro", 0.012, 0.012, 8.0 - yl, Vector3(5.0, (8.0 + yl) * 0.5, zc), Vector3.ZERO, 6)
+		_bb.cylinder("ouro_velho", 0.75, 0.75, 0.07, Vector3(5.0, yl, zc), Vector3.ZERO, 24)
+		_bb.cylinder("ouro_velho", 0.55, 0.55, 0.05, Vector3(5.0, yl - 0.25, zc), Vector3.ZERO, 20)
+		_bb.sphere("ouro_velho", 0.14, Vector3(5.0, yl - 0.5, zc), 10, 8)
+		for k in 8:
+			var a := TAU * float(k) / 8.0
+			_vela(5.0 + cos(a) * 0.66, yl + 0.03, zc + sin(a) * 0.66, false)
+		var ll := b._lamp_light(g, Vector3(5.0, yl + 0.3, zc), 1.1)
+		ll.omni_range = 10.0
+		b._halo(g, Vector3(5.0, yl + 0.35, zc), 2.2, "halo_vela")
+	# altares laterais entre as janelas: moldura dourada, nicho escuro, santo, castiçais e vaso de antúrio
+	for zl: float in [7.75, 13.25]:
+		for lado: float in [-1.0, 1.0]:
+			var x0 := 0.0 if lado < 0.0 else 10.0
+			var dir := 1.0 if lado < 0.0 else -1.0          # sentido "para dentro da nave"
+			_bb.box("cantaria", Vector3(0.9, 1.05, 2.0), Vector3(x0 + dir * 0.45, 0.52, zl))             # mesa do altar
+			_bb.box("ouro_velho", Vector3(0.14, 0.05, 2.1), Vector3(x0 + dir * 0.95, 1.07, zl))
+			_bb.box("pano_cru", Vector3(0.9, 0.04, 1.8), Vector3(x0 + dir * 0.45, 1.07, zl))
+			_bb.box("ouro_velho", Vector3(0.18, 4.4, 2.1), Vector3(x0 + dir * 0.09, 3.3, zl))             # retábulo dourado
+			_bb.box("madeira_escura", Vector3(0.10, 2.6, 1.3), Vector3(x0 + dir * 0.2, 2.9, zl))          # nicho
+			_bb.cylinder("ouro_velho", 0.65, 0.65, 0.2, Vector3(x0 + dir * 0.16, 4.3, zl), Vector3(0, 0, PI / 2.0), 18)   # arco do topo
+			_bb.box("ouro_velho", Vector3(0.3, 0.4, 2.3), Vector3(x0 + dir * 0.18, 5.65, zl))             # frontão
+			_prop("gothic_statue", x0 + dir * 0.38, zl, PI / 2.0 * dir, 1.5, 1.62)                      # santo no nicho
+			for sz: float in [-1.0, 1.0]:
+				_vela(x0 + dir * 0.6, 1.1, zl + sz * 0.75, false)
+				_bb.cylinder("ouro_velho", 0.05, 0.07, 0.12, Vector3(x0 + dir * 0.6, 1.13, zl + sz * 0.75), Vector3.ZERO, 12)
+			_parte("anthurium_botany_01", ["anthurium_botany_04_d"], x0 + dir * 0.6, zl, 0.0, 0.18, 1.1)
+			var lc := b._lamp_light(g, Vector3(x0 + dir * 0.7, 1.6, zl), 0.55)
+			lc.omni_range = 4.0
+			b._blocker(g, "ColAltarLat_%d_%d" % [int(lado), int(zl)], Vector3(1.0, 1.2, 2.1), Vector3(x0 + dir * 0.5, 0.6, zl))
+	# vitrais coloridos nas janelas altas (emissivos) com uma luz colorida entrando
+	for k in 3:
+		for lado2: String in ["O", "L"]:
+			_vitral(lado2, 5.0 + k * 5.5, 5.0, 1.0, 2.4, k)
+	# púlpito dourado na parede oeste, com escada e dossel
+	_bb.cylinder("madeira_escura", 0.5, 0.45, 1.5, Vector3(0.9, 1.95, 12.0), Vector3.ZERO, 14)
+	_bb.cylinder("ouro_velho", 0.55, 0.55, 0.1, Vector3(0.9, 2.75, 12.0), Vector3.ZERO, 14)
+	_bb.box("madeira_escura", Vector3(0.1, 2.6, 1.0), Vector3(0.08, 3.3, 12.0))
+	_bb.cylinder("ouro_velho", 0.95, 0.2, 0.7, Vector3(0.7, 5.0, 12.0), Vector3.ZERO, 14)           # dossel (sino invertido)
+	_bb.sphere("ouro_velho", 0.14, Vector3(0.7, 5.45, 12.0), 10, 8)
+	b._blocker(g, "ColPulpito", Vector3(1.1, 2.9, 1.1), Vector3(0.9, 1.45, 12.0))
+	# estandartes vermelhos e dourados nas colunas do arco triunfal
+	for sx: float in [-1.0, 1.0]:
+		_bb.box("bandeira_a", Vector3(0.06, 2.4, 0.9), Vector3(5.0 + sx * 4.3, 4.6, 16.6))
+		_bb.box("ouro_velho", Vector3(0.08, 0.08, 1.0), Vector3(5.0 + sx * 4.3, 5.85, 16.6))
+	# fonte batismal de pedra junto à porta
+	_bb.cylinder("cantaria", 0.55, 0.45, 0.9, Vector3(8.6, 0.45, 1.8), Vector3.ZERO, 14)
+	_bb.cylinder("cantaria", 0.7, 0.7, 0.12, Vector3(8.6, 0.96, 1.8), Vector3.ZERO, 14)
+	_bb.cylinder("agua_chafariz", 0.55, 0.55, 0.02, Vector3(8.6, 1.02, 1.8), Vector3.ZERO, 14)
+	b._blocker(g, "ColBatismal", Vector3(1.4, 1.1, 1.4), Vector3(8.6, 0.55, 1.8))
+
+
+## Vitral em mosaico (células de vidro colorido com chumbo escuro) com uma luz colorida entrando na nave.
+func _vitral(lado: String, p: float, y: float, w: float, h: float, tom: int) -> void:
+	var mats := ["vitral_vermelho", "vitral_azul", "vitral_ambar", "vitral_verde"]
+	var x := 0.05 if lado == "O" else _w - 0.05
+	var yaw := PI / 2.0 if lado == "O" else -PI / 2.0
+	var cols := 3
+	var rows := 7
+	for r in rows:
+		for c in cols:
+			var m: String = mats[(r * 2 + c + tom) % 4]
+			var cw := w / cols
+			var ch := h / rows
+			var zz := p - w * 0.5 + cw * (c + 0.5)
+			var yy := y - h * 0.5 + ch * (r + 0.5)
+			_bb.quad(m, Vector2(cw - 0.05, ch - 0.05), Vector3(x, yy, zz), yaw)
+	var cor: Color = [Color(0.9, 0.2, 0.2), Color(0.25, 0.35, 1.0), Color(1.0, 0.7, 0.2)][tom % 3]
+	var l := OmniLight3D.new()
+	l.position = Vector3(x + (0.9 if lado == "O" else -0.9), y - 0.5, p)
+	l.light_color = cor
+	l.light_energy = 0.6
+	l.omni_range = 5.5
+	_g.add_child(l)
 
 
 ## Arco em pé (plano X-Y, olhando para -Z): anel de caixas ao redor de `c`.
@@ -946,11 +1043,9 @@ func _presbiterio(g: Node3D) -> void:
 	_arco_xy("ouro_velho", Vector3(5.0, 5.2, 21.62), 1.25, 0.18, 0.26, 14)
 	_bb.box("madeira_escura", Vector3(2.4, 0.5, 0.12), Vector3(5.0, 5.35, 21.66))
 	_bb.sphere("ouro_velho", 0.16, Vector3(5.0, 6.55, 21.6), 6, 4)                           # fecho do arco
-	# santa no nicho: manto azul, véu claro, auréola dourada
-	_bb.cylinder("pano_azul", 0.5, 0.2, 1.6, Vector3(5.0, 3.1, 21.45), Vector3.ZERO, 10)
-	_bb.box("pano_azul", Vector3(0.9, 0.16, 0.3), Vector3(5.0, 3.5, 21.45))
-	_bb.sphere("pano_cru", 0.2, Vector3(5.0, 4.12, 21.45), 8, 5)
-	_bb.cylinder("ouro_velho", 0.3, 0.3, 0.03, Vector3(5.0, 4.15, 21.62), Vector3(PI / 2.0, 0, 0), 14)
+	# santa no nicho: estátua de verdade (modelo gothic_statue) com auréola dourada
+	_prop("gothic_statue", 5.0, 21.4, PI, 2.2 / 1.0, 2.3)
+	_bb.cylinder("ouro_velho", 0.34, 0.34, 0.03, Vector3(5.0, 4.5, 21.55), Vector3(PI / 2.0, 0, 0), 20)
 	# colunas torças dos dois lados e entablamento
 	for k: float in [-1.0, 1.0]:
 		_coluna_torsa(5.0 + k * 2.2, 21.2, 0.6, 5.8)
@@ -966,7 +1061,7 @@ func _presbiterio(g: Node3D) -> void:
 		_bb.box("ouro_velho", Vector3(0.07, 1.25, 0.05), Vector3(5.0 + dir.x * 0.95, 7.35 + dir.y * 0.95, 21.55), Vector3(0, 0, ang - PI / 2.0))
 	_bb.box("ferro", Vector3(0.14, 1.5, 0.1), Vector3(5.0, 7.3, 21.5))
 	_bb.box("ferro", Vector3(0.95, 0.14, 0.1), Vector3(5.0, 7.7, 21.5))
-	_bb.box("bradador_palido", Vector3(0.26, 1.0, 0.08), Vector3(5.0, 7.3, 21.43))
+	_bb.sphere("ouro_velho", 0.14, Vector3(5.0, 7.3, 21.42), 12, 8)                           # coração radiante no centro da cruz
 	# lâmpada do santíssimo: pendurada à frente do altar, chama vermelha
 	_bb.cylinder("ferro", 0.012, 0.012, 2.2, Vector3(5.0, 6.7, 19.0), Vector3.ZERO, 4)
 	_prop("brass_diya_lantern", 5.0, 19.0, 0.0, 1.5, 5.0)                                          # lampião diya de latão pendurado (Poly Haven, CC0)
@@ -974,6 +1069,8 @@ func _presbiterio(g: Node3D) -> void:
 	# castiçais altos de chão dos dois lados
 	for k: float in [-1.0, 1.0]:
 		_castical(5.0 + k * 3.9, 0.6, 19.2, 1.6)
+		_bb.box("ouro_velho", Vector3(0.9, 0.9, 0.9), Vector3(5.0 + k * 4.0, 1.05, 20.6))                 # pedestal dourado
+		_prop("gothic_statue", 5.0 + k * 4.0, 20.6, PI + k * 0.5, 1.5, 1.5)                          # santos de cada lado do altar
 
 
 func _sala_carpintaria(g: Node3D) -> void:
@@ -1069,7 +1166,7 @@ func _sala_pensao(g: Node3D) -> void:
 	_prop_c("old_bed_frame", _mx(1.0), _mz(4.6), 0.0, 1.0)
 	_prop_c("old_bed_frame", _mx(6.0), _mz(4.6), 0.0, 1.0)
 	_prop_c("vintage_day_bed", _mx(3.5), _mz(0.9), 0.0, 1.0)
-	_bb.box("listra_azul", Vector3(2.4, 0.012, 1.6), Vector3(_mx(3.5), 0.008, _mz(2.6)))                         # tapete sob a mesinha
+	_tapete(_mx(3.5), _mz(2.6), 2.4, 1.6, 1)
 	_prop_c("gothic_coffee_table", _mx(3.5), _mz(2.6), 0.0, 1.0)
 	_prop("vintage_binocular", _mx(3.2), _mz(2.6), 0.4, 1.0, 0.56)
 	_prop("cigarette_pack", _mx(3.9), _mz(2.4), 1.0, 1.5, 0.56)
@@ -1093,11 +1190,6 @@ func _sala_costureira(g: Node3D) -> void:
 	_mesa(_mx(3.0), _mz(3.6), 1.8, 0.9, 0.8, "madeira_natural")                           # mesa de corte
 	_bb.box("pano_rosa", Vector3(1.4, 0.03, 0.8), Vector3(_mx(3.0), 0.83, _mz(3.6)))
 	_papelaria(_mx(3.8), _mz(3.4), 0.84, 0.6)
-	# manequim: tronco de cone + esfera
-	_bb.cylinder("pano_cru", 0.24, 0.14, 0.7, Vector3(_mx(5.2), 1.2, _mz(3.8)), Vector3.ZERO, 10)
-	_bb.cylinder("madeira_escura", 0.03, 0.03, 0.85, Vector3(_mx(5.2), 0.42, _mz(3.8)), Vector3.ZERO, 6)
-	_bb.sphere("pano_cru", 0.1, Vector3(_mx(5.2), 1.62, _mz(3.8)), 7, 4)
-	b._blocker(g, "ColManequim", Vector3(0.5, 1.6, 0.5), Vector3(_mx(5.2), 0.8, _mz(3.8)))
 	for k in 4:
 		_bb.cylinder(["pano_azul", "pano_rosa", "pano_cru", "listra_vermelha"][k], 0.1, 0.1, 0.8, Vector3(_mx(0.5), 0.1 + k * 0.2, _mz(1.4 + k * 0.01)), Vector3(PI / 2.0, 0, 0), 8)
 	_prop_c("GothicCabinet_01", _mx(1.25), _mz(4.35), PI, 0.9)

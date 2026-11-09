@@ -25,6 +25,7 @@ func _init() -> void:
 	_reboco_caido()
 	_ponto_luz()
 	_retratos()
+	_pinturas()
 	_silhueta()
 	_janelas()
 	print("[tex] pronto")
@@ -781,3 +782,127 @@ func _retratos() -> void:
 				img.set_pixel(x, y, Color(col.r * vig * cr, col.g * vig * cr, col.b * vig * cr))
 		img.save_png(OUT + "retrato_" + ["a", "b"][v] + ".png")
 		print("[tex] retrato_", ["a", "b"][v])
+
+
+## Pinturas sem rostos (paisagens a óleo e foto antiga desbotada), tapetes persas, forro estrelado e piso de mármore xadrez.
+func _pinturas() -> void:
+	# --- paisagens a óleo: céu em degradê, sol, três camadas de morros e primeiro plano escuro; craquelê do verniz por cima
+	for v in 2:
+		var W := 256
+		var H := 320
+		var img := Image.create(W, H, false, Image.FORMAT_RGB8)
+		var cra := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.08, 311 + v, 3)
+		var mor := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.012, 411 + v, 4)
+		var topo: Color = Color(0.16, 0.14, 0.32) if v == 0 else Color(0.20, 0.34, 0.52)
+		var baixo: Color = Color(0.95, 0.55, 0.22) if v == 0 else Color(0.96, 0.82, 0.52)
+		for y in H:
+			for x in W:
+				var fy := float(y) / H
+				var col := topo.lerp(baixo, clampf(fy * 1.5, 0.0, 1.0))
+				var sx := (float(x) / W - (0.68 if v == 0 else 0.3))
+				var sy := (fy - 0.50)
+				col += Color(1.0, 0.85, 0.55) * clampf(0.42 - sqrt(sx * sx + sy * sy) * 1.5, 0.0, 0.42)
+				for cam in 3:
+					var base := 0.52 + cam * 0.11
+					var alt := base + mor.get_noise_1d(float(x) * (1.0 + cam * 0.7) + cam * 77.0) * (0.10 - cam * 0.015)
+					if fy > alt:
+						var t := float(cam) / 2.0
+						col = (Color(0.30, 0.26, 0.34) if v == 0 else Color(0.26, 0.34, 0.40)).lerp(Color(0.04, 0.05, 0.05), t)
+						col *= 1.0 - 0.25 * clampf((fy - alt) * 3.0, 0.0, 1.0) * (1.0 - t)
+				var cr := 0.92 + 0.14 * (cra.get_noise_2d(x * 1.4, y * 1.4) * 0.5 + 0.5)
+				var vig := 1.0 - 0.45 * clampf(pow(absf(float(x) / W - 0.5) * 2.0, 3.0) + pow(absf(fy - 0.5) * 2.0, 3.0), 0.0, 1.0)
+				img.set_pixel(x, y, Color(col.r * cr * vig, col.g * cr * vig, col.b * cr * vig))
+		img.save_png(OUT + "paisagem_" + ["a", "b"][v] + ".png")
+	# --- foto antiga: sépia desbotada, moldura oval e manchas; sem rostos
+	var fi := Image.create(256, 320, false, Image.FORMAT_RGB8)
+	var mn := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.03, 523, 4)
+	for y in 320:
+		for x in 256:
+			var u := (float(x) - 128.0) / 128.0
+			var w := (float(y) - 160.0) / 160.0
+			var ov := u * u * 1.25 + w * w * 0.95
+			var base := Color(0.86, 0.80, 0.68)
+			if ov < 0.8:
+				var tom := 0.34 + 0.30 * (mn.get_noise_2d(x, y) * 0.5 + 0.5) + 0.25 * (1.0 - w * 0.5)
+				base = Color(0.40, 0.30, 0.20) * tom * 1.7
+			base *= 0.86 + 0.18 * (mn.get_noise_2d(x * 3.0, y * 3.0) * 0.5 + 0.5)
+			fi.set_pixel(x, y, base)
+	fi.save_png(OUT + "foto_antiga.png")
+	# --- tapetes (motivos de losangos, barra e franja)
+	for t in 2:
+		var im := Image.create(256, 256, false, Image.FORMAT_RGB8)
+		var campo: Color = Color(0.45, 0.06, 0.07) if t == 0 else Color(0.12, 0.28, 0.20)
+		var alt: Color = Color(0.88, 0.80, 0.58)
+		var azul: Color = Color(0.10, 0.14, 0.32) if t == 0 else Color(0.55, 0.34, 0.12)
+		var rn := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.2, 611 + t, 2)
+		for y in 256:
+			for x in 256:
+				var uu := float(x) / 255.0
+				var vv := float(y) / 255.0
+				var bord := minf(minf(uu, 1.0 - uu), minf(vv, 1.0 - vv))
+				var col := campo
+				if bord < 0.035:
+					col = alt
+				elif bord < 0.075:
+					col = azul
+				elif bord < 0.095:
+					col = alt
+				else:
+					var gx := absf(fposmod(uu * 4.0, 1.0) - 0.5)
+					var gy := absf(fposmod(vv * 4.0, 1.0) - 0.5)
+					var d1 := gx + gy
+					if d1 < 0.20:
+						col = azul
+					if d1 < 0.12:
+						col = alt
+					if d1 < 0.05:
+						col = campo
+				col *= 0.80 + 0.30 * (rn.get_noise_2d(x * 2.0, y * 2.0) * 0.5 + 0.5)
+				im.set_pixel(x, y, col)
+		im.save_png(OUT + "tapete_" + ["a", "b"][t] + ".png")
+	# --- forro estrelado da igreja: azul profundo, nuvens, estrelas douradas e caixotões
+	var fo := Image.create(512, 512, false, Image.FORMAT_RGB8)
+	var nb := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.012, 701, 4)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 707
+	for y in 512:
+		for x in 512:
+			var g := 0.5 + 0.5 * nb.get_noise_2d(x, y)
+			var col := Color(0.04, 0.09, 0.24).lerp(Color(0.16, 0.34, 0.50), g * 0.8)
+			col += Color(0.5, 0.45, 0.38) * clampf((nb.get_noise_2d(x * 0.35 + 90.0, y * 0.35) - 0.25) * 1.2, 0.0, 0.35)
+			var cx := fposmod(float(x), 256.0)
+			var cy := fposmod(float(y), 256.0)
+			var edge := minf(minf(cx, 256.0 - cx), minf(cy, 256.0 - cy))
+			if edge < 6.0:
+				col = Color(0.75, 0.55, 0.16)
+			elif edge < 10.0:
+				col = Color(0.30, 0.18, 0.06)
+			fo.set_pixel(x, y, col)
+	for k in 260:
+		var sx := rng.randi() % 512
+		var sy := rng.randi() % 512
+		var ck := Color(1.0, 0.86, 0.45)
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				var q := clampf(1.0 - float(dx * dx + dy * dy) / 5.0, 0.0, 1.0)
+				var px := (sx + dx) % 512
+				var py := (sy + dy) % 512
+				var c0 := fo.get_pixel(px, py)
+				fo.set_pixel(px, py, c0.lerp(ck, q))
+	fo.save_png(OUT + "forro_ceu.png")
+	# --- piso de mármore xadrez com veios
+	var pi := Image.create(512, 512, false, Image.FORMAT_RGB8)
+	var ve := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.02, 811, 5)
+	for y in 512:
+		for x in 512:
+			var cell := (int(x / 64) + int(y / 64)) % 2
+			var base: Color = Color(0.88, 0.83, 0.72) if cell == 0 else Color(0.22, 0.17, 0.15)
+			var vv := absf(ve.get_noise_2d(x * 1.3, y * 0.7))
+			base *= 0.86 + 0.20 * pow(1.0 - vv, 6.0) + 0.1 * ve.get_noise_2d(x * 0.2, y * 0.2)
+			var gx := fposmod(float(x), 64.0)
+			var gy := fposmod(float(y), 64.0)
+			if gx < 1.5 or gy < 1.5:
+				base *= 0.55
+			pi.set_pixel(x, y, base)
+	pi.save_png(OUT + "piso_xadrez.png")
+	print("[tex] pinturas, tapetes, forro, piso")

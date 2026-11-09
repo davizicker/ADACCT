@@ -179,9 +179,25 @@ func show_interact(text: String) -> void:
 	_interact.text = text
 
 
+var _nota_completa := ""
+var _nota_resumida := false
+
+
+## Bilhetes longos aparecem em RESUMO (o essencial, rápido de ler); R mostra o texto completo. Menos leitura chata, mais jogo.
 func show_note(title: String, body: String) -> void:
 	_note_title.text = title
-	_note_body.text = body
+	_nota_completa = body
+	_nota_resumida = false
+	var resumo := body
+	if body.length() > 330:
+		var corte := 330
+		for k in range(330, mini(body.length(), 520)):
+			if body[k] == "." or body[k] == "\n":
+				corte = k + 1
+				break
+		resumo = body.substr(0, corte).strip_edges() + "\n\n[R] ler o resto"
+		_nota_resumida = true
+	_note_body.text = resumo
 	_note_panel.visible = true
 
 
@@ -245,6 +261,11 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _note_panel != null and _note_panel.visible and _nota_resumida and event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_R:
+		_note_body.text = _nota_completa
+		_nota_resumida = false
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("fps"):
 		_fps_on = not _fps_on
 		if not _fps_on:

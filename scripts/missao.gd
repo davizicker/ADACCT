@@ -93,6 +93,31 @@ func sair_esconderijo() -> void:
 	hud.flash(Color(0, 0, 0, 0.5), 0.3)
 
 
+var reliquias := 0                  # medalhas da Irmandade achadas (12 espalhadas pela vila)
+const TOTAL_RELIQUIAS := 12
+
+
+## Achou uma medalha: +querosene, e a cada quatro uma recompensa (o Bradador recua; no fim, uma pista final).
+func registrar_reliquia() -> void:
+	reliquias += 1
+	player.oil = minf(Player.OIL_MAX, player.oil + 18.0)
+	player.oil_changed.emit(player.oil)
+	var msg := "Medalha da Irmandade %d/%d (+querosene)" % [reliquias, TOTAL_RELIQUIAS]
+	if reliquias % 4 == 0 and reliquias < TOTAL_RELIQUIAS:
+		var jogo := get_tree().get_first_node_in_group("jogo")
+		if jogo != null:
+			var sc: Variant = jogo.get("screams")
+			if sc != null and int(sc.get("stage")) > 0:
+				sc.set("stage", int(sc.get("stage")) - 1)
+				sc.call("_place_bradador")
+		msg += "  Algo se acalma, e o Bradador recua."
+	elif reliquias == TOTAL_RELIQUIAS:
+		msg = "As doze medalhas estão com você. A Irmandade te reconhece: a igreja abrirá mais fácil esta noite."
+		dar_item("terco") if not tem("terco") else null
+	hud.show_prompt(msg, 5.0)
+	get_tree().call_group("audio", "play_clink")
+
+
 func registrar_nota(id: int) -> void:
 	if not lidas.has(id):
 		lidas.append(id)

@@ -784,7 +784,14 @@ func _frontage(root: Node3D) -> void:
 				"passagem":
 					_lot_passagem(becos, f, int(boca["idx"]), bool(boca["ini"]))
 			if kind == "casa" or kind == "quintal" or kind == "talude":
-				_joints.append({"sigma": sigma, "s": s, "xf": f["xf"]})      # guarda o quadro do lote: o altar se alinha à parede dele, não à tangente da rua
+				var zloc := 0.0                                  # onde, ao longo da parede do lote, o altar fica: longe da porta, no meio de um trecho de parede
+				if kind == "casa" and casas.get_child_count() > 0:
+					var ult := casas.get_child(casas.get_child_count() - 1)
+					if ult.has_meta("door_z"):
+						var dzz := float(ult.get_meta("door_z"))
+						zloc = dzz + (2.4 if dzz < 0.0 else -2.4)
+						zloc = clampf(zloc, -float(f["w"]) * 0.5 + 1.0, float(f["w"]) * 0.5 - 1.0)
+				_joints.append({"sigma": sigma, "s": s, "xf": f["xf"], "zloc": zloc})      # guarda o quadro do lote: o altar se alinha à parede dele, não à tangente da rua
 			prev_special = kind != "casa"
 			s = s2
 
@@ -1256,23 +1263,8 @@ const FLORES := ["flor_vermelha", "flor_rosa", "flor_amarela", "flor_mix"]
 
 
 ## Cachos de flores coloridas (buquês de bolinhas com miolo claro) e folhas pendentes: dão cor às janelas além das folhagens do kit.
-func _flores(b: MeshBatch, centro: Vector3, larg: float, prof: float, n: int, pende := false) -> void:
-	var cor: String = FLORES[_rng_f.randi() % FLORES.size()]
-	var cor2: String = FLORES[_rng_f.randi() % FLORES.size()]
-	for k in n:
-		var q := Vector3(centro.x + _rng_f.randf_range(-prof, prof) * 0.5, centro.y + _rng_f.randf_range(0.02, 0.15), centro.z + _rng_f.randf_range(-larg, larg) * 0.5)
-		var r := _rng_f.randf_range(0.03, 0.05)
-		if k % 2 == 0:
-			b.sphere("verde_vaso", r * 2.2, q + Vector3(0.0, -0.06, 0.0), 6, 4)         # folhagem sob as flores: elas não ficam soltas no ar
-		b.sphere(cor if _rng_f.randf() < 0.65 else cor2, r, q, 5, 3)
-		if _rng_f.randf() < 0.45:
-			b.sphere("flor_amarela", r * 0.4, q + Vector3(-0.025, 0.01, 0.0), 4, 2)      # miolo
-	if pende:
-		for k in maxi(2, int(larg * 3.0)):
-			var zz := centro.z + _rng_f.randf_range(-larg, larg) * 0.5
-			var comp := _rng_f.randf_range(0.14, 0.34)
-			b.box("verde_vaso", Vector3(0.018, comp, 0.05), Vector3(centro.x - prof * 0.55, centro.y - 0.08 - comp * 0.5, zz), Vector3(0, 0, _rng_f.randf_range(-0.2, 0.2)))
-			b.sphere(cor, 0.028, Vector3(centro.x - prof * 0.55, centro.y - 0.1 - comp, zz), 4, 2)
+func _flores(_b: MeshBatch, _centro: Vector3, _larg: float, _prof: float, _n: int, _pende := false) -> void:
+	return      # as "bolinhas coloridas" foram removidas: o verde e as flores vêm dos modelos reais de plantas (vinca, mato, antúrio)
 
 
 func _pot(b: MeshBatch, p: Vector3) -> void:
@@ -2385,6 +2377,7 @@ func make_igreja(width: float, nave_len: float, twin: bool, collide: bool) -> No
 		_fachada_barroca(b, width, fh, py, pr, half, ced, wall)
 		_igreja_relevos_portal(b, py, pr)
 		_igreja_laterais(c, b, width, nave_len, nh, ced, wall)
+		_igreja_exterior_extra(c, b, width, fh, py, pr, half, ced)
 	_mesh_node(c, "Detalhes", b.commit())
 	# santos nos nichos (Poly Haven gothic_statue, CC0)
 	var sprobe := PropKit.make("gothic_statue", 1.0)
@@ -2514,6 +2507,47 @@ func _igreja_relevos_portal(b: MeshBatch, py: float, pr: float) -> void:
 		b.box("pedra_sabao", Vector3(0.1, 0.12, 0.42), Vector3(-0.78, py + pr + 3.18, qz - sz * 0.3), Vector3(0, 0, -sz * 0.5))
 	b.box("pedra_sabao", Vector3(0.22, 1.4, 1.1), Vector3(-0.74, py + pr + 3.0, 0))             # cartela sob o medalhão
 	b.sphere("ouro_velho", 0.16, Vector3(-0.9, py + pr + 3.0, 0), 10, 6)
+
+
+## Exuberância do exterior: vitral em roseta que brilha, estátuas sobre pedestais na escadaria, balaustrada com pináculos, lampiões dourados e
+## acabamento em ouro nas colunas e nos capitéis.
+func _igreja_exterior_extra(c: Node3D, b: MeshBatch, width: float, fh: float, py: float, pr: float, half: float, ced: String) -> void:
+	# roseta de vitral no frontão (emissiva: brilha à noite)
+	var ry := fh + 2.4
+	var mats := ["vitral_vermelho", "vitral_azul", "vitral_ambar", "vitral_verde"]
+	for k in 12:
+		var a := TAU * float(k) / 12.0
+		b.box(mats[k % 4], Vector3(0.05, 0.26, 0.56), Vector3(-0.50, ry + sin(a) * 0.34, cos(a) * 0.34), Vector3(-a, 0.0, 0.0))
+	b.cylinder("vitral_ambar", 0.17, 0.17, 0.06, Vector3(-0.52, ry, 0), Vector3(0, 0, PI / 2.0), 16)
+	for k in 6:
+		b.box("ferro", Vector3(0.04, 0.05, 1.3), Vector3(-0.54, ry, 0), Vector3(k * PI / 6.0, 0, 0))
+	# ouro nos capitéis e nas bases das colunas do portal
+	for sz: float in [-1.0, 1.0]:
+		var zc := sz * (pr + 1.25)
+		b.box("ouro_velho", Vector3(1.05, 0.10, 1.05), Vector3(-0.62, py + pr + 1.30, zc))
+		b.box("ouro_velho", Vector3(1.0, 0.08, 1.0), Vector3(-0.62, 0.38, zc))
+	b.box("ouro_velho", Vector3(1.0, 0.08, 2.0 * (pr + 1.25) + 1.4), Vector3(-0.64, py + pr + 1.46, 0))
+	# balaustrada com balaústres e pináculos ao longo da escadaria, dos dois lados
+	for sz: float in [-1.0, 1.0]:
+		var zb := sz * (width * 0.45 + 0.35)
+		b.box(ced, Vector3(3.3, 0.14, 0.5), Vector3(-3.1, 0.94, zb))
+		for k in 7:
+			b.cylinder(ced, 0.07, 0.07, 0.62, Vector3(-1.7 - k * 0.45, 0.58, zb), Vector3.ZERO, 12)
+			b.sphere(ced, 0.085, Vector3(-1.7 - k * 0.45, 0.88, zb), 8, 6)
+		b.box(ced, Vector3(0.5, 1.3, 0.5), Vector3(-4.8, 0.65, zb))                                  # pilar
+		b.sphere("ouro_velho", 0.22, Vector3(-4.8, 1.5, zb), 12, 8)
+	# estátuas sobre pedestais na frente da escadaria
+	var spr := PropKit.make("gothic_statue", 1.0)
+	var sbb: AABB = spr.get_meta("bb")
+	spr.free()
+	for sz: float in [-1.0, 1.0]:
+		var zs := sz * (half + 1.6)
+		b.box(ced, Vector3(1.1, 1.1, 1.1), Vector3(-3.0, 0.55, zs))
+		b.box("ouro_velho", Vector3(1.2, 0.1, 1.2), Vector3(-3.0, 1.15, zs))
+		var st := _prop(c, "gothic_statue", Vector3(-3.0, 1.2, zs), -PI / 2.0, 2.3 / maxf(sbb.size.y, 0.1))
+		st.name = "EstatuaEscadaria_%d" % int(sz)
+		var lz := _lamp_light(c, Vector3(-3.6, 3.6, zs), 0.8)
+		lz.omni_range = 7.0
 
 
 ## Laterais da nave: embasamento de pedra, pilastras a cada 5 m, cornija com cachorros sob o beiral, óculos e janelas gradeadas,
@@ -3452,11 +3486,8 @@ func _nichos() -> Node3D:
 		if j.has("xf"):
 			# alinha à parede do lote vizinho: mesmo plano e mesma direção (antes seguia a tangente da rua e ficava torto nas curvas)
 			var lxf: Transform3D = j["xf"]
-			var a0 := facade(sigma, s)
-			var zt := (a0 - lxf.origin).dot(lxf.basis.z)
-			var dirz := 1.0 if zt < 0.0 else -1.0            # sentido do centro do lote
-			origin = lxf.origin + lxf.basis.z * (zt + dirz * 0.7)
-			origin.y = Route.height(s) + SW_H
+			origin = lxf.origin + lxf.basis.z * float(j.get("zloc", 0.0))
+			origin.y = lxf.origin.y
 			nbasis = lxf.basis
 		var g := _group(root, "Nicho_%03d" % int(s), Transform3D(nbasis, origin))
 		var b := _batch()
@@ -3477,6 +3508,8 @@ func _nichos() -> Node3D:
 			var alt := 0.95 if variante == 0 else 0.85
 			var st := _prop(g, "gothic_statue", Vector3(-0.2, 1.58 if variante == 0 else 1.66, 0.0), -PI / 2.0, alt / maxf(sbb2.size.y, 0.1))
 			st.name = "Santa"
+			for szv: float in [-1.0, 1.0]:               # vasos de flores com antúrio de verdade (sem bolinhas)
+				_parte(g, "anthurium_botany_01", ["anthurium_botany_01_a" if szv < 0.0 else "anthurium_botany_05_e"], Vector3(-0.42, 1.62, szv * 0.52), _rng_f.randf() * TAU, 0.13)
 		var l := OmniLight3D.new()
 		l.name = "LuzDaVela"
 		l.position = Vector3(-0.55, 1.95, 0)
@@ -3592,17 +3625,6 @@ func _nicho_oferendas(b: MeshBatch, variante: int) -> void:
 			b.cylinder("cantaria", 0.075, 0.05, 0.10, Vector3(vx, 1.57, vz), Vector3.ZERO, 14)                  # jarra de louça branca
 			b.cylinder("ouro_velho", 0.082, 0.082, 0.018, Vector3(vx, 1.625, vz), Vector3.ZERO, 14)              # friso dourado na boca
 			b.cylinder("ouro_velho", 0.052, 0.052, 0.012, Vector3(vx, 1.515, vz), Vector3.ZERO, 14)              # pé
-			for f in 7:                                                                                          # folhagem em leque e hastes
-				var a := TAU * float(f) / 7.0
-				b.sphere("verde_vaso", 0.05, Vector3(vx + cos(a) * 0.06, 1.70 + 0.02 * float(f % 3), vz + sin(a) * 0.06), 8, 5)
-			for f in 5:                                                                                          # lírios brancos com miolo amarelo
-				var a2 := TAU * float(f) / 5.0 + 0.4
-				var fx := vx + cos(a2) * 0.035
-				var fz := vz + sin(a2) * 0.035
-				var fy := 1.78 + 0.03 * float(f % 3)
-				b.cylinder("verde_vaso", 0.006, 0.006, fy - 1.64, Vector3(fx * 0.5 + vx * 0.5, (fy + 1.64) * 0.5, fz * 0.5 + vz * 0.5), Vector3.ZERO, 12)
-				b.sphere("flor_branca", 0.034, Vector3(fx, fy, fz), 8, 5)
-				b.sphere("flor_amarela", 0.012, Vector3(fx - 0.012, fy + 0.012, fz), 6, 4)
 	for k in 6:                                                                                                  # ex-votos de lata e cera na parede
 		var zz := -0.55 + k * 0.22
 		b.box("ouro_velho", Vector3(0.015, 0.09, 0.07), Vector3(-0.03, 1.15 + 0.07 * float(k % 3), zz), Vector3(0.0, 0.0, 0.2 * float(k % 2)))
@@ -3662,6 +3684,14 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 		b.cylinder("vidro_oleo", 0.032, 0.032, 0.12, Vector3(0, 0.30, 0), Vector3.ZERO, 8)        # gargalo
 		b.cylinder("madeira_natural", 0.04, 0.036, 0.05, Vector3(0, 0.38, 0), Vector3.ZERO, 8)    # rolha
 		_halo(a, Vector3(0, 0.22, 0), 0.7, "halo_vela")
+	elif tipo == "reliquia":
+		# medalha da Irmandade: disco de latão com borda e cruz em relevo, de pé, com um brilho quente
+		b.cylinder("ouro_velho", 0.10, 0.10, 0.025, Vector3(0, 0.62, 0), Vector3(PI / 2.0, 0, 0), 24)
+		b.cylinder("cantaria_ocre", 0.075, 0.075, 0.03, Vector3(0, 0.62, 0), Vector3(PI / 2.0, 0, 0), 24)
+		b.box("ouro_velho", Vector3(0.018, 0.10, 0.034), Vector3(0, 0.62, 0))
+		b.box("ouro_velho", Vector3(0.060, 0.018, 0.034), Vector3(0, 0.64, 0))
+		b.cylinder("ouro_velho", 0.012, 0.012, 0.04, Vector3(0, 0.74, 0), Vector3(PI / 2.0, 0, 0), 12)
+		_halo(a, Vector3(0, 0.62, 0), 0.9, "halo_vela")
 	else:
 		var dia := _prop(a, "binder_notebook", Vector3.ZERO, _rng.randf_range(-0.8, 0.8), 0.85)
 		dia.name = "Diario"
@@ -3685,6 +3715,13 @@ func _coletaveis() -> Node3D:
 		var p := facade(sigma, s) - Route.right(s) * sigma * 0.35 + Vector3(0, SW_H, 0)
 		_coletavel(root, "Oleo_%02d" % i, p, "oleo", 0, "Pegar querosene")
 		i += 1
+	# doze medalhas da Irmandade escondidas junto às paredes, cantos e escadas: exploração com recompensa
+	var ri := 0
+	for rs: float in [38.0, 96.0, 130.0, 178.0, 214.0, 252.0, 286.0, 316.0, 338.0, 362.0, 386.0, 404.0]:
+		var rsig := 1.0 if ri % 2 == 0 else -1.0
+		var rp := facade(rsig, rs) - Route.right(rs) * rsig * 0.55 + Vector3(0, SW_H, 0)
+		_coletavel(root, "Reliquia_%02d" % ri, rp, "reliquia", 0, "Pegar a medalha")
+		ri += 1
 	var notes := NOTE_PTS
 	for n in notes:
 		var s: float = n[0]
