@@ -39,6 +39,8 @@ PROPS = {
     "seadogs_compass":      (3000, True),
     "street_rat":           (3500, False),
     "dining_table":         (5000, False),
+    "mantel_clock_01":      (3500, False),
+    "vintage_microwave":    (2500, True),
 }
 
 
