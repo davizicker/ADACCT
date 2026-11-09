@@ -2788,13 +2788,17 @@ func _hill_houses(root: Node3D) -> void:
 	var batches := {}
 	var tries := 0
 	var placed := 0
-	while placed < 360 and tries < 8000:
+	while placed < 360 and tries < 14000:
 		tries += 1
-		var sc := clampf(_rng.randf_range(0.0, Route.length() + 15.0), 0.0, Route.length())
+		# casario em TERRAÇOS: fileiras paralelas à rua (a cada 13 m de afastamento), casas a cada ~11 m ao longo dela, todas de frente para a rua
+		# (antes cada casa era sorteada em qualquer ponto, com giro aleatório: parecia uma maquete jogada no morro)
+		var sc := clampf(snappedf(_rng.randf_range(0.0, Route.length() + 15.0), 11.0) + _rng.randf_range(-0.6, 0.6), 0.0, Route.length())
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
 		if absf(sc - Route.BRIDGE_S) < 11.0:
 			continue
-		var d := _rng.randf_range(Route.width(sc) * 0.5 + 21.0, 150.0)
+		var d := Route.width(sc) * 0.5 + 21.0 + float(_rng.randi_range(0, 8)) * 13.0 + _rng.randf_range(-0.8, 0.8)
+		if d > 150.0:
+			continue
 		var p := Route.pos(sc) + Route.right(sc) * sigma * d
 		var q := Vector2(p.x, p.z)
 		if Route.dist_to_center(p) < Route.width(sc) * 0.5 + 19.0:      # nas curvas fechadas, d medido na normal pode cair perto de OUTRA perna da rua
@@ -2806,7 +2810,7 @@ func _hill_houses(root: Node3D) -> void:
 				break
 		if near:
 			continue
-		var x_axis := (Route.right(sc) * sigma).rotated(Vector3.UP, _rng.randf_range(-0.4, 0.4))
+		var x_axis := (Route.right(sc) * sigma).rotated(Vector3.UP, _rng.randf_range(-0.05, 0.05))
 		var z_axis := x_axis.cross(Vector3.UP)
 		var w := _rng.randf_range(6.0, 10.5)
 		var dep := _rng.randf_range(6.0, 9.0)
