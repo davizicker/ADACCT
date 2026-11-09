@@ -795,52 +795,95 @@ func _sala_sineiro(g: Node3D) -> void:
 
 
 func _sala_casarao(g: Node3D) -> void:
-	_casca("Casarão dos Vaz", 10.0, 8.0, 3.8, "reboco_ocre", "madeira_escura")
-	# mesa de jantar comprida com cadeiras (uma caída), castiçal apagado
-	_tapete(_mx(5.0), _mz(3.8), 3.4, 2.3, 0)
-	_examinar(_mx(7.4), 0.5, _mz(3.8), "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
-	_examinar(_mx(5.0), 0.95, _mz(3.8), "Examinar a mesa", "Sete lugares postos. Seis cadeiras. Quem faltava à mesa dos Vaz? | O castiçal central tem sete velas. Seis derreteram até o fim; a sétima nunca foi acesa.")
-	_prop_c("dining_table", _mx(5.0), _mz(3.8), 0.0, 1.0)                                                      # mesa de jantar com toalha xadrez (Poly Haven, CC0)
+	var up := 3.75                                   # altura do piso do andar de cima
+	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_ocre", "madeira_escura")       # pé-direito duplo: salão embaixo, galeria em cima
+	# ---------------- térreo: salão de jantar
+	_tapete(5.0, 3.8, 3.4, 2.3, 0)
+	_examinar(7.4, 0.5, 3.8, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
+	_examinar(5.0, 0.95, 3.8, "Examinar a mesa", "Sete lugares postos. Seis cadeiras. Quem faltava à mesa dos Vaz? | O castiçal central tem sete velas. Seis derreteram até o fim; a sétima nunca foi acesa.")
+	_prop_c("dining_table", 5.0, 3.8, 0.0, 1.0)
 	for k in 3:
-		_cadeira(_mx(3.9 + k * 1.1), _mz(4.78), PI)
+		_cadeira(3.9 + k * 1.1, 4.78, PI)
 	for k in 2:
-		_cadeira(_mx(3.9 + k * 1.1), _mz(2.82), 0.0)
-	_bx("madeira_natural", Vector3(_mx(7.4), 0, _mz(3.8)), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
-	_parte("brass_candleholders", ["brass_candleholder_01"], _mx(4.3), _mz(3.8), 0.0, 0.55, 0.89)
-	_parte("brass_candleholders", ["brass_candleholder_02"], _mx(5.0), _mz(3.8), 0.0, 0.55, 0.89)
-	_parte("brass_candleholders", ["brass_candleholder_03"], _mx(5.7), _mz(3.8), 0.0, 0.55, 0.89)                                          # conjunto de candelabros de latão sobre a mesa
-	var lcd := b._lamp_light(_g, Vector3(_mx(5.0), 1.45, _mz(3.8)), 0.5)
-	lcd.omni_range = 5.0
-	_prop_c("WoodenChair_01", _mx(2.55), _mz(3.8), PI / 2.0, 0.5)                                                # cadeira gótica na cabeceira
-	# retratos escuros, um espelho quebrado, lustre apagado
+		_cadeira(3.9 + k * 1.1, 2.82, 0.0)
+	_bx("madeira_natural", Vector3(7.4, 0, 3.8), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
+	_parte("brass_candleholders", ["brass_candleholder_01"], 4.3, 3.8, 0.0, 0.55, 0.89)
+	_parte("brass_candleholders", ["brass_candleholder_02"], 5.0, 3.8, 0.0, 0.55, 0.89)
+	_parte("brass_candleholders", ["brass_candleholder_03"], 5.7, 3.8, 0.0, 0.55, 0.89)
+	var lcd := b._lamp_light(_g, Vector3(5.0, 1.45, 3.8), 0.7)
+	lcd.omni_range = 6.0
+	var fill2 := b._lamp_light(_g, Vector3(5.0, 2.6, 3.0), 0.8)                                       # luz de preenchimento do salão alto
+	fill2.omni_range = 10.0
+	_prop_c("WoodenChair_01", 2.55, 3.8, PI / 2.0, 0.5)
 	for k in 4:
-		_quadro(_mx(1.6 + k * 2.2), 2.2, _mz(7.95), "N", 0.7, 0.9)
-	_quadro(_mx(0.04), 1.9, _mz(4.0), "O", 0.9, 1.3, "vidro_noite")
-	_prop("brass_diya_lantern", _mx(5.0), _mz(3.8), 0.0, 2.2, _h - 2.2)                                 # lustre de latão pendurado do forro
-	# escada que sobe e para numa parede (a ala de cima está desabada)
-	for k in 8:
-		_bb.box("madeira_escura", Vector3(1.2, 0.18, 0.3), Vector3(_mx(9.2), 0.09 + k * 0.18, _mz(1.0 + k * 0.3)))
-	b._blocker(g, "ColEscada", Vector3(1.2, 1.5, 2.4), Vector3(_mx(9.2), 0.75, _mz(2.2)))
-	# escrivaninha do capataz no canto: o livro está aqui
-	_mesa(_mx(1.4), _mz(6.7), 1.6, 0.8, 0.78, "madeira_escura")
-	_prop_c("chinese_armchair", _mx(1.4), _mz(5.95), 0.0, 0.72)                                                  # poltrona de espaldar alto na escrivaninha
-	_prop("planter_pot_clay", _mx(9.3), _mz(0.8), 0.0, 1.4, 0.0)
-	_parte("anthurium_botany_01", ["anthurium_botany_04_d"], _mx(9.3), _mz(0.8), 0.9, 0.22, 0.30)
-	_vela(_mx(1.0), 0.82, _mz(6.9), true)
-	_item("livro", Vector3(_mx(1.8), 0.88, _mz(6.7)), "Pegar o livro de registros dos Vaz")
-	_nota(_mx(4.1), 0.9, _mz(3.55), 21, "Ler o telegrama da Companhia")
-	_nota(_mx(5.95), 0.9, _mz(4.05), 22, "Ler o rascunho amassado")
-	_nota(_mx(1.1), 0.83, _mz(6.75), 26, "Ler o diário de Eulália Vaz")
-	_prop("seadogs_compass", _mx(2.05), _mz(6.45), 0.4, 1.0, 0.78)                                             # bússola de latão do capataz, sobre a escrivaninha
-	_oleo(_mx(8.8), 0.9, _mz(6.9))
-	_janela("L", _mz(5.5), 1.9, 1.0, 1.6)
-	_janela("O", _mz(1.8), 1.9, 1.0, 1.6)
-	_prop_c("GothicCabinet_01", _mx(6.0), _mz(7.35), PI, 1.0)
-	_prop_c("vintage_day_bed", _mx(2.0), _mz(0.75), 0.0, 1.0)
-	_prop_c("gothic_coffee_table", _mx(2.0), _mz(2.6), 0.5, 1.0)
-	_papelaria(_mx(1.55), _mz(6.5), 0.82, 0.4)
+		_quadro(1.6 + k * 2.2, 2.2, 7.95, "N", 0.7, 0.9)
+	_quadro(0.04, 1.9, 4.0, "O", 0.9, 1.3, "vidro_noite")
+	# lustre de latão pendurado por uma corrente comprida do forro alto
+	_bb.cylinder("ferro", 0.012, 0.012, 7.6 - (up + 1.7), Vector3(5.0, (7.6 + up + 1.7) * 0.5, 3.8), Vector3.ZERO, 6)
+	_prop("brass_diya_lantern", 5.0, 3.8, 0.0, 2.2, up + 0.3)
+	_prop("planter_pot_clay", 9.3, 0.8, 0.0, 1.4, 0.0)
+	_parte("anthurium_botany_01", ["anthurium_botany_04_d"], 9.3, 0.8, 0.9, 0.22, 0.30)
+	_nota(4.1, 0.9, 3.55, 21, "Ler o telegrama da Companhia")
+	_nota(5.95, 0.9, 4.05, 22, "Ler o rascunho amassado")
+	_oleo(8.7, 0.0, 0.5)
+	_janela("L", 5.5, 1.9, 1.0, 1.6)
+	_janela("O", 1.8, 1.9, 1.0, 1.6)
+	_prop_c("vintage_day_bed", 2.0, 0.75, 0.0, 1.0)
+	_prop_c("gothic_coffee_table", 2.0, 2.6, 0.5, 1.0)
+	# ---------------- escada de madeira (19 degraus) subindo rente à parede leste até a galeria
+	var n := 19
+	var rise := up / float(n)
+	var z0 := 0.9
+	for k in n:
+		var top := rise * float(k + 1)
+		_bb.box("madeira_escura", Vector3(1.2, top, 0.25), Vector3(9.2, top * 0.5, z0 + 0.125 + k * 0.25))
+		_bb.box("madeira_natural", Vector3(1.22, 0.04, 0.27), Vector3(9.2, top + 0.02, z0 + 0.125 + k * 0.25))
+	var ang := atan2(up, n * 0.25)
+	var ramp := StaticBody3D.new()
+	ramp.name = "RampaEscada"
+	var rcs := CollisionShape3D.new()
+	var rbs := BoxShape3D.new()
+	rbs.size = Vector3(1.2, 0.4, sqrt(pow(n * 0.25, 2.0) + up * up) + 0.3)
+	rcs.shape = rbs
+	ramp.add_child(rcs)
+	ramp.position = Vector3(9.2, up * 0.5 - 0.2, z0 + n * 0.125)
+	ramp.rotation.x = -ang
+	g.add_child(ramp)
+	for k in range(0, n, 3):                                                       # corrimão e balaústres do lado aberto da escada
+		var top2 := rise * float(k + 1)
+		_bb.cylinder("madeira_escura", 0.03, 0.03, 0.9, Vector3(8.58, top2 + 0.45, z0 + 0.125 + k * 0.25), Vector3.ZERO, 8)
+	_bb.box("madeira_natural", Vector3(0.07, 0.07, sqrt(pow(n * 0.25, 2.0) + up * up)), Vector3(8.58, up * 0.5 + 0.92, z0 + n * 0.125), Vector3(-ang, 0, 0))
+	b._blocker(g, "ColCorrimaoEscada", Vector3(0.1, 1.2, 1.0), Vector3(8.55, 0.6, z0 + 0.4))
+	# ---------------- galeria do andar de cima (z de 5,5 a 8,0): laje, guarda-corpo, quarto e escritório do capataz
+	_bb.box("madeira_escura", Vector3(10.0, 0.3, 2.55), Vector3(5.0, up - 0.15, 6.75))
+	_bb.box("madeira_natural", Vector3(10.0, 0.18, 0.12), Vector3(5.0, up - 0.36, 5.5))
+	b._blocker(g, "PisoSuperior", Vector3(10.0, 0.5, 2.55), Vector3(5.0, up - 0.25, 6.75))
+	var xb := 0.25
+	while xb < 8.4:
+		_bb.cylinder("madeira_escura", 0.03, 0.03, 0.95, Vector3(xb, up + 0.47, 5.55), Vector3.ZERO, 8)
+		xb += 0.22
+	_bb.box("madeira_natural", Vector3(8.2, 0.07, 0.1), Vector3(4.3, up + 0.97, 5.55))
+	b._blocker(g, "ColGuardaCorpo", Vector3(8.2, 1.1, 0.12), Vector3(4.3, up + 0.55, 5.55))
+	_prop_c("old_bed_frame", 1.2, 6.9, 0.0, 1.0, up)
+	_examinar(1.2, up + 0.9, 6.9, "Examinar a cama", "A cama de Eulália Vaz. O travesseiro ainda tem um fio de cabelo branco e, debaixo do colchão, uma lista com trinta e um nomes riscados a lápis.", "papel", 0.1)
+	# escrivaninha do capataz (tampo e pernas de caixas) com cadeira de espaldar alto
+	_bx("madeira_escura", Vector3(3.6, up, 7.3), 0.0, Vector3(0, 0.78, 0), Vector3(1.7, 0.07, 0.8))
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_bx("madeira_escura", Vector3(3.6, up, 7.3), 0.0, Vector3(sx * 0.78, 0.39, sz * 0.34), Vector3(0.08, 0.78, 0.08))
+	b._blocker(g, "ColEscrivaninha", Vector3(1.7, 0.8, 0.8), Vector3(3.6, up + 0.4, 7.3))
+	_prop_c("chinese_armchair", 3.6, 6.5, 0.0, 0.72, up)
+	_item("livro", Vector3(4.0, up + 0.88, 7.3), "Pegar o livro de registros dos Vaz")
+	_nota(3.0, up + 0.83, 7.35, 26, "Ler o diário de Eulália Vaz")
+	_vela(2.8, up + 0.82, 7.5, true)
+	_prop("seadogs_compass", 4.3, 7.15, 0.4, 1.0, up + 0.78)
+	_papelaria(3.5, 7.15, up + 0.82, 0.4)
+	_prop_c("GothicCabinet_01", 6.4, 7.45, PI, 1.0, up)
+	_examinar(6.4, up + 1.1, 7.2, "Abrir o guarda-roupa", "Só casacos de homem, todos do mesmo corte, todos com a gola cortada. Quem usava isto sabia que um dia ia precisar sair depressa.", "creak", 0.08)
+	_janela("L", 7.0, up + 1.9, 1.0, 1.6)
+	var lg := b._lamp_light(_g, Vector3(4.0, up + 2.1, 6.8), 0.9)                                    # luz quente da galeria
+	lg.omni_range = 7.0
 	_fim()
-	# poeira: nada de lamparina acesa aqui, só a vela do escritório e o luar
 
 
 func _sala_igreja(g: Node3D) -> void:

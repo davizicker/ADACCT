@@ -948,6 +948,20 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	rb.box("telha_cumeeira", Vector3(0.36, 0.22, w + 0.56), Vector3(rcx, ry + rise + 0.03, 0))
 	rb.box("madeira_escura", Vector3(0.10, 0.16, w + 0.50), Vector3(rcx - (depth + 1.4) / 2.0 + 0.04, ry - 0.05, 0))
 	rb.box("madeira_escura", Vector3(0.10, 0.16, w + 0.50), Vector3(rcx + (depth + 1.4) / 2.0 - 0.04, ry - 0.05, 0))
+	# silhueta do telhado: chaminé de pedra com boné (algumas casas) e antena de TV (poucas, é 1961): quebra o ar de "caixa com tampa"
+	if _rng_f.randf() < 0.45:
+		var cz := _rng_f.randf_range(-w * 0.3, w * 0.3)
+		var cxk := rcx + (depth + 1.4) * 0.17
+		var cyb := ry + rise * 0.62 - 0.25
+		rb.box("muro", Vector3(0.75, 1.9, 0.75), Vector3(cxk, cyb + 0.95, cz))
+		rb.box("cantaria", Vector3(0.95, 0.14, 0.95), Vector3(cxk, cyb + 1.95, cz))
+		rb.box("janela_escura", Vector3(0.45, 0.05, 0.45), Vector3(cxk, cyb + 2.03, cz))
+		rb.box("ferro", Vector3(0.06, 0.4, 0.06), Vector3(cxk + 0.3, cyb + 2.2, cz - 0.3))
+	if _rng_f.randf() < 0.16:
+		var az := _rng_f.randf_range(-w * 0.25, w * 0.25)
+		rb.box("ferro", Vector3(0.04, 2.1, 0.04), Vector3(rcx, ry + rise + 1.0, az))
+		for k in 3:
+			rb.box("ferro", Vector3(0.03, 0.03, 1.0 - k * 0.22), Vector3(rcx, ry + rise + 0.8 + k * 0.45, az))
 	_mesh_node(c, "Telhado", rb.commit())
 	_telhado_colisao(c, Vector3(rcx, ry + rise / 2.0, 0), depth + 1.4, rise, w + 0.5, 0.0)      # o telhado também é sólido (antes dava para atravessá-lo pelo morro)
 
@@ -1022,10 +1036,18 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if dz + dn > w / 2.0 - 0.2:
 		dn = -dn
 	pb.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + dn))   # número da casa na parede (do lado em que há parede)
+	if entrada.is_empty():
+		# casa FECHADA (não dá para entrar): duas tábuas pregadas em X sobre a porta e um cadeado enferrujado
+		for sg: float in [-1.0, 1.0]:
+			pb.box("madeira_escura", Vector3(0.05, 0.22, 3.15), Vector3(-0.30, 1.45, dz), Vector3(sg * 0.98, 0.0, 0.0))
+			for pz: float in [-0.7, 0.0, 0.7]:
+				pb.box("ferro", Vector3(0.06, 0.05, 0.05), Vector3(-0.335, 1.45 + sg * pz * 1.5, dz + pz))
+		pb.box("ferro_ferrugem", Vector3(0.07, 0.2, 0.14), Vector3(-0.31, 1.05, dz + 0.55))
 	var porta_no := _mesh_node(c, "Porta", pb.commit())
 	porta_no.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if not entrada.is_empty():
 		_porta_entrada(c, entrada, dz, w)
+		_placa_entrada(c, entrada, dz)
 
 	var bal_cols: Array[int] = []
 	if balcony and floors >= 2:
@@ -1130,6 +1152,40 @@ func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
 		d.lower_fade = 0.05
 		d.cull_mask = 1
 		casa.add_child(d)
+
+
+const NOME_ENTRADA := {"benedita": "D. BENEDITA", "padaria": "PADARIA", "carpintaria": "CARPINTARIA", "venda": "VENDA", "escola": "ESCOLA",
+		"barbearia": "BARBEARIA", "casarao": "CASARÃO", "sineiro": "SINEIRO"}
+
+
+## Marca clara das casas que se PODE entrar: plaquinha de latão com o nome sobre a porta, luz quente no limiar e faixa dourada no batente.
+## (As casas fechadas têm a porta tapada com tábuas em X.)
+func _placa_entrada(c: Node3D, entrada: Dictionary, dz: float) -> void:
+	var nome: String = NOME_ENTRADA.get(entrada["id"], "ENTRE")
+	var g := _group(c, "PlacaDeEntrada", Transform3D(Basis.IDENTITY, Vector3(-0.1, 3.55, dz)))
+	var b := _batch()
+	b.box("ouro_velho", Vector3(0.05, 0.36, 1.5), Vector3(-0.03, 0, 0))
+	b.box("placa_preta", Vector3(0.06, 0.30, 1.44), Vector3(-0.04, 0, 0))
+	b.sphere("ouro_velho", 0.035, Vector3(-0.07, 0.0, -0.72), 6, 4)
+	b.sphere("ouro_velho", 0.035, Vector3(-0.07, 0.0, 0.72), 6, 4)
+	_mesh_node(g, "Malha", b.commit())
+	var l := Label3D.new()
+	l.name = "Texto"
+	l.text = nome
+	l.font = _sign_font()
+	l.font_size = 72
+	l.pixel_size = clampf(1.28 / (maxf(nome.length(), 4.0) * 0.62 * 72.0), 0.0009, 0.0022)
+	l.modulate = Color(0.98, 0.86, 0.52)
+	l.outline_modulate = Color(0.05, 0.03, 0.0)
+	l.outline_size = 8
+	l.shaded = false
+	l.double_sided = false
+	l.rotation.y = -PI / 2.0
+	l.position = Vector3(-0.09, 0.0, 0.0)
+	g.add_child(l)
+	var luz := _lamp_light(g, Vector3(-0.9, -1.9, 0.0), 0.9)                       # luz quente que "vaza" pela porta e ilumina o degrau
+	luz.omni_range = 4.5
+	_halo(g, Vector3(-0.5, -2.2, 0.0), 2.4, "halo_quente")
 
 
 ## Porta que o jogador pode abrir (E): gatilho + lampião de parede aceso ao lado (marca as casas visitáveis).
