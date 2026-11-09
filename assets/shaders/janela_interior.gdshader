@@ -15,7 +15,7 @@ uniform vec3 cor_luz : source_color = vec3(1.0, 0.70, 0.36);
 uniform sampler2DArray salas : source_color, filter_linear_mipmap, repeat_disable;
 uniform int n_salas = 0;
 uniform vec3 dim_sala[16];
-uniform float brilho_sala = 1.9;
+uniform float brilho_sala = 2.6;
 
 const vec3 OLHAR[6] = vec3[6](vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0), vec3(0, -1, 0), vec3(0, 0, 1), vec3(0, 0, -1));
 const vec3 CIMA[6] = vec3[6](vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1), vec3(0, 1, 0), vec3(0, 1, 0));
@@ -205,7 +205,7 @@ void fragment() {
 		// sala fotografada: acesa = como foi capturada (lâmpadas da sala); apagada = escura, com um pouco de luar pela janela
 		float ent = 0.35 + 0.65 * exp(-0.55 * d * 0.5);
 		ALBEDO = vec3(0.01);
-		EMISSION = acesa ? col * mix(vec3(1.0), cor_luz * 1.5, 0.2) : col * vec3(0.20, 0.24, 0.34) * ent;
+		EMISSION = acesa ? col * mix(vec3(1.0), cor_luz * 1.5, 0.2) : col * vec3(0.34, 0.40, 0.55) * ent;
 	} else if (acesa) {
 		quente = col * cor_luz * (0.30 + 2.8 * luz);
 		ALBEDO = vec3(0.01);
