@@ -20,7 +20,8 @@ var _d := 0.0
 var _h := 0.0
 var _w0 := 1.0                         # largura/profundidade ORIGINAIS da sala (o layout foi desenhado para elas); a sala real é maior
 var _d0 := 1.0
-const K_SALA := 1.3                    # as casas ficaram 30% maiores: móveis encostados nas paredes acompanham as paredes, o meio da sala fica livre
+const K_SALA := 1.0                    # (remapear cada móvel separado desalinhava mesas e cadeiras; agora a sala inteira é ampliada por escala uniforme em construir())
+const ESCALA_SALA := 1.25              # ampliação uniforme da sala inteira (paredes, móveis, luzes, colisão)
 var _cadeiras: Array[Vector2] = []
 var _n_casca := 0                      # quantas caixas de _bb são da casca da sala (o resto é mobília)
 
@@ -38,6 +39,12 @@ func construir(builder: VilaBuilder) -> Node3D:
 		_g = g
 		call("_sala_" + id, g)
 		_camada(g)
+		if id != "igreja":
+			g.scale = Vector3.ONE * ESCALA_SALA
+			g.set_meta("spawn", (g.get_meta("spawn") as Vector3) * ESCALA_SALA)
+			g.set_meta("dim", (g.get_meta("dim") as Vector3) * ESCALA_SALA)
+			for l in g.find_children("*", "OmniLight3D", true, false):
+				(l as OmniLight3D).omni_range *= ESCALA_SALA
 	return root
 
 
@@ -68,7 +75,6 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	if nome != "Igreja Matriz":                      # a igreja já é grande
 		w = snappedf(w * K_SALA, 0.1)
 		d = snappedf(d * K_SALA, 0.1)
-		h = snappedf(h * 1.1, 0.1)                  # pé-direito mais alto, como nas casas coloniais
 	_w = w
 	_d = d
 	_h = h
