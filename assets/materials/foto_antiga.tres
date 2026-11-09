@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/foto_antiga.png" id="1_frabg"]
+
+[resource]
+albedo_texture = ExtResource("1_frabg")
+roughness = 0.95
