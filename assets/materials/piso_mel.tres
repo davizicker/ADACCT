@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/superficie_mista.gdshader" id="1_oi15f"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/Color.jpg" id="2_qpcr1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood028/Color.jpg" id="3_oyfjg"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood035/NormalGL.jpg" id="4_hseq1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ambientcg/Wood028/NormalGL.jpg" id="5_eoprb"]
+[ext_resource type="Texture2D" path="res://assets/textures/ruido_mistura.png" id="6_hshqy"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_oi15f")
+shader_parameter/albedo_a = ExtResource("2_qpcr1")
+shader_parameter/normal_a = ExtResource("4_hseq1")
+shader_parameter/albedo_b = ExtResource("3_oyfjg")
+shader_parameter/normal_b = ExtResource("5_eoprb")
+shader_parameter/ruido = ExtResource("6_hshqy")
+shader_parameter/tint = Color(1, 0.95, 0.9, 1)
+shader_parameter/tint_b = Color(0.95, 0.9, 0.85, 1)
+shader_parameter/escala = 0.8
+shader_parameter/escala_ruido = 0.09
+shader_parameter/mistura = 0.45
+shader_parameter/contraste = 3.2
+shader_parameter/sujeira = 0.25
+shader_parameter/normal_forca = 1.0
+shader_parameter/rough = 0.9
