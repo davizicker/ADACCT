@@ -71,3 +71,10 @@ Modelos no estilo Poly Haven (CC0, a confirmar na página de cada um antes de pu
 Textura de cera da vela (`assets/textures/vela_albedo.png`, `vela_normal.png`): recorte do pacote "Candle_Textures_2K" enviado pelo usuário. Licença: CONFIRMAR com quem enviou o pacote.
 Quarta leva (enviados pelo usuário, mesmo estilo Poly Haven, a confirmar): painted_wooden_nightstand, painted_wooden_chair_02, planter_pot_clay, can_rusted, vintage_suitcase.
 Quinta leva (enviados pelo usuário): vintage_lighter, seadogs_compass, street_rat, dining_table (modelos) e bark_brown_02 (casca de árvore, textura). Estilo Poly Haven, CC0 a confirmar.
+
+
+## Rodada de novembro (v27)
+- `mantel_clock_01` e `vintage_microwave` (Poly Haven, CC0 a confirmar): relógio de lareira usado nos interiores; micro-ondas convertido e não usado (anacronismo em 1961).
+- Fontes (SIL Open Font License 1.1): Playfair Display SC, Cinzel e IM Fell DW Pica, em `assets/fonts/` com as licenças.
+- `RoofingTilesSubstance002_COMPILED.sbsar` (ambientCG, CC0): arquivo Substance recebido; não foi possível renderizá-lo aqui (precisa do motor Substance). Para usar, exporte BaseColor/Normal/Roughness/AO em PNG.
+- `Human_Basic_Motions_FREE` (pacote de animações enviado): ainda não integrado.

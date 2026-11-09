@@ -1,4 +1,4 @@
-# BRADADOR: novidades desta versão (v26) e avisos
+# BRADADOR: novidades desta versão (v27) e avisos
 
 ## O que mudou
 **Jogabilidade**
@@ -26,6 +26,19 @@
 **Gráficos e peso**
 - Texturas 3D com **compressão BC7 e mipmaps**: ~3 a 4x menos memória de vídeo e sem tremer de longe.
 - Halos de luz por shader (sem quadrados), velas com chama, flores com folhagem.
+
+**Casas por dentro, janelas e portas (v27)**
+- As 13 casas ficaram 30% maiores (pé-direito 10% mais alto): móveis encostados nas paredes acompanham as paredes e o meio fica livre.
+- Iluminação nova: luz quente de preenchimento no teto, toque frio de luar junto ao piso, janelas com luar mais forte e lamparinas com sombra.
+- Vestígios de quem morou ali: lençóis sobre cadeiras, quadro caído, caixas de mudança e mala, relógio de lareira (`mantel_clock_01`) sobre uma prateleira, relógio de parede, retratos, tapetes, vasos e teias.
+- **Janelas mostram a sala de verdade**: as 14 salas são fotografadas por dentro (`tools/interior_cubes.gd`) e cada janela mostra uma delas, com vidro, reflexo e cortina por cima.
+- **Portas que abrem**: nas casas visitáveis as duas folhas giram na dobradiça, a luz da sala aparece e só então você entra.
+- Objetos para examinar (cada um conta um pedaço da história) e velas para acender nos altares (o Bradador recua um passo).
+- Altares alinhados à parede do lote vizinho; santa de pedra nos nichos.
+- Becos e passagens com janelinhas, portinhas, arcos, varal, vasos e mais lampiões.
+- Telhados com colisão; placas com a fonte Playfair Display SC (vem junto no projeto); sombra da lua em 2 cascatas com borda macia.
+- Sons: passos pesados, arranhões e rosnado do Bradador; papel ao abrir/fechar bilhetes; ler ao ar livre é arriscado.
+- Não usei o micro-ondas enviado: ele não existia em casas de 1961. O modelo está convertido (`vintage_microwave.glb`) caso você queira usá-lo em outra época.
 
 **Mapa e clima (v26)**
 - Curva grande no começo da rua: a subida deixou de ser reta (a rua ficou 25 m mais longa; as distâncias do resto foram deslocadas por `Route.SHIFT`).
