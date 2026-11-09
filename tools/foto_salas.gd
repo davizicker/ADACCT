@@ -19,6 +19,7 @@ func _init() -> void:
 	(main.get_node("Gritos") as Node).set("enabled", false)
 	(main.get_node("Eventos") as Node).set("enabled", false)
 	main.get_node("Interface").call("hide_note")
+	root.get_viewport().scaling_3d_scale = 0.5            # renderiza a 50%: bem mais rápido, suficiente para conferir a arrumação
 	var inter := main.get_node("Vila/Interiores")
 	for ch in main.get_node("Vila").get_children():          # só as salas: o resto da vila (milhares de objetos) deixa a captura lentíssima
 		if not ["Interiores", "Ambiente", "Lua"].has(String(ch.name)):

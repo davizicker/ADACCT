@@ -930,7 +930,12 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var fh := 4.0
 	var up := 3.4
 	var height := fh + (floors - 1) * up
-	_box(c, "Corpo", Vector3(depth, height + 4.0, w), Vector3(depth / 2.0, height / 2.0 - 2.0, 0), wall, true)
+	if floors >= 2 and _rng_f.randf() < 0.65:
+		# sobrado ouro-pretano: térreo de pedra rústica e andar de cima caiado (corpo dividido em dois blocos, sem faces sobrepostas)
+		_box(c, "CorpoPedra", Vector3(depth, fh + 4.0, w), Vector3(depth / 2.0, (fh - 4.0) / 2.0, 0), "muro", true)
+		_box(c, "Corpo", Vector3(depth, height - fh, w), Vector3(depth / 2.0, (height + fh) / 2.0, 0), wall, true)
+	else:
+		_box(c, "Corpo", Vector3(depth, height + 4.0, w), Vector3(depth / 2.0, height / 2.0 - 2.0, 0), wall, true)
 	# oclusão: o corpo da casa esconde o que está atrás (só Forward+/Mobile; ligado em project.godot)
 	var occ := OccluderInstance3D.new()
 	occ.name = "Oclusor"
@@ -1007,7 +1012,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var wood_porta := wood
 	if wood == "madeira_ocre" or wood == "madeira_branca" or wood == "madeira_natural":
 		# portas coloniais mineiras são coloridas (azul, verde, vermelho-sangue); madeira escura demais virava um buraco preto sob a luz fraca
-		wood_porta = ["madeira_azul", "madeira_verde", "madeira_vermelha", "madeira_escura"][_rng_f.randi() % 4]
+		wood_porta = ["madeira_azul", "madeira_verde", "madeira_vermelha", "madeira_escura", "madeira_ocre", "madeira_ocre"][_rng_f.randi() % 6]
 	if arched:
 		var dr := 0.72
 		var dh := 3.0
@@ -1355,6 +1360,10 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 	else:
 		b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
 		_jan_atual.append({"pos": Vector3(-0.012, p.y, p.z), "size": Vector2(wid * 0.9, hgt * 0.933), "lit": lit})
+		if p.y > 3.6 and _rng_f.randf() < 0.32:                                       # pano roxo pendurado no peitoril, como na Semana Santa
+			b.box("pano_roxo", Vector3(0.02, 1.15, wid * 0.62), Vector3(-0.2, base_y - 0.55, p.z), Vector3(0.0, 0.0, 0.07))
+			b.box("pano_cru", Vector3(0.022, 0.5, wid * 0.5), Vector3(-0.215, base_y - 0.3, p.z), Vector3(0.0, 0.0, 0.07))
+			b.box("ferro", Vector3(0.03, 0.03, wid * 0.7), Vector3(-0.2, base_y + 0.02, p.z))
 		var sorteio := _rng.randf()
 		if sorteio < 0.16:
 			_pot(b, Vector3(-0.2, base_y + 0.03, p.z))

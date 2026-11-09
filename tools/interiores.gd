@@ -287,6 +287,10 @@ func _decorar() -> void:
 		_bb.box("madeira_escura", Vector3(0.24, 0.05, 0.03), Vector3(_w * 0.5, 2.98, 0.04))
 		_bb.sphere("ouro_velho", 0.025, Vector3(_w * 0.5, 2.98, 0.06), 6, 4)
 	_vida(rng)
+	# lustre de latão pendurado no centro (corrente do forro): iluminação de casa de verdade
+	if _h < 5.0 and String(_g.name) != "casarao" and not _ocupado(AABB(Vector3(_w * 0.5 - 0.5, 1.2, _d * 0.5 - 0.5), Vector3(1.0, 2.0, 1.0))):
+		_bb.cylinder("ferro", 0.01, 0.01, 0.9, Vector3(_w * 0.5, _h - 0.45, _d * 0.5), Vector3.ZERO, 6)
+		_prop("brass_diya_lantern", _w * 0.5, _d * 0.5, 0.0, 1.5, _h - 1.25)
 	# 6) teias de aranha nos cantos do teto (fios finos): sala velha, casa abandonada
 	for cx: float in [0.0, _w]:
 		for cz: float in [0.0, _d]:
@@ -347,45 +351,92 @@ func _vida(rng: RandomNumberGenerator) -> void:
 			break
 
 
+## Parede de galeria (como nos casarões mineiros): muitos quadros pequenos em grade, com molduras douradas.
+func _galeria(lado: String, centro: float, cols: int, rows: int, y0 := 1.35) -> void:
+	var mats := ["paisagem_a", "paisagem_b", "foto_antiga"]
+	for r in rows:
+		for c in cols:
+			var along := centro + (c - (cols - 1) * 0.5) * 0.46
+			var yy := y0 + r * 0.52
+			var m: String = mats[(r * 2 + c) % 3]
+			var qx := 0.04
+			var qz := 0.0
+			match lado:
+				"O":
+					qx = 0.04
+					qz = along
+				"L":
+					qx = _w - 0.04
+					qz = along
+				_:
+					qx = along
+					qz = _d - 0.04
+			_quadro(qx, yy, qz, lado, 0.32, 0.4, m)
+
+
 func _fim() -> void:
 	_decorar()
 	b._mesh_node(_g, "Mobilia", _bb.commit())
 
 
 ## Janela na parede: lado "L" (x = largura), "O" (x = 0) ou "N" (z = profundidade); `p` = posição ao longo da parede.
+## Estilo colonial mineiro: portas-balcão altas em arco com folhas de madeira verde abertas, caixilhos e, atrás do vidro, a vista noturna do
+## vale com a igreja e o guarda-corpo de ferro forjado.
 func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 	var pos := Vector3.ZERO
 	var yaw := 0.0
+	var inw := 1.0                                   # sentido "para dentro da sala"
+	match lado:
+		"O":
+			yaw = PI / 2.0
+			inw = 1.0
+		"L":
+			yaw = -PI / 2.0
+			inw = -1.0
+		_:
+			yaw = PI
+	var alto := _h >= 3.1 and lado != "N" and h < 2.0 and _h < 7.0
+	if alto:
+		h = 2.1
+		y = 0.3 + h * 0.5
 	match lado:
 		"O":
 			pos = Vector3(0.02, y, p)
-			yaw = PI / 2.0
 		"L":
 			pos = Vector3(_w - 0.02, y, p)
-			yaw = -PI / 2.0
 		_:
 			pos = Vector3(p, y, _d - 0.02)
-			yaw = PI
-	_bb.quad("vidro_noite", Vector2(w, h), pos, yaw)
+	_bb.quad("vista_noite", Vector2(w, h), pos, yaw)
 	var dir := Vector3(sin(yaw), 0, cos(yaw))
 	var side := Vector3(dir.z, 0, -dir.x)
-	for k in [-1.0, 1.0]:
-		_bb.box("madeira_escura", Vector3(0.06, h + 0.12, 0.06) if lado == "N" else Vector3(0.06, h + 0.12, 0.06), pos + dir * 0.03 + side * k * (w / 2.0 + 0.03))
-	_bb.box("madeira_escura", Vector3(0.06, 0.06, 0.06), pos + dir * 0.03 + Vector3(0, h / 2.0 + 0.03, 0))
-	# caixilho em cruz
+	var verde := "madeira_verde"
+	for k: float in [-1.0, 1.0]:                                                                       # batentes
+		_bb.box(verde, Vector3(0.10, h + 0.1, 0.10) if lado != "N" else Vector3(0.10, h + 0.1, 0.08), pos + dir * 0.04 + side * k * (w / 2.0 + 0.04))
+	_bb.box(verde, Vector3(0.10, 0.10, w + 0.18) if lado != "N" else Vector3(w + 0.18, 0.10, 0.08), pos + dir * 0.04 + Vector3(0, h / 2.0 + 0.04, 0))
+	if lado != "N":                                                                              # arco de madeira sobre a verga (portas-balcão)
+		var topy: float = y + h / 2.0 + 0.09
+		if topy + w * 0.5 < _h - 0.1:
+			_bb.arch(verde, Vector3(pos.x + dir.x * 0.04, topy, pos.z), w / 2.0 + 0.04, 0.07, 0.10, 12)
+	# caixilhos: cruz e travessas
 	var along := side.abs()
-	_bb.box("madeira_escura", Vector3(0.03 + along.x * w, 0.04, 0.03 + along.z * w), pos + dir * 0.03)
-	_bb.box("madeira_escura", Vector3(0.04, h, 0.04), pos + dir * 0.03)
-	# peitoril de pedra, varão e cortinas (as cores variam por janela)
-	var pano: String = ["pano_rosa", "pano_azul", "pano_cru", "pano_rosa"][int(p * 3.0 + y * 5.0) % 4]
+	for fr in [0.0, 0.33, -0.33]:
+		_bb.box(verde, Vector3(0.03 + along.x * w, 0.035, 0.03 + along.z * w), pos + dir * 0.035 + Vector3(0, fr * h, 0))
+	_bb.box(verde, Vector3(0.035, h, 0.035), pos + dir * 0.035)
+	# folhas de madeira verde abertas para dentro, em ângulo (venezianas / folhas da porta-balcão)
+	for k: float in [-1.0, 1.0]:
+		var hinge := pos + dir * 0.06 + side * k * (w / 2.0 + 0.06)
+		if lado != "N":
+			var th := 1.15
+			var vec := dir * sin(th) - side * k * cos(th)
+			var c := hinge + vec * (w * 0.25)
+			var phi := atan2(vec.x, vec.z)
+			_bb.box(verde, Vector3(0.04, h, w * 0.5), c, Vector3(0, phi, 0))
+			_bb.box("madeira_natural", Vector3(0.05, h * 0.78, w * 0.36), c + dir * 0.0, Vector3(0, phi, 0))
+		else:
+			_bb.box(verde, Vector3(w * 0.5, h, 0.04), hinge + side * k * (w * 0.25) * 1.0 + dir * 0.02)
+	# peitoril de pedra
 	var sill := Vector3(0.16, 0.05, w + 0.3) if lado != "N" else Vector3(w + 0.3, 0.05, 0.16)
 	_bb.box("cantaria", sill, pos + dir * 0.09 + Vector3(0, -h / 2.0 - 0.03, 0))
-	var rod := Vector3(0.03, 0.03, w + 0.8) if lado != "N" else Vector3(w + 0.8, 0.03, 0.03)
-	_bb.box("ferro", rod, pos + dir * 0.10 + Vector3(0, h / 2.0 + 0.3, 0))
-	var csz := Vector3(0.03, h + 0.45, 0.3) if lado != "N" else Vector3(0.3, h + 0.45, 0.03)
-	for k in [-1.0, 1.0]:
-		for dobra in 2:
-			_bb.box(pano, csz, pos + dir * (0.08 + 0.02 * dobra) + side * k * (w / 2.0 + 0.14 - 0.09 * dobra) + Vector3(0, 0.02, 0))
 	# luar frio entrando (sem sombra): pequena luz azul
 	var l := OmniLight3D.new()
 	l.position = pos + dir * 0.8
@@ -642,7 +693,7 @@ func _prop(key: String, x: float, z: float, yaw := 0.0, escala := 1.0, y := 0.0)
 # ------------------------------------------------------------------ salas
 
 func _sala_benedita(g: Node3D) -> void:
-	_casca("Casa de Dona Benedita", 7.0, 6.0, 3.0, "reboco_creme", "madeira_natural")
+	_casca("Casa de Dona Benedita", 7.0, 6.0, 3.0, "reboco_creme", "piso_mel", "forro_tabuas")
 	_cama(_mx(1.2), _mz(4.7), 0.0)
 	_armario(_mx(0.4), _mz(2.2), 1.3, 2.0, 0.55, PI / 2.0)
 	_fogao(_mx(6.0), _mz(5.4), PI)
@@ -677,7 +728,7 @@ func _sala_benedita(g: Node3D) -> void:
 
 
 func _sala_padaria(g: Node3D) -> void:
-	_casca("Padaria da esquina", 6.0, 5.0, 3.0, "reboco_amarelo", "madeira_escura")
+	_casca("Padaria da esquina", 6.0, 5.0, 3.0, "reboco_amarelo", "piso_mel", "forro_tabuas")
 	# forno de lenha na parede leste: arco de pedra, boca em brasa e luz de fogo
 	_bb.box("cantaria", Vector3(1.4, 1.7, 2.0), Vector3(_mx(5.3), 0.85, _mz(3.4)))
 	_bb.box("cantaria", Vector3(0.9, 1.7, 0.9), Vector3(_mx(5.4), 2.0, _mz(3.4)))
@@ -708,7 +759,7 @@ func _sala_padaria(g: Node3D) -> void:
 
 
 func _sala_venda(g: Node3D) -> void:
-	_casca("Venda do Seu Zé", 8.0, 6.0, 3.1, "reboco_ocre", "madeira_escura")
+	_casca("Venda do Seu Zé", 8.0, 6.0, 3.1, "reboco_ocre", "piso_mel", "forro_tabuas")
 	_balcao(_mx(4.0), _mz(4.7), 4.4)
 	_prateleira(_mx(4.0), 1.55, _mz(5.82), 3.6, 0.0, 9)
 	_prateleira(_mx(4.0), 2.05, _mz(5.82), 3.6, 0.0, 8)
@@ -744,7 +795,7 @@ func _sala_venda(g: Node3D) -> void:
 
 
 func _sala_barbearia(g: Node3D) -> void:
-	_casca("Barbearia", 5.0, 5.0, 3.0, "reboco_azul", "madeira_natural")
+	_casca("Barbearia", 5.0, 5.0, 3.0, "reboco_azul", "piso_mel", "forro_tabuas")
 	# cadeira de barbeiro: assento, encosto, apoio e pé de ferro
 	_bb.box("couro", Vector3(0.6, 0.12, 0.6), Vector3(_mx(2.5), 0.62, _mz(2.8)))
 	_bb.box("couro", Vector3(0.6, 0.8, 0.12), Vector3(_mx(2.5), 1.1, _mz(3.15)))
@@ -769,7 +820,7 @@ func _sala_barbearia(g: Node3D) -> void:
 
 
 func _sala_sineiro(g: Node3D) -> void:
-	_casca("Casa do sineiro", 6.0, 5.0, 2.9, "reboco_branco", "madeira_escura")
+	_casca("Casa do sineiro", 6.0, 5.0, 2.9, "reboco_branco", "piso_mel", "forro_tabuas")
 	_cama(_mx(0.9), _mz(3.7), 0.0, "pano_cru")
 	# caixa de madeira embaixo da cama (onde está a chave)
 	_bb.box("madeira_natural", Vector3(0.5, 0.26, 0.4), Vector3(_mx(1.0), 0.13, _mz(2.45)))
@@ -796,7 +847,7 @@ func _sala_sineiro(g: Node3D) -> void:
 
 func _sala_casarao(g: Node3D) -> void:
 	var up := 3.75                                   # altura do piso do andar de cima
-	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_ocre", "madeira_escura")       # pé-direito duplo: salão embaixo, galeria em cima
+	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_branco", "piso_mel", "forro_tabuas")       # pé-direito duplo: salão embaixo, galeria em cima
 	# ---------------- térreo: salão de jantar
 	_tapete(5.0, 3.8, 3.4, 2.3, 0)
 	_examinar(7.4, 0.5, 3.8, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
@@ -1123,7 +1174,7 @@ func _presbiterio(g: Node3D) -> void:
 
 
 func _sala_carpintaria(g: Node3D) -> void:
-	_casca("Carpintaria do Seu Mateus", 8.0, 6.0, 3.2, "reboco_branco", "madeira_natural")
+	_casca("Carpintaria do Seu Mateus", 8.0, 6.0, 3.2, "reboco_branco", "piso_mel", "forro_tabuas")
 	# bancada comprida com plaina, serrote e tábuas; ferramentas na prateleira de metal
 	_mesa(_mx(4.0), _mz(4.6), 3.2, 0.9, 0.9, "madeira_natural")
 	_prop("hand_plane_no4", _mx(3.3), _mz(4.5), 0.4, 1.0, 0.94)
@@ -1147,7 +1198,7 @@ func _sala_carpintaria(g: Node3D) -> void:
 
 
 func _sala_escola(g: Node3D) -> void:
-	_casca("Escola Rural", 7.0, 6.0, 3.2, "reboco_creme", "madeira_natural")
+	_casca("Escola Rural", 7.0, 6.0, 3.2, "reboco_creme", "piso_mel", "forro_tabuas")
 	_prop_c("standing_chalkboard_01", _mx(3.5), _mz(5.3), PI, 1.5)
 	_quadro(_mx(6.96), 1.8, _mz(3.0), "L", 1.4, 0.9, "placa_verde")
 	for fila in 2:
@@ -1211,7 +1262,7 @@ func _sala_casa_vazia(g: Node3D) -> void:
 
 
 func _sala_pensao(g: Node3D) -> void:
-	_casca("Pensão da Dona Elvira", 7.0, 6.0, 3.0, "reboco_salmao", "madeira_natural")
+	_casca("Pensão da Dona Elvira", 7.0, 6.0, 3.0, "reboco_verde", "piso_mel", "forro_tabuas")
 	_prop_c("old_bed_frame", _mx(1.0), _mz(4.6), 0.0, 1.0)
 	_prop_c("old_bed_frame", _mx(6.0), _mz(4.6), 0.0, 1.0)
 	_prop_c("vintage_day_bed", _mx(3.5), _mz(0.9), 0.0, 1.0)
@@ -1235,7 +1286,7 @@ func _sala_pensao(g: Node3D) -> void:
 
 
 func _sala_costureira(g: Node3D) -> void:
-	_casca("Casa da costureira", 6.0, 5.0, 2.9, "reboco_azul", "madeira_natural")
+	_casca("Casa da costureira", 6.0, 5.0, 2.9, "reboco_azul", "piso_mel", "forro_tabuas")
 	_mesa(_mx(3.0), _mz(3.6), 1.8, 0.9, 0.8, "madeira_natural")                           # mesa de corte
 	_bb.box("pano_rosa", Vector3(1.4, 0.03, 0.8), Vector3(_mx(3.0), 0.83, _mz(3.6)))
 	_papelaria(_mx(3.8), _mz(3.4), 0.84, 0.6)

@@ -287,6 +287,20 @@ func _materials() -> void:
 		fm.uv1_scale = Vector3.ONE * float(pn2[1])
 		fm.roughness = float(pn2[2])
 		ResourceSaver.save(fm, MATS + String(pn2[0]) + ".tres")
+	var vm := StandardMaterial3D.new()                                                    # vista noturna na janela (emissiva fraca: lê-se no escuro)
+	vm.albedo_texture = _tex("vista_noite.png")
+	vm.emission_enabled = true
+	vm.emission_texture = vm.albedo_texture
+	vm.emission_energy_multiplier = 0.9
+	vm.roughness = 0.2
+	ResourceSaver.save(vm, MATS + "vista_noite.tres")
+	for pj in [["piso_mel", "madeira_natural", Color(1.38, 1.12, 0.78)], ["forro_tabuas", "madeira_natural", Color(1.15, 0.92, 0.66)]]:      # piso de tábua larga cor de mel e forro de madeira
+		var base := load(MATS + String(pj[1]) + ".tres")
+		if base != null:
+			var dm := (base as Material).duplicate()
+			if dm is StandardMaterial3D:
+				(dm as StandardMaterial3D).albedo_color = pj[2]
+			ResourceSaver.save(dm, MATS + String(pj[0]) + ".tres")
 	_flat("vitral_vermelho", Color(0.85, 0.10, 0.12), 0.3, 0.0, 1.6)
 	_flat("vitral_azul", Color(0.12, 0.25, 0.85), 0.3, 0.0, 1.5)
 	_flat("vitral_ambar", Color(1.0, 0.65, 0.12), 0.3, 0.0, 1.8)
@@ -315,6 +329,7 @@ func _materials() -> void:
 	_flat("listra_azul", Color(0.10, 0.20, 0.50), 0.7)
 	_flat("pano_azul", Color(0.35, 0.42, 0.52), 1.0)
 	_flat("pano_rosa", Color(0.58, 0.40, 0.40), 1.0)
+	_flat("pano_roxo", Color(0.30, 0.10, 0.30), 1.0)
 	_flat("pano_cru", Color(0.60, 0.55, 0.43), 1.0)
 	for hl in [["halo_quente", Color(1.0, 0.70, 0.32, 0.55)], ["halo_vela", Color(1.0, 0.52, 0.18, 0.65)]]:
 		var hm := ShaderMaterial.new()

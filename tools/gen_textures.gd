@@ -26,6 +26,7 @@ func _init() -> void:
 	_ponto_luz()
 	_retratos()
 	_pinturas()
+	_vista_noturna()
 	_silhueta()
 	_janelas()
 	print("[tex] pronto")
@@ -906,3 +907,76 @@ func _pinturas() -> void:
 			pi.set_pixel(x, y, base)
 	pi.save_png(OUT + "piso_xadrez.png")
 	print("[tex] pinturas, tapetes, forro, piso")
+
+
+## Vista noturna vista da janela: céu estrelado com lua, morros, casario com janelas acesas, a igreja de duas torres e o guarda-corpo de ferro forjado na frente.
+func _vista_noturna() -> void:
+	var W := 256
+	var H := 384
+	var img := Image.create(W, H, false, Image.FORMAT_RGB8)
+	var mor := _noise(FastNoiseLite.TYPE_SIMPLEX, 0.012, 911, 4)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 913
+	for y in H:
+		for x in W:
+			var fy := float(y) / H
+			var col := Color(0.03, 0.05, 0.14).lerp(Color(0.16, 0.22, 0.40), clampf(fy * 1.4, 0.0, 1.0))
+			var mx := (float(x) / W - 0.78)
+			var my := (fy - 0.16)
+			col += Color(0.75, 0.78, 0.9) * clampf(0.30 - sqrt(mx * mx * 2.0 + my * my) * 3.0, 0.0, 0.30)    # lua
+			# morros em duas camadas
+			var a1 := 0.46 + mor.get_noise_1d(float(x) * 1.1) * 0.10
+			var a2 := 0.56 + mor.get_noise_1d(float(x) * 1.5 + 200.0) * 0.08
+			if fy > a1:
+				col = Color(0.06, 0.09, 0.15)
+			if fy > a2:
+				col = Color(0.03, 0.05, 0.08)
+			img.set_pixel(x, y, col)
+	for k in 90:                                                          # estrelas
+		var sx := rng.randi() % W
+		var sy := rng.randi() % int(H * 0.42)
+		img.set_pixel(sx, sy, Color(0.95, 0.92, 0.8))
+	# igreja de duas torres e frontão, em silhueta, com a porta acesa (à direita, como na foto de referência)
+	var bx := 150
+	var by := int(H * 0.56)
+	for y in range(by - 62, by):
+		for x in range(bx, bx + 52):
+			var torre := (x < bx + 12 or x > bx + 40) and y > by - 62
+			var corpo := y > by - 34
+			var fronte := absi(x - (bx + 26)) < (by - y) * 0.45 and y > by - 46
+			if torre or corpo or fronte:
+				img.set_pixel(x, y, Color(0.07, 0.08, 0.12))
+	for y in range(by - 20, by):
+		for x in range(bx + 21, bx + 31):
+			img.set_pixel(x, y, Color(0.95, 0.65, 0.25))                  # porta acesa
+	for t in [bx + 6, bx + 46]:
+		for y in range(by - 74, by - 62):
+			for x in range(t - 4 + (by - 62 - y) / 4, t + 5 - (by - 62 - y) / 4):
+				img.set_pixel(x, y, Color(0.07, 0.08, 0.12))
+	# casario: pequenas casas escuras com janelas acesas
+	for k in 16:
+		var hx := 8 + (k * 41) % 120
+		var hy := int(H * 0.60) + (k * 17) % 28
+		for y in range(hy, hy + 16):
+			for x in range(hx, hx + 22):
+				img.set_pixel(x, y, Color(0.05, 0.06, 0.10))
+		if k % 3 != 0:
+			img.set_pixel(hx + 6, hy + 7, Color(1.0, 0.72, 0.3))
+			img.set_pixel(hx + 14, hy + 7, Color(1.0, 0.72, 0.3))
+	# guarda-corpo de ferro forjado: corrimão, barras e volutas, em preto
+	var ry := int(H * 0.74)
+	for x in W:
+		for y in range(ry, ry + 5):
+			img.set_pixel(x, y, Color(0.01, 0.01, 0.015))
+		for y in range(H - 8, H):
+			img.set_pixel(x, y, Color(0.01, 0.01, 0.015))
+	for bxx in range(4, W, 14):
+		for y in range(ry, H):
+			img.set_pixel(bxx, y, Color(0.01, 0.01, 0.015))
+			img.set_pixel(bxx + 1, y, Color(0.01, 0.01, 0.015))
+		for dy in range(-6, 7):
+			var dx := int(sqrt(maxf(36.0 - dy * dy, 0.0)))
+			img.set_pixel(clampi(bxx + 7 + dx, 0, W - 1), ry + 40 + dy + 14, Color(0.01, 0.01, 0.015))
+			img.set_pixel(clampi(bxx + 7 - dx, 0, W - 1), ry + 40 + dy + 14, Color(0.01, 0.01, 0.015))
+	img.save_png(OUT + "vista_noite.png")
+	print("[tex] vista noturna")
