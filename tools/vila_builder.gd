@@ -1532,6 +1532,10 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 	_plant(g, "samambaia", Vector3(run_len * 0.5, total * 0.5 + 2.7, wb / 2.0 + 0.6), 0.0, 1.2)
 	var lamp := _lantern_wall(Vector3(run_len * 0.4, total * 0.4 + 2.3, wb / 2.0), PI)
 	g.add_child(lamp)
+	for fx2: float in [0.12, 0.72, 0.92]:                   # mais lampiões, lados alternados: o beco deixa de ser um túnel escuro
+		var sg2 := -1.0 if fx2 > 0.5 and fx2 < 0.8 else 1.0
+		var lw2 := _lantern_wall(Vector3(run_len * fx2, total * fx2 + 2.3, sg2 * (wb / 2.0)), PI if sg2 > 0.0 else 0.0)
+		g.add_child(lw2)
 
 
 ## Beco de atalho. A boca de baixo ("ini") constrói o corredor inteiro (escadaria com patamares, muros, arcos, lampiões);
@@ -1611,11 +1615,11 @@ func _lot_passagem(parent: Node3D, f: Dictionary, idx: int, ini: bool) -> void:
 	refuge.position = Vector3(D / 2.0, rise / 2.0 + 1.7, 0)
 	g.add_child(refuge)
 	# lampiões e vegetação
-	for li in 2:
-		var lx := D * (0.28 if li == 0 else 0.72)
+	for li in 4:
+		var lx: float = D * [0.14, 0.38, 0.62, 0.86][li]
 		var ly := tops[mini(n - 1, int(lx / run))] + 2.3
-		var sg := 1.0 if li == 0 else -1.0
-		g.add_child(_lantern_wall(Vector3(lx, ly, sg * (wb / 2.0)), PI if li == 0 else 0.0))
+		var sg := 1.0 if li % 2 == 0 else -1.0
+		g.add_child(_lantern_wall(Vector3(lx, ly, sg * (wb / 2.0)), PI if sg > 0.0 else 0.0))
 		_plant(g, "samambaia", Vector3(lx + 2.0, ly + 0.4, -sg * (wb / 2.0 + 0.6)), 0.0, 1.2)
 	_plant(g, "samambaia", Vector3(D * 0.5, tops[n / 2] + 2.8, wb / 2.0 + 0.6), 0.0, 1.3)
 

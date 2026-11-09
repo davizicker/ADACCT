@@ -251,6 +251,19 @@ func vidros_e_plantas(builder: VilaBuilder, root: Node3D) -> Node3D:
 	q.size = Vector2(1, 1)
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://assets/shaders/janela_interior.gdshader")
+	# salas reais (fotografadas por tools/interior_cubes.gd): se o arquivo existir, a janela mostra a mobília de verdade
+	if ResourceLoader.exists("res://assets/texturas/salas_interior.res") and FileAccess.file_exists("res://assets/texturas/salas_interior_dims.json"):
+		var jd: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://assets/texturas/salas_interior_dims.json"))
+		if jd is Array:
+			var dd := PackedVector3Array()
+			for d in (jd as Array):
+				dd.append(Vector3(float(d[0]), float(d[1]), float(d[2])))
+			while dd.size() < 16:
+				dd.append(Vector3(7, 3, 6))
+			mat.set_shader_parameter("salas", load("res://assets/texturas/salas_interior.res"))
+			mat.set_shader_parameter("n_salas", (jd as Array).size())
+			mat.set_shader_parameter("dim_sala", dd)
+			print("[vila] janelas com salas reais: ", (jd as Array).size())
 	q.material = mat
 	var xfs: Array = []
 	var dados: Array = []

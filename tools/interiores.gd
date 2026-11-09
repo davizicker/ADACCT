@@ -58,6 +58,7 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	b._cache["i_" + parede] = pm
 	parede = "i_" + parede
 	_g.set_meta("nome", nome)
+	_g.set_meta("dim", Vector3(w, h, d))         # largura, altura, profundidade: usadas por tools/interior_cubes.gd (janelas mostram a sala de verdade)
 	_g.set_meta("spawn", Vector3(w / 2.0, 0.12, 1.7))
 	_bb = b._batch()
 	_bb.box(piso, Vector3(w + 0.6, 0.2, d + 0.6), Vector3(w / 2.0, -0.1, d / 2.0))

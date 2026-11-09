@@ -23,6 +23,16 @@ func _init() -> void:
 		var amb := main.get_node("Vila").get_node_or_null("Ambiente") as WorldEnvironment
 		if amb:
 			amb.environment.ambient_light_energy = 1.6
+	if a.size() > 8 and a[8] == "mapa":       # vista de cima: sem neblina, luz forte (para ver o traçado das ruas e das casas)
+		var amb2 := main.get_node("Vila").get_node_or_null("Ambiente") as WorldEnvironment
+		if amb2:
+			amb2.environment.fog_enabled = false
+			amb2.environment.ambient_light_energy = 2.2
+		var lua := main.get_node("Vila").get_node_or_null("Lua") as DirectionalLight3D
+		if lua:
+			lua.light_energy = 1.6
+		p.cam.far = 900.0
+		p.cam.get_node_or_null("Lampiao").queue_free() if p.cam.get_node_or_null("Lampiao") != null else null
 	for i in 8:
 		await process_frame
 	root.get_viewport().get_texture().get_image().save_png(a[6])

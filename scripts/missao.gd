@@ -192,6 +192,9 @@ func absorver_erro() -> bool:
 	return false
 
 
+var _porta_aberta: Node = null
+
+
 func usar_porta(porta: Node, p: Player) -> void:
 	if _cooldown > 0.0:
 		return
@@ -204,6 +207,13 @@ func usar_porta(porta: Node, p: Player) -> void:
 	if destino == "":
 		sair()
 	else:
+		if porta.has_method("abrir_visual") and not modo_teste:
+			_cooldown = 1.6
+			_porta_aberta = porta
+			porta.call("abrir_visual")
+			get_tree().call_group("audio", "play_creak", (porta as Node3D).global_position)
+			await get_tree().create_timer(0.6).timeout
+			_cooldown = 0.0
 		entrar(destino)
 
 
@@ -231,6 +241,9 @@ func entrar(id: String) -> void:
 
 
 func sair() -> void:
+	if _porta_aberta != null and is_instance_valid(_porta_aberta):
+		_porta_aberta.call("fechar_visual")
+	_porta_aberta = null
 	_cooldown = 1.0
 	player.global_position = _ret_pos
 	player.velocity = Vector3.ZERO

@@ -10,6 +10,15 @@ uniform float largura_sala = 3.8;
 uniform float pe_direito = 3.1;
 uniform float peitoril = 0.95;
 uniform vec3 cor_luz : source_color = vec3(1.0, 0.70, 0.36);
+// SALAS DE VERDADE: fotos (6 faces) do interior real de cada casa visitável, feitas por tools/interior_cubes.gd.
+// Se n_salas > 0, a janela mostra uma dessas salas (com a mobília de verdade); senão, cai na sala procedural abaixo.
+uniform sampler2DArray salas : source_color, filter_linear_mipmap, repeat_disable;
+uniform int n_salas = 0;
+uniform vec3 dim_sala[16];
+uniform float brilho_sala = 1.9;
+
+const vec3 OLHAR[6] = vec3[6](vec3(1, 0, 0), vec3(-1, 0, 0), vec3(0, 1, 0), vec3(0, -1, 0), vec3(0, 0, 1), vec3(0, 0, -1));
+const vec3 CIMA[6] = vec3[6](vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 0, -1), vec3(0, 0, 1), vec3(0, 1, 0), vec3(0, 1, 0));
 
 varying vec3 pos_loc;
 varying vec4 dados;
@@ -36,6 +45,21 @@ float caixa(vec3 ro, vec3 rd, vec3 bmin, vec3 bmax, out vec3 n) {
 	else if (tn == tmn.y) n = vec3(0.0, -sign(rd.y), 0.0);
 	else n = vec3(0.0, 0.0, -sign(rd.z));
 	return tn;
+}
+
+// Amostra a "cubemap" em camadas: escolhe a face pelo eixo dominante e projeta como a câmera da captura (mesmas tabelas OLHAR/CIMA).
+vec3 foto_sala(int sala, vec3 d) {
+	vec3 a = abs(d);
+	int f;
+	if (a.x >= a.y && a.x >= a.z) f = d.x > 0.0 ? 0 : 1;
+	else if (a.y >= a.z) f = d.y > 0.0 ? 2 : 3;
+	else f = d.z > 0.0 ? 4 : 5;
+	vec3 L = OLHAR[f];
+	vec3 U = CIMA[f];
+	vec3 R = cross(L, U);
+	float k = dot(d, L);
+	vec2 uv = vec2(0.5 + 0.5 * dot(d, R) / k, 0.5 - 0.5 * dot(d, U) / k);
+	return texture(salas, vec3(uv, float(sala * 6 + f))).rgb;
 }
 
 void vertex() {
@@ -122,7 +146,20 @@ void fragment() {
 		H = P + D * t;
 		mov = true;
 	}
-	if (mov) {
+	bool real = false;
+	if (n_salas > 0) {
+		int idx = int(floor(h1(semente + 9.0) * float(n_salas))) % n_salas;
+		vec3 dm = dim_sala[idx];
+		vec3 cen = vec3(0.0, (y0 + y1) * 0.5, -prof * 0.5);
+		vec3 rel = H - cen;
+		// leva o ponto da caixa virtual para a sala real (mesma posição relativa); +Z do painel vira "para dentro" da sala
+		vec3 dR = vec3(rel.x / (rw * 0.5) * dm.x * 0.5, rel.y / ((y1 - y0) * 0.5) * dm.y * 0.5, -rel.z / (prof * 0.5) * dm.z * 0.5);
+		col = foto_sala(idx, dR) * brilho_sala;
+		real = true;
+	}
+	if (real) {
+		// col já veio da foto da sala real
+	} else if (mov) {
 		col = movcor;
 	} else if (eixo == 2) {
 		// parede do fundo
@@ -164,7 +201,12 @@ void fragment() {
 	float d = length(H - L);
 	float luz = 1.0 / (1.0 + 0.2 * d * d);
 	vec3 quente;
-	if (acesa) {
+	if (real) {
+		// sala fotografada: acesa = como foi capturada (lâmpadas da sala); apagada = escura, com um pouco de luar pela janela
+		float ent = 0.35 + 0.65 * exp(-0.55 * d * 0.5);
+		ALBEDO = vec3(0.01);
+		EMISSION = acesa ? col * mix(vec3(1.0), cor_luz * 1.5, 0.2) : col * vec3(0.20, 0.24, 0.34) * ent;
+	} else if (acesa) {
 		quente = col * cor_luz * (0.30 + 2.8 * luz);
 		ALBEDO = vec3(0.01);
 		EMISSION = quente * 1.0;
