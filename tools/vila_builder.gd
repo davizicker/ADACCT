@@ -952,30 +952,32 @@ func _casa_penetra(xf: Transform3D, depth: float, w: float) -> bool:
 	return false
 
 
-## Conflito FINO entre a casa sob medida (xf, depth, w) e o que já foi posto: amostra a pegada a cada 0,5 m nos dois sentidos, com margem de 0,25 m.
-## (O teste `_casa_atravessa` é grosseiro: deixava passar quinas de casas vizinhas que apareciam dentro das salas.)
+## Conflito entre a casa sob medida (xf, depth, w) e o que já foi posto. Encostar de lado na vizinha é normal (as casas se sobrepõem 0,24 m
+## de propósito); o que NÃO pode é algo entrar na SALA: a parede da sala fica 0,44 m para dentro da borda da casa.
+## Amostra a cada 0,4 m: (1) pontos da outra caixa dentro do miolo da sala; (2) pontos do miolo da sala dentro da outra caixa (encolhida 0,05).
 func _sala_conflita(xf: Transform3D, depth: float, w: float) -> bool:
+	var m := 0.44
 	for o in _casas_postas:
 		var oxf: Transform3D = o["xf"]
 		var od := float(o["depth"])
 		var ow := float(o["w"])
 		if oxf.origin.distance_to(xf.origin) > depth + od + w + ow:
 			continue
-		var nx := int(ceil(depth / 0.5))
-		var nz := int(ceil(w / 0.5))
+		var nx := int(ceil(od / 0.4))
+		var nz := int(ceil(ow / 0.4))
 		for ix in nx + 1:
 			for iz in nz + 1:
-				var p: Vector3 = xf * Vector3(depth * float(ix) / float(nx), 0.0, -w / 2.0 + w * float(iz) / float(nz))
-				var q: Vector3 = oxf.affine_inverse() * p
-				if q.x > -0.25 and q.x < od + 0.25 and absf(q.z) < ow / 2.0 + 0.25:
+				var p: Vector3 = oxf * Vector3(od * float(ix) / float(nx), 0.0, -ow / 2.0 + ow * float(iz) / float(nz))
+				var q: Vector3 = xf.affine_inverse() * p
+				if q.x > m and q.x < depth - m and absf(q.z) < w / 2.0 - m:
 					return true
-		nx = int(ceil(od / 0.5))
-		nz = int(ceil(ow / 0.5))
+		nx = int(ceil((depth - 2.0 * m) / 0.4))
+		nz = int(ceil((w - 2.0 * m) / 0.4))
 		for ix in nx + 1:
 			for iz in nz + 1:
-				var p2: Vector3 = oxf * Vector3(od * float(ix) / float(nx), 0.0, -ow / 2.0 + ow * float(iz) / float(nz))
-				var q2: Vector3 = xf.affine_inverse() * p2
-				if q2.x > -0.25 and q2.x < depth + 0.25 and absf(q2.z) < w / 2.0 + 0.25:
+				var p2: Vector3 = xf * Vector3(m + (depth - 2.0 * m) * float(ix) / float(nx), 0.0, -w / 2.0 + m + (w - 2.0 * m) * float(iz) / float(nz))
+				var q2: Vector3 = oxf.affine_inverse() * p2
+				if q2.x > 0.05 and q2.x < od - 0.05 and absf(q2.z) < ow / 2.0 - 0.05:
 					return true
 	return false
 
