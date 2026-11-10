@@ -226,8 +226,218 @@ def chamine():
     p.exportar("chamine")
 
 
+# ================================================================ KIT 2 (mapa do zero): peças mais ricas para moldar as casas
+
+def _voluta(p, m, cx, cy, z, r0, voltas=1.6, esp=0.012, segs=22, sentido=1):
+    """Arabesco de ferro forjado (espiral plana no plano XY), feito de segmentos finos."""
+    pts = []
+    for k in range(segs + 1):
+        t = k / segs
+        a = sentido * t * voltas * 2 * math.pi
+        r = r0 * (1.0 - 0.75 * t)
+        pts.append((cx + math.cos(a) * r, cy + math.sin(a) * r))
+    for (x0, y0), (x1, y1) in zip(pts[:-1], pts[1:]):
+        L = math.hypot(x1 - x0, y1 - y0)
+        ang = math.atan2(y1 - y0, x1 - x0)
+        p.box(m, (L + esp, esp, esp), ((x0 + x1) / 2, (y0 + y1) / 2, z), rot=(0, 0, ang))
+
+
+# ---------------------------------------------------------------- sacada de ferro forjado (1,6 m) com mísulas entalhadas
+def sacada_ferro():
+    p = Peca()
+    w, prof = 1.6, 0.75
+    p.box("cantaria", (w, 0.12, prof), (0, -0.06, prof / 2), bevel=0.012)                          # laje de pedra
+    p.box("cantaria", (w + 0.06, 0.05, 0.06), (0, -0.005, prof - 0.02), bevel=0.008)             # lábio
+    pts = [(0.0, 0.0), (0.06, 0.0), (0.06, -0.04), (0.03, -0.07), (0.0, -0.08)]
+    p.perfil_extrudado("cantaria", [(z + prof - 0.08, y - 0.12) for z, y in pts], w - 0.04, (0, 0, 0))   # moldura sob a laje
+    for sx in (-1, 1):                                                                             # mísulas em S
+        x = sx * (w / 2 - 0.18)
+        for k in range(6):
+            t = k / 5.0
+            p.box("cantaria", (0.14, 0.09, 0.62 - 0.5 * t), (x, -0.17 - k * 0.075, 0.31 - 0.25 * t), bevel=0.01)
+    # gradil: barras, corrimão, rodapé e arabescos
+    z = prof - 0.05
+    alt = 0.95
+    p.box("ferro", (w - 0.02, 0.035, 0.045), (0, alt, z), bevel=0.006)                             # corrimão
+    p.box("ferro", (w - 0.02, 0.025, 0.025), (0, 0.08, z))                                           # barra de baixo
+    p.box("ferro", (w - 0.02, 0.02, 0.02), (0, alt - 0.16, z))                                       # faixa de cima
+    for sz in (-1, 1):
+        p.box("ferro", (0.025, alt, 0.025), (sz * (w / 2 - 0.02), alt / 2, z))
+        p.box("ferro", (0.025, 0.025, prof - 0.1), (sz * (w / 2 - 0.02), alt, prof / 2))         # retorno lateral
+        p.box("ferro", (0.025, alt, 0.025), (sz * (w / 2 - 0.02), alt / 2, 0.06))
+    n = 13
+    for i in range(n):
+        x = -w / 2 + 0.06 + i * (w - 0.12) / (n - 1)
+        p.box("ferro", (0.016, alt - 0.08, 0.016), (x, (alt + 0.08) / 2 - 0.04 + 0.04, z))
+    for i in range(4):                                                                              # arabescos na faixa de cima
+        cx = -w / 2 + 0.2 + i * (w - 0.4) / 3
+        _voluta(p, "ferro", cx - 0.05, alt - 0.08, z + 0.012, 0.06, sentido=1)
+        _voluta(p, "ferro", cx + 0.05, alt - 0.08, z + 0.012, 0.06, sentido=-1)
+    p.exportar("sacada_ferro")
+
+
+# ---------------------------------------------------------------- janela de guilhotina (vão 1,0 x 1,6) com cercadura de orelhas
+def janela_guilhotina():
+    p = Peca()
+    w, h = 1.0, 1.6
+    for sx in (-1, 1):
+        p.box("cantaria", (0.17, h + 0.04, 0.15), (sx * (w / 2 + 0.085), h / 2, 0.06), bevel=0.012, jitter=0.003)
+        p.box("cantaria", (0.30, 0.20, 0.17), (sx * (w / 2 + 0.11), h + 0.07, 0.065), bevel=0.012)        # orelhas
+    p.box("cantaria", (w + 0.32, 0.22, 0.17), (0, h + 0.12, 0.065), bevel=0.012)                       # verga
+    arc = 10
+    for k in range(arc):                                                                                # verga em arco abatido
+        a0 = math.pi * k / arc
+        a1 = math.pi * (k + 1) / arc
+        am = (a0 + a1) / 2
+        L = 2 * 0.62 * math.sin((a1 - a0) / 2) + 0.02
+        p.box("cantaria", (L, 0.07, 0.18), (math.cos(am) * 0.62, h + 0.26 + math.sin(am) * 0.10, 0.07), rot=(0, 0, am + math.pi / 2), bevel=0.006)
+    p.box("cantaria", (w + 0.44, 0.06, 0.28), (0, -0.03, 0.12), bevel=0.01)                            # peitoril
+    p.box("cantaria", (w + 0.24, 0.05, 0.2), (0, -0.085, 0.08), bevel=0.008)
+    z = 0.035
+    for sx in (-1, 1):
+        p.box("madeira", (0.055, h, 0.06), (sx * (w / 2 - 0.027), h / 2, z), bevel=0.004)
+    for yy in (0.027, h / 2, h - 0.027):
+        p.box("madeira", (w, 0.055 if yy != h / 2 else 0.07, 0.06), (0, yy, z), bevel=0.004)          # travessas (a do meio é o encontro das guilhotinas)
+    for half in (0, 1):
+        y0 = half * h / 2
+        for k in (1, 2):
+            p.box("madeira", (0.025, h / 2 - 0.06, 0.035), (-w / 2 + k * w / 3, y0 + h / 4, z + 0.01), bevel=0.002)
+        p.box("madeira", (w - 0.08, 0.025, 0.035), (0, y0 + h / 4, z + 0.01), bevel=0.002)
+    p.exportar("janela_guilhotina")
+
+
+# ---------------------------------------------------------------- porta-balcão (vão 1,1 x 2,4) para as sacadas: almofadas embaixo, vidro em cima
+def porta_balcao():
+    p = Peca()
+    w, h = 1.1, 2.4
+    for sx in (-1, 1):
+        p.box("cantaria", (0.18, h + 0.05, 0.16), (sx * (w / 2 + 0.09), h / 2, 0.06), bevel=0.012, jitter=0.003)
+    p.box("cantaria", (w + 0.42, 0.22, 0.18), (0, h + 0.11, 0.07), bevel=0.012)
+    p.box("cantaria", (0.2, 0.28, 0.2), (0, h + 0.15, 0.08), bevel=0.012)                               # pedra-chave
+    z = 0.035
+    for sx in (-1, 1):
+        cx = sx * w / 4
+        lw = w / 2 - 0.015
+        for xx in (cx - lw / 2 + 0.03, cx + lw / 2 - 0.03):
+            p.box("madeira", (0.06, h, 0.06), (xx, h / 2, z), bevel=0.004)
+        for yy in (0.03, 0.85, h - 0.03):
+            p.box("madeira", (lw, 0.06, 0.06), (cx, yy, z), bevel=0.004)
+        p.box("madeira", (lw - 0.12, 0.6, 0.03), (cx, 0.44, z + 0.03), bevel=0.01)                      # almofada
+        for k in (1, 2):
+            p.box("madeira", (0.025, h - 0.95, 0.035), (cx - lw / 2 + k * lw / 3, 0.85 + (h - 0.9) / 2, z + 0.01), bevel=0.002)
+        for k in (1, 2):
+            p.box("madeira", (lw - 0.1, 0.025, 0.035), (cx, 0.85 + k * (h - 0.9) / 3, z + 0.01), bevel=0.002)
+        p.box("ferro", (0.03, 0.14, 0.03), (sx * 0.05, 1.05, z + 0.05), bevel=0.003)
+    p.exportar("porta_balcao")
+
+
+# ---------------------------------------------------------------- grade de ferro de janela térrea (1,0 x 1,5) com volutas no topo
+def grade_janela():
+    p = Peca()
+    w, h = 1.0, 1.5
+    z = 0.2
+    for i in range(7):
+        x = -w / 2 + 0.07 + i * (w - 0.14) / 6
+        p.box("ferro", (0.018, h, 0.018), (x, h / 2, z))
+        p.box("ferro", (0.03, 0.06, 0.03), (x, h + 0.03, z))
+    for yy in (0.15, h * 0.55, h - 0.08):
+        p.box("ferro", (w, 0.022, 0.022), (0, yy, z))
+    for i in range(3):
+        cx = -0.3 + i * 0.3
+        _voluta(p, "ferro", cx - 0.06, h - 0.2, z + 0.01, 0.05, sentido=1)
+        _voluta(p, "ferro", cx + 0.06, h - 0.2, z + 0.01, 0.05, sentido=-1)
+    for sx in (-1, 1):
+        p.box("ferro", (0.03, 0.03, z), (sx * (w / 2 - 0.02), 0.3, z / 2))
+        p.box("ferro", (0.03, 0.03, z), (sx * (w / 2 - 0.02), h - 0.2, z / 2))
+    p.exportar("grade_janela")
+
+
+# ---------------------------------------------------------------- porta de uma folha (vão 1,1 x 2,3) com bandeira em arco e raios de ferro
+def porta_bandeira():
+    p = Peca()
+    w, h = 1.1, 2.3
+    r = w / 2
+    for sx in (-1, 1):
+        p.box("cantaria", (0.2, h + 0.05, 0.18), (sx * (w / 2 + 0.1), h / 2, 0.07), bevel=0.014, jitter=0.004)
+    arc = 12
+    for k in range(arc):
+        a0 = math.pi * k / arc
+        a1 = math.pi * (k + 1) / arc
+        am = (a0 + a1) / 2
+        L = 2 * (r + 0.1) * math.sin((a1 - a0) / 2) + 0.03
+        p.box("cantaria", (L, 0.2, 0.18), (math.cos(am) * (r + 0.1), h + math.sin(am) * (r + 0.1), 0.07), rot=(0, 0, am + math.pi / 2), bevel=0.01)
+    p.box("cantaria", (w + 0.5, 0.1, 0.45), (0, -0.02, 0.2), bevel=0.012)                               # soleira
+    z = 0.04
+    p.box("madeira", (w - 0.02, h - 0.04, 0.07), (0, (h - 0.04) / 2 + 0.02, z), bevel=0.006)
+    for py, ph in ((0.5, 0.75), (1.35, 0.7), (1.95, 0.3)):
+        for sx in (-1, 1):
+            p.box("madeira", ((w - 0.2) / 2 - 0.04, ph, 0.03), (sx * (w - 0.2) / 4 + sx * 0.0, py, z + 0.045), bevel=0.01)
+    p.box("madeira", (w, 0.08, 0.08), (0, h, z), bevel=0.005)                                           # travessa da bandeira
+    for k in range(5):                                                                                  # raios de ferro da bandeira
+        a = math.pi * (k + 0.5) / 5
+        p.box("ferro", (r * 0.9, 0.02, 0.02), (math.cos(a) * r * 0.45, h + math.sin(a) * r * 0.45, z + 0.01), rot=(0, 0, a))
+    for k in range(arc):
+        a0 = math.pi * k / arc
+        a1 = math.pi * (k + 1) / arc
+        am = (a0 + a1) / 2
+        L = 2 * (r - 0.02) * math.sin((a1 - a0) / 2) + 0.02
+        p.box("madeira", (L, 0.05, 0.06), (math.cos(am) * (r - 0.02), h + math.sin(am) * (r - 0.02), z), rot=(0, 0, am + math.pi / 2))
+    p.box("ferro", (0.05, 0.05, 0.05), (0.38, 1.1, z + 0.07), bevel=0.01)                              # aldrava
+    p.exportar("porta_bandeira")
+
+
+# ---------------------------------------------------------------- cunhal de cantaria (1 m de altura): blocos alternados com bisel
+def cunhal_1m():
+    p = Peca()
+    for k in range(3):
+        longo = k % 2 == 0
+        p.box("cantaria", (0.52 if longo else 0.32, 0.31, 0.14), (0.0 if longo else 0.1, k * 0.333 + 0.16, 0.06), bevel=0.014, jitter=0.006)
+    p.exportar("cunhal_1m")
+
+
+# ---------------------------------------------------------------- embasamento de pedra (1 m de largura, 0,9 m de altura): blocos rústicos
+def embasamento_1m():
+    p = Peca()
+    y = 0.0
+    fila = 0
+    while y < 0.9:
+        hh = random.uniform(0.2, 0.3)
+        x = -0.5 + (0.0 if fila % 2 == 0 else 0.18)
+        while x < 0.5:
+            ww = random.uniform(0.3, 0.5)
+            x1 = min(x + ww, 0.5)
+            p.box("muro", (x1 - x - 0.02, hh - 0.02, 0.08), ((x + x1) / 2, y + hh / 2, 0.04), bevel=0.015, jitter=0.008)
+            x = x1
+        y += hh
+        fila += 1
+    p.box("cantaria", (1.0, 0.06, 0.14), (0, 0.93, 0.07), bevel=0.01)                                   # capa
+    p.exportar("embasamento_1m")
+
+
+# ---------------------------------------------------------------- beiral de telhas capa-e-canal (1 m de largura): o fim do telhado visto da rua
+def beiral_telhas():
+    p = Peca()
+    n = 6
+    for i in range(n):
+        x = -0.5 + (i + 0.5) / n
+        for camada, (r, yy) in enumerate(((0.07, 0.0), (0.06, 0.05))):                                  # canal (embaixo) e capa (em cima, deslocada)
+            xx = x + (0.0 if camada == 0 else 0.5 / n)
+            if xx > 0.5:
+                continue
+            segs = 6
+            for k in range(segs):
+                a0 = math.pi * k / segs
+                a1 = math.pi * (k + 1) / segs
+                am = (a0 + a1) / 2
+                L = 2 * r * math.sin((a1 - a0) / 2) + 0.01
+                sgn = -1 if camada == 0 else 1
+                p.box("telha", (L, 0.012, 0.45), (xx + math.cos(am) * r, yy + sgn * math.sin(am) * r * 0.6, 0.22), rot=(0, 0, sgn * (am + math.pi / 2)))
+    p.exportar("beiral_telhas")
+
+
 # ---------------------------------------------------------------- balaustre isolado e mesa torneada não: só os módulos de fachada
 if __name__ == "__main__":
-    for fn in (janela, veneziana, lambda: veneziana(True), porta, sacada, cornija, cachorro, chamine):
+    for fn in (janela, veneziana, lambda: veneziana(True), porta, sacada, cornija, cachorro, chamine,
+               sacada_ferro, janela_guilhotina, porta_balcao, grade_janela, porta_bandeira, cunhal_1m, embasamento_1m, beiral_telhas):
         limpar()
         fn()

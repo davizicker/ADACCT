@@ -6,97 +6,59 @@ extends RefCounted
 ##
 ## Para mudar o desenho da rua: edite as listas CTRL_*, rode tools/bake.gd (recria o mundo).
 
-## Pontos (x, z) por onde a rua passa. A rua começa em (0,0) olhando para -Z.
-const CTRL_XZ: Array[Vector2] = [
-	Vector2(0, 14), Vector2(0, 0), Vector2(7, -13), Vector2(15, -27), Vector2(17, -41), Vector2(9, -53),
-	Vector2(-5, -58), Vector2(-20, -56),
-	Vector2(-34, -78), Vector2(-30, -104), Vector2(-14, -122), Vector2(4, -134),
-	Vector2(20, -156), Vector2(30, -184),
-	# ladeira da igreja: zigue-zague com duas curvas de 180 graus (raio ~13 m); as pernas ficam ~26 m uma da outra
-	Vector2(31.8, -187.8), Vector2(34.4, -191.1), Vector2(37.6, -193.8), Vector2(41.2, -195.8),
-	Vector2(45.2, -196.9), Vector2(48.7, -197.6), Vector2(52.1, -198.2), Vector2(55.6, -198.8),
-	Vector2(59.0, -199.5), Vector2(62.9, -200.8), Vector2(66.1, -203.3), Vector2(68.4, -206.6),
-	Vector2(69.6, -210.5), Vector2(69.5, -214.6), Vector2(68.1, -218.4), Vector2(65.7, -221.7),
-	Vector2(62.3, -224.0), Vector2(58.4, -225.1), Vector2(54.3, -225.0), Vector2(50.7, -224.4),
-	Vector2(47.0, -223.7), Vector2(43.3, -223.0), Vector2(39.6, -222.3), Vector2(35.9, -221.7),
-	Vector2(32.2, -221.0), Vector2(28.5, -220.3), Vector2(24.8, -219.7), Vector2(20.8, -219.6),
-	Vector2(16.9, -220.7), Vector2(13.5, -223.0), Vector2(11.1, -226.3), Vector2(9.7, -230.1),
-	Vector2(9.6, -234.2), Vector2(10.8, -238.1), Vector2(13.1, -241.4), Vector2(16.3, -243.9),
-	Vector2(20.2, -245.2), Vector2(23.9, -245.9), Vector2(27.5, -246.6), Vector2(31.2, -247.2),
-	Vector2(34.9, -247.9), Vector2(38.6, -248.6), Vector2(42.3, -249.3), Vector2(46.0, -249.9),
-	Vector2(49.7, -250.6), Vector2(53.9, -251.9), Vector2(57.6, -254.2), Vector2(60.7, -257.3),
-	Vector2(62.9, -261.1), Vector2(64.2, -265.3), Vector2(64.9, -269.4), Vector2(65.6, -273.6),
-	Vector2(66.3, -277.7), Vector2(67.0, -281.9), Vector2(67.7, -286.0), Vector2(68.4, -290.1),
-	Vector2(69.1, -294.3), Vector2(69.8, -298.4), Vector2(70.5, -302.6), Vector2(71.2, -306.7),
-]
-## Altitude (m) em função da distância percorrida s (m).
-const CTRL_H: Array[Vector2] = [
-	Vector2(-20, -2), Vector2(0, 0), Vector2(30, 3.5), Vector2(85, 9.0), Vector2(115, 13.0),
-	Vector2(145, 17.5), Vector2(175, 19.5), Vector2(203, 19.9), Vector2(246.8, 26.0),
-	Vector2(293.6, 32.0), Vector2(340.5, 36.5), Vector2(400.0, 38.0), Vector2(480.0, 38.8),
-]
-## Largura do leito da rua (m, entre meios-fios) em função de s.
+## A rua vem do PLANO DA VILA (scripts/plano_vila.gd, mapa do zero): pernas retas em zigue-zague ligadas por curvas de raio fixo.
+## Altura: cada peça tem a sua rampa. Largura do leito: constante nas ruas, alarga no adro da igreja.
 const CTRL_W: Array[Vector2] = [
-	Vector2(0, 5.5), Vector2(22, 5.5), Vector2(70, 4.2), Vector2(93, 3.4), Vector2(117, 4.4),
-	Vector2(143, 5.5), Vector2(163, 6.0), Vector2(177, 12.0), Vector2(191, 13.0),
-	Vector2(205, 6.0), Vector2(237.4, 5.0), Vector2(262.3, 3.6), Vector2(296.8, 3.6),
-	Vector2(324.9, 5.0), Vector2(362.5, 5.5), Vector2(410.0, 6.0), Vector2(417.0, 11.0), Vector2(437.0, 19.0), Vector2(480.0, 20.0),
+	Vector2(0, 5.0), Vector2(435.0, 5.0), Vector2(445.0, 14.0), Vector2(455.0, 20.0), Vector2(540.0, 20.0),
 ]
 ## Deslocamento (m) das distâncias s depois da curva inicial (a rua ficou 25 m mais comprida no começo).
-const SHIFT := 25.0
+const SHIFT := 0.0          # (o mapa antigo deslocava 25 m; o mapa novo não usa mais)
 const STEP := 0.5
 const SIDEWALK := 0.7
 ## s onde termina o casario e começa o adro da igreja, e s da fachada da igreja.
-const S_END := 413.0
-const CHURCH_S := 470.0
+const S_END := 435.0
+const CHURCH_S := 482.0
 ## ponte de pedra sobre um riacho que cruza a rua em BRIDGE_S (metade do comprimento = BRIDGE_HALF)
-const BRIDGE_S := 143.0
+const BRIDGE_S := 63.5
 const BRIDGE_HALF := 4.6
 ## chafariz de pedra no largo (lado +1 = direita de quem sobe)
-const FOUNTAIN_S := 185.0
-const FOUNTAIN_SIDE := 1.0
+const FOUNTAIN_S := 118.7
+const FOUNTAIN_SIDE := -1.0
 
 static var _built := false
 static var _pts: PackedVector2Array
 static var _len := 0.0
 
 
-static func _catmull(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) -> Vector2:
-	var t2 := t * t
-	var t3 := t2 * t
-	return 0.5 * ((2.0 * p1) + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
+static var _hs := PackedFloat32Array()
 
 
 static func _build() -> void:
 	if _built:
 		return
-	# 1) amostra densa da curva Catmull-Rom
-	var dense := PackedVector2Array()
-	var n := CTRL_XZ.size()
-	for i in range(1, n - 2):
-		for k in 60:
-			dense.append(_catmull(CTRL_XZ[i - 1], CTRL_XZ[i], CTRL_XZ[i + 1], CTRL_XZ[i + 2], float(k) / 60.0))
-	dense.append(CTRL_XZ[n - 2])
-	# 2) reamostra em passos iguais de comprimento de arco (STEP) a partir do ponto (0,0)
-	var start := 0
-	for i in dense.size():
-		if dense[i].distance_to(Vector2.ZERO) < 0.2:
-			start = i
-			break
+	var pl := PlanoVila.new()
+	var dense := pl.eixo3(0.1)
+	# começa no ponto mais perto de (0, 0) e reamostra em passos iguais (STEP), guardando a altura
+	var start := 0                                      # a rua começa no começo da 1ª peça do plano (s = 0)
+	var h0 := dense[start].y
 	_pts = PackedVector2Array()
-	_pts.append(dense[start])
+	_hs = PackedFloat32Array()
+	_pts.append(Vector2(dense[start].x, dense[start].z))
+	_hs.append(0.0)
 	var acc := 0.0
 	var prev := dense[start]
 	for i in range(start + 1, dense.size()):
-		var seg := prev.distance_to(dense[i])
-		while acc + seg >= STEP:
+		var cur := dense[i]
+		var seg := Vector2(prev.x, prev.z).distance_to(Vector2(cur.x, cur.z))
+		while acc + seg >= STEP and seg > 0.0:
 			var t := (STEP - acc) / seg
-			prev = prev.lerp(dense[i], t)
-			_pts.append(prev)
-			seg = prev.distance_to(dense[i])
+			prev = prev.lerp(cur, t)
+			_pts.append(Vector2(prev.x, prev.z))
+			_hs.append(prev.y - h0)
+			seg = Vector2(prev.x, prev.z).distance_to(Vector2(cur.x, cur.z))
 			acc = 0.0
 		acc += seg
-		prev = dense[i]
+		prev = cur
 	_len = (_pts.size() - 1) * STEP
 	_built = true
 
@@ -110,15 +72,8 @@ static func _interp(ctrl: Array[Vector2], s: float) -> float:
 	var i := 0
 	while i < n - 2 and s > ctrl[i + 1].x:
 		i += 1
-	var p0 := ctrl[maxi(i - 1, 0)]
-	var p1 := ctrl[i]
-	var p2 := ctrl[i + 1]
-	var p3 := ctrl[mini(i + 2, n - 1)]
-	var t := (s - p1.x) / (p2.x - p1.x)
-	# Catmull-Rom só no valor (y); x é linear em s, o que é suficiente aqui
-	var t2 := t * t
-	var t3 := t2 * t
-	return 0.5 * ((2.0 * p1.y) + (-p0.y + p2.y) * t + (2.0 * p0.y - 5.0 * p1.y + 4.0 * p2.y - p3.y) * t2 + (-p0.y + 3.0 * p1.y - 3.0 * p2.y + p3.y) * t3)
+	var t := (s - ctrl[i].x) / (ctrl[i + 1].x - ctrl[i].x)
+	return lerpf(ctrl[i].y, ctrl[i + 1].y, smoothstep(0.0, 1.0, t))
 
 
 ## Comprimento total da rota (m).
@@ -135,7 +90,12 @@ static func _xz(s: float) -> Vector2:
 
 
 static func height(s: float) -> float:
-	return _interp(CTRL_H, s)
+	_build()
+	if s <= 0.0:
+		return _hs[0] + s * 0.08                       # antes do começo (a rua da estação continua descendo)
+	var f := clampf(s, 0.0, _len) / STEP
+	var i := mini(int(f), _hs.size() - 2)
+	return lerpf(_hs[i], _hs[i + 1], f - i)
 
 
 static func width(s: float) -> float:

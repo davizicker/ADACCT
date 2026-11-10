@@ -12,6 +12,8 @@ const FUNDO_MAX := 11.0        # profundidade máxima de casa comum
 const FUNDO_MIN := 5.0
 const BECO_L := 3.4            # largura útil dos becos-escada
 const BECO_PAREDE := 0.45
+const X_PONTE := 37.5           # ponte sobre o córrego, no meio da 1ª perna
+const FINAL_L := 60.0           # reta final: fim do casario e o adro da igreja
 
 ## Pernas: [x0, x1, z] (andam ao longo de x). A entrada e o fim andam ao longo de z.
 const X_OESTE := 6.0
@@ -22,6 +24,10 @@ var pecas: Array = []          # trechos da rua: {tipo:"reta"/"arco", ...}
 var cadastro: Array = []       # {id, tipo, r: Rect2 (x,z), ...}
 var avisos: Array[String] = []
 var rng := RandomNumberGenerator.new()
+
+
+func _init() -> void:
+	pecas = tracado()
 
 
 ## Entrada (sul -> norte), 4 pernas em zigue-zague e subida final até o adro.
@@ -46,8 +52,56 @@ func tracado() -> Array:
 				p.append({"tipo": "arco", "c": Vector2(X_OESTE, cz), "r": R_GRAMPO, "a0": PI * 0.5, "a1": PI * 1.5})
 	var zf := Z_PERNA[Z_PERNA.size() - 1]
 	p.append({"tipo": "arco", "c": Vector2(20.0, zf - R_CANTO), "r": R_CANTO, "a0": PI * 0.5, "a1": PI})
-	p.append({"tipo": "reta", "a": Vector2(20.0 - R_CANTO, zf - R_CANTO), "b": Vector2(20.0 - R_CANTO, zf - R_CANTO - 12.0)})
+	p.append({"tipo": "reta", "a": Vector2(20.0 - R_CANTO, zf - R_CANTO), "b": Vector2(20.0 - R_CANTO, zf - R_CANTO - FINAL_L)})
 	return p
+
+
+## Inclinação (subida por metro) de cada peça, na ordem do traçado: entrada, curva de 90°, pernas, grampos, curva final, adro.
+func rampa(i: int) -> float:
+	var pc: Dictionary = pecas[i]
+	if i == 0:
+		return 0.08
+	if i == pecas.size() - 1:
+		return 0.03
+	if pc["tipo"] == "arco":
+		return 0.06 if float(pc["r"]) < R_GRAMPO - 0.1 else 0.10
+	return 0.045
+
+
+## Eixo da rua com altura: Vector3(x, y, z) a cada `passo` m. A altura sobe conforme a rampa de cada peça.
+func eixo3(passo := 0.5) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var h := 0.0
+	var prev := Vector2.INF
+	for i in pecas.size():
+		var pc: Dictionary = pecas[i]
+		var g := rampa(i)
+		var pts := PackedVector2Array()
+		if pc["tipo"] == "reta":
+			var a: Vector2 = pc["a"]
+			var b: Vector2 = pc["b"]
+			var n := maxi(1, int(round(a.distance_to(b) / passo)))
+			for k in n:
+				pts.append(a.lerp(b, float(k) / n))
+		else:
+			var c: Vector2 = pc["c"]
+			var r: float = pc["r"]
+			var a0: float = pc["a0"]
+			var a1: float = pc["a1"]
+			var n2 := maxi(2, int(round(absf(a1 - a0) * r / passo)))
+			for k in n2:
+				var t := lerpf(a0, a1, float(k) / n2)
+				pts.append(c + Vector2(cos(t), sin(t)) * r)
+		for pt in pts:
+			if prev != Vector2.INF:
+				h += prev.distance_to(pt) * g
+			out.append(Vector3(pt.x, h, pt.y))
+			prev = pt
+	var ult: Dictionary = pecas[pecas.size() - 1]
+	var fim: Vector2 = ult["b"]
+	h += prev.distance_to(fim) * rampa(pecas.size() - 1)
+	out.append(Vector3(fim.x, h, fim.y))
+	return out
 
 
 ## Pontos densos do eixo da rua (a cada `passo` m), na ordem de quem sobe.
@@ -139,6 +193,18 @@ func _ret_lote(q: Dictionary, u: float, w: float, d: float) -> Rect2:
 	return Rect2(Vector2(minf(p0.x, p1.x), minf(p0.y, p1.y)), Vector2(absf(p1.x - p0.x), absf(p1.y - p0.y)))
 
 
+## Reservas que não podem virar casa: a ponte e o vale do córrego na 1ª perna (dos dois lados da rua) e o largo do chafariz
+## no miolo do 1º grampo.
+func _reservas_fixas() -> void:
+	var meia := LARG_RUA * 0.5 + CALCADA
+	var xp := X_PONTE
+	cadastrar("ponte_sul", "ponte", Rect2(Vector2(xp - 5.0, Z_PERNA[0] + meia), Vector2(10.0, 30.0)))
+	cadastrar("ponte_norte", "ponte", Rect2(Vector2(xp - 5.0, Z_PERNA[1] + meia), Vector2(10.0, Z_PERNA[0] - Z_PERNA[1] - 2.0 * meia)))
+	var c := Vector2(X_LESTE, Z_PERNA[0] - R_GRAMPO)
+	var ri := (R_GRAMPO - meia - 0.3) * 0.62                  # quadrado inscrito no miolo do grampo (não toca a curva)
+	cadastrar("largo_chafariz", "largo", Rect2(c - Vector2(ri, ri), Vector2(ri, ri) * 2.0))
+
+
 ## Becos-escada que ligam duas pernas vizinhas (atalhos): corredor reto em z, de uma calçada até a outra.
 func _becos_ligacao() -> void:
 	var meia := LARG_RUA * 0.5 + CALCADA
@@ -157,15 +223,21 @@ func _becos_ligacao() -> void:
 ## Becos sem saída (portas das casas dos becos): 12 m para dentro do quarteirão, do lado de cima da perna.
 func _becos_cegos() -> void:
 	var meia := LARG_RUA * 0.5 + CALCADA
-	var defs := [["ferraria", 0, 38.0], ["casa_vazia", 1, 33.0], ["pensao", 2, 56.0], ["costureira", 1, 58.0], ["deposito", 2, 14.0]]
+	var defs := [["ferraria", 0, 16.0], ["casa_vazia", 1, 33.0], ["pensao", 2, 56.0], ["costureira", 1, 58.0], ["deposito", 2, 14.0]]
 	for d in defs:
 		var i: int = d[1]
-		var x: float = d[2]
-		var z0 := Z_PERNA[i] - meia
-		var r := Rect2(Vector2(x - BECO_L * 0.5 - BECO_PAREDE, z0 - 12.0), Vector2(BECO_L + 2.0 * BECO_PAREDE, 12.0))
-		if livre(r):
-			cadastrar("cego_" + str(d[0]), "cego", r, {"x": x, "z_rua": z0, "perna": i, "sala": d[0]})
-		else:
+		var achou := false
+		for k in 40:
+			var x: float = float(d[2]) + float(k / 2) * 1.5 * (1.0 if k % 2 == 0 else -1.0)
+			if x < X_OESTE + 4.0 or x > X_LESTE - 4.0:
+				continue
+			var z0 := Z_PERNA[i] - meia
+			var r := Rect2(Vector2(x - BECO_L * 0.5 - BECO_PAREDE, z0 - 12.0), Vector2(BECO_L + 2.0 * BECO_PAREDE, 12.0))
+			if livre(r):
+				cadastrar("cego_" + str(d[0]), "cego", r, {"x": x, "z_rua": z0, "perna": i, "sala": d[0]})
+				achou = true
+				break
+		if not achou:
 			avisos.append("beco sem saída %s não coube" % d[0])
 
 
@@ -254,6 +326,7 @@ func montar(dims := {}) -> Dictionary:
 	cadastro.clear()
 	avisos.clear()
 	_cadastrar_rua()
+	_reservas_fixas()
 	_becos_ligacao()
 	_becos_cegos()
 	_casas_visitaveis(dims)

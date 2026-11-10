@@ -24,17 +24,10 @@ const WOODS: Array[String] = ["madeira_azul", "madeira_vermelha", "madeira_verde
 ## Becos em escada: [s, lado, tipo]. tipo "cego" = beco SEM SAÍDA (pátio com portão de ferro, itens e uma casa com porta); sem tipo = escada que sobe até a porta do alto.
 ## (A rota ganhou um começo novo e o resto dela deslocou Route.SHIFT m: tudo que depende da forma da rua a partir de ~65 m soma SHIFT.
 ## Os becos de atalho e a ladeira em zigue-zague não tinham sido deslocados e a parede de 54 m do atalho cortava a rua.)
-const ALLEYS: Array = [
-	[18.0, -1.0], [28.0, 1.0, "cego"], [44.0, 1.0], [60.0, -1.0, "cego"], [74.0 + Route.SHIFT, 1.0], [88.0 + Route.SHIFT, -1.0], [104.0 + Route.SHIFT, 1.0],
-	[134.0 + Route.SHIFT, -1.0], [172.0 + Route.SHIFT, -1.0], [196.0 + Route.SHIFT, 1.0], [214.0 + Route.SHIFT, -1.0, "cego"], [250.0 + Route.SHIFT, 1.0], [268.0 + Route.SHIFT, 1.0, "cego"],
-	[348.0 + Route.SHIFT, -1.0, "cego"], [372.0 + Route.SHIFT, -1.0],
-]
+const ALLEYS: Array = []          # (mapa antigo; o mapa novo tira os becos do plano: scripts/plano_vila.gd)
 ## PASSAGENS = becos de atalho: escadas/rampas que atravessam de uma perna do zigue-zague da ladeira da igreja à outra.
 ## "a" é a boca de baixo e "b" a de cima: [s da rua, lado]. Dá para subir 60-80 m de rua em ~20 m de escada.
-const PASSAGENS: Array = [
-	{"id": "AtalhoDoSino", "a": [240.0 + Route.SHIFT, -1.0], "b": [318.0 + Route.SHIFT, -1.0]},
-	{"id": "AtalhoDaFonte", "a": [310.0 + Route.SHIFT, 1.0], "b": [376.0 + Route.SHIFT, 1.0]},
-]
+const PASSAGENS: Array = []
 const PASS_W := 3.2          # largura útil do corredor
 const PASS_BOCA := 4.6       # largura da boca na fachada
 const FOUNTAIN := [Route.FOUNTAIN_S, Route.FOUNTAIN_SIDE]
@@ -333,11 +326,35 @@ func _nearest(x: float, z: float) -> Vector2:
 	return Vector2(best_s, sqrt(best_d))
 
 
+## Ponto da rota mais perto de (x, z) que esteja LONGE (mais de 30 m de rua) do ponto `s1`: a outra perna do zigue-zague.
+func _nearest_outro(x: float, z: float, s1: float) -> Vector2:
+	var q := Vector2(x, z)
+	var bi := -1
+	var bd := INF
+	for i in _rs.size():
+		if absf(i * 2.0 - s1) < 30.0:
+			continue
+		var d := q.distance_squared_to(_rs[i])
+		if d < bd:
+			bd = d
+			bi = i
+	if bi < 0:
+		return Vector2(-1.0, INF)
+	return Vector2(bi * 2.0, sqrt(bd))
+
+
 func terrain_h(x: float, z: float) -> float:
 	var q := _nearest(x, z)
 	var base := Route.height(q.x) - 0.4      # abaixo da calçada: não cobre a rua
+	# entre duas pernas do zigue-zague o chão sobe em rampa de uma rua até a outra (antes havia um degrau no meio do quarteirão)
+	var q2 := _nearest_outro(x, z, q.x)
+	var entre := 0.0
+	if q2.x >= 0.0 and q2.y < 40.0:
+		var wq := clampf((q.y - 3.5) / maxf(q.y + q2.y - 7.0, 0.1), 0.0, 0.5)
+		base = lerpf(base, Route.height(q2.x) - 0.4, wq)
+		entre = 1.0 - smoothstep(30.0, 45.0, q.y + q2.y)
 	var dc := Route.width(q.x) * 0.5 + SW + 12.0       # corredor plano onde ficam as casas
-	var t := maxf(0.0, q.y - dc)
+	var t := maxf(0.0, q.y - dc) * (1.0 - entre)
 	var rise := 0.30 * t + 0.0030 * t * t
 	rise = 130.0 * tanh(rise / 130.0)        # morros altos, mas sem paredões de 400 m nas bordas do terreno
 	var n := _noise_lo.get_noise_2d(x, z) * 16.0 + _noise_hi.get_noise_2d(x, z) * 3.0
@@ -619,7 +636,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	for sid in Interiores.SALAS_RUA:
 		_salas_rua[sid] = _interiores.sala_rua(self, sid)
 	_rng.state = rng_antes
-	_frontage(root)
+	_frontage_plano(root)
 	_tira_plantas_dentro_das_casas(root)
 	_aterra_plantas(root)
 	root.add_child(Realismo.new().vidros_e_plantas(self, root))
@@ -821,6 +838,178 @@ func _frontage(root: Node3D) -> void:
 				_joints.append({"sigma": sigma, "s": s, "xf": f["xf"], "zloc": zloc})      # guarda o quadro do lote: o altar se alinha à parede dele, não à tangente da rua
 			prev_special = kind != "casa"
 			s = s2
+
+
+# ================================================================== MAPA DO ZERO (docs/27): tudo sai do cadastro do plano
+
+var _plano: Dictionary = {}
+
+
+## Quadro (origem na fachada, x para dentro do lote) de um retângulo do plano, a partir da peça reta e do lado.
+func _quadro_plano(pl: PlanoVila, c: Dictionary) -> Dictionary:
+	var pc: Dictionary = pl.pecas[int(c["peca"])]
+	var q := pl._quadro_lote(pc, float(c["lado"]))
+	var a: Vector2 = q["a"]
+	var t: Vector2 = q["t"]
+	var n: Vector2 = q["n"]
+	var f: float = q["frente"]
+	var m := a + t * (float(c["u"]) + float(c["w"]) * 0.5) + n * f
+	var sm := Route.nearest_s(Vector3(m.x, 0.0, m.y))
+	var x_axis := Vector3(n.x, 0.0, n.y)
+	var basis := Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP))
+	return {"xf": Transform3D(basis, Vector3(m.x, Route.height(sm) + SW_H, m.y)), "w": float(c["w"]), "sm": sm}
+
+
+func _frontage_plano(root: Node3D) -> void:
+	var casas := _group(root, "Casas")
+	var muros := _group(root, "MurosEQuintais")
+	var becos := _group(root, "Becos")
+	_start_wall(root)
+	var dims := {}
+	for sid in _salas_rua:
+		var d: Vector3 = (_salas_rua[sid] as Node3D).get_meta("dim")
+		dims[sid] = Vector2(d.x + SHELL * 2.0 + 0.75, d.z + SHELL * 2.0 + 0.75)
+	var pl := PlanoVila.new()
+	_plano = pl.montar(dims)
+	print("[vila] plano: %d itens, %d sobreposições, avisos: %s" % [(_plano["cadastro"] as Array).size(), int(_plano["sobreposicoes"]), str(_plano["avisos"])])
+	# 1) becos-escada de ligação primeiro (o terreno se ajusta ao piso deles)
+	for c in _plano["cadastro"]:
+		if c["tipo"] == "beco":
+			_beco_escada(becos, c)
+	# 2) casas, casas visitáveis, quintais e becos sem saída
+	for c in _plano["cadastro"]:
+		match String(c["tipo"]):
+			"casa", "visitavel":
+				var f := _quadro_plano(pl, c)
+				_entrada_atual = {}
+				if c["tipo"] == "visitavel":
+					for e in ENTRADAS:
+						if e["id"] == c["sala"]:
+							_entrada_atual = e
+					_entradas_feitas[c["sala"]] = f["sm"]
+				_lot_casa_plano(casas, f, float(c["lado"]), float(c["d"]), c)
+			"quintal":
+				_lot_quintal(muros, _quadro_plano(pl, c))
+			"cego":
+				var x: float = c["x"]
+				var z0: float = c["z_rua"]
+				var sm := Route.nearest_s(Vector3(x, 0.0, z0))
+				var xa := Vector3(0, 0, -1)
+				var fb := {"xf": Transform3D(Basis(xa, Vector3.UP, xa.cross(Vector3.UP)), Vector3(x, Route.height(sm) + SW_H, z0)), "w": PlanoVila.BECO_L, "sm": sm}
+				_lot_beco(becos, fb, String(c["sala"]))
+	# 3) ponte (dois lados) e chafariz no largo do 1º grampo
+	for sg: float in [-1.0, 1.0]:
+		var fp := lot_frame(sg, Route.BRIDGE_S - Route.BRIDGE_HALF, Route.BRIDGE_S + Route.BRIDGE_HALF)
+		_lot_ponte(muros, fp, sg)
+	var fc := lot_frame(Route.FOUNTAIN_SIDE, Route.FOUNTAIN_S - 3.5, Route.FOUNTAIN_S + 3.5)
+	_lot_chafariz(muros, fc)
+	_entrada_atual = {}
+
+
+## Casa de um lote do plano: largura e fundo EXATOS do cadastro (nada de encolher depois). Sobrados ganham sacada.
+func _lot_casa_plano(parent: Node3D, f: Dictionary, sigma: float, depth: float, c: Dictionary) -> void:
+	var w: float = f["w"]
+	var sala: Node3D = null
+	if not _entrada_atual.is_empty() and _salas_rua.has(_entrada_atual["id"]):
+		sala = _salas_rua[_entrada_atual["id"]]
+	var floors := 2 if _rng.randf() < 0.65 else 1
+	if _rng.randf() < 0.08 and w > 7.5:
+		floors = 3
+	if sala != null:
+		floors = 1
+	var haunted: bool = floors >= 2 and _haunted < 6 and _rng.randf() < 0.12
+	if haunted:
+		_haunted += 1
+	var xf: Transform3D = f["xf"]
+	_casas_postas.append({"xf": xf, "depth": depth, "w": w})
+	var casa := make_casa(w, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth, floors >= 2, 0.28, false, haunted, _entrada_atual, sala)
+	casa.name = "Casa_%02d" % _n
+	_n += 1
+	var pd: Vector3 = xf * Vector3(-0.4, 0.0, float(casa.get_meta("door_z")))
+	xf.origin.y += clampf(Route.height(Route.nearest_s(pd)) + SW_H - pd.y, -2.2, 2.2)
+	casa.transform = xf
+	parent.add_child(casa)
+	_reservar(xf * Vector3(-1.0, 0.0, float(casa.get_meta("door_z"))), 1.7)
+	_portas.append(xf * Vector3(-0.9, 0.0, float(casa.get_meta("door_z"))))
+	_decalques_fachada(casa, w, float(casa.get_meta("altura")))
+	var porta_a := casa.get_node_or_null("Entrada_%s" % _entrada_atual.get("id", "")) as Node3D
+	if porta_a != null:
+		porta_a.position.y = 1.3
+	var dzz := float(casa.get_meta("door_z"))
+	var zloc := clampf(dzz + (2.4 if dzz < 0.0 else -2.4), -w * 0.5 + 1.0, w * 0.5 - 1.0)
+	_joints.append({"sigma": sigma, "s": f["sm"], "xf": f["xf"], "zloc": zloc})
+
+
+## BECO-ESCADA DE LIGAÇÃO (atalho entre duas pernas): reto, do meio-fio de baixo ao de cima, degraus iguais, muros dos dois lados
+## acompanhando a escada, lampiões, colisão em rampa contínua (ninguém trava) e refúgio. Origem do nó: boca de baixo; x = para cima.
+func _beco_escada(parent: Node3D, c: Dictionary) -> void:
+	var x: float = c["x"]
+	var zb: float = c["z_baixo"]
+	var zc: float = c["z_cima"]
+	var sb := Route.nearest_s(Vector3(x, 0.0, zb))
+	var sc := Route.nearest_s(Vector3(x, 0.0, zc))
+	var hb := Route.height(sb) + SW_H
+	var hc := Route.height(sc) + SW_H
+	var L := zb - zc
+	var rise := hc - hb
+	var wb := PlanoVila.BECO_L
+	var xa := Vector3(0, 0, -1)
+	var g := _group(parent, "BecoEscada_%02d" % _n, Transform3D(Basis(xa, Vector3.UP, xa.cross(Vector3.UP)), Vector3(x, hb, zb)))
+	_n += 1
+	g.set_meta("passagem", true)
+	g.set_meta("comprimento", L)
+	g.set_meta("subida", rise)
+	_casas_postas.append({"xf": g.transform, "depth": L, "w": wb + 1.0, "corr": true})
+	_pass_geo.append({"id": g.name, "A": Vector3(x, hb, zb), "B": Vector3(x, hc, zc), "dir": xa, "D": L, "rise": rise})
+	var n := maxi(4, int(round(absf(rise) / 0.16)))
+	var run := L / float(n)
+	var b := _batch()
+	for i in n:
+		var top := rise * float(i + 1) / float(n)
+		b.box("pedra_chao", Vector3(run + 0.02, top + 1.2, wb), Vector3((i + 0.5) * run, top - (top + 1.2) * 0.5, 0))
+		b.box("cantaria", Vector3(0.10, 0.06, wb), Vector3(i * run + 0.05, top - rise / float(n) + 0.03, 0))      # espelho de pedra no degrau
+	var nm := maxi(6, int(L / 1.6))
+	for sz: float in [-1.0, 1.0]:
+		for k in nm:
+			var x0 := k * L / nm
+			var seg := L / nm
+			var top := rise * float(k + 1) / float(nm) + 2.4
+			b.box("muro", Vector3(seg + 0.04, top + 1.4, 0.45), Vector3(x0 + seg * 0.5, top * 0.5 - 0.7, sz * (wb * 0.5 + 0.225)))
+			b.box("cantaria", Vector3(seg + 0.04, 0.10, 0.6), Vector3(x0 + seg * 0.5, top + 0.05, sz * (wb * 0.5 + 0.225)))
+	_mesh_node(g, "Degraus", b.commit())
+	var ang := atan2(rise, L)
+	var ramp := StaticBody3D.new()
+	ramp.name = "Rampa"
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(sqrt(L * L + rise * rise) + 0.6, 0.4, wb)
+	cs.shape = bs
+	ramp.add_child(cs)
+	ramp.position = Vector3(L * 0.5, rise * 0.5 - 0.2 * cos(ang), 0)
+	ramp.rotation.z = ang
+	g.add_child(ramp)
+	for sz: float in [-1.0, 1.0]:
+		_blocker(g, "Parede_%d" % int(sz), Vector3(L, absf(rise) + 6.0, 0.45), Vector3(L * 0.5, rise * 0.5 + 1.5, sz * (wb * 0.5 + 0.225)))
+	for k in range(1, int(L / 8.0) + 1):                                                   # lampiões de parede alternados
+		var xl := k * 8.0 - 2.0
+		if xl > L - 2.0:
+			break
+		var sl := 1.0 if k % 2 == 0 else -1.0
+		var lw := _lantern_wall(Vector3(xl, rise * xl / L + 2.4, sl * (wb * 0.5 - 0.02)), PI if sl > 0.0 else 0.0)
+		g.add_child(lw)
+	var refuge := Area3D.new()
+	refuge.name = "Refugio"
+	refuge.add_to_group("refugio", true)
+	refuge.collision_layer = 0
+	var rcs := CollisionShape3D.new()
+	var rbs := BoxShape3D.new()
+	rbs.size = Vector3(6.0, 3.4, wb)
+	rcs.shape = rbs
+	refuge.add_child(rcs)
+	refuge.position = Vector3(3.2, rise * 3.2 / L + 1.7, 0)
+	g.add_child(refuge)
+	for k in range(2, int(L) - 2, 5):                                                     # mato nas frestas dos degraus, junto ao muro
+		_plant(g, "capim", Vector3(k + 0.3, rise * (k + 0.3) / L, (wb * 0.5 - 0.25) * (1.0 if k % 2 == 0 else -1.0)), _rng.randf() * TAU, 0.7)
 
 
 ## Prédio que fecha o começo da rua (atrás do jogador).
