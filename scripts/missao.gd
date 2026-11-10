@@ -414,5 +414,8 @@ func _process(delta: float) -> void:
 	_detecta_sala()
 	if _env == null:
 		return
-	var alvo_amb := 0.14 if dentro != "" else 0.38
+	var alvo_amb := 0.22 if dentro != "" else 0.38
 	_env.ambient_light_energy = lerpf(_env.ambient_light_energy, alvo_amb, clampf(delta * 4.0, 0.0, 1.0))
+	# dentro de casa a sombra é quente (lamparina), não azul-noite da rua
+	var alvo_cor := Color(0.34, 0.22, 0.13) if dentro != "" else Color(0.10, 0.13, 0.20)
+	_env.ambient_light_color = _env.ambient_light_color.lerp(alvo_cor, clampf(delta * 4.0, 0.0, 1.0))
