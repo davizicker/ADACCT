@@ -863,8 +863,13 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		var w_sala := float(_salas_rua[_entrada_atual["id"]].get_meta("dim").x) + SHELL * 2.0 + 0.75
 		var xt := (f["xf"] as Transform3D)
 		xt.origin += xt.basis.x * 0.05
-		if _casa_atravessa(xt, d_sala, w_sala, true):
-			# a casa sob medida invadiria um beco/passagem: nesta vaga vira casa comum e a entrada fica para o próximo lote
+		if not _beco_vizinho.is_empty():
+			_casas_postas.append(_beco_vizinho)
+		var choque := near_alley or _casa_atravessa(xt, d_sala, w_sala)          # vizinhas, becos, passagens e o beco logo depois
+		if not _beco_vizinho.is_empty():
+			_casas_postas.pop_back()
+		if choque:
+			# a casa sob medida invadiria uma vizinha/beco (a colisão de uma engolia o querosene dentro da outra): nesta vaga vira casa comum e a entrada fica para o próximo lote
 			push_warning("[vila] entrada %s adiada: invadiria um beco" % _entrada_atual["id"])
 			_entradas_feitas.erase(_entrada_atual["id"])
 			_entrada_atual = {}
@@ -3565,7 +3570,7 @@ func _adornos() -> Node3D:
 		for k in 4:
 			b.box("cantaria", Vector3(0.5, 0.02, 0.03), p + Vector3(0, 0.05, 0), Vector3(0, k * PI / 4.0, 0))
 	# lugares dos carros cobertos (colocados depois, em _props_rua): nada se sobrepõe a eles
-	for cfg in [[153.0, -1.0], [S_END + 22.0, 1.0]]:
+	for cfg in [[153.0 + Route.SHIFT, -1.0], [S_END + 22.0, 1.0]]:
 		var cs0: float = _s_sem_porta(float(cfg[1]), float(cfg[0]), 0.5, 3.4)      # o carro não pode ficar na frente de uma porta
 		_carros_s[int(cfg[0])] = cs0
 		_reservar(Route.pos(cs0) + Route.right(cs0) * float(cfg[1]) * (Route.width(cs0) * 0.5 - 1.25), 3.0)
@@ -4119,7 +4124,7 @@ func _props_rua() -> Node3D:
 		var banco := _prop(root, "wooden_stool_01", sb["pos"], _rng.randf() * TAU, 1.0)
 		_prop_collision(banco, "cil", Vector3(0.4, 0.44, 0.4), Vector3(0, 0.22, 0))
 	# --- carros cobertos com lona, estacionados na borda do largo e do adro
-	for cfg in [[153.0, -1.0], [S_END + 22.0, 1.0]]:
+	for cfg in [[153.0 + Route.SHIFT, -1.0], [S_END + 22.0, 1.0]]:
 		var sg: float = cfg[1]
 		var s: float = float(_carros_s.get(int(cfg[0]), cfg[0]))
 		var c := Route.pos(s) + Route.right(s) * sg * (Route.width(s) * 0.5 - 1.25)
