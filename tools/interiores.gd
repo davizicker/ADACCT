@@ -207,7 +207,7 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	rp.interior = true
 	rp.box_projection = true
 	rp.update_mode = ReflectionProbe.UPDATE_ONCE
-	rp.intensity = 1.0
+	rp.intensity = 0.2          # (a 1.0 refletia o céu azul da captura em blocos azuis e brancos nas paredes)
 	_g.add_child(rp)
 
 

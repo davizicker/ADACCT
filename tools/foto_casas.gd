@@ -30,7 +30,8 @@ func _init() -> void:
 		var dim: Vector3 = (sl.get_meta("dim") as Vector3) / xs      # medidas da sala sem a ampliação (coordenadas locais do nó)
 		var ey := 1.65 / xs
 		var poses := [
-			["fora", Vector3(dim.x * 0.5, ey, -6.5), Vector3(dim.x * 0.5, ey * 0.95, 0.6)],
+			["fora", Vector3(dim.x * 0.5, ey, -3.4), Vector3(dim.x * 0.5, ey * 0.9, 0.6)],
+			["fora2", Vector3(dim.x * 0.5, ey * 1.9, -9.0), Vector3(dim.x * 0.5, ey * 0.8, 0.6)],
 			["in1", Vector3(dim.x * 0.5, ey, 0.5), Vector3(dim.x * 0.5, ey * 0.7, dim.z)],
 			["in2", Vector3(dim.x * 0.5, ey, dim.z - 0.7), Vector3(dim.x * 0.5, ey * 1.05, 0.0)],
 			["in3", Vector3(dim.x - 0.7, ey, dim.z - 0.7), Vector3(dim.x * 0.15, ey * 0.7, dim.z * 0.2)],
