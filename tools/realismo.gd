@@ -310,7 +310,7 @@ func vidros_e_plantas(builder: VilaBuilder, root: Node3D) -> Node3D:
 			relv = (ndv as Node3D).transform * relv
 			ndv = ndv.get_parent()
 		var kv := 0.2 / maxf(bbv.size.y, 0.05)             # vaso de ~20 cm de altura
-		var meshv := miv.mesh
+		var meshv: Mesh = PropKit.malha_vaso_com_terra(miv.mesh, miv.mesh.get_aabb())
 		hv.free()
 		var xfv: Array = []
 		for xv in vasos:

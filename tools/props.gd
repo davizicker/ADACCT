@@ -33,6 +33,51 @@ static func bounds(n: Node, xf := Transform3D.IDENTITY) -> AABB:
 	return out
 
 
+## O modelo do vaso de barro vem VAZIO: acrescenta a terra escura dentro (disco logo abaixo da borda). `bb` = caixa do modelo sem escala.
+static func _terra_do_vaso(bb: AABB) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.name = "Terra"
+	var cm := CylinderMesh.new()
+	cm.top_radius = minf(bb.size.x, bb.size.z) * 0.5 * 0.88
+	cm.bottom_radius = cm.top_radius
+	cm.height = 0.012
+	cm.radial_segments = 14
+	cm.rings = 1
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.15, 0.09, 0.055)
+	m.roughness = 1.0
+	cm.material = m
+	mi.mesh = cm
+	var c := bb.get_center()
+	mi.position = Vector3(c.x, bb.position.y + bb.size.y * 0.80, c.z)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+## Malha do vaso + terra numa só (para vasos em lote/MultiMesh).
+static func malha_vaso_com_terra(vaso: Mesh, bb: AABB) -> ArrayMesh:
+	var out := ArrayMesh.new()
+	for si in vaso.get_surface_count():
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, vaso.surface_get_arrays(si))
+		out.surface_set_material(out.get_surface_count() - 1, vaso.surface_get_material(si))
+	var t := _terra_do_vaso(bb)
+	var tm := t.mesh as CylinderMesh
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, tm.get_mesh_arrays())
+	# desloca os vértices da terra para a posição dela (o disco foi criado na origem)
+	var arrs := out.surface_get_arrays(out.get_surface_count() - 1)
+	var vs: PackedVector3Array = arrs[Mesh.ARRAY_VERTEX]
+	for i in vs.size():
+		vs[i] += t.position
+	arrs[Mesh.ARRAY_VERTEX] = vs
+	var out2 := ArrayMesh.new()
+	for si in out.get_surface_count() - 1:
+		out2.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, out.surface_get_arrays(si))
+		out2.surface_set_material(si, out.surface_get_material(si))
+	out2.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrs)
+	out2.surface_set_material(out2.get_surface_count() - 1, tm.material)
+	return out2
+
+
 ## Malhas auxiliares do Blender (planos "wdg_*" de 0,00001 m de altura, invisíveis) esticavam a caixa do modelo (o relógio de lareira "media" 0,9 m).
 static func _tira_auxiliares(inst: Node) -> void:
 	for mi in inst.find_children("wdg_*", "MeshInstance3D", true, false):
@@ -51,6 +96,8 @@ static func make(key: String, scale := 1.0, align := "chao") -> Node3D:
 	holder.add_child(wrap)
 	wrap.add_child(inst)
 	var bb := bounds(inst)
+	if key == "planter_pot_clay":
+		inst.add_child(_terra_do_vaso(bb))                    # terra dentro do vaso (escala junto com o modelo)
 	inst.scale = Vector3.ONE * scale
 	var sb := AABB(bb.position * scale, bb.size * scale)
 	var c := sb.get_center()

@@ -865,7 +865,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		xt.origin += xt.basis.x * 0.05
 		if not _beco_vizinho.is_empty():
 			_casas_postas.append(_beco_vizinho)
-		var choque := _casa_atravessa(xt, d_sala, w_sala)          # vizinhas, becos, passagens e o beco logo depois
+		var choque := _sala_conflita(xt, d_sala, w_sala)          # vizinhas, becos, passagens e o beco logo depois
 		if not _beco_vizinho.is_empty():
 			_casas_postas.pop_back()
 		if choque:
@@ -948,6 +948,34 @@ func _casa_penetra(xf: Transform3D, depth: float, w: float) -> bool:
 					return true
 				var q2: Vector3 = xf.affine_inverse() * (oxf * Vector3(float(o["depth"]) * fx, 0.0, -float(o["w"]) / 2.0 + float(o["w"]) * fz))
 				if q2.x > 0.2 and q2.x < depth - 0.2 and absf(q2.z) < w / 2.0 - 0.2:
+					return true
+	return false
+
+
+## Conflito FINO entre a casa sob medida (xf, depth, w) e o que já foi posto: amostra a pegada a cada 0,5 m nos dois sentidos, com margem de 0,25 m.
+## (O teste `_casa_atravessa` é grosseiro: deixava passar quinas de casas vizinhas que apareciam dentro das salas.)
+func _sala_conflita(xf: Transform3D, depth: float, w: float) -> bool:
+	for o in _casas_postas:
+		var oxf: Transform3D = o["xf"]
+		var od := float(o["depth"])
+		var ow := float(o["w"])
+		if oxf.origin.distance_to(xf.origin) > depth + od + w + ow:
+			continue
+		var nx := int(ceil(depth / 0.5))
+		var nz := int(ceil(w / 0.5))
+		for ix in nx + 1:
+			for iz in nz + 1:
+				var p: Vector3 = xf * Vector3(depth * float(ix) / float(nx), 0.0, -w / 2.0 + w * float(iz) / float(nz))
+				var q: Vector3 = oxf.affine_inverse() * p
+				if q.x > -0.25 and q.x < od + 0.25 and absf(q.z) < ow / 2.0 + 0.25:
+					return true
+		nx = int(ceil(od / 0.5))
+		nz = int(ceil(ow / 0.5))
+		for ix in nx + 1:
+			for iz in nz + 1:
+				var p2: Vector3 = oxf * Vector3(od * float(ix) / float(nx), 0.0, -ow / 2.0 + ow * float(iz) / float(nz))
+				var q2: Vector3 = xf.affine_inverse() * p2
+				if q2.x > -0.25 and q2.x < depth + 0.25 and absf(q2.z) < w / 2.0 + 0.25:
 					return true
 	return false
 
@@ -3477,12 +3505,14 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 ## Bueiros, barris, caixotes, bancos, carroça, varais e bandeirinhas.
 ## Plantas de quintal e de talude que ficaram dentro do volume de uma casa vizinha (agora as casas têm fundo de verdade).
 func _tira_plantas_dentro_das_casas(root: Node3D) -> void:
-	var grupo := root.get_node_or_null("MurosEQuintais")
-	if grupo == null:
-		return
 	var tirados := 0
-	var prefixos := ["arvore_", "palmeira", "bananeira", "arbusto", "samambaia", "capim"]
-	for lot in grupo.get_children():
+	var prefixos := ["arvore_", "palmeira", "bananeira", "arbusto", "samambaia", "capim", "rooibos", "periwinkle", "mato", "weed", "grass"]
+	var lotes: Array = []
+	for gn in ["MurosEQuintais", "Becos"]:                      # árvores de quintal e de beco que entravam nas salas
+		var gr := root.get_node_or_null(gn)
+		if gr != null:
+			lotes.append_array(gr.get_children())
+	for lot in lotes:
 		if not (lot is Node3D):
 			continue
 		for n in (lot as Node3D).get_children().duplicate():
