@@ -48,14 +48,43 @@ func _init() -> void:
 			["paredeN", Vector3(dim.x * 0.5, ey, 0.5), Vector3(dim.x * 0.5, ey * 0.8, dim.z)],
 		]
 		for ps in poses:
-			if modo != "" and str(ps[0]) != modo and not (modo == "dentro" and str(ps[0]) != "fora" and str(ps[0]) != "fora2"):
+			if modo != "" and str(ps[0]) != modo and not (modo == "dentro" and str(ps[0]) != "fora" and str(ps[0]) != "fora2" and str(ps[0]) != "topo"):
+				continue
+			if str(ps[0]) == "topo":
+				# planta da sala vista de cima: câmera ortogonal logo abaixo do forro + luz forte (para conferir onde cada coisa está)
+				var cam := Camera3D.new()
+				root.add_child(cam)
+				cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+				var w := dim.x * xs
+				var d := dim.z * xs
+				cam.size = maxf(d * 1.08, w * 1.08 * 9.0 / 16.0)
+				cam.near = 0.05
+				cam.far = 40.0
+				var topo: Vector3 = sl.global_transform * Vector3(dim.x * 0.5, dim.y / xs - 0.05, dim.z * 0.5)
+				var cima := (sl.global_transform.basis * Vector3(0, 0, 1)).normalized()
+				cam.look_at_from_position(topo, topo + Vector3(0, -1, 0), cima)
+				cam.current = true
+				var luz := OmniLight3D.new()
+				luz.omni_range = 14.0
+				luz.light_energy = 2.2
+				luz.light_color = Color(1.0, 0.92, 0.8)
+				luz.light_cull_mask = 2
+				root.add_child(luz)
+				luz.global_position = topo - Vector3(0, 0.3, 0)
+				for i in 4:
+					await process_frame
+				root.get_viewport().get_texture().get_image().save_png("%s/%s_topo.png" % [saida, id])
+				cam.current = false
+				cam.queue_free()
+				luz.queue_free()
+				p.cam.make_current()
 				continue
 			var pos: Vector3 = sl.global_transform * (ps[1] as Vector3)
 			var alvo: Vector3 = sl.global_transform * (ps[2] as Vector3)
 			p.global_position = pos - Vector3(0, 1.6, 0)
-			var cima := Vector3.UP if absf((alvo - pos).normalized().y) < 0.99 else Vector3(0, 0, 1)
-			p.cam.look_at(alvo, cima)
-			p.cam.fov = 100.0 if str(ps[0]) == "topo" else 74.0
+			var cima2 := Vector3.UP if absf((alvo - pos).normalized().y) < 0.99 else Vector3(0, 0, 1)
+			p.cam.look_at(alvo, cima2)
+			p.cam.fov = 74.0
 			for i in 4:
 				await process_frame
 			root.get_viewport().get_texture().get_image().save_png("%s/%s_%s.png" % [saida, id, ps[0]])
