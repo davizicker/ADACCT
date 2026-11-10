@@ -3925,7 +3925,7 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 
 
 const OIL_PTS := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [150.0, 1.0], [171.0, -1.0], [205.0, 1.0], [240.0, -1.0], [262.0, -1.0], [290.0, 1.0], [320.0, 1.0], [345.0, -1.0]]
-const NOTE_PTS := [[8.0, 1.0, 11], [101.0, -1.0, 0], [166.0, -1.0, 18], [235.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
+const NOTE_PTS := [[8.0, 1.0, 11], [101.0, -1.0, 0], [166.0, -1.0, 18], [252.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
 
 
 func _coletaveis() -> Node3D:
