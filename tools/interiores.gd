@@ -489,13 +489,13 @@ func _auditar() -> void:
 			var ra: Rect2 = rect.call(a)
 			var rb: Rect2 = rect.call(c2)
 			var inter := ra.intersection(rb)
-			if inter.size.x <= 0.08 or inter.size.y <= 0.08:
+			if inter.size.x <= 0.03 or inter.size.y <= 0.03:
 				continue
 			var na := String(a["nome"]).to_lower()
 			var nb2 := String(c2["nome"]).to_lower()
 			var cad_mesa := (na.contains("chair") and (nb2.begins_with("colmesa") or nb2.contains("table"))) or (nb2.contains("chair") and (na.begins_with("colmesa") or na.contains("table")))
-			if cad_mesa and minf(inter.size.x, inter.size.y) < 0.55:
-				continue                                               # cadeira enfiada sob a mesa
+			if cad_mesa and minf(inter.size.x, inter.size.y) < 0.06:
+				continue                                               # cadeira encostada na borda do tampo (tolerância 6 cm)
 			if (na.begins_with("colsaco") and nb2.begins_with("sack")) or (nb2.begins_with("colsaco") and na.begins_with("sack")):
 				continue                                               # o saco e a colisão dele são a mesma coisa
 			aviso.call("ATRAVESSA", "%s (%.2f, %.2f, y %.2f-%.2f) com %s (%.2f, %.2f, y %.2f-%.2f): %.0f x %.0f cm" % [a["nome"], (a["c"] as Vector3).x, (a["c"] as Vector3).z, float(a["ymin"]), float(a["ymax"]), c2["nome"], (c2["c"] as Vector3).x, (c2["c"] as Vector3).z, float(c2["ymin"]), float(c2["ymax"]), inter.size.x * 100.0, inter.size.y * 100.0])
@@ -827,11 +827,11 @@ func _cadeira(x: float, z: float, olha := 0.0, _mat := "madeira_natural") -> voi
 	_prop("painted_wooden_chair_02", x, z, olha - PI / 2.0, 1.0)      # a frente do modelo é +X; o ângulo compensa
 
 
-## Cadeira JUNTO da mesa, com o assento entrando 15 cm embaixo do tampo. lado: "S","N" (mesa ao norte/sul da cadeira) ou "O","L".
+## Cadeira JUNTO da mesa, encostada na borda do tampo (sem atravessar). lado: "S","N" (mesa ao norte/sul da cadeira) ou "O","L".
 ## (tx, tz) = centro da mesa; tw = comprimento em X; td = profundidade em Z; `ao_longo` = deslocamento ao longo da borda.
 func _cadeira_mesa(tx: float, tz: float, tw: float, td: float, lado: String, ao_longo := 0.0) -> void:
 	var cd := _dim("painted_wooden_chair_02").x
-	var d := cd * 0.5 - 0.15
+	var d := cd * 0.5 - 0.02          # a frente da cadeira para a 2 cm do tampo (antes entrava 15 cm embaixo e parecia atravessar a mesa)
 	match lado:
 		"S":
 			_cadeira(tx + ao_longo, tz - td * 0.5 - d, 0.0)
@@ -1256,9 +1256,9 @@ func _sala_venda(g: Node3D) -> void:
 	_janela("O", _mz(3.0))
 	_quadro(_mx(5.0), 1.9, _mz(5.82), "N", 0.6, 0.5)
 	_nota(_mx(5.8), 1.1, _mz(4.6), 6, "Ler o bilhete do Seu Zé")
-	_prop_c("cardboard_box_01", _mx(6.2), _mz(5.35), 0.3, 1.0)
+	_prop_c("cardboard_box_01", _mx(6.7), _mz(5.45), 0.3, 1.0)
 	_prop("vintage_lighter", _mx(3.5), _mz(4.55), 1.0, 1.0, 1.1)
-	_prop("cardboard_box_01", _mx(6.25), _mz(5.35), 0.7, 1.0, 0.34)
+	_prop("cardboard_box_01", _mx(6.72), _mz(5.45), 0.7, 1.0, 0.34)
 	_prop("lightbulb_01", _mx(4.2), _mz(2.2), 0.0, 1.0, 2.52)                                              # lâmpada apagada pendurada pelo fio
 	_bb.cylinder("ferro", 0.008, 0.008, 0.55, Vector3(_mx(4.2), 2.85, _mz(2.2)), Vector3.ZERO, 4)
 	_nota(_mx(4.5), 1.1, _mz(4.7), 23, "Ler a confissão do Seu Zé")
