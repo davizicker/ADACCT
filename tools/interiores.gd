@@ -194,8 +194,8 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	var luar := OmniLight3D.new()
 	luar.name = "LuarDoChao"
 	luar.position = Vector3(w * 0.5, 0.5, d * 0.5)
-	luar.light_color = Color(0.5, 0.6, 0.9)
-	luar.light_energy = 0.35
+	luar.light_color = Color(0.66, 0.70, 0.82)
+	luar.light_energy = 0.22
 	luar.omni_range = maxf(w, d) * 1.2
 	luar.light_specular = 0.0
 	_g.add_child(luar)
@@ -509,8 +509,8 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 	# luar frio entrando (sem sombra): pequena luz azul
 	var l := OmniLight3D.new()
 	l.position = pos + dir * 0.8
-	l.light_color = Color(0.45, 0.58, 0.9)
-	l.light_energy = 0.55
+	l.light_color = Color(0.62, 0.70, 0.88)
+	l.light_energy = 0.3
 	l.omni_range = 6.0
 	_g.add_child(l)
 
@@ -529,9 +529,9 @@ func _parede_frente() -> void:
 	var jans: Array = []
 	var yc := minf(1.6, h - 1.15)
 	for lado in 2:
-		var x0 := 0.9 if lado == 0 else w / 2.0 + PORTA_MEIA + 0.75
-		var x1 := w / 2.0 - PORTA_MEIA - 0.75 if lado == 0 else w - 0.9
-		if x1 - x0 < JAN_W + 0.4:
+		var x0 := 0.75 if lado == 0 else w / 2.0 + PORTA_MEIA + 0.55
+		var x1 := w / 2.0 - PORTA_MEIA - 0.55 if lado == 0 else w - 0.75
+		if x1 - x0 < JAN_W * 0.9:
 			continue
 		var n := maxi(1, int(round((x1 - x0) / 2.3)))
 		for k in n:
