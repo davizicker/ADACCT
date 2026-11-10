@@ -905,6 +905,9 @@ func _frontage_plano(root: Node3D) -> void:
 		var fp := lot_frame(sg, Route.BRIDGE_S - Route.BRIDGE_HALF, Route.BRIDGE_S + Route.BRIDGE_HALF)
 		_lot_ponte(muros, fp, sg)
 	var fc := lot_frame(Route.FOUNTAIN_SIDE, Route.FOUNTAIN_S - 3.5, Route.FOUNTAIN_S + 3.5)
+	var xfc: Transform3D = fc["xf"]
+	xfc.origin += xfc.basis.x.normalized() * 2.2           # no grampo a beira é curva: recua o chafariz para dentro do largo (o tanque invadia a rua)
+	fc["xf"] = xfc
 	_lot_chafariz(muros, fc)
 	_entrada_atual = {}
 	_curvas_plano(root)
@@ -4249,7 +4252,7 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 
 
 const OIL_PTS := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [150.0, 1.0], [171.0, -1.0], [205.0, 1.0], [240.0, -1.0], [262.0, -1.0], [290.0, 1.0], [320.0, 1.0], [345.0, -1.0]]
-const NOTE_PTS := [[8.0, 1.0, 11], [101.0, -1.0, 0], [166.0, -1.0, 18], [252.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
+const NOTE_PTS := [[3.0, 1.0, 11], [101.0, -1.0, 0], [166.0, -1.0, 18], [252.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
 
 
 func _coletaveis() -> Node3D:

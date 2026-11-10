@@ -43,6 +43,7 @@ func _ready() -> void:
 	Config.load_all()
 	_setup_input()
 	add_child((load("res://scripts/vagalumes.gd") as GDScript).new() as Node3D)
+	add_child((load("res://scripts/barreiras.gd") as GDScript).new() as Node3D)     # muretas onde a beira da rua dá para o vazio
 	add_child((load("res://scripts/morcegos.gd") as GDScript).new() as Node3D)
 	var args := OS.get_cmdline_user_args()
 	if "--modo-teste" in args:
@@ -696,7 +697,7 @@ func _test_becos(delta: float) -> void:
 		Input.action_press("move_forward")
 		_hint = str(start.y)
 	_test_t += delta
-	if _test_t > 12.0:
+	if _test_t > (18.0 if atalho else 12.0):      # becos-escada de 27 m e 9 m de subida: o jogador leva ~14 s andando
 		Input.action_release("move_forward")
 		var along := (player.global_position - beco.global_position).dot(x_axis)
 		var rise := player.global_position.y - float(_hint)

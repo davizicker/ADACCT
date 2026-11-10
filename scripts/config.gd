@@ -176,3 +176,33 @@ static func _apply_high_end(main: Node) -> void:
 	RenderingServer.environment_set_ssao_quality([RenderingServer.ENV_SSAO_QUALITY_VERY_LOW, RenderingServer.ENV_SSAO_QUALITY_LOW, RenderingServer.ENV_SSAO_QUALITY_MEDIUM, RenderingServer.ENV_SSAO_QUALITY_HIGH][clampi(quality, 0, 3)], true, 0.5, 2, 50.0, 300.0)
 	RenderingServer.environment_set_ssil_quality(RenderingServer.ENV_SSIL_QUALITY_HIGH if cine else RenderingServer.ENV_SSIL_QUALITY_MEDIUM, true, 0.5, 4, 50.0, 300.0)
 	main.get_viewport().use_taa = hi
+	# tom de filme AgX (cores das luzes quentes não "estouram" para amarelo chapado; sombras com mais detalhe)
+	e.tonemap_mode = Environment.TONE_MAPPER_AGX if hi else Environment.TONE_MAPPER_FILMIC
+	e.tonemap_exposure = 1.15 if hi else 1.0
+	e.glow_levels_1 = 0.0
+	e.glow_levels_3 = 1.0
+	e.glow_levels_5 = 0.6 if cine else 0.3      # halo largo e suave em volta dos lampiões
+	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	# sombras dos lampiões perto do jogador (8 no cinematográfico, 4 no alto): atlas de sombras grande e suave
+	var vp := main.get_viewport()
+	vp.positional_shadow_atlas_size = 8192 if cine else 4096
+	vp.positional_shadow_atlas_16_bits = true
+	vp.positional_shadow_atlas_quad_0 = Viewport.SHADOW_ATLAS_QUADRANT_SUBDIV_4
+	vp.positional_shadow_atlas_quad_1 = Viewport.SHADOW_ATLAS_QUADRANT_SUBDIV_4
+	vp.positional_shadow_atlas_quad_2 = Viewport.SHADOW_ATLAS_QUADRANT_SUBDIV_16
+	vp.positional_shadow_atlas_quad_3 = Viewport.SHADOW_ATLAS_QUADRANT_SUBDIV_16
+	# calçamento úmido de sereno: pedra mais lisa (os reflexos de tela mostram os lampiões no chão, como nas fotos de Ouro Preto à noite)
+	var pc := load("res://assets/materials/pedra_chao.tres") as StandardMaterial3D
+	if pc != null:
+		pc.roughness = 0.62 if hi else 1.0
+		pc.albedo_color = Color(0.80, 0.78, 0.74) if hi else Color(0.88, 0.85, 0.8)
+	var sd := main.get_node_or_null("SombrasDinamicas")
+	if hi:
+		if sd == null:
+			sd = (load("res://scripts/sombras_dinamicas.gd") as GDScript).new() as Node
+			sd.name = "SombrasDinamicas"
+			main.add_child(sd)
+		var jg := main.get_node_or_null("Jogador") as Node3D
+		sd.call_deferred("configurar", jg, 8 if cine else 4)
+	elif sd != null:
+		sd.queue_free()
