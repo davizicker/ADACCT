@@ -865,7 +865,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 		xt.origin += xt.basis.x * 0.05
 		if not _beco_vizinho.is_empty():
 			_casas_postas.append(_beco_vizinho)
-		var choque := near_alley or _casa_atravessa(xt, d_sala, w_sala)          # vizinhas, becos, passagens e o beco logo depois
+		var choque := _casa_atravessa(xt, d_sala, w_sala)          # vizinhas, becos, passagens e o beco logo depois
 		if not _beco_vizinho.is_empty():
 			_casas_postas.pop_back()
 		if choque:
