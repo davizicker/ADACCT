@@ -1852,27 +1852,65 @@ func _presbiterio(g: Node3D) -> void:
 
 
 func _sala_carpintaria(g: Node3D) -> void:
+	# CARPINTARIA do Seu Mateus: bancada de marceneiro com torno, painel de ferramentas na parede, cavaletes com tábua, pilha de
+	# tábuas, serragem no chão, cepo de rachar lenha e, no fundo, os caixões de pinho da encomenda da Companhia (a história do lugar).
 	_casca("Carpintaria do Seu Mateus", 8.0, 6.0, 3.2, "reboco_branco", "piso_taco", "forro_tabuas")
-	# bancada comprida com plaina, serrote e tábuas; ferramentas na prateleira de metal
-	_mesa(_mx(4.0), _mz(4.6), 3.2, 0.9, 0.9, "madeira_natural")
-	_prop("hand_plane_no4", _mx(3.3), _mz(4.5), 0.4, 1.0, 0.94)
-	_prop("handsaw_wood", _mx(4.6), _mz(4.7), 1.2, 1.0, 0.94)
-	_encostar_auto("worn_metal_rack", _mx(0.5), _mz(4.2), 1.0)
-	_prop("wooden_axe_02", _mx(1.3), _mz(4.2), 0.0, 1.0, 0.0).rotation.z = 0.25
-	_prop_c("wooden_ladder", _mx(7.45), _mz(4.5), -PI / 2.0, 1.5).rotation.x = -0.18
-	for k in 5:
-		_bb.box("madeira_natural", Vector3(2.2, 0.06, 0.28), Vector3(_mx(6.4), 0.05 + k * 0.07, _mz(5.4)))      # pilha de tábuas
-	_bb.box("madeira_natural", Vector3(0.8, 0.5, 0.8), Vector3(_mx(1.2), 0.25, _mz(1.2)))                         # cepos
-	b._blocker(g, "ColCepo", Vector3(0.8, 0.5, 0.8), Vector3(_mx(1.2), 0.25, _mz(1.2)))
-	_lamparina(_mx(4.0), 0.95, _mz(4.4))
-	_janela("L", _mz(2.0))
-	_nota(_mx(2.6), 0.95, _mz(4.6), 12, "Ler o bilhete do Seu Mateus")
-	_nota(_mx(4.0), 0.93, _mz(4.2), 27, "Ler a encomenda da Companhia")
-	_prop("rusted_spade_01", _mx(0.45), _mz(5.6), 0.0, 1.0, 0.0).rotation.z = 0.10
-	_prop("trowel_01", _mx(5.3), _mz(4.3), 0.7, 1.0, 0.94)
-	_oleo(_mx(6.9), 0.95, _mz(0.9))
-	_prop("watering_can_metal_01", _mx(7.2), _mz(5.2), 0.3, 1.0)
-	_comida(2.9, 4.6, 0.94, "cafe", "Beber o café")
+	# --- bancada de marceneiro na parede norte: tampo grosso, prateleira embaixo, torno de madeira
+	var bz := 5.45
+	_bb.box("madeira_natural", Vector3(3.0, 0.10, 0.80), Vector3(3.6, 0.88, bz))
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_bb.box("madeira_escura", Vector3(0.10, 0.83, 0.10), Vector3(3.6 + sx * 1.38, 0.415, bz + sz * 0.33))
+	_bb.box("madeira_escura", Vector3(2.8, 0.04, 0.66), Vector3(3.6, 0.22, bz))                       # prateleira de baixo
+	_bb.box("madeira_natural", Vector3(0.30, 0.22, 0.10), Vector3(2.35, 0.82, bz - 0.44))              # torno de bancada
+	_bb.cylinder("ferro", 0.018, 0.018, 0.35, Vector3(2.35, 0.82, bz - 0.55), Vector3(PI / 2.0, 0, 0), 6)
+	b._blocker(g, "ColBancada", Vector3(3.0, 0.93, 0.8), Vector3(3.6, 0.465, bz))
+	_prop("hand_plane_no4", 3.1, bz - 0.1, 0.4, 1.0, 0.93)
+	_prop("handsaw_wood", 4.2, bz + 0.05, 1.2, 1.0, 0.93)
+	_prop("trowel_01", 4.8, bz - 0.15, 0.7, 1.0, 0.93)
+	for k in 6:                                                                                   # aparas e serragem no tampo e no chão
+		_bb.box("pano_cru", Vector3(0.10 + 0.04 * (k % 3), 0.006, 0.05), Vector3(2.7 + k * 0.32, 0.935, bz + 0.12 - (k % 2) * 0.2), Vector3(0, k * 0.7, 0))
+	_bb.box("pano_cru", Vector3(1.6, 0.004, 0.9), Vector3(3.4, 0.003, bz - 1.0))                   # serragem espalhada no piso
+	# --- painel de ferramentas na parede norte, acima da bancada
+	_bb.box("madeira_escura", Vector3(2.6, 1.0, 0.04), Vector3(3.6, 1.75, _d - 0.03))
+	for k in 7:
+		var tx := 2.5 + k * 0.36
+		_bb.box("ferro", Vector3(0.02, 0.02, 0.06), Vector3(tx, 2.05, _d - 0.07))                  # pregos
+		if k % 2 == 0:
+			_bb.box("madeira_natural", Vector3(0.04, 0.32, 0.03), Vector3(tx, 1.86, _d - 0.08))    # cabos pendurados
+			_bb.box("ferro", Vector3(0.10, 0.06, 0.02), Vector3(tx, 1.70, _d - 0.08))
+		else:
+			_bb.box("ferro", Vector3(0.22, 0.03, 0.02), Vector3(tx, 1.95, _d - 0.08), Vector3(0, 0, 0.6))  # esquadros e formões
+	_lamparina(3.6, 0.93, bz + 0.2)
+	_nota(2.85, 0.93, bz - 0.2, 12, "Ler o bilhete do Seu Mateus")
+	_comida(4.5, bz + 0.2, 0.93, "cafe", "Beber o café")
+	# --- cavaletes com uma tábua no meio da oficina
+	for cx: float in [4.6, 6.2]:
+		for sz: float in [-1.0, 1.0]:
+			_bb.box("madeira_natural", Vector3(0.06, 0.72, 0.06), Vector3(cx, 0.36, 2.9 + sz * 0.22), Vector3(sz * 0.25, 0, 0))
+		_bb.box("madeira_natural", Vector3(0.08, 0.06, 0.62), Vector3(cx, 0.72, 2.9))
+	_bb.box("madeira_natural", Vector3(2.6, 0.05, 0.30), Vector3(5.4, 0.78, 2.9))
+	b._blocker(g, "ColCavaletes", Vector3(2.6, 0.8, 0.7), Vector3(5.4, 0.4, 2.9))
+	# --- pilha de tábuas e cepo de rachar lenha com machado
+	for k in 6:
+		_bb.box("madeira_natural", Vector3(0.28, 0.05, 2.4), Vector3(7.55, 0.03 + k * 0.06, 2.2), Vector3(0, (k % 2) * 0.03, 0))
+	b._blocker(g, "ColTabuas", Vector3(0.4, 0.4, 2.4), Vector3(7.55, 0.2, 2.2))
+	_bb.cylinder("madeira_escura", 0.28, 0.30, 0.5, Vector3(1.0, 0.25, 1.4), Vector3.ZERO, 10)
+	b._blocker(g, "ColCepo", Vector3(0.6, 0.5, 0.6), Vector3(1.0, 0.25, 1.4))
+	_prop("wooden_axe_02", 1.0, 1.4, 0.6, 1.0, 0.5).rotation.z = 0.45
+	# --- os caixões de pinho, encostados na parede oeste (a encomenda dos 31): tampa lisa, sem nome
+	for k in 3:
+		var cz := 2.4 + k * 0.85
+		_bb.box("madeira_natural", Vector3(0.40, 1.85, 0.62), Vector3(0.30, 0.95, cz), Vector3(0, 0, -0.10))
+		_bb.box("madeira_escura", Vector3(0.03, 1.80, 0.56), Vector3(0.51, 0.95, cz), Vector3(0, 0, -0.10))
+	b._blocker(g, "ColCaixoes", Vector3(0.6, 1.9, 2.4), Vector3(0.32, 0.95, 3.25))
+	_examinar(0.8, 1.1, 3.25, "Examinar os caixões", "Pinho sem verniz, tampa lisa, sem nome. | No fundo de um deles, a lápis, escondido: um nome. O Seu Mateus escreveu um em cada caixão.", "creak", 0.12)
+	_nota(0.85, 0.02, 4.4, 27, "Ler a encomenda da Companhia")
+	_encostar_auto("worn_metal_rack", 7.5, 5.4, 1.0)
+	_prop_c("wooden_ladder", 7.45, 4.3, -PI / 2.0, 1.5).rotation.x = -0.18
+	_prop("rusted_spade_01", 7.6, 0.6, 0.0, 1.0, 0.0).rotation.z = 0.10
+	_janela("L", 2.2)
+	_oleo(6.9, 0.95, 0.9)
 	_fim()
 
 
