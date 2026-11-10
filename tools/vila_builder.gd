@@ -1038,7 +1038,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		for k in 3:
 			rb.box("ferro", Vector3(0.03, 0.03, 1.0 - k * 0.22), Vector3(rcx, ry + rise + 0.8 + k * 0.45, az))
 	_mesh_node(c, "Telhado", rb.commit())
-	_telhado_colisao(c, Vector3(rcx, ry + rise / 2.0, 0), depth + 1.4, rise, w + 0.5, 0.0)      # o telhado também é sólido (antes dava para atravessá-lo pelo morro)
+	_telhado_colisao(c, Vector3(rcx, ry + rise / 2.0, 0), depth - 0.2, rise, w - 1.0, 0.0)      # o telhado também é sólido (antes dava para atravessá-lo pelo morro); a colisão fica DENTRO do lote: o beral não prende quem sobe um beco ao lado
 
 	var b := _batch()
 	var ncor := maxi(1, int(ceil(w)))
