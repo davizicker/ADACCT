@@ -10,7 +10,7 @@ Convenções (coordenadas do glTF, Y para cima):
 import bpy, bmesh, math, os, sys, random
 from mathutils import Vector, Matrix
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/kit"
+OUT = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else "/tmp/kit"      # blender -b --python kit_colonial.py -- <pasta>
 os.makedirs(OUT, exist_ok=True)
 random.seed(7)
 

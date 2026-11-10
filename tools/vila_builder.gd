@@ -154,6 +154,8 @@ const PLANTAS_REAIS := {
 	"samambaia": [["periwinkle_a", "periwinkle_b", "periwinkle_c", "mato_b"], 0.5],
 }
 var _alt_real := {}
+var rb2_beiral: Array = []
+var _kit2 := false               # casa em construção usa o kit 2 (sacadas de ferro, guilhotina, grades, porta com bandeira...)
 var _jan_atual: Array = []      # painéis de vidro da casa em construção: {pos, size, lit} (locais da casa)
 var _pl_atual: Array = []       # plantas de janela da casa em construção: {pos, tipo, esc}
 const ESPECIE_REAL := {"arvore_0": "arvore_a", "arvore_1": "arvore_b", "arvore_2": "arvore_c"}
@@ -1201,6 +1203,8 @@ func _casa_atravessa(xf: Transform3D, depth: float, w: float, so_corredores := f
 func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false, entrada := {}, sala: Node3D = null) -> Node3D:
 	var c := Node3D.new()
 	c.name = "Casa"
+	_kit2 = _rng_f.randf() < 0.65
+	rb2_beiral = []
 	_jan_atual = []
 	_pl_atual = []
 	var fh := 4.0
@@ -1325,7 +1329,10 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
 	else:
-		pb.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
+		if _kit2 and sala == null and _rng_f.randf() < 0.5:
+			pb.malha(Kit.mesh("porta_bandeira"), Kit.fachada(Vector3(0.0, 0.0, dz)), {"madeira": wood_porta})          # porta de uma folha com bandeira em arco
+		else:
+			pb.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
 	if arched:
 		pb.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
 	var dn := 1.25 if not arched else 1.15
@@ -1370,7 +1377,11 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			else:
 				_window(b, Vector3(0, y0 + 1.65, col_z[i]), 1.0, 1.7, wood, _rng.randf() < lit_p, false, false, arched)
 	if not bal_cols.is_empty() and not simple:
-		_balcony(b, col_z[bal_cols[0]] - 0.95, col_z[bal_cols[bal_cols.size() - 1]] + 0.95, fh, wood)
+		if _kit2:
+			for bi in bal_cols:                                                       # uma sacada de ferro forjado em cada porta-balcão
+				b.malha(Kit.mesh("sacada_ferro"), Kit.fachada(Vector3(0.0, fh, col_z[bi])))
+		else:
+			_balcony(b, col_z[bal_cols[0]] - 0.95, col_z[bal_cols[bal_cols.size() - 1]] + 0.95, fh, wood)
 	if not simple and _rng.randf() < 0.4:
 		var chz := _rng.randf_range(-w * 0.3, w * 0.3)
 		b.malha(Kit.mesh("chamine"), Transform3D(Basis.IDENTITY, Vector3(depth / 2.0 - 0.2, height + rise - 0.55, chz)))      # chaminé de pedra do kit (embute no telhado)
@@ -1382,6 +1393,12 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	# --- detalhes de arquitetura e de abandono (para a fachada não parecer uma caixa lisa) ---
 	# cunhais de cantaria nas duas quinas (blocos alternados, como nos sobrados de Minas)
 	for qz: float in [-1.0, 1.0]:
+		if _kit2:                                                                     # cunhal do kit 2: blocos com bisel e desgaste
+			var ky := 0.0
+			while ky < height - 0.9:
+				b.malha(Kit.mesh("cunhal_1m"), Kit.fachada(Vector3(0.0, ky, qz * (w / 2.0 - 0.26))))
+				ky += 1.0
+			continue
 		var qy := 0.25
 		var qi := 0
 		while qy < height - 0.4:
@@ -1389,6 +1406,17 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			b.box("cantaria", Vector3(0.13, 0.36, 0.52 if longo else 0.30), Vector3(-0.065, qy + 0.18, qz * (w / 2.0 - (0.26 if longo else 0.15))))
 			qy += 0.5
 			qi += 1
+	if _kit2:
+		# embasamento de pedra rústica na frente do soco (pula o vão da porta) e beiral de telhas capa-e-canal na beira do telhado
+		var ez := -w / 2.0 + 0.5
+		while ez <= w / 2.0 - 0.5:
+			if absf(ez - dz) > 1.3:
+				b.malha(Kit.mesh("embasamento_1m"), Kit.fachada(Vector3(-0.26, 0.12, ez)))
+			ez += 1.0
+		var tz := -w / 2.0 + 0.5
+		while tz <= w / 2.0 - 0.45:
+			rb2_beiral.append(tz)
+			tz += 1.0
 	# caibros aparentes sob o beiral (as pontas das vigas do telhado)
 	var zc := -w / 2.0 + 0.35
 	while zc < w / 2.0 - 0.2:
@@ -1416,6 +1444,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		AABB(Vector3(rcx - (depth + 1.4) / 2.0, ry - 0.05, -(w + 0.5) / 2.0), Vector3(depth + 1.4, rise + 0.1, w + 0.5))]
 	for fl in b.floating(solidos):
 		_flutuando.append("casa w=%.1f: %s" % [w, fl])
+	for tz2 in rb2_beiral:                                                            # beiral de telhas na beira da frente
+		b.malha(Kit.mesh("beiral_telhas"), Kit.fachada(Vector3(-0.5, height + 0.17, float(tz2))))
 	var det := _mesh_node(c, "Detalhes", b.commit())
 	det.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # molduras e grades não precisam de sombra (menos uma passada por casa)
 	c.set_meta("janelas", _jan_atual)
@@ -1697,11 +1727,21 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 			b.box("cantaria", Vector3(0.34, 0.1, wid + 0.5), Vector3(-0.17, base_y - 0.1, p.z))
 		return
 	var base_y := p.y - hgt / 2.0
-	if door:
+	if door and _kit2:
+		# porta-balcão do kit 2: almofadas embaixo, vidro em cima (o vidro com a sala atrás entra como painel)
+		b.malha(Kit.mesh("porta_balcao"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.1, hgt / 2.4, 1.0)), {"madeira": wood})
+		if not real:
+			_jan_atual.append({"pos": Vector3(-0.012, base_y + hgt * (0.85 + 1.55 * 0.5) / 2.4, p.z), "size": Vector2(wid * 0.85, hgt * 1.5 / 2.4), "lit": lit})
+	elif door:
 		# porta-balcão: porta de duas folhas do kit, menos funda
 		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.4, hgt / 2.5, 0.6)), {"madeira": wood, "vidro": glass})
 	else:
-		b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
+		if _kit2:
+			b.malha(Kit.mesh("janela_guilhotina"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.6, 1.0)), {"madeira": wood})
+			if real:
+				b.quad("vidro_claro", Vector2(wid * 0.92, hgt * 0.95), Vector3(-0.01, p.y, p.z), -PI / 2.0)       # vidro de verdade (a sala aparece atrás)
+		else:
+			b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
 		if not real:          # janela de verdade (sala atrás do vidro): sem foto de sala no painel
 			_jan_atual.append({"pos": Vector3(-0.012, p.y, p.z), "size": Vector2(wid * 0.9, hgt * 0.933), "lit": lit})
 		if p.y > 3.6 and _rng_f.randf() < 0.32:                                       # pano roxo pendurado no peitoril, como na Semana Santa
@@ -1715,7 +1755,9 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 			_jardineira(b, Vector3(-0.26, base_y + 0.03, p.z), wid)
 		if _rng.randf() < 0.55:
 			_venezianas(b, p, wid, hgt, wood)
-	if grate:
+	if grate and _kit2:
+		b.malha(Kit.mesh("grade_janela"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)))
+	elif grate:
 		for k in 5:
 			b.box("ferro", Vector3(0.03, hgt, 0.03), Vector3(-0.26, p.y, p.z - wid / 2.0 + wid * k / 4.0))
 
