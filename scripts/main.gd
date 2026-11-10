@@ -450,7 +450,7 @@ func _test_esconder() -> void:
 		missao._cooldown = 0.0
 		missao.sair_esconderijo()
 		var ok3 := (not player.hidden) and (not player.frozen)
-		print("[esconder] %s: escondeu=%s sem penalidade=%s saiu=%s -> %s" % [sp.name, str(ok1), str(ok2), str(ok3), "OK" if (ok1 and ok2 and ok3) else "FALHOU"])
+		print("[esconder] %s: escondeu=%s sem penalidade=%s saiu=%s -> %s  (oculto em %s, rua %.2f)" % [sp.name, str(ok1), str(ok2), str(ok3), "OK" if (ok1 and ok2 and ok3) else "FALHOU", str(sp.pos_oculto.snapped(Vector3.ONE * 0.1)), Route.height(Route.nearest_s(sp.pos_oculto))])
 		if not (ok1 and ok2 and ok3):
 			falhas += 1
 		await get_tree().create_timer(0.7, true, false, true).timeout

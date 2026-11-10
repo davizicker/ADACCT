@@ -21,7 +21,7 @@ func _montar() -> void:
 		var ini := -1.0
 		var s := 0.5
 		while s <= Route.length() + PASSO:
-			var perigo := s <= Route.CHURCH_S - 6.0 and _perigo(sp, s, sigma)
+			var perigo := s <= Route.S_END + 4.0 and _perigo(sp, s, sigma)     # o adro tem as próprias muretas
 			if perigo and ini < 0.0:
 				ini = s
 			elif not perigo and ini >= 0.0:
@@ -29,7 +29,7 @@ func _montar() -> void:
 				ini = -1.0
 			s += PASSO
 		if ini >= 0.0:
-			_mureta(ini - 0.5, minf(s, Route.CHURCH_S - 6.0), sigma, mat)
+			_mureta(ini - 0.5, minf(s, Route.S_END + 4.0), sigma, mat)
 	print("[barreiras] muretas contra o vazio: %d" % feitas)
 
 

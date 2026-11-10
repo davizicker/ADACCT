@@ -969,6 +969,8 @@ func _beco_escada(parent: Node3D, c: Dictionary) -> void:
 	g.set_meta("subida", rise)
 	_casas_postas.append({"xf": g.transform, "depth": L, "w": wb + 1.0, "corr": true})
 	_pass_geo.append({"id": g.name, "A": Vector3(x, hb, zb), "B": Vector3(x, hc, zc), "dir": xa, "D": L, "rise": rise})
+	_reservar(Vector3(x, hb, zb + 1.6), 2.2)          # bocas do beco livres: nada de barril/caixote na entrada de baixo nem na de cima
+	_reservar(Vector3(x, hc, zc - 1.6), 2.2)
 	var n := maxi(4, int(round(absf(rise) / 0.16)))
 	var run := L / float(n)
 	var b := _batch()

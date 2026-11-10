@@ -5,8 +5,8 @@ extends Area3D
 
 @export var texto_interacao := "Esconder-se"
 ## onde o jogador fica (posição global) e para onde olha (yaw em radianos)
-var pos_oculto := Vector3.ZERO
-var yaw_oculto := 0.0
+@export var pos_oculto := Vector3.ZERO     # @export: precisa ser salvo na cena (sem isso o carro levava o jogador para (0,0,0))
+@export var yaw_oculto := 0.0
 
 
 func _ready() -> void:

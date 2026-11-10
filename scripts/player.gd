@@ -172,6 +172,9 @@ func _physics_process(delta: float) -> void:
 ## (em vez de cair para sempre e travar a partida).
 func _resgate_de_queda(delta: float) -> void:
 	var m := get_tree().get_first_node_in_group("missao")
+	if hidden or frozen:
+		_t_chao = 0.0                        # escondido/parado: a posição é controlada pelo esconderijo, não cai
+		return
 	if m != null and str(m.get("dentro")) != "":
 		_ultimo_chao = Vector3.ZERO          # os interiores ficam longe e abaixo do mapa: nada de resgate lá dentro
 		_t_chao = 0.0

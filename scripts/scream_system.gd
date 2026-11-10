@@ -174,6 +174,7 @@ func _process(delta: float) -> void:
 			elif Config.grito_ativo and _shout_time >= SHOUT_NEEDED:
 				_resolve(true)
 			elif not Config.grito_ativo and player.move_speed > 1.3:
+				log_line.emit("mexeu na janela do grito: vel=%.1f escondido=%s pos=%s" % [player.move_speed, str(player.hidden), str(player.global_position.snapped(Vector3.ONE * 0.1))])
 				_resolve(false)           # mexeu-se durante a janela: ele ouviu
 			elif _window_left <= 0.0:
 				_resolve((not Config.grito_ativo) and _shout_time >= WINDOW_SECONDS - 0.6)
