@@ -686,6 +686,13 @@ func _test_becos(delta: float) -> void:
 		Input.action_press("move_forward")
 		_hint = str(start.y)
 	_test_t += delta
+	if str(beco.name) == "Beco_365" and int(_test_t * 4.0) != int((_test_t - delta) * 4.0):
+		var why2 := ""
+		for i in player.get_slide_collision_count():
+			var col2 := player.get_slide_collision(i)
+			var cn2 := col2.get_collider() as Node
+			why2 += " [%s/%s %s pos=%s]" % [cn2.get_parent().name if cn2 else "?", cn2.name if cn2 else "?", str(snapped(col2.get_normal(), Vector3(0.01, 0.01, 0.01))), str(snapped(col2.get_position(), Vector3(0.01, 0.01, 0.01)))]
+		print("[becodbg] t=%.2f along=%.2f y=%.2f vel=%s floor=%s%s" % [_test_t, (player.global_position - beco.global_position).dot(x_axis), player.global_position.y, str(snapped(player.velocity, Vector3(0.01, 0.01, 0.01))), str(player.is_on_floor()), why2])
 	if _test_t > 12.0:
 		Input.action_release("move_forward")
 		var along := (player.global_position - beco.global_position).dot(x_axis)
