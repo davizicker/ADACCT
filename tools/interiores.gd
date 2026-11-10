@@ -1438,27 +1438,57 @@ func _sala_venda(g: Node3D) -> void:
 
 
 func _sala_barbearia(g: Node3D) -> void:
-	_casca("Barbearia", 5.0, 5.0, 3.0, "reboco_azul", "piso_taco", "forro_tabuas")
-	# cadeira de barbeiro: assento, encosto, apoio e pé de ferro
-	_bb.box("couro", Vector3(0.6, 0.12, 0.6), Vector3(_mx(2.5), 0.62, _mz(2.8)))
-	_bb.box("couro", Vector3(0.6, 0.8, 0.12), Vector3(_mx(2.5), 1.1, _mz(3.15)))
-	_bb.box("couro", Vector3(0.5, 0.06, 0.4), Vector3(_mx(2.5), 0.32, _mz(2.35)))
-	_bb.cylinder("ferro", 0.09, 0.14, 0.55, Vector3(_mx(2.5), 0.28, _mz(2.8)), Vector3.ZERO, 8)
-	for k in [-1.0, 1.0]:
-		_bb.box("couro", Vector3(0.08, 0.06, 0.5), Vector3(_mx(2.5 + k * 0.34), 0.9, _mz(2.8)))
-	b._blocker(g, "ColCadeira", Vector3(0.9, 1.4, 1.1), Vector3(_mx(2.5), 0.7, _mz(2.8)))
-	# espelho grande na parede norte, prateleira com frascos
-	_bb.box("ouro_velho", Vector3(1.9, 1.3, 0.04), Vector3(_mx(2.5), 1.7, _mz(4.97)))
-	_bb.quad("vidro_noite", Vector2(1.8, 1.2), Vector3(_mx(2.5), 1.7, _mz(4.94)), PI)
-	_prateleira(_mx(2.5), 1.0, _mz(4.82), 2.0, 0.0, 6)
-	_mesa(_mx(0.9), _mz(4.2), 0.8, 0.6, 0.8)
-	_lamparina(_mx(0.9), 0.84, _mz(4.2))
-	_janela("L", _mz(2.5))
-	_nota(_mx(0.9), 0.92, _mz(4.0), 9, "Ler o recorte de jornal")
-	_oleo(_mx(4.4), 0.95, _mz(1.5))
-	_cadeira(_w - 0.02 - _dim("painted_wooden_chair_02").x * 0.5, 3.8, -PI / 2.0)               # cadeira de espera encostada na parede leste
-	_prop("cigarette_pack", _mx(0.9), _mz(4.1), 0.8, 1.5, 0.75)
-	_encostar_auto("worn_metal_rack", _mx(4.55), _mz(4.5), 0.9)
+	# BARBEARIA: duas cadeiras de barbeiro de couro e ferro diante do espelho comprido, bancada com pia de louça, navalhas, pincéis e
+	# frascos, toalhas penduradas, banco de espera com jornais, cabideiro com chapéus, cartazes antigos na parede.
+	_casca("Barbearia", 6.0, 5.0, 3.0, "reboco_azul", "piso_taco", "forro_tabuas")
+	for cx: float in [2.0, 4.0]:
+		_bb.box("couro", Vector3(0.62, 0.12, 0.6), Vector3(cx, 0.62, 3.3))
+		_bb.box("couro", Vector3(0.62, 0.78, 0.12), Vector3(cx, 1.08, 3.66))
+		_bb.box("couro", Vector3(0.36, 0.16, 0.10), Vector3(cx, 1.55, 3.64))                         # apoio de cabeça
+		_bb.box("couro", Vector3(0.5, 0.06, 0.4), Vector3(cx, 0.30, 2.85))                            # apoio dos pés
+		_bb.cylinder("ferro", 0.09, 0.16, 0.55, Vector3(cx, 0.28, 3.3), Vector3.ZERO, 10)
+		_bb.cylinder("ferro", 0.22, 0.24, 0.04, Vector3(cx, 0.02, 3.3), Vector3.ZERO, 14)
+		for k in [-1.0, 1.0]:
+			_bb.box("couro", Vector3(0.08, 0.06, 0.5), Vector3(cx + k * 0.35, 0.92, 3.3))
+			_bb.box("ferro", Vector3(0.03, 0.30, 0.03), Vector3(cx + k * 0.35, 0.76, 3.1))
+		b._blocker(g, "ColCadeira", Vector3(0.9, 1.4, 1.1), Vector3(cx, 0.7, 3.3))
+	# espelho comprido e bancada com pia (parede norte)
+	_bb.box("ouro_velho", Vector3(3.6, 1.1, 0.04), Vector3(3.0, 1.85, 4.97))
+	_bb.quad("vidro_noite", Vector2(3.5, 1.0), Vector3(3.0, 1.85, 4.94), PI)
+	_bb.box("madeira_escura", Vector3(3.6, 0.85, 0.45), Vector3(3.0, 0.425, 4.75))
+	_bb.box("cantaria", Vector3(3.7, 0.05, 0.5), Vector3(3.0, 0.875, 4.73))
+	for px: float in [2.0, 4.0]:
+		_bb.cylinder("pano_cru", 0.17, 0.12, 0.10, Vector3(px, 0.93, 4.72), Vector3.ZERO, 12)         # pia de louça
+		_bb.cylinder("ferro", 0.012, 0.012, 0.18, Vector3(px, 1.0, 4.88), Vector3.ZERO, 6)           # torneira
+	b._blocker(g, "ColBancada", Vector3(3.6, 0.9, 0.5), Vector3(3.0, 0.45, 4.75))
+	for k in 7:
+		_bb.cylinder("vidro_oleo", 0.03, 0.03, 0.14, Vector3(1.4 + k * 0.2 + (0.45 if k > 3 else 0.0), 0.97, 4.82), Vector3.ZERO, 7)   # loções
+	_bb.box("ferro", Vector3(0.14, 0.01, 0.03), Vector3(2.5, 0.905, 4.62), Vector3(0, 0.4, 0))      # navalha
+	_bb.cylinder("madeira_natural", 0.02, 0.025, 0.09, Vector3(3.5, 0.95, 4.62), Vector3.ZERO, 6)   # pincel de barba
+	_bb.sphere("pano_cru", 0.03, Vector3(3.5, 1.01, 4.62), 6, 4)
+	# toalhas penduradas num varão (parede leste) e cabideiro com chapéus
+	_bb.cylinder("madeira_natural", 0.015, 0.015, 1.4, Vector3(5.92, 1.5, 2.6), Vector3(PI / 2.0, 0, 0), 6)
+	for k in 3:
+		_bb.box("pano_cru", Vector3(0.02, 0.55, 0.35), Vector3(5.9, 1.25, 2.1 + k * 0.5))
+	_bb.cylinder("madeira_escura", 0.025, 0.03, 1.75, Vector3(5.6, 0.88, 0.5), Vector3.ZERO, 8)
+	_bb.cylinder("madeira_escura", 0.18, 0.2, 0.03, Vector3(5.6, 0.02, 0.5), Vector3.ZERO, 10)
+	_bb.cylinder("pano_azul", 0.16, 0.16, 0.08, Vector3(5.6, 1.78, 0.5), Vector3.ZERO, 12)          # chapéu
+	_bb.cylinder("pano_azul", 0.10, 0.10, 0.10, Vector3(5.6, 1.86, 0.5), Vector3.ZERO, 10)
+	# banco de espera (parede oeste) com jornais
+	_bb.box("madeira_natural", Vector3(0.45, 0.06, 1.8), Vector3(0.3, 0.45, 2.6))
+	_bb.box("madeira_natural", Vector3(0.06, 0.45, 1.8), Vector3(0.06, 0.75, 2.6))
+	for sz: float in [-1.0, 1.0]:
+		_bb.box("madeira_escura", Vector3(0.4, 0.45, 0.06), Vector3(0.3, 0.22, 2.6 + sz * 0.85))
+	b._blocker(g, "ColBanco", Vector3(0.5, 0.5, 1.8), Vector3(0.3, 0.25, 2.6))
+	_bb.box("pano_cru", Vector3(0.32, 0.01, 0.42), Vector3(0.3, 0.485, 2.2), Vector3(0, 0.2, 0))
+	_nota(0.3, 0.49, 3.0, 9, "Ler o recorte de jornal")
+	_prop("cigarette_pack", 0.32, 2.75, 0.8, 1.5, 0.48)
+	# cartazes antigos e quadros
+	_quadro(0.04, 1.8, 1.3, "O", 0.5, 0.7)
+	_quadro(5.96, 1.9, 4.3, "L", 0.5, 0.65)
+	_lamparina(3.0, 0.9, 4.75)
+	_janela("L", 3.6)
+	_oleo(5.4, 0.95, 4.0)
 	_fim()
 
 

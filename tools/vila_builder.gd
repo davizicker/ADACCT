@@ -1400,10 +1400,11 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	pb.box("ouro_velho", Vector3(0.02, 0.10, 0.18), Vector3(-0.03, 2.2, dz + dn))   # número da casa na parede (do lado em que há parede)
 	if entrada.is_empty():
 		# casa FECHADA (não dá para entrar): duas tábuas pregadas em X sobre a porta e um cadeado enferrujado
+		# (tábuas do tamanho do vão: antes passavam da moldura e pareciam vigas)
 		for sg: float in [-1.0, 1.0]:
-			pb.box("madeira_escura", Vector3(0.05, 0.22, 3.15), Vector3(-0.30, 1.45, dz), Vector3(sg * 0.98, 0.0, 0.0))
-			for pz: float in [-0.7, 0.0, 0.7]:
-				pb.box("ferro", Vector3(0.06, 0.05, 0.05), Vector3(-0.335, 1.45 + sg * pz * 1.5, dz + pz))
+			pb.box("madeira_escura", Vector3(0.04, 0.16, 2.55), Vector3(-0.27, 1.3, dz), Vector3(sg * 1.0, 0.0, 0.0))
+			for pz: float in [-0.5, 0.5]:
+				pb.box("ferro", Vector3(0.05, 0.04, 0.04), Vector3(-0.30, 1.3 + sg * pz * 1.55, dz + pz))
 		pb.box("ferro_ferrugem", Vector3(0.07, 0.2, 0.14), Vector3(-0.31, 1.05, dz + 0.55))
 	var porta_no := _mesh_node(c, "Porta", pb.commit())
 	porta_no.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

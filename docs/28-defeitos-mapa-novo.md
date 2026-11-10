@@ -7,7 +7,7 @@ Status: **corrigido** (no código, entra no próximo bake) · **aberto** · **vi
 |---|---|---|---|
 | 1 | Entrada (s 0-15), fachadas | Pedra do térreo e dos muros em blocos gigantes (textura esticada: "cara de Minecraft") | corrigido: textura do material `muro` 1,8x menor (blocos de tamanho real) |
 | 2 | Calçadas da vila toda | Mato e tufos demais na beira das fachadas (3.300 tufos): parece abandono exagerado e esconde a calçada | corrigido: reduzido para ~1.000 (calçada) e 250 (rua) |
-| 3 | Entrada, casa fechada à esquerda | Tábuas em X da porta fechada grossas e passando da moldura | aberto |
+| 3 | Entrada, casa fechada à esquerda | Tábuas em X da porta fechada grossas e passando da moldura | corrigido: tábuas do tamanho do vão, mais finas |
 | 4 | Entrada | Placas de loja escuras e ilegíveis de longe | aberto |
 | 5 | Fim da reta da entrada | Fundo da rua escuro e liso (paredão sem detalhe) | aberto: conferir no próximo quadro |
 | 6 | Casarão/escola/padaria/carpintaria (interiores) | Ainda não fotografados no mapa novo | aberto |
