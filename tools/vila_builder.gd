@@ -906,6 +906,7 @@ func _frontage_plano(root: Node3D) -> void:
 	var fc := lot_frame(Route.FOUNTAIN_SIDE, Route.FOUNTAIN_S - 3.5, Route.FOUNTAIN_S + 3.5)
 	_lot_chafariz(muros, fc)
 	_entrada_atual = {}
+	_curvas_plano(root)
 
 
 ## Casa de um lote do plano: largura e fundo EXATOS do cadastro (nada de encolher depois). Sobrados ganham sacada.
@@ -1012,6 +1013,64 @@ func _beco_escada(parent: Node3D, c: Dictionary) -> void:
 	g.add_child(refuge)
 	for k in range(2, int(L) - 2, 5):                                                     # mato nas frestas dos degraus, junto ao muro
 		_plant(g, "capim", Vector3(k + 0.3, rise * (k + 0.3) / L, (wb * 0.5 - 0.25) * (1.0 if k % 2 == 0 else -1.0)), _rng.randf() * TAU, 0.7)
+
+
+## Curvas do zigue-zague (mapa do zero): por FORA, muro de arrimo de pedra acompanhando o arco, com capa de cantaria, lampiões e árvores
+## além do muro; por DENTRO, mureta baixa de pedra com um jardim no miolo. Tudo em segmentos retos curtos colados ao arco (sem buraco).
+func _curvas_plano(root: Node3D) -> void:
+	var g := _group(root, "MurosDasCurvas")
+	var b := _batch()
+	var meia := PlanoVila.LARG_RUA * 0.5 + PlanoVila.CALCADA
+	var n_luz := 0
+	for pc in (_plano["pecas"] as Array):
+		if pc["tipo"] != "arco":
+			continue
+		var c: Vector2 = pc["c"]
+		var r0: float = pc["r"]
+		var a0: float = pc["a0"]
+		var a1: float = pc["a1"]
+		var nseg := maxi(6, int(absf(a1 - a0) * r0 / 1.5))
+		for lado: float in [1.0, -1.0]:                          # +1 = fora do arco (muro alto); -1 = dentro (mureta)
+			var rr := r0 + lado * (meia + 0.3)
+			if rr < 1.0:
+				continue
+			for k in nseg:
+				var t0 := lerpf(a0, a1, float(k) / nseg)
+				var t1 := lerpf(a0, a1, float(k + 1) / nseg)
+				var tm := (t0 + t1) * 0.5
+				var p0 := c + Vector2(cos(t0), sin(t0)) * rr
+				var p1 := c + Vector2(cos(t1), sin(t1)) * rr
+				var pm := (p0 + p1) * 0.5
+				var comp := p0.distance_to(p1) + 0.08
+				var sm := Route.nearest_s(Vector3(pm.x, 0, pm.y))
+				if lado < 0.0 and absf(sm - Route.FOUNTAIN_S) < 6.0:
+					continue                                                                      # boca do largo do chafariz fica aberta
+				var y := Route.height(sm) + SW_H
+				var alto := 2.2 if lado > 0.0 else 0.75
+				var yaw := -atan2(p1.y - p0.y, p1.x - p0.x)
+				b.box("muro", Vector3(comp, alto + 3.0, 0.5), Vector3(pm.x, y + (alto - 3.0) * 0.5, pm.y), Vector3(0, yaw, 0))
+				b.box("cantaria", Vector3(comp + 0.02, 0.12, 0.66), Vector3(pm.x, y + alto + 0.06, pm.y), Vector3(0, yaw, 0))
+				var col := StaticBody3D.new()
+				col.name = "MuroCurva"
+				var cs := CollisionShape3D.new()
+				var bs := BoxShape3D.new()
+				bs.size = Vector3(comp, alto + 3.0, 0.5)
+				cs.shape = bs
+				col.add_child(cs)
+				col.position = Vector3(pm.x, y + (alto - 3.0) * 0.5, pm.y)
+				col.rotation.y = yaw
+				g.add_child(col)
+				if lado > 0.0 and k % 7 == 3:                                                     # lampião no muro de fora
+					var dirc := Vector3(-cos(tm), 0, -sin(tm))                                      # para o centro da curva (para a rua)
+					var pl := Vector3(pm.x, y + 2.6, pm.y) + dirc * 0.27
+					var lw := _lantern_wall(pl, atan2(dirc.x, dirc.z))
+					lw.name = "LampiaoCurva_%d" % n_luz
+					g.add_child(lw)
+					n_luz += 1
+				if lado > 0.0 and k % 5 == 1:                                                     # árvore além do muro
+					var pa := c + Vector2(cos(tm), sin(tm)) * (rr + 2.5)
+					_plant(g, "arvore_%d" % (k % 3), Vector3(pa.x, terrain_h(pa.x, pa.y) - 0.1, pa.y), _rng.randf() * TAU, 1.0)
+	_mesh_node(g, "Muros", b.commit())
 
 
 ## Prédio que fecha o começo da rua (atrás do jogador).
