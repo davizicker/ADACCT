@@ -193,9 +193,9 @@ static func _apply_high_end(main: Node) -> void:
 	# tom de filme AgX (cores das luzes quentes não "estouram" para amarelo chapado; sombras com mais detalhe)
 	e.tonemap_mode = Environment.TONE_MAPPER_AGX if hi else Environment.TONE_MAPPER_FILMIC
 	e.tonemap_exposure = 1.15 if hi else 1.0
-	e.glow_levels_1 = 0.0
-	e.glow_levels_3 = 1.0
-	e.glow_levels_5 = 0.6 if cine else 0.3      # halo largo e suave em volta dos lampiões
+	e.set_glow_level(0, 0.0)
+	e.set_glow_level(2, 1.0)
+	e.set_glow_level(4, 0.6 if cine else 0.3)  # halo largo e suave em volta dos lampiões
 	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
 	# sombras dos lampiões perto do jogador (8 no cinematográfico, 4 no alto): atlas de sombras grande e suave
 	var vp := main.get_viewport()
