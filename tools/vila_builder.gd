@@ -1683,10 +1683,10 @@ func _sign(c: Node3D, b: MeshBatch, z: float) -> void:
 		l.font = _sign_font()
 		l.font_size = 96
 		l.pixel_size = clampf(0.72 / (text.length() * 0.62 * 96.0), 0.0011, 0.0026)
-		l.modulate = Color(0.98, 0.86, 0.52)
-		l.outline_modulate = Color(0.10, 0.045, 0.01)
+		l.modulate = Color(0.80, 0.66, 0.38)           # dourado sem luz própria forte: legível à noite sem "brilhar" como neon
+		l.outline_modulate = Color(0.08, 0.035, 0.01)
 		l.outline_size = 10
-		l.shaded = true
+		l.shaded = false
 		l.double_sided = false
 		l.alpha_cut = Label3D.ALPHA_CUT_OPAQUE_PREPASS
 		l.position = Vector3(bx, by, z + side * 0.032)
