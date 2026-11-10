@@ -24,6 +24,8 @@ const K_SALA := 1.0                    # (remapear cada móvel separado desalinh
 const ESCALA_SALA := 1.25              # ampliação uniforme da sala inteira (paredes, móveis, luzes, colisão)
 var _cadeiras: Array[Vector2] = []
 var _parede_mat := ""
+var _andar_sup := 0.0                   # altura do piso do 2º andar (0 = sala de um andar só): a parede da frente ganha a 2ª fileira de janelas
+var _divisorias_x: Array[float] = []    # x das paredes internas que tocam a parede da frente (janela não pode cair nelas)
 var _n_casca := 0                      # quantas caixas de _bb são da casca da sala (o resto é mobília)
 
 
@@ -114,6 +116,8 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	_d0 = d
 	_cadeiras = []
 	_janelas_lat = []
+	_andar_sup = 0.0
+	_divisorias_x = []
 	_tem_tapete = false
 	if nome != "Igreja Matriz":                      # a igreja já é grande
 		w = snappedf(w * K_SALA, 0.1)
@@ -239,16 +243,16 @@ var _tem_tapete := false
 
 
 ## Tapete persa com desenho (textura própria) e franjas; um por sala.
-func _tapete(x: float, z: float, lx: float, lz: float, qual := 0, yaw := 0.0) -> void:
+func _tapete(x: float, z: float, lx: float, lz: float, qual := 0, yaw := 0.0, y := 0.0) -> void:
 	_tem_tapete = true
 	var m := "tapete_a" if qual == 0 else "tapete_b"
-	_bb.quad_h(m, Vector2(lx, lz), Vector3(x, 0.012, z), yaw)
+	_bb.quad_h(m, Vector2(lx, lz), Vector3(x, y + 0.012, z), yaw)
 	var c := cos(yaw)
 	var sn := sin(yaw)
 	for k in int(lx / 0.12):                                                  # franjas nas duas pontas menores
 		var t := -lx * 0.5 + 0.06 + k * 0.12
 		for sg: float in [-1.0, 1.0]:
-			_bb.box("pano_cru", Vector3(0.02, 0.004, 0.10), Vector3(x + c * t - sn * sg * (lz * 0.5 + 0.05), 0.007, z + sn * t + c * sg * (lz * 0.5 + 0.05)), Vector3(0, yaw, 0))
+			_bb.box("pano_cru", Vector3(0.02, 0.004, 0.10), Vector3(x + c * t - sn * sg * (lz * 0.5 + 0.05), y + 0.007, z + sn * t + c * sg * (lz * 0.5 + 0.05)), Vector3(0, yaw, 0))
 
 
 ## Objeto para examinar (E): uma frase da história ou um arrepio. Várias frases separadas por " | " alternam a cada exame.
@@ -728,7 +732,23 @@ func _parede_frente() -> void:
 	var h := _h
 	var vaos: Array = [[w / 2.0 - PORTA_MEIA, w / 2.0 + PORTA_MEIA, 0.0, PORTA_ALTA]]
 	var jans: Array = []
-	var yc := minf(1.6, h - 1.15)
+	var yc := minf(1.6, (_andar_sup if _andar_sup > 0.0 else h) - 1.15)
+	if _andar_sup > 0.0:                                         # 2º andar: janelas no meio de cada trecho entre divisórias
+		var cortes: Array[float] = [2.3]
+		cortes.append_array(_divisorias_x)
+		cortes.append(w - 0.4)
+		cortes.sort()
+		var yc2 := _andar_sup + 1.6
+		for i in cortes.size() - 1:
+			var a0: float = cortes[i] + 0.5
+			var a1: float = cortes[i + 1] - 0.5
+			if a1 - a0 < JAN_W:
+				continue
+			var xc2 := (a0 + a1) * 0.5
+			if _ocupado(AABB(Vector3(xc2 - 0.6, yc2 - 0.65, 0.0), Vector3(1.2, 1.3, 0.5))):
+				continue
+			jans.append({"x": xc2, "y": yc2, "w": JAN_W, "h": JAN_H})
+			vaos.append([xc2 - JAN_W * 0.43, xc2 + JAN_W * 0.43, yc2 - JAN_H * 0.44, yc2 + JAN_H * 0.44])
 	for lado in 2:
 		var x0 := 0.75 if lado == 0 else w / 2.0 + PORTA_MEIA + 0.55
 		var x1 := w / 2.0 - PORTA_MEIA - 0.55 if lado == 0 else w - 0.75
@@ -788,6 +808,56 @@ func _parede_frente() -> void:
 		_bb.box("cantaria", Vector3(hw * 2.0 + 0.3, 0.05, 0.2), Vector3(xc, yj - hh - 0.08, 0.06))               # peitoril por dentro
 	_g.set_meta("aberturas", jans)
 	_g.set_meta("porta_x", w / 2.0)
+
+
+## Parede interna (divisória) com vãos de porta (1,1 m x 2,15 m), batentes e colisão. eixo "x": vai de (a, fixo) a (b, fixo) ao longo de x;
+## eixo "z": de (fixo, a) a (fixo, b) ao longo de z. y0/y1 = piso e teto daquele andar.
+func _divisoria(eixo: String, fixo: float, a: float, fim: float, y0: float, y1: float, portas: Array = [], esp := 0.14) -> void:
+	var furos: Array = []
+	for pt in portas:
+		furos.append([float(pt) - 0.55, float(pt) + 0.55])
+	furos.sort_custom(func(m: Array, n2: Array) -> bool: return float(m[0]) < float(n2[0]))
+	var cur := a
+	var pecas: Array = []                                   # [s0, s1, ya, yb]
+	for f in furos:
+		if float(f[0]) - cur > 0.01:
+			pecas.append([cur, float(f[0]), y0, y1])
+		pecas.append([float(f[0]), float(f[1]), y0 + 2.15, y1])           # verga sobre a porta
+		cur = float(f[1])
+	if fim - cur > 0.01:
+		pecas.append([cur, fim, y0, y1])
+	for pc in pecas:
+		var s0: float = pc[0]
+		var s1: float = pc[1]
+		var ya: float = pc[2]
+		var yb: float = pc[3]
+		if yb - ya < 0.01:
+			continue
+		var c := Vector3((s0 + s1) * 0.5, (ya + yb) * 0.5, fixo) if eixo == "x" else Vector3(fixo, (ya + yb) * 0.5, (s0 + s1) * 0.5)
+		var sz := Vector3(s1 - s0, yb - ya, esp) if eixo == "x" else Vector3(esp, yb - ya, s1 - s0)
+		_bb.box(_parede_mat, sz, c)
+		b._blocker(_g, "ColDivisoria", sz, c)
+		var rd := Vector3(s1 - s0 - 0.02, 0.12, esp + 0.04) if eixo == "x" else Vector3(esp + 0.04, 0.12, s1 - s0 - 0.02)
+		if ya <= y0 + 0.01:
+			_bb.box("madeira_escura", rd, Vector3(c.x, y0 + 0.06, c.z))       # rodapé dos dois lados
+	for f in furos:                                                          # batentes de madeira em volta de cada vão
+		var m0: float = f[0]
+		var m1: float = f[1]
+		for mm: float in [m0 + 0.04, m1 - 0.04]:
+			var pj := Vector3(mm, y0 + 1.07, fixo) if eixo == "x" else Vector3(fixo, y0 + 1.07, mm)
+			_bb.box("madeira_escura", Vector3(0.08, 2.15, esp + 0.06) if eixo == "x" else Vector3(esp + 0.06, 2.15, 0.08), pj)
+		var pv := Vector3((m0 + m1) * 0.5, y0 + 2.11, fixo) if eixo == "x" else Vector3(fixo, y0 + 2.11, (m0 + m1) * 0.5)
+		_bb.box("madeira_escura", Vector3(m1 - m0, 0.08, esp + 0.06) if eixo == "x" else Vector3(esp + 0.06, 0.08, m1 - m0), pv)
+	if eixo == "z" and a < 0.3:
+		_divisorias_x.append(fixo)
+
+
+## Laje do 2º andar (retângulo x0..x1, z0..z1): piso de tacos por cima, forro de tábuas por baixo e colisão.
+func _laje(x0: float, x1: float, z0: float, z1: float, y: float) -> void:
+	var c := Vector3((x0 + x1) * 0.5, 0.0, (z0 + z1) * 0.5)
+	_bb.box("piso_taco", Vector3(x1 - x0, 0.05, z1 - z0), Vector3(c.x, y - 0.025, c.z))
+	_bb.box("forro_tabuas", Vector3(x1 - x0, 0.22, z1 - z0), Vector3(c.x, y - 0.16, c.z))
+	b._blocker(_g, "PisoSuperior", Vector3(x1 - x0, 0.5, z1 - z0), Vector3(c.x, y - 0.25, c.z))
 
 
 func _lamparina(x: float, y: float, z: float, energia := 0.85) -> void:
@@ -1420,95 +1490,128 @@ func _sala_sineiro(g: Node3D) -> void:
 
 
 func _sala_casarao(g: Node3D) -> void:
+	# CASARÃO de dois andares completos. Térreo: sala de estar (entrada) com a escada, sala de jantar à direita, cozinha nos fundos.
+	# Andar de cima (piso inteiro): quarto do capataz (escrivaninha e o Livro), quarto de Eulália e o corredor com a galeria de retratos.
 	var up := 3.75                                   # altura do piso do andar de cima
-	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_branco", "piso_taco", "forro_tabuas")       # pé-direito duplo: salão embaixo, galeria em cima
-	# ---------------- térreo: salão de jantar
-	_tapete(5.0, 3.8, 3.4, 2.3, 0)
-	_examinar(7.4, 0.5, 3.8, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
-	_examinar(5.0, 0.95, 3.8, "Examinar a mesa", "Sete lugares postos. Seis cadeiras. Quem faltava à mesa dos Vaz? | O castiçal central tem sete velas. Seis derreteram até o fim; a sétima nunca foi acesa.")
-	_prop_c("dining_table", 5.0, 3.8, 0.0, 1.0)
-	var dtm := _dim("dining_table")                                                  # mesa de jantar: 2,26 x 1,39 m (medido no modelo)
-	for k in 3:
-		_cadeira_mesa(5.0, 3.8, dtm.x, dtm.z, "N", (k - 1) * 0.72)
-	for k in 2:
-		_cadeira_mesa(5.0, 3.8, dtm.x, dtm.z, "S", (k - 0.5) * 0.8)
-	_bx("madeira_natural", Vector3(7.4, 0, 3.8), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
-	_parte("brass_candleholders", ["brass_candleholder_01"], 4.3, 3.8, 0.0, 0.55, 0.89)
-	_parte("brass_candleholders", ["brass_candleholder_02"], 5.0, 3.8, 0.0, 0.55, 0.89)
-	_parte("brass_candleholders", ["brass_candleholder_03"], 5.7, 3.8, 0.0, 0.55, 0.89)
-	var lcd := b._lamp_light(_g, Vector3(5.0, 1.45, 3.8), 0.7)
-	lcd.omni_range = 6.0
-	var fill2 := b._lamp_light(_g, Vector3(5.0, 2.6, 3.0), 0.8)                                       # luz de preenchimento do salão alto
-	fill2.omni_range = 10.0
-	_prop_c("WoodenChair_01", 2.55, 3.8, PI / 2.0, 0.5)
-	for k in 4:
-		_quadro(1.6 + k * 2.2, 2.2, 7.95, "N", 0.7, 0.9)
-	_quadro(0.04, 1.9, 4.0, "O", 0.9, 1.3, "vidro_noite")
-	# lustre de latão pendurado por uma corrente comprida do forro alto
-	_bb.cylinder("ferro", 0.012, 0.012, 7.6 - (up + 1.7), Vector3(5.0, (7.6 + up + 1.7) * 0.5, 3.8), Vector3.ZERO, 6)
-	_prop("brass_diya_lantern", 5.0, 3.8, 0.0, 2.2, up + 0.3)
-	_prop("planter_pot_clay", 9.3, 0.8, 0.0, 1.4, 0.0)
-	_parte("anthurium_botany_01", ["anthurium_botany_04_d"], 9.3, 0.8, 0.9, 0.22, 0.30)
-	_nota(4.1, 0.9, 3.55, 21, "Ler o telegrama da Companhia")
-	_nota(5.95, 0.9, 4.05, 22, "Ler o rascunho amassado")
-	_oleo(8.7, 0.0, 0.5)
-	_janela("L", 5.5, 1.9, 1.0, 1.6)
-	_janela("O", 1.8, 1.9, 1.0, 1.6)
-	_encostar_auto("vintage_day_bed", 2.0, 0.75, 1.0)
-	_prop_c("gothic_coffee_table", 2.0, 2.6, 0.5, 1.0)
-	# ---------------- escada de madeira (19 degraus) subindo rente à parede leste até a galeria
+	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_branco", "piso_taco", "forro_tabuas")
+	_andar_sup = up
+	# ---------------- divisórias do térreo
+	_divisoria("z", 6.5, 0.0, 8.0, 0.0, up, [2.3, 6.4])                 # estar | jantar ; cozinha | jantar
+	_divisoria("x", 4.75, 2.15, 6.5, 0.0, up, [2.9])                     # estar | cozinha
+	_divisoria("z", 2.15, 4.75, 8.0, 0.0, up, [])                        # cozinha | vão sob o patamar
+	# ---------------- escada de madeira (19 degraus) subindo rente à parede oeste
 	var n := 19
 	var rise := up / float(n)
+	var run := 0.27
 	var z0 := 0.9
 	for k in n:
 		var top := rise * float(k + 1)
-		_bb.box("madeira_escura", Vector3(1.2, top, 0.25), Vector3(9.2, top * 0.5, z0 + 0.125 + k * 0.25))
-		_bb.box("madeira_natural", Vector3(1.22, 0.04, 0.27), Vector3(9.2, top + 0.02, z0 + 0.125 + k * 0.25))
-	var ang := atan2(up, n * 0.25)
+		_bb.box("madeira_escura", Vector3(1.2, top, run), Vector3(0.85, top * 0.5, z0 + run * 0.5 + k * run))
+		_bb.box("madeira_natural", Vector3(1.22, 0.04, run + 0.02), Vector3(0.85, top + 0.02, z0 + run * 0.5 + k * run))
+	var ang := atan2(up, n * run)
 	var ramp := StaticBody3D.new()
 	ramp.name = "RampaEscada"
 	var rcs := CollisionShape3D.new()
 	var rbs := BoxShape3D.new()
-	rbs.size = Vector3(1.2, 0.4, sqrt(pow(n * 0.25, 2.0) + up * up) + 0.3)
+	rbs.size = Vector3(1.2, 0.4, sqrt(pow(n * run, 2.0) + up * up) + 0.3)
 	rcs.shape = rbs
 	ramp.add_child(rcs)
-	ramp.position = Vector3(9.2, up * 0.5 - 0.2, z0 + n * 0.125)
+	ramp.position = Vector3(0.85, up * 0.5 - 0.2, z0 + n * run * 0.5)
 	ramp.rotation.x = -ang
 	g.add_child(ramp)
-	for k in range(0, n, 3):                                                       # corrimão e balaústres do lado aberto da escada
+	for k in range(0, n, 2):                                                       # balaústres e corrimão do lado aberto
 		var top2 := rise * float(k + 1)
-		_bb.cylinder("madeira_escura", 0.03, 0.03, 0.9, Vector3(8.58, top2 + 0.45, z0 + 0.125 + k * 0.25), Vector3.ZERO, 8)
-	_bb.box("madeira_natural", Vector3(0.07, 0.07, sqrt(pow(n * 0.25, 2.0) + up * up)), Vector3(8.58, up * 0.5 + 0.92, z0 + n * 0.125), Vector3(-ang, 0, 0))
-	b._blocker(g, "ColCorrimaoEscada", Vector3(0.1, 1.2, 1.0), Vector3(8.55, 0.6, z0 + 0.4))
-	# ---------------- galeria do andar de cima (z de 5,5 a 8,0): laje, guarda-corpo, quarto e escritório do capataz
-	_bb.box("madeira_escura", Vector3(10.0, 0.3, 2.55), Vector3(5.0, up - 0.15, 6.75))
-	_bb.box("madeira_natural", Vector3(10.0, 0.18, 0.12), Vector3(5.0, up - 0.36, 5.5))
-	b._blocker(g, "PisoSuperior", Vector3(10.0, 0.5, 2.55), Vector3(5.0, up - 0.25, 6.75))
-	var xb := 0.25
-	while xb < 8.4:
-		_bb.cylinder("madeira_escura", 0.03, 0.03, 0.95, Vector3(xb, up + 0.47, 5.55), Vector3.ZERO, 8)
-		xb += 0.22
-	_bb.box("madeira_natural", Vector3(8.2, 0.07, 0.1), Vector3(4.3, up + 0.97, 5.55))
-	b._blocker(g, "ColGuardaCorpo", Vector3(8.2, 1.1, 0.12), Vector3(4.3, up + 0.55, 5.55))
-	_prop_c("old_bed_frame", 1.2, 6.9, 0.0, 1.0, up)
-	_examinar(1.2, up + 0.9, 6.9, "Examinar a cama", "A cama de Eulália Vaz. O travesseiro ainda tem um fio de cabelo branco e, debaixo do colchão, uma lista com trinta e um nomes riscados a lápis.", "papel", 0.1)
-	# escrivaninha do capataz (tampo e pernas de caixas) com cadeira de espaldar alto
-	_bx("madeira_escura", Vector3(3.6, up, 7.3), 0.0, Vector3(0, 0.78, 0), Vector3(1.7, 0.07, 0.8))
+		_bb.cylinder("madeira_escura", 0.025, 0.025, 0.9, Vector3(1.5, top2 + 0.45, z0 + run * 0.5 + k * run), Vector3.ZERO, 8)
+	_bb.box("madeira_natural", Vector3(0.07, 0.07, sqrt(pow(n * run, 2.0) + up * up)), Vector3(1.5, up * 0.5 + 0.92, z0 + n * run * 0.5), Vector3(-ang, 0, 0))
+	b._blocker(g, "ColCorrimaoEscada", Vector3(0.1, 1.2, 1.2), Vector3(1.5, 0.6, z0 + 0.5))
+	# ---------------- laje do 2º andar inteira (menos o vão da escada x 0..2,15 / z 0..6,03)
+	_laje(2.15, 10.0, 0.0, 8.0, up)
+	_laje(0.0, 2.15, z0 + n * run, 8.0, up)
+	# ---------------- divisórias do 2º andar
+	_divisoria("z", 2.15, 0.0, 6.1, up, 7.6, [])                         # fecha o vão da escada (ninguém cai)
+	_divisoria("x", 6.1, 2.15, 10.0, up, 7.6, [2.9, 8.3])                # corredor | quartos
+	_divisoria("z", 6.5, 0.0, 6.1, up, 7.6, [])                          # quarto do capataz | quarto de Eulália
+	# ================= TÉRREO =================
+	# --- sala de estar (x 2,15–6,5 / z 0–4,75): sofá encostado na cozinha, poltrona, mesinha, estante
+	_tapete(4.6, 3.1, 2.8, 1.8, 0)
+	_prop_c("vintage_day_bed", 4.55, 4.25, PI, 1.0)
+	_prop_c("gothic_coffee_table", 4.55, 3.05, 0.0, 0.62)
+	_prop_c("chinese_armchair", 2.95, 3.0, PI / 2.0, 0.85)
+	_prop_c("wooden_bookshelf_worn", 6.1, 3.8, -PI / 2.0, 1.0)
+	_prop("planter_pot_clay", 2.55, 0.5, 0.0, 1.4, 0.0)
+	_parte("anthurium_botany_01", ["anthurium_botany_04_d"], 2.55, 0.5, 0.9, 0.22, 0.30)
+	var lz := b._lamp_light(_g, Vector3(4.4, up - 0.6, 2.4), 0.8)
+	lz.omni_range = 7.0
+	# --- sala de jantar (x 6,5–10 / z 0–8): mesa de jantar ao longo de z, seis cadeiras, aparador
+	_tapete(8.3, 4.6, 2.2, 3.4, 1, PI / 2.0)
+	_prop_c("dining_table", 8.3, 4.6, PI / 2.0, 1.0)
+	var dtm := _dim("dining_table")                                                  # 2,26 x 1,39 m (medido no modelo); girada: 1,39 em x
+	for k in 3:
+		_cadeira_mesa(8.3, 4.6, dtm.z, dtm.x, "O", (k - 1) * 0.72)
+		_cadeira_mesa(8.3, 4.6, dtm.z, dtm.x, "L", (k - 1) * 0.72)
+	_examinar(8.3, 0.95, 4.6, "Examinar a mesa", "Sete lugares postos. Seis cadeiras. Quem faltava à mesa dos Vaz? | O castiçal central tem sete velas. Seis derreteram até o fim; a sétima nunca foi acesa.")
+	_parte("brass_candleholders", ["brass_candleholder_01"], 8.3, 3.9, 0.0, 0.55, 0.89)
+	_parte("brass_candleholders", ["brass_candleholder_02"], 8.3, 4.6, 0.0, 0.55, 0.89)
+	_parte("brass_candleholders", ["brass_candleholder_03"], 8.3, 5.3, 0.0, 0.55, 0.89)
+	_nota(8.05, 0.9, 4.15, 21, "Ler o telegrama da Companhia")
+	_nota(8.55, 0.9, 5.05, 22, "Ler o rascunho amassado")
+	_bb.cylinder("ferro", 0.012, 0.012, up - 2.6, Vector3(8.3, (up + 2.6) * 0.5, 4.6), Vector3.ZERO, 6)
+	_prop("brass_diya_lantern", 8.3, 4.6, 0.0, 1.6, 2.15)
+	var lj := b._lamp_light(_g, Vector3(8.3, 2.0, 4.6), 0.9)
+	lj.omni_range = 6.5
+	_prop_c("GothicCabinet_01", 9.47, 1.25, -PI / 2.0, 0.85)
+	_bx("madeira_natural", Vector3(9.3, 0, 7.3), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
+	_examinar(9.3, 0.5, 7.3, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
+	_oleo(9.6, 0.0, 0.5)
+	# --- cozinha (x 2,15–6,5 / z 4,75–8): fogão a lenha, mesa com duas cadeiras, prateleira, sacos
+	_fogao(4.4, 7.58, PI)
+	_mesa(4.0, 6.0, 1.2, 0.7, 0.8, "madeira_natural")
+	_cadeira_mesa(4.0, 6.0, 1.2, 0.7, "S")
+	_cadeira_mesa(4.0, 6.0, 1.2, 0.7, "O")
+	_prateleira(2.9, 1.6, 7.85, 1.2, 0.0, 4)
+	_saco(6.1, 7.6, 0.2)
+	_prop("wooden_bucket_01", 6.15, 5.2, 0.0)
+	_comida(4.2, 6.0, 0.84, "feijao", "Comer a lata de feijão")
+	# ================= 2º ANDAR =================
+	# --- quarto do capataz (x 2,15–6,5 / z 0–6,1): cama, criados-mudos, guarda-roupa, escrivaninha com o Livro
+	_tapete(4.6, 4.2, 2.2, 1.6, 0, 0.0, up)
+	_prop_c("old_bed_frame", 4.6, 5.0, PI, 1.0, up)
+	_examinar(4.6, up + 0.9, 5.0, "Examinar a cama", "A cama de Eulália Vaz. O travesseiro ainda tem um fio de cabelo branco e, debaixo do colchão, uma lista com trinta e um nomes riscados a lápis.", "papel", 0.1)
+	_prop("painted_wooden_nightstand", 3.85, 5.7, PI, 1.0, up)
+	_prop("painted_wooden_nightstand", 5.35, 5.7, PI, 1.0, up)
+	_prop_c("GothicCabinet_01", 2.74, 2.4, PI / 2.0, 0.9, up)
+	_examinar(2.9, up + 1.1, 2.4, "Abrir o guarda-roupa", "Só casacos de homem, todos do mesmo corte, todos com a gola cortada. Quem usava isto sabia que um dia ia precisar sair depressa.", "creak", 0.08)
+	_bx("madeira_escura", Vector3(5.2, up, 1.0), 0.0, Vector3(0, 0.78, 0), Vector3(1.7, 0.07, 0.8))        # escrivaninha
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
-			_bx("madeira_escura", Vector3(3.6, up, 7.3), 0.0, Vector3(sx * 0.78, 0.39, sz * 0.34), Vector3(0.08, 0.78, 0.08))
-	b._blocker(g, "ColEscrivaninha", Vector3(1.7, 0.8, 0.8), Vector3(3.6, up + 0.4, 7.3))
-	_prop_c("chinese_armchair", 3.6, 6.5, 0.0, 0.72, up)
-	_item("livro", Vector3(4.0, up + 0.88, 7.3), "Pegar o livro de registros dos Vaz")
-	_nota(3.0, up + 0.83, 7.35, 26, "Ler o diário de Eulália Vaz")
-	_vela(2.8, up + 0.82, 7.5, true)
-	_prop("seadogs_compass", 4.3, 7.15, 0.4, 1.0, up + 0.78)
-	_papelaria(3.5, 7.15, up + 0.82, 0.4)
-	_prop_c("GothicCabinet_01", 6.4, 7.45, PI, 1.0, up)
-	_examinar(6.4, up + 1.1, 7.2, "Abrir o guarda-roupa", "Só casacos de homem, todos do mesmo corte, todos com a gola cortada. Quem usava isto sabia que um dia ia precisar sair depressa.", "creak", 0.08)
-	_janela("L", 7.0, up + 1.9, 1.0, 1.6)
-	var lg := b._lamp_light(_g, Vector3(4.0, up + 2.1, 6.8), 0.9)                                    # luz quente da galeria
-	lg.omni_range = 7.0
+			_bx("madeira_escura", Vector3(5.2, up, 1.0), 0.0, Vector3(sx * 0.78, 0.39, sz * 0.34), Vector3(0.08, 0.78, 0.08))
+	b._blocker(g, "ColEscrivaninha", Vector3(1.7, 0.8, 0.8), Vector3(5.2, up + 0.4, 1.0))
+	_prop_c("chinese_armchair", 5.2, 1.75, PI, 0.72, up)
+	_item("livro", Vector3(5.6, up + 0.88, 1.0), "Pegar o livro de registros dos Vaz")
+	_nota(4.6, up + 0.83, 1.05, 26, "Ler o diário de Eulália Vaz")
+	_vela(4.45, up + 0.82, 0.8, true)
+	_prop("seadogs_compass", 5.9, 0.85, 0.4, 1.0, up + 0.78)
+	_papelaria(5.0, 1.15, up + 0.82, 0.0)
+	var lq := b._lamp_light(_g, Vector3(4.3, up + 2.6, 3.0), 0.8)
+	lq.omni_range = 6.0
+	# --- quarto de Eulália (x 6,5–10 / z 0–6,1): cama, baú de malas, cadeirinha e mesinha, cômoda
+	_tapete(8.3, 3.2, 2.0, 1.5, 1, 0.0, up)
+	_prop_c("old_bed_frame", 8.3, 5.0, PI, 1.0, up)
+	_prop("painted_wooden_nightstand", 9.55, 5.7, PI, 1.0, up)
+	_parte("vintage_suitcase", ["vintage_suitcase_01_"], 9.5, 2.2, 1.57, 0.75, up)
+	_parte("vintage_suitcase", ["vintage_suitcase_02_"], 9.5, 2.95, 1.57, 0.75, up)
+	_prop_c("WoodenChair_01", 7.2, 1.2, PI / 4.0, 0.5, up)
+	_prop("WoodenTable_02", 7.75, 1.0, 0.0, 1.0, up)
+	_prop_c("wooden_bookshelf_worn", 6.9, 3.6, PI / 2.0, 1.0, up)
+	var le := b._lamp_light(_g, Vector3(8.3, up + 2.6, 3.0), 0.7)
+	le.omni_range = 6.0
+	# --- corredor de cima (z 6,1–8): passadeira, galeria de retratos e aparador com lampião
+	_tapete(5.8, 7.05, 6.4, 0.9, 0, 0.0, up)
+	_galeria("N", 5.8, 6, 2, up + 1.4)
+	_prop("painted_wooden_nightstand", 9.5, 7.55, PI, 1.0, up)
+	_lamparina(9.5, up + 0.66, 7.55)
+	var lc := b._lamp_light(_g, Vector3(4.0, up + 2.7, 7.0), 0.7)
+	lc.omni_range = 7.0
 	_fim()
 
 
@@ -1774,23 +1877,47 @@ func _sala_carpintaria(g: Node3D) -> void:
 
 
 func _sala_escola(g: Node3D) -> void:
-	_casca("Escola Rural", 7.0, 6.0, 3.2, "reboco_creme", "piso_taco", "forro_tabuas")
-	_encostar_auto("standing_chalkboard_01", _mx(3.5), _mz(5.3), 1.5)
-	_quadro(_mx(6.96), 1.8, _mz(3.0), "L", 1.4, 0.9, "placa_verde")
-	for fila in 2:
-		for col in 3:
-			var x := 1.4 + col * 1.7
-			var z := 1.9 + fila * 1.3
-			_mesa(_mx(x), _mz(z), 1.0, 0.5, 0.7, "madeira_natural")
-			_cadeira_mesa(_mx(x), _mz(z), 1.0, 0.5, "S")
-	_mesa(_mx(5.6), _mz(4.8), 1.4, 0.7, 0.8, "madeira_escura")                # mesa da professora
-	_papelaria(_mx(5.6), _mz(4.8), 0.84, 0.4)
-	_lamparina(_mx(5.2), 0.84, _mz(4.9))
-	_janela("O", _mz(3.0))
-	_nota(_mx(6.0), 0.9, _mz(4.8), 13, "Ler o caderno de caligrafia")
-	_encostar_auto("wooden_bookshelf_worn", _mx(6.62), _mz(1.0), 1.0)
-	_oleo(_mx(0.6), 0.95, _mz(5.3))
-	_comida(6.0, 4.6, 0.84, "cafe", "Beber o café")
+	# ESCOLA RURAL ampla: quadro-negro grande na parede do fundo, mesa da professora, 12 carteiras em dois blocos com corredor no meio,
+	# estante, armário, cabideiro com bolsas e lâmpadas penduradas. Tudo medido: cadeiras sob as carteiras, nada encostando em nada.
+	_casca("Escola Rural", 10.0, 8.0, 3.4, "reboco_creme", "piso_taco", "forro_tabuas")
+	# quadro-negro na parede do fundo (z = 8) com moldura e calha de giz
+	_bb.box("madeira_escura", Vector3(3.3, 1.42, 0.05), Vector3(5.0, 1.75, 7.97))
+	_bb.quad("placa_verde", Vector2(3.1, 1.22), Vector3(5.0, 1.75, 7.94), PI)
+	_bb.box("madeira_natural", Vector3(3.2, 0.04, 0.10), Vector3(5.0, 1.02, 7.92))
+	for k in 4:
+		_bb.cylinder("pano_cru", 0.008, 0.008, 0.07, Vector3(4.2 + k * 0.3, 1.05, 7.9), Vector3(0, 0, PI / 2.0), 5)    # gizes
+	_examinar(5.0, 1.75, 7.6, "Ler o quadro-negro", "Escrito com letra de criança, por cima da lição: 'TODO NOME MERECE SER DITO.' | Embaixo, apagado pela metade, uma lista de sobrenomes da vila. Os da Galeria Três estão sublinhados.", "papel", 0.05)
+	# mesa da professora (perto do quadro) com cadeira atrás, voltada para a turma
+	_mesa(7.6, 6.7, 1.6, 0.8, 0.8, "madeira_escura")
+	_cadeira_mesa(7.6, 6.7, 1.6, 0.8, "N")
+	_papelaria(7.35, 6.6, 0.84, 0.0)
+	_lamparina(8.1, 0.84, 6.85)
+	_nota(7.0, 0.9, 6.55, 13, "Ler o caderno de caligrafia")
+	_comida(8.1, 6.45, 0.84, "cafe", "Beber o café")
+	# carteiras: dois blocos (x 1,6/3,2 e 6,8/8,4) x três fileiras; cadeira do lado sul (o aluno olha para o quadro)
+	for xc: float in [1.6, 3.2, 6.8, 8.4]:
+		for zr: float in [2.9, 4.2, 5.5]:
+			if xc > 6.0 and zr > 5.0:
+				continue                                                  # perto da mesa da professora fica livre
+			_mesa(xc, zr, 1.0, 0.5, 0.7, "madeira_natural")
+			_cadeira_mesa(xc, zr, 1.0, 0.5, "S")
+	# estante (parede oeste, perto do quadro), armário (parede leste, na frente) e cabideiro com bolsas (parede oeste, na entrada)
+	_prop_c("wooden_bookshelf_worn", 0.31, 6.9, PI / 2.0, 1.0)
+	_prop_c("GothicCabinet_01", 9.5, 1.3, -PI / 2.0, 0.85)
+	_bb.box("madeira_escura", Vector3(0.04, 0.10, 2.2), Vector3(0.03, 1.55, 2.4))
+	for k in 5:
+		_bb.box("ferro", Vector3(0.10, 0.02, 0.02), Vector3(0.08, 1.52, 1.5 + k * 0.45))
+		if k % 2 == 0:
+			_bb.box("pano_cru" if k == 0 else "pano_azul", Vector3(0.10, 0.34, 0.26), Vector3(0.10, 1.3, 1.5 + k * 0.45))   # bolsa de pano pendurada
+	# duas lâmpadas apagadas penduradas pelo fio (a luz da sala vem das lamparinas)
+	for lx: float in [3.0, 7.0]:
+		_prop("lightbulb_01", lx, 4.2, 0.0, 1.0, 2.75)
+		_bb.cylinder("ferro", 0.008, 0.008, 0.55, Vector3(lx, 3.13, 4.2), Vector3.ZERO, 4)
+	_lamparina(3.2, 0.74, 4.3)
+	_janela("O", 4.2)
+	_janela("L", 4.2)
+	_oleo(9.5, 0.95, 4.2)
+	_examinar(3.2, 0.8, 2.9, "Examinar a carteira", "Alguém entalhou um nome no tampo, letra por letra, com a ponta de um compasso. O mesmo nome está riscado no livro de chamada.", "papel")
 	_fim()
 
 
