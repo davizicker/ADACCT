@@ -126,8 +126,9 @@ func _checar_mm(mmi: MultiMeshInstance3D, grupo: String) -> void:
 		var gap := 9.0 if h.is_empty() else p.y - (h.position as Vector3).y
 		if gap > 0.12 or gap < -0.30:
 			ruins += 1
-			if exemplo == "":
-				exemplo = "%s gap=%.2f" % [str(p.snapped(Vector3.ONE * 0.1)), gap]
+			if exemplo == "" or (absf(p.x - 40.0) < 50.0 and p.z > -175.0 and p.z < 20.0 and not exemplo.contains("perto")):
+				var cn := "nada" if h.is_empty() else "%s/%s" % [(h.collider as Node).get_parent().name, (h.collider as Node).name]
+				exemplo = "%s gap=%.2f sobre %s%s" % [str(p.snapped(Vector3.ONE * 0.1)), gap, cn, " perto" if (absf(p.x - 40.0) < 50.0 and p.z > -175.0 and p.z < 20.0) else ""]
 	if ruins > 0:
 		print("[flut] MM %s/%s: %d de %d amostras fora do chão (%.0f%%) ex: %s" % [grupo, mmi.name, ruins, vistos, 100.0 * ruins / vistos, exemplo])
 		_anota("mm_" + grupo)
