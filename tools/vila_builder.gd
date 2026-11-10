@@ -619,6 +619,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	_rng.state = rng_antes
 	_frontage(root)
 	_tira_plantas_dentro_das_casas(root)
+	_aterra_plantas(root)
 	root.add_child(Realismo.new().vidros_e_plantas(self, root))
 	root.add_child(_lamps())
 	root.add_child(_adornos())
@@ -3486,6 +3487,36 @@ func _tira_plantas_dentro_das_casas(root: Node3D) -> void:
 	print("[vila] plantas removidas por estarem dentro de casas: ", tirados)
 
 
+## Assenta no terreno as plantas dos quintais e taludes (antes ficavam numa altura fixa e, em ladeira, afundavam até 2 m ou pairavam).
+func _aterra_plantas(root: Node3D) -> void:
+	var grupo := root.get_node_or_null("MurosEQuintais")
+	if grupo == null:
+		return
+	var ajustadas := 0
+	var prefixos := ["arvore_", "palmeira", "bananeira", "arbusto", "samambaia", "capim", "rooibos", "periwinkle", "mato", "weed", "grass"]
+	for lot in grupo.get_children():
+		if not (lot is Node3D):
+			continue
+		for n in (lot as Node3D).get_children():
+			if not (n is Node3D):
+				continue
+			var nome := str(n.name)
+			var eh := false
+			for pf in prefixos:
+				if nome.begins_with(pf):
+					eh = true
+			if not eh:
+				continue
+			var local := (n as Node3D).position
+			var mundo: Vector3 = (lot as Node3D).transform * local
+			var chao := terrain_h(mundo.x, mundo.z)
+			var dy := (chao - 0.04) - mundo.y
+			if absf(dy) > 0.15:
+				(n as Node3D).position.y += dy / maxf((lot as Node3D).transform.basis.get_scale().y, 0.001)
+				ajustadas += 1
+	print("[vila] plantas de quintal assentadas no terreno: ", ajustadas)
+
+
 ## Remove caixote/barril/escada que ficou com o corpo dentro de uma casa (a casa pode avançar um pouco sobre a calçada).
 func _tira_props_dentro_das_casas(root: Node3D) -> void:
 	var tirados := 0
@@ -3893,7 +3924,7 @@ func _coletaveis() -> Node3D:
 	var ri := 0
 	for rs: float in [38.0, 96.0, 130.0, 178.0, 214.0, 252.0, 286.0, 316.0, 338.0, 362.0, 386.0, 404.0]:
 		var rsig := 1.0 if ri % 2 == 0 else -1.0
-		var rp := facade(rsig, rs) - Route.right(rs) * rsig * 0.55 + Vector3(0, SW_H, 0)
+		var rp := facade(rsig, rs) - Route.right(rs) * rsig * 0.55 + Vector3(0, SW_H - 0.4, 0)      # a medalha repousa no chão (antes pairava a 52 cm)
 		_coletavel(root, "Reliquia_%02d" % ri, rp, "reliquia", 0, "Pegar a medalha")
 		ri += 1
 	var notes := NOTE_PTS
