@@ -664,6 +664,10 @@ func _escape_test(delta: float) -> void:
 		var dist := Route.dist_to_center(player.global_position)
 		_esc_worst = maxf(_esc_worst, dist)
 		var queda := Route.height(Route.nearest_s(player.global_position)) - player.global_position.y
+		var pp := player.global_position
+		var chao := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(pp + Vector3(0, 0.5, 0), pp - Vector3(0, 2.0, 0), 0xFFFFFFFF, [player.get_rid()]))
+		if not chao.is_empty() and String((chao.collider as Node).name) == "Rampa":
+			queda = 0.0                   # está descendo um beco-escada (caminho de verdade), não caiu
 		if dist > 23.0 or queda > 2.5:    # saiu da vila ou caiu de um muro/barranco (vazio)
 			_esc_leaks.append("s=%.0f lado=%d dist=%.1f queda=%.1f pos=%s" % [s, int(sigma), dist, queda, str(player.global_position.snapped(Vector3.ONE * 0.1))])
 		Input.action_release("move_forward")
