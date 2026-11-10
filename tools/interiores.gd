@@ -472,7 +472,7 @@ func _auditar() -> void:
 		var c: Vector3 = e["c"]
 		var sz: Vector3 = e["sz"]
 		return Rect2(c.x - sz.x / 2.0, c.z - sz.z / 2.0, sz.x, sz.z)
-	var mesas: Array = itens.filter(func(e: Dictionary) -> bool: return String(e["nome"]).begins_with("ColMesa") or String(e["nome"]).to_lower().contains("table"))
+	var mesas: Array = itens.filter(func(e: Dictionary) -> bool: return String(e["nome"]).begins_with("ColMesa") or String(e["nome"]).begins_with("ColEscrivaninha") or String(e["nome"]).begins_with("ColBancada") or String(e["nome"]).to_lower().contains("table"))
 	for e in itens:
 		var r: Rect2 = rect.call(e)
 		var nome: String = e["nome"]
@@ -1410,7 +1410,7 @@ func _sala_venda(g: Node3D) -> void:
 	_prop("wine_barrel_01", _mx(0.7), _mz(2.5), 1.0)
 	for k in 3:
 		_prop("wooden_stool_01", _mx(2.7 + k * 1.2), _mz(3.55), k * 0.7)
-	_saco(_mx(7.2), _mz(4.9), 0.3)
+	_saco(_mx(7.38), _mz(4.75), 0.3)          # afastado das caixas (antes um atravessava o outro)
 	_saco(_mx(7.5), _mz(5.4))
 	_cont("Crate3", _mx(1.5), _mz(0.65), 0.2)
 	_cont("Basket1", _mx(2.6), _mz(0.6), 0.0)
@@ -1589,7 +1589,7 @@ func _sala_casarao(g: Node3D) -> void:
 	_prop("brass_diya_lantern", 8.3, 4.6, 0.0, 1.6, 2.15)
 	var lj := b._lamp_light(_g, Vector3(8.3, 2.0, 4.6), 0.9)
 	lj.omni_range = 6.5
-	_prop_c("GothicCabinet_01", 9.47, 1.25, -PI / 2.0, 0.85)
+	_prop_c("GothicCabinet_01", 9.52, 1.25, -PI / 2.0, 0.85)       # encostado de verdade na parede
 	_bx("madeira_natural", Vector3(9.3, 0, 7.3), 0.4, Vector3(0, 0.22, 0), Vector3(0.44, 0.44, 0.04))     # cadeira tombada
 	_examinar(9.3, 0.5, 7.3, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
 	_oleo(9.6, 0.0, 0.5)
@@ -1630,7 +1630,7 @@ func _sala_casarao(g: Node3D) -> void:
 	_prop("painted_wooden_nightstand", 9.55, 5.7, PI, 1.0, up)
 	_parte("vintage_suitcase", ["vintage_suitcase_01_"], 9.5, 2.2, 1.57, 0.75, up)
 	_parte("vintage_suitcase", ["vintage_suitcase_02_"], 9.5, 2.95, 1.57, 0.75, up)
-	_prop_c("WoodenChair_01", 7.2, 1.2, PI / 4.0, 0.5, up)
+	_prop_c("WoodenChair_01", 7.22, 1.0, PI / 2.0, 0.5, up)        # de frente para a mesinha, encaixada
 	_prop("WoodenTable_02", 7.75, 1.0, 0.0, 1.0, up)
 	_prop_c("wooden_bookshelf_worn", 6.9, 3.6, PI / 2.0, 1.0, up)
 	var le := b._lamp_light(_g, Vector3(8.3, up + 2.6, 3.0), 0.7)
@@ -1651,12 +1651,12 @@ func _sala_igreja(g: Node3D) -> void:
 	for k in 8:
 		var z := 4.0 + k * 1.5
 		for lado in [0, 1]:
-			var x0 := 1.2 if lado == 0 else 6.2
+			var x0 := 1.6 if lado == 0 else 6.2         # fileira oeste afastada da parede: púlpito e altares laterais não encostam nos bancos
 			_bb.box("madeira_natural", Vector3(2.6, 0.06, 0.45), Vector3(x0 + 1.3, 0.45, z))
 			_bb.box("madeira_escura", Vector3(2.6, 0.6, 0.06), Vector3(x0 + 1.3, 0.85, z - 0.24))
 			for lx in [0.1, 1.3, 2.5]:
 				_bb.box("madeira_escura", Vector3(0.06, 0.45, 0.4), Vector3(x0 + lx, 0.22, z))
-		b._blocker(g, "ColBanco_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(2.5, 0.45, z))
+		b._blocker(g, "ColBanco_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(2.9, 0.45, z))
 		b._blocker(g, "ColBancoD_%d" % k, Vector3(2.7, 0.9, 0.5), Vector3(7.5, 0.45, z))
 	_presbiterio(g)
 	_igreja_exuberante(g)
@@ -1710,6 +1710,7 @@ func _igreja_exuberante(g: Node3D) -> void:
 			_bb.box("madeira_escura", Vector3(0.10, 2.6, 1.3), Vector3(x0 + dir * 0.2, 2.9, zl))          # nicho
 			_bb.cylinder("ouro_velho", 0.65, 0.65, 0.2, Vector3(x0 + dir * 0.16, 4.3, zl), Vector3(0, 0, PI / 2.0), 18)   # arco do topo
 			_bb.box("ouro_velho", Vector3(0.3, 0.4, 2.3), Vector3(x0 + dir * 0.18, 5.65, zl))             # frontão
+			_bb.box("cantaria", Vector3(0.55, 0.53, 0.62), Vector3(x0 + dir * 0.38, 1.355, zl))           # peanha: o santo pousa nela (antes ficava 50 cm no ar)
 			_prop("gothic_statue", x0 + dir * 0.38, zl, PI / 2.0 * dir, 1.5, 1.62)                      # santo no nicho
 			for sz: float in [-1.0, 1.0]:
 				_vela(x0 + dir * 0.6, 1.1, zl + sz * 0.75, false)
@@ -1722,13 +1723,13 @@ func _igreja_exuberante(g: Node3D) -> void:
 	for k in 3:
 		for lado2: String in ["O", "L"]:
 			_vitral(lado2, 5.0 + k * 5.5, 5.0, 1.0, 2.4, k)
-	# púlpito dourado na parede oeste, com escada e dossel
-	_bb.cylinder("madeira_escura", 0.5, 0.45, 1.5, Vector3(0.9, 1.95, 12.0), Vector3.ZERO, 14)
-	_bb.cylinder("ouro_velho", 0.55, 0.55, 0.1, Vector3(0.9, 2.75, 12.0), Vector3.ZERO, 14)
-	_bb.box("madeira_escura", Vector3(0.1, 2.6, 1.0), Vector3(0.08, 3.3, 12.0))
-	_bb.cylinder("ouro_velho", 0.95, 0.2, 0.7, Vector3(0.7, 5.0, 12.0), Vector3.ZERO, 14)           # dossel (sino invertido)
-	_bb.sphere("ouro_velho", 0.14, Vector3(0.7, 5.45, 12.0), 10, 8)
-	b._blocker(g, "ColPulpito", Vector3(1.1, 2.9, 1.1), Vector3(0.9, 1.45, 12.0))
+	# púlpito dourado na parede oeste, entre o altar lateral e o arco (fora de bancos, altares e vitrais), com escada e dossel
+	_bb.cylinder("madeira_escura", 0.5, 0.45, 1.5, Vector3(0.9, 1.95, 15.0), Vector3.ZERO, 14)
+	_bb.cylinder("ouro_velho", 0.55, 0.55, 0.1, Vector3(0.9, 2.75, 15.0), Vector3.ZERO, 14)
+	_bb.box("madeira_escura", Vector3(0.1, 2.6, 1.0), Vector3(0.08, 3.3, 15.0))
+	_bb.cylinder("ouro_velho", 0.75, 0.2, 0.6, Vector3(0.7, 5.0, 15.0), Vector3.ZERO, 14)           # dossel (sino invertido)
+	_bb.sphere("ouro_velho", 0.14, Vector3(0.7, 5.45, 15.0), 10, 8)
+	b._blocker(g, "ColPulpito", Vector3(1.1, 2.9, 1.1), Vector3(0.9, 1.45, 15.0))
 	# estandartes vermelhos e dourados nas colunas do arco triunfal
 	for sx: float in [-1.0, 1.0]:
 		_bb.box("bandeira_a", Vector3(0.06, 2.4, 0.9), Vector3(5.0 + sx * 4.3, 4.6, 16.6))
@@ -1852,6 +1853,7 @@ func _presbiterio(g: Node3D) -> void:
 	_bb.box("madeira_escura", Vector3(2.4, 0.5, 0.12), Vector3(5.0, 5.35, 21.66))
 	_bb.sphere("ouro_velho", 0.16, Vector3(5.0, 6.55, 21.6), 6, 4)                           # fecho do arco
 	# santa no nicho: estátua de verdade (modelo gothic_statue) com auréola dourada
+	_bb.box("ouro_velho", Vector3(1.1, 0.56, 0.75), Vector3(5.0, 2.02, 21.4))                 # trono dourado sob a santa (antes ela ficava no ar à frente da base)
 	_prop("gothic_statue", 5.0, 21.4, PI, 2.2 / 1.0, 2.3)
 	_bb.cylinder("ouro_velho", 0.34, 0.34, 0.03, Vector3(5.0, 4.5, 21.55), Vector3(PI / 2.0, 0, 0), 20)
 	# colunas torças dos dois lados e entablamento

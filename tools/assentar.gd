@@ -66,6 +66,17 @@ func _e_chao(col: Object) -> bool:
 	return n.name == "ChaoTmp" or p.contains("/Rua/") or p.contains("/Terreno/") or p.contains("Rampa") or p.contains("/Ponte/") or p.contains("Degraus") or p.contains("Adro/")
 
 
+func _e_agua(col: Object) -> bool:
+	var n := col as Node
+	if n == null or n.get_parent() == null:
+		return false
+	var pn := String(n.get_parent().name) + "/" + String(n.name)
+	for w in ["Riacho", "Espuma", "Agua", "Cachoeira", "Queda", "Poco"]:
+		if pn.contains(w):
+			return true
+	return false
+
+
 ## Primeiro chão debaixo de `p` (procura de 0,8 m acima até 8 m abaixo). Retorna {} se não há nada (vazio).
 func _chao(p: Vector3, excluir: Array[RID] = []) -> Dictionary:
 	var q := PhysicsRayQueryParameters3D.create(p + Vector3(0, 0.8, 0), p - Vector3(0, 8.0, 0))
@@ -86,7 +97,7 @@ func _mm(mmi: MultiMeshInstance3D) -> void:
 		var xl := mm.get_instance_transform(i)
 		var xg := mmi.global_transform * xl
 		var h := _chao(xg.origin)
-		if h.is_empty() or not _e_chao(h.collider) or (h.normal as Vector3) == Vector3.ZERO:
+		if h.is_empty() or not _e_chao(h.collider) or _e_agua(h.collider) or (h.normal as Vector3) == Vector3.ZERO:
 			rel["mm_removidos"] += 1          # dentro de casa/muro, em cima de telhado ou boiando sobre o vazio
 			continue
 		var gy: float = (h.position as Vector3).y
@@ -152,7 +163,7 @@ func _no(n: Node3D, grupo: String) -> void:
 			rel["nos_removidos"] += 1
 		return
 	var gy: float = (h.position as Vector3).y
-	var chao_ok := _e_chao(h.collider) and (h.normal as Vector3) != Vector3.ZERO
+	var chao_ok := _e_chao(h.collider) and not _e_agua(h.collider) and (h.normal as Vector3) != Vector3.ZERO
 	if planta and not chao_ok:
 		n.get_parent().remove_child(n)
 		n.free()
