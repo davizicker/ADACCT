@@ -22,16 +22,18 @@ const WALL_WEIGHT: Array[int] = [30, 14, 18, 8, 8, 4, 6, 12]
 const WOODS: Array[String] = ["madeira_azul", "madeira_vermelha", "madeira_verde", "madeira_ocre", "madeira_natural", "madeira_branca"]
 ## becos em escada: [s, lado]
 ## Becos em escada: [s, lado, tipo]. tipo "cego" = beco SEM SAÍDA (pátio com portão de ferro, itens e uma casa com porta); sem tipo = escada que sobe até a porta do alto.
+## (A rota ganhou um começo novo e o resto dela deslocou Route.SHIFT m: tudo que depende da forma da rua a partir de ~65 m soma SHIFT.
+## Os becos de atalho e a ladeira em zigue-zague não tinham sido deslocados e a parede de 54 m do atalho cortava a rua.)
 const ALLEYS: Array = [
-	[18.0, -1.0], [28.0, 1.0, "cego"], [44.0, 1.0], [60.0, -1.0, "cego"], [74.0, 1.0], [88.0, -1.0], [104.0, 1.0],
-	[134.0, -1.0], [172.0, -1.0], [196.0, 1.0], [214.0, -1.0, "cego"], [250.0, 1.0], [268.0, 1.0, "cego"],
-	[348.0, -1.0, "cego"], [372.0, -1.0],
+	[18.0, -1.0], [28.0, 1.0, "cego"], [44.0, 1.0], [60.0, -1.0, "cego"], [74.0 + Route.SHIFT, 1.0], [88.0 + Route.SHIFT, -1.0], [104.0 + Route.SHIFT, 1.0],
+	[134.0 + Route.SHIFT, -1.0], [172.0 + Route.SHIFT, -1.0], [196.0 + Route.SHIFT, 1.0], [214.0 + Route.SHIFT, -1.0, "cego"], [250.0 + Route.SHIFT, 1.0], [268.0 + Route.SHIFT, 1.0, "cego"],
+	[348.0 + Route.SHIFT, -1.0, "cego"], [372.0 + Route.SHIFT, -1.0],
 ]
 ## PASSAGENS = becos de atalho: escadas/rampas que atravessam de uma perna do zigue-zague da ladeira da igreja à outra.
 ## "a" é a boca de baixo e "b" a de cima: [s da rua, lado]. Dá para subir 60-80 m de rua em ~20 m de escada.
 const PASSAGENS: Array = [
-	{"id": "AtalhoDoSino", "a": [240.0, -1.0], "b": [318.0, -1.0]},
-	{"id": "AtalhoDaFonte", "a": [310.0, 1.0], "b": [376.0, 1.0]},
+	{"id": "AtalhoDoSino", "a": [240.0 + Route.SHIFT, -1.0], "b": [318.0 + Route.SHIFT, -1.0]},
+	{"id": "AtalhoDaFonte", "a": [310.0 + Route.SHIFT, 1.0], "b": [376.0 + Route.SHIFT, 1.0]},
 ]
 const PASS_W := 3.2          # largura útil do corredor
 const PASS_BOCA := 4.6       # largura da boca na fachada
@@ -704,7 +706,7 @@ func _frontage(root: Node3D) -> void:
 	# os corredores dos becos de atalho entram como "casas já postas": nenhuma casa nem quintal invade o vão
 	for G in _pass_geo:
 		var dv: Vector3 = G["dir"]
-		_casas_postas.append({"xf": Transform3D(Basis(dv, Vector3.UP, dv.cross(Vector3.UP)), G["A"]), "depth": float(G["D"]) + 0.4, "w": PASS_W + 2.4})
+		_casas_postas.append({"xf": Transform3D(Basis(dv, Vector3.UP, dv.cross(Vector3.UP)), G["A"]), "depth": float(G["D"]) + 0.4, "w": PASS_W + 2.4, "corr": true})
 		var k := 0.0
 		while k <= float(G["D"]):
 			var q: Vector3 = (G["A"] as Vector3) + dv * k
@@ -792,7 +794,7 @@ func _frontage(root: Node3D) -> void:
 						var a2: Array = ALLEYS[ai2]
 						if a2[1] == sigma and not done_alley.has(ai2) and s2 >= a2[0] - 4.0:
 							var fb2 := lot_frame(sigma, s2, _advance(sigma, s2, 3.6))
-							_beco_vizinho = {"xf": fb2["xf"], "depth": (36 if a2.size() <= 2 else 14) * 0.45 + 0.8, "w": 3.6 + 0.4}
+							_beco_vizinho = {"xf": fb2["xf"], "depth": (36 if a2.size() <= 2 else 14) * 0.45 + 0.8, "w": 3.6 + 0.4, "corr": true}
 							break
 					_lot_casa(casas, f, sigma, w_street)
 					_beco_vizinho = {}
@@ -857,10 +859,20 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	var depth := _rng.randf_range(5.6, 6.8) if near_alley else _rng.randf_range(10.0, 13.0)
 	var sala: Node3D = null
 	if not _entrada_atual.is_empty() and _salas_rua.has(_entrada_atual["id"]):
-		sala = _salas_rua[_entrada_atual["id"]]
-		floors = 1
-		haunted = false
-		depth = float(sala.get_meta("dim").z) + SHELL * 2.0 + 0.75      # a casa tem exatamente o tamanho da sala
+		var d_sala := float(_salas_rua[_entrada_atual["id"]].get_meta("dim").z) + SHELL * 2.0 + 0.75      # a casa tem exatamente o tamanho da sala
+		var w_sala := float(_salas_rua[_entrada_atual["id"]].get_meta("dim").x) + SHELL * 2.0 + 0.75
+		var xt := (f["xf"] as Transform3D)
+		xt.origin += xt.basis.x * 0.05
+		if _casa_atravessa(xt, d_sala, w_sala, true):
+			# a casa sob medida invadiria um beco/passagem: nesta vaga vira casa comum e a entrada fica para o próximo lote
+			push_warning("[vila] entrada %s adiada: invadiria um beco" % _entrada_atual["id"])
+			_entradas_feitas.erase(_entrada_atual["id"])
+			_entrada_atual = {}
+		else:
+			sala = _salas_rua[_entrada_atual["id"]]
+			floors = 1
+			haunted = false
+			depth = d_sala
 	_porta_central = near_alley
 	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
 	var xf0: Transform3D = f["xf"]
@@ -935,10 +947,12 @@ func _casa_penetra(xf: Transform3D, depth: float, w: float) -> bool:
 	return false
 
 
-func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
+func _casa_atravessa(xf: Transform3D, depth: float, w: float, so_corredores := false) -> bool:
 	# só conta SOBREPOSIÇÃO de verdade (pontos bem dentro da outra caixa): as casas vizinhas se encostam de lado de propósito
 	# (+0,24 m de largura) e antes isso encurtava quase todas as casas para 2,4 m de fundo (finas como papelão vistas dos becos)
 	for o in _casas_postas:
+		if so_corredores and not o.has("corr"):
+			continue                                      # só becos e passagens contam (casas vizinhas podem se sobrepor por trás sem ninguém ver)
 		var oxf: Transform3D = o["xf"]
 		if oxf.origin.distance_to(xf.origin) > depth + float(o["depth"]) + w + float(o["w"]):
 			continue
@@ -1633,7 +1647,7 @@ func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 		_reservar((f["xf"] as Transform3D) * Vector3(-1.0 - off * 0.0, 0.0, 0.0) + (f["xf"] as Transform3D).basis.x * (-1.4 + off), wb * 0.5 + 0.9)
 	var steps := 36 if cego_id == "" else 14
 	var run := 0.45
-	_casas_postas.append({"xf": f["xf"], "depth": steps * run + 0.8, "w": wb + 0.4})      # casas seguintes não invadem o beco
+	_casas_postas.append({"xf": f["xf"], "depth": steps * run + 0.8, "w": wb + 0.4, "corr": true})      # casas seguintes não invadem o beco
 	var rise := 0.19
 	var b := _batch()
 	for i in steps:

@@ -42,6 +42,7 @@ var _shake_amp := 0.0
 var _base_energy := 1.7
 var _lantern_home := Vector3.ZERO
 var _bracos: Node3D = null
+var _corpo_sombra: MeshInstance3D = null
 var _lantern_glass: StandardMaterial3D = null
 var _lantern_rot := Vector3.ZERO
 var _bob_phase := 0.0
@@ -72,6 +73,23 @@ func _ready() -> void:
 			_bracos.name = "Bracos"
 			_bracos.set("lanterna", lantern_model)
 			cam.add_child(_bracos)
+	# sombras: a lanterna projeta sombra dos objetos (inclusive do corpo do jogador, que aparece nas paredes atrás dele) e a Lua também.
+	# Os modelos presos à câmera (braços, lanterna) NÃO projetam sombra: a lanterna fica dentro da própria malha e se apagaria.
+	for n in cam.find_children("*", "GeometryInstance3D", true, false):
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	lantern.shadow_enabled = true
+	lantern.shadow_bias = 0.06
+	lantern.shadow_blur = 1.6
+	_corpo_sombra = MeshInstance3D.new()
+	_corpo_sombra.name = "CorpoSombra"
+	var cm := CapsuleMesh.new()
+	cm.radius = 0.26
+	cm.height = 1.62
+	_corpo_sombra.mesh = cm
+	_corpo_sombra.position = Vector3(0.0, 0.81, 0.0)
+	_corpo_sombra.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY      # só a sombra existe (o corpo é invisível em 1ª pessoa)
+	_corpo_sombra.layers = 3                                                                 # camadas 1 e 2: a Lua (rua) e as luzes das salas enxergam
+	add_child(_corpo_sombra)
 	floor_snap_length = 0.6
 	floor_max_angle = deg_to_rad(50.0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -183,6 +201,11 @@ func _update_camera(delta: float) -> void:
 		# respiração em repouso (mais forte quando cansado ou com medo)
 		bob_y += sin(_t * (1.4 + fear * 1.2 + (1.0 if exhausted else 0.0))) * (0.004 + 0.006 * fear + (0.006 if exhausted else 0.0))
 	cam.position.y = lerpf(cam.position.y, target_h + bob_y, clampf(delta * 10.0, 0.0, 1.0))
+	if _corpo_sombra != null:                                   # a sombra acompanha o agachar
+		var k := clampf(cam.position.y / STAND_H, 0.55, 1.0)
+		_corpo_sombra.scale = Vector3(1.0, k, 1.0)
+		_corpo_sombra.position.y = 0.81 * k
+		_corpo_sombra.visible = not hidden
 	cam.position.x = lerpf(cam.position.x, bob_x, clampf(delta * 8.0, 0.0, 1.0))
 	cam.fov = lerpf(cam.fov, BASE_FOV + (7.0 if sprinting else 0.0) + fear * 3.0, clampf(delta * 6.0, 0.0, 1.0))
 	if body_shape.shape is CapsuleShape3D:

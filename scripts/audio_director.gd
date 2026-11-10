@@ -44,6 +44,10 @@ var _t_arranha := 15.0
 var _t_rosna := 25.0
 var _dog_t := 18.0
 var _bell_t := 35.0
+var interior := false                      # o jogador está dentro de uma casa (passos de madeira, mundo abafado)
+var _sinos_restantes := 6                  # as seis badaladas das 18h, logo no começo da noite
+var _sino_prox := 4.0
+var _cutoff := 20000.0
 
 
 static func ensure_buses() -> void:
@@ -63,6 +67,10 @@ static func ensure_buses() -> void:
 			rev.wet = wet
 			rev.dry = 1.0
 			AudioServer.add_bus_effect(idx, rev)
+		if bus_name == "Ambiente":
+			var lp := AudioEffectLowPassFilter.new()          # dentro de casa o mundo lá fora fica abafado (filtro fecha suavemente)
+			lp.cutoff_hz = 20000.0
+			AudioServer.add_bus_effect(idx, lp)
 
 
 func _loop_player(stream: AudioStream, bus: String, volume_db: float) -> AudioStreamPlayer:
@@ -120,6 +128,7 @@ func setup(p_player: Player, p_screams: ScreamSystem) -> void:
 	_owl = _player3d(Synth.owl(), "Ambiente", -9.0, 40.0)
 	_dog = _player3d(Synth.dog(), "Ambiente", -8.0, 30.0)
 	_bell = _player3d(Synth.bell(), "Ambiente", -2.0, 60.0)
+	_bell.max_polyphony = 4                    # as badaladas se sobrepõem, como um sino de verdade
 	_creak = _player3d(Synth.creak(), "Efeitos", -4.0, 12.0)
 	_whisper = _player3d(Synth.whisper(), "Efeitos", -6.0, 8.0)
 	_clink = AudioStreamPlayer.new()
@@ -164,7 +173,7 @@ func _on_step(loudness: float) -> void:
 	var p := _step_players[_step_i]
 	_step_i = (_step_i + 1) % _step_players.size()
 	var lista: Array[AudioStreamWAV] = _steps
-	var dentro := player.global_position.x > 1500.0          # interiores ficam longe da rua: madeira em vez de pedra
+	var dentro := interior or player.global_position.x > 1500.0          # dentro de casa: madeira em vez de pedra
 	if dentro:
 		lista = _steps_wood
 	elif loudness < 0.3:
@@ -191,6 +200,11 @@ func play_creak(pos: Vector3) -> void:
 ## Sussurro bem perto do jogador (o Bradador está por perto).
 func play_creak_at(pos: Vector3) -> void:
 	play_creak(pos)
+
+
+## Missao avisa quando o jogador entra/sai de uma casa.
+func set_interior(v: bool) -> void:
+	interior = v
 
 
 func play_clink() -> void:
@@ -269,6 +283,25 @@ func _process(delta: float) -> void:
 		_breath.pitch_scale = _rng.randf_range(0.95, 1.1)
 		_breath.play()
 
+	# mundo abafado dentro de casa (filtro passa-baixa no barramento "Ambiente")
+	var alvo_cut := 1400.0 if interior else 20000.0
+	_cutoff = lerpf(_cutoff, alvo_cut, clampf(delta * 3.0, 0.0, 1.0))
+	var ib := AudioServer.get_bus_index("Ambiente")
+	if ib != -1:
+		for ei in AudioServer.get_bus_effect_count(ib):
+			var ef := AudioServer.get_bus_effect(ib, ei)
+			if ef is AudioEffectLowPassFilter:
+				(ef as AudioEffectLowPassFilter).cutoff_hz = _cutoff
+	# as seis badaladas das 18h (o sino que a vila inteira conhece)
+	if _sinos_restantes > 0:
+		_sino_prox -= delta
+		if _sino_prox <= 0.0:
+			_sinos_restantes -= 1
+			_sino_prox = 4.6
+			_bell.global_position = Route.pos(Route.CHURCH_S) + Vector3(0, 26, 0)
+			_bell.pitch_scale = 1.0
+			_bell.volume_db = 3.0 if _sinos_restantes > 0 else 0.0
+			_bell.play()
 	_presenca_bradador(delta)
 	_dog_t -= delta
 	if _dog_t <= 0.0:
@@ -287,5 +320,6 @@ func _process(delta: float) -> void:
 	_bell_t -= delta
 	if _bell_t <= 0.0:
 		_bell_t = _rng.randf_range(50.0, 90.0)
+		_bell.volume_db = -2.0
 		_bell.global_position = Route.pos(Route.CHURCH_S) + Vector3(0, 26, 0)
 		_bell.play()

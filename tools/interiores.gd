@@ -639,6 +639,8 @@ func _fim() -> void:
 		_parede_frente()
 	_decorar()
 	_auditar()
+	for pc in _bb.coplanares(8, AABB(Vector3.ZERO, Vector3(_w, _h, _d))):
+		_auditoria_linhas.append("| %s | PISCA (faces coplanares) | %s |" % [String(_g.name), pc])
 	b._mesh_node(_g, "Mobilia", _bb.commit())
 
 
@@ -768,8 +770,8 @@ func _parede_frente() -> void:
 	b._blocker(_g, "BloqueioPorta", Vector3(PORTA_MEIA * 2.0, PORTA_ALTA, 0.4), Vector3(w / 2.0, PORTA_ALTA / 2.0, -0.2))
 	# batente da porta, por dentro
 	for sg: float in [-1.0, 1.0]:
-		_bb.box("cantaria", Vector3(0.12, PORTA_ALTA + 0.1, 0.34), Vector3(w / 2.0 + sg * (PORTA_MEIA + 0.06), (PORTA_ALTA + 0.1) / 2.0 - 0.05, -0.15))
-	_bb.box("cantaria", Vector3(PORTA_MEIA * 2.0 + 0.24, 0.12, 0.34), Vector3(w / 2.0, PORTA_ALTA + 0.06, -0.15))
+		_bb.box("cantaria", Vector3(0.12, PORTA_ALTA + 0.1, 0.34), Vector3(w / 2.0 + sg * (PORTA_MEIA + 0.05), (PORTA_ALTA + 0.1) / 2.0 - 0.05, -0.15))      # entra 1 cm no vão: sem faces coplanares (piscavam)
+	_bb.box("cantaria", Vector3(PORTA_MEIA * 2.0 + 0.24, 0.12, 0.34), Vector3(w / 2.0, PORTA_ALTA + 0.05, -0.15))
 	# guarnições das janelas, por dentro
 	for j in jans:
 		var xc: float = j["x"]
@@ -777,9 +779,9 @@ func _parede_frente() -> void:
 		var hw := JAN_W * 0.43
 		var hh := JAN_H * 0.44
 		for sg: float in [-1.0, 1.0]:
-			_bb.box("madeira_verde", Vector3(0.06, hh * 2.0 + 0.12, 0.34), Vector3(xc + sg * (hw + 0.03), yj, -0.15))
-		_bb.box("madeira_verde", Vector3(hw * 2.0 + 0.12, 0.06, 0.34), Vector3(xc, yj + hh + 0.03, -0.15))
-		_bb.box("madeira_verde", Vector3(hw * 2.0 + 0.12, 0.06, 0.34), Vector3(xc, yj - hh - 0.03, -0.15))
+			_bb.box("madeira_verde", Vector3(0.06, hh * 2.0 + 0.12, 0.34), Vector3(xc + sg * (hw + 0.02), yj, -0.15))      # 1 cm para dentro do vão: sem faces coplanares com a parede
+		_bb.box("madeira_verde", Vector3(hw * 2.0 + 0.12, 0.06, 0.34), Vector3(xc, yj + hh + 0.02, -0.15))
+		_bb.box("madeira_verde", Vector3(hw * 2.0 + 0.12, 0.06, 0.34), Vector3(xc, yj - hh - 0.02, -0.15))
 		_bb.box("cantaria", Vector3(hw * 2.0 + 0.3, 0.05, 0.2), Vector3(xc, yj - hh - 0.08, 0.06))               # peitoril por dentro
 	_g.set_meta("aberturas", jans)
 	_g.set_meta("porta_x", w / 2.0)

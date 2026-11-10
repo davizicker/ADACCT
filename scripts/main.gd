@@ -283,14 +283,14 @@ func _texto_final() -> String:
 	if l.has(21) or l.has(27) or l.has(23):
 		t += "\n\nDepois, os trinta e um da Galeria Três. Pela primeira vez, nenhum ficou sem nome."
 	if l.has(25) or l.has(27):
-		t += " O último foi o de Joaquim Aragão. A voz de Tomé não falhou, e a de Dona Benedita, ao lado dele, finalmente chorou alto."
+		t += " O último foi o de Joaquim Aragão. A sua voz não falhou, e a de Dona Benedita, ao seu lado, finalmente chorou alto."
 	if l.has(22):
 		t += "\n\nO Livro provou a fraude da Lavra. A concessão da Companhia caiu. O doutor Anselmo Vaz nunca mais foi visto na vila."
 	if l.has(26):
 		t += "\n\nNa torre, o sino parou. Dizem que alguém ouviu, no vale, um homem chorando baixinho, e depois mais nada."
 	if l.size() >= 16:
 		t += "\n\nVocê leu tudo o que a vila escondia. Hoje, a vila fala."
-	return t + "\n\n(fim da primeira noite)"
+	return t + "\n\nO sino das seis ainda vai tocar amanhã. Mas, agora, quem o ouvir saberá o que ele guarda.\n\n(fim da primeira noite)"
 
 
 ## Teste da Mula: "rua" (deve morrer), "refugio" (lampião apagado: salvo), "refugio_aceso" (penalidade).
@@ -531,6 +531,11 @@ func _test_casas() -> void:
 			await _aguarda_quadros(13)
 		await _esperar_missao()
 		_press_interact()
+		await _aguarda_quadros(3)
+		await _esperar_missao()                       # a porta leva ~0,6 s para abrir
+		if missao._sala_por_id(pid) != null:
+			player.global_position = missao._spawn_sala(missao._sala_por_id(pid))      # casa da rua: entra andando pela porta aberta
+			player.velocity = Vector3.ZERO
 		await _aguarda_quadros(8)
 		if missao.dentro != pid:
 			print("[casas]   DEBUG %s: alvo=%s dentro=%s frozen=%s pos=%s cd=%.2f hidden=%s" % [pid, str(player._target), missao.dentro, str(player.frozen), str(player.global_position), missao._cooldown, str(player.hidden)])
@@ -551,7 +556,7 @@ func _test_casas() -> void:
 				var pq := PhysicsPointQueryParameters3D.new()
 				pq.position = (it as Node3D).global_position + Vector3(0, 0.1, 0)
 				pq.collide_with_areas = false
-				if space.intersect_point(pq, 1).size() > 0:
+				if space.intersect_point(pq, 1).size() > 0 and not str(it.name).begins_with("Examinar"):      # os pontos de "examinar" ficam sobre o móvel de propósito
 					embutidos += 1
 					print("[casas]   item dentro de móvel: %s em %s" % [it.name, pid])
 				it.call("interagir", player)
@@ -707,6 +712,7 @@ func _test_becos(delta: float) -> void:
 
 ## Pega todos os frascos e lê todos os bilhetes pelo caminho real (raycast + tecla E).
 var _test_items: Array = []
+var _test_rel0 := 0
 
 
 func _press_interact() -> void:
@@ -759,9 +765,10 @@ func _test_itens(delta: float) -> void:
 			_test_state = 2
 		2:  # espera a física, confere o aviso [E] e aperta E
 			if _test_t > 0.5:
-				var expected := "Pegar" if it.get("tipo") == "oleo" else "Ler"
+				var expected := "Pegar" if (it.get("tipo") == "oleo" or it.get("tipo") == "reliquia") else "Ler"
 				_test_seen = _hint.contains(expected)
 				_test_oil0 = player.oil
+				_test_rel0 = missao.reliquias
 				_press_interact()
 				_test_t = 0.0
 				_test_state = 3
@@ -772,6 +779,13 @@ func _test_itens(delta: float) -> void:
 					ok = _test_seen and (not it.visible) and player.oil > _test_oil0 + 20.0
 					print("[itens] %s: aviso=%s oleo %.0f -> %.0f visivel=%s -> %s" % [it.name, str(_test_seen), _test_oil0, player.oil, str(it.visible), "OK" if ok else "FALHOU"])
 					player.oil = 40.0
+					if not ok:
+						_test_fail += 1
+					_test_i += 1
+					_test_state = 1
+				elif it.get("tipo") == "reliquia":
+					ok = _test_seen and (not it.visible) and missao.reliquias == _test_rel0 + 1
+					print("[itens] %s: aviso=%s medalhas %d -> %d visivel=%s -> %s" % [it.name, str(_test_seen), _test_rel0, missao.reliquias, str(it.visible), "OK" if ok else "FALHOU"])
 					if not ok:
 						_test_fail += 1
 					_test_i += 1

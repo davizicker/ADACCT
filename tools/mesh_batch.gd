@@ -62,11 +62,47 @@ static func tri_uv(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, ua: Vect
 		st.add_vertex(pts[i])
 
 
+## Faces de caixas que ficam NO MESMO PLANO, viradas para o mesmo lado e se sobrepondo: o motor não sabe qual desenhar e a superfície PISCA (z-fighting).
+## Só confere caixas sem rotação. Retorna descrições curtas.
+func coplanares(limite := 20, dentro := AABB(Vector3(-1e6, -1e6, -1e6), Vector3(2e6, 2e6, 2e6))) -> Array[String]:
+	var out: Array[String] = []
+	var n := _boxes.size()
+	for i in n:
+		if bool(_boxes[i][2]) if _boxes[i].size() > 2 else false:
+			continue
+		var a: AABB = _boxes[i][1]
+		for j in range(i + 1, n):
+			if bool(_boxes[j][2]) if _boxes[j].size() > 2 else false:
+				continue
+			var b: AABB = _boxes[j][1]
+			if not a.grow(0.004).intersects(b.grow(0.004)):
+				continue
+			for ax in 3:
+				var o1 := (ax + 1) % 3
+				var o2 := (ax + 2) % 3
+				var ov1 := minf(a.end[o1], b.end[o1]) - maxf(a.position[o1], b.position[o1])
+				var ov2 := minf(a.end[o2], b.end[o2]) - maxf(a.position[o2], b.position[o2])
+				if ov1 < 0.02 or ov2 < 0.02:
+					continue
+				var mesmo_fim := absf(a.end[ax] - b.end[ax]) < 0.0015
+				if mesmo_fim or absf(a.position[ax] - b.position[ax]) < 0.0015:
+					var plano: float = a.end[ax] if mesmo_fim else a.position[ax]
+					if plano < dentro.position[ax] - 0.01 or plano > dentro.end[ax] + 0.01:
+						continue                                       # face por fora da sala: ninguém vê
+					if (mesmo_fim and plano >= dentro.end[ax] - 0.01) or ((not mesmo_fim) and plano <= dentro.position[ax] + 0.01):
+						continue                                       # face virada para a parede/forro/piso: fica escondida atrás dele
+					out.append("%s x %s eixo %s (%.2f x %.2f m) perto de (%.2f, %.2f, %.2f)" % [_boxes[i][0], _boxes[j][0], "xyz"[ax], ov1, ov2, a.get_center().x, a.get_center().y, a.get_center().z])
+					if out.size() >= limite:
+						return out
+					break
+	return out
+
+
 func box(mat: String, size: Vector3, pos: Vector3, rot := Vector3.ZERO) -> void:
 	var xf := Transform3D(Basis.from_euler(rot), pos)
 	var st := _tool(mat)
 	var h := size * 0.5
-	_boxes.append([mat, xf * AABB(-h, size)])
+	_boxes.append([mat, xf * AABB(-h, size), rot != Vector3.ZERO])
 	for axis in 3:
 		for sign in [-1.0, 1.0]:
 			var n := Vector3.ZERO

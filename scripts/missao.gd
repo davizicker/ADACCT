@@ -168,7 +168,7 @@ func objetivo() -> String:
 	if not tem("chave_casarao") and not tem("livro"):
 		if tem("chave_igreja"):
 			return "Ache a chave do Casarão na Venda do Seu Zé."
-		return "Procure as casas com luz na porta. Comece pela Venda e pela casa do sineiro."
+		return "Descubra o que acontece à noite: procure as casas com luz na porta e leia os recados. Comece pela Venda e pela casa do sineiro."
 	return "Ache a chave da igreja na casa do sineiro."
 
 
@@ -278,6 +278,7 @@ func _detecta_sala() -> void:
 	if achada != "":
 		dentro = achada
 		_em_sala_rua = true
+		get_tree().call_group("audio", "set_interior", true)
 		if screams != null:
 			screams.hold = true
 		if eventos != null:
@@ -289,6 +290,7 @@ func _detecta_sala() -> void:
 	else:
 		dentro = ""
 		_em_sala_rua = false
+		get_tree().call_group("audio", "set_interior", false)
 		salvar()
 		if screams != null:
 			screams.hold = false
@@ -308,6 +310,7 @@ func entrar(id: String) -> void:
 	_ret_pos = player.global_position
 	_ret_rot = player.rotation.y
 	dentro = id
+	get_tree().call_group("audio", "set_interior", true)
 	player.global_position = sala.global_position + (sala.get_meta("spawn") as Vector3)
 	player.velocity = Vector3.ZERO
 	player.rotation.y = PI
@@ -332,6 +335,7 @@ func sair() -> void:
 	player.rotation.y = _ret_rot + PI
 	player.cam.rotation.x = 0.0
 	dentro = ""
+	get_tree().call_group("audio", "set_interior", false)
 	salvar()
 	hud.flash(Color(0, 0, 0, 1), 0.7)
 	get_tree().call_group("audio", "play_creak", player.global_position)
