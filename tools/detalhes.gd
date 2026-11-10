@@ -369,11 +369,11 @@ func _espalha(nome: String, key: String, n_base: int, modo: String, esc: Vector2
 func _plantas_reais() -> Node3D:
 	var g := Node3D.new()
 	g.name = "PlantasReais"
-	g.add_child(_espalha("Tufo_a", "grass_tuft_a", 700, "calcada", Vector2(1.8, 3.2), 60.0))
-	g.add_child(_espalha("Tufo_b", "grass_tuft_b", 700, "calcada", Vector2(1.6, 2.8), 60.0))
+	g.add_child(_espalha("Tufo_a", "grass_tuft_a", 220, "calcada", Vector2(1.8, 3.2), 60.0))
+	g.add_child(_espalha("Tufo_b", "grass_tuft_b", 220, "calcada", Vector2(1.6, 2.8), 60.0))
 	g.add_child(_espalha("Tufo_c", "grass_tuft_a", 900, "encosta", Vector2(2.5, 4.5), 90.0))
 	g.add_child(_espalha("Tufo_d", "grass_tuft_b", 900, "encosta", Vector2(2.2, 4.0), 90.0))
-	g.add_child(_espalha("Erva_a", "weed_a", 260, "rua", Vector2(1.3, 2.4), 45.0))
+	g.add_child(_espalha("Erva_a", "weed_a", 110, "rua", Vector2(1.3, 2.4), 45.0))
 	g.add_child(_espalha("Erva_b", "weed_b", 260, "calcada", Vector2(1.3, 2.4), 45.0))
 	g.add_child(_espalha("Vinca_a", "periwinkle_a", 150, "calcada", Vector2(1.5, 2.6), 40.0))
 	g.add_child(_espalha("Vinca_b", "periwinkle_b", 150, "calcada", Vector2(1.5, 2.6), 40.0))
@@ -382,10 +382,10 @@ func _plantas_reais() -> Node3D:
 	g.add_child(_espalha("Mato_a", "mato_a", 1100, "encosta", Vector2(0.4, 0.9), 110.0))
 	g.add_child(_espalha("Mato_c", "mato_c", 1100, "encosta", Vector2(0.4, 0.8), 110.0))
 	g.add_child(_espalha("Mato_b", "mato_b", 1000, "encosta", Vector2(0.9, 1.8), 110.0))
-	g.add_child(_espalha("Mato_b_calcada", "mato_b", 1300, "calcada", Vector2(0.6, 1.1), 70.0))
+	g.add_child(_espalha("Mato_b_calcada", "mato_b", 320, "calcada", Vector2(0.6, 1.1), 70.0))
 	g.add_child(_espalha("Mato_c_calcada", "mato_c", 800, "calcada", Vector2(0.35, 0.6), 70.0))
-	g.add_child(_espalha("Mato_a_calcada", "mato_a", 600, "calcada", Vector2(0.3, 0.5), 70.0))
-	g.add_child(_espalha("Mato_b_rua", "mato_b", 500, "rua", Vector2(0.4, 0.75), 55.0))
+	g.add_child(_espalha("Mato_a_calcada", "mato_a", 180, "calcada", Vector2(0.3, 0.5), 70.0))
+	g.add_child(_espalha("Mato_b_rua", "mato_b", 140, "rua", Vector2(0.4, 0.75), 55.0))
 	# musgo (moss_01, Poly Haven, CC0): tufos de 28 fios no pé das paredes, nas frestas da rua e nas encostas
 	for v in ["musgo_a", "musgo_b", "musgo_c"]:
 		g.add_child(_espalha(v + "_calcada", v, 380, "calcada", Vector2(0.9, 1.7), 45.0, "musgo"))

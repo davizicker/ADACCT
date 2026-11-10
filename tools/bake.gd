@@ -196,7 +196,7 @@ func _materials() -> void:
 	pc.roughness_texture = _tex("pedra_rough.png")   # pedra polida brilha, junta de terra é fosca
 	pc.roughness = 1.0
 	ResourceSaver.save(pc, MATS + "pedra_chao.tres")
-	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.34, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
+	_poly("muro", "stone_wall_04", Color(0.95, 0.93, 0.90), 0.6, 1.2)    # muros e arrimos: pedra rústica real (Poly Haven)
 	_surf("cantaria", "cantaria", Color(1.0, 1.0, 0.97), 0.5, 0.8, 1.0)
 	_surf("cantaria_ocre", "cantaria", Color(0.94, 0.77, 0.50), 0.5, 0.8, 1.0)
 	_surf("pedra_sabao", "cantaria", Color(0.56, 0.60, 0.58), 0.5, 0.62, 1.1)      # pedra-sabão cinza-azulada (portal da igreja)      # cantaria ocre da igreja principal
