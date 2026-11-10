@@ -21,6 +21,16 @@ func _init() -> void:
 	(main.get_node("Eventos") as Node).set("enabled", false)
 	main.get_node("Interface").call("hide_note")
 	root.get_viewport().scaling_3d_scale = float(a[4]) if a.size() > 4 else 0.5
+	if a.size() > 5 and a[5] == "dia":        # luz forte só para conferir onde cada objeto está (a noite de verdade é escura demais para auditar)
+		var amb := main.get_node("Vila").get_node_or_null("Ambiente") as WorldEnvironment
+		if amb:
+			amb.environment.ambient_light_energy = 1.8
+			amb.environment.fog_density = 0.004
+		var lua := main.get_node("Vila").get_node_or_null("Lua") as DirectionalLight3D
+		if lua:
+			lua.light_energy = 1.8
+		if p.cam.get_node_or_null("Lampiao") != null:
+			p.cam.get_node("Lampiao").queue_free()
 	var s := s0
 	while s <= s1:
 		var c := Route.pos(s)
