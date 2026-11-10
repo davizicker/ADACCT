@@ -144,9 +144,23 @@ static func _apply_high_end(main: Node) -> void:
 		e.adjustment_enabled = true
 		e.adjustment_contrast = 1.14
 		e.adjustment_saturation = 0.86
-		RenderingServer.directional_shadow_atlas_set_size(4096, true)
-		RenderingServer.directional_soft_shadow_filter_set_quality(RenderingServer.SHADOW_QUALITY_SOFT_HIGH)
-		RenderingServer.positional_soft_shadow_filter_set_quality(RenderingServer.SHADOW_QUALITY_SOFT_HIGH)
+		# PLACA DE VÍDEO NO MÁXIMO: sombras 8K ultra suaves, névoa volumétrica em alta resolução, GI com mais raios,
+		# filtro anisotrópico 16x (chão e paredes nítidos em ângulo), decalques filtrados e modelos sempre no nível mais detalhado
+		RenderingServer.directional_shadow_atlas_set_size(8192, true)
+		RenderingServer.directional_soft_shadow_filter_set_quality(RenderingServer.SHADOW_QUALITY_SOFT_ULTRA)
+		RenderingServer.positional_soft_shadow_filter_set_quality(RenderingServer.SHADOW_QUALITY_SOFT_ULTRA)
+		RenderingServer.environment_set_volumetric_fog_volume_size(128, 128)
+		RenderingServer.environment_set_volumetric_fog_filter_active(true)
+		RenderingServer.environment_set_sdfgi_ray_count(RenderingServer.ENV_SDFGI_RAY_COUNT_64)
+		RenderingServer.environment_set_sdfgi_frames_to_converge(RenderingServer.ENV_SDFGI_CONVERGE_IN_30_FRAMES)
+		RenderingServer.decals_set_filter(RenderingServer.DECAL_FILTER_LINEAR_MIPMAPS_ANISOTROPIC)
+		RenderingServer.environment_glow_set_use_bicubic_upscale(true)
+		var vpc := main.get_viewport()
+		vpc.anisotropic_filtering_level = Viewport.ANISOTROPY_16X
+		vpc.mesh_lod_threshold = 0.5
+		e.sdfgi_cascades = 4
+		e.sdfgi_min_cell_size = 0.3
+		e.ssr_max_steps = 256
 		var jog := main.get_node_or_null("Jogador/Camera") as Camera3D
 		if jog != null:
 			var ca := CameraAttributesPractical.new()
@@ -203,6 +217,6 @@ static func _apply_high_end(main: Node) -> void:
 			sd.name = "SombrasDinamicas"
 			main.add_child(sd)
 		var jg := main.get_node_or_null("Jogador") as Node3D
-		sd.call_deferred("configurar", jg, 8 if cine else 4)
+		sd.call_deferred("configurar", jg, 12 if cine else 4)
 	elif sd != null:
 		sd.queue_free()

@@ -156,6 +156,7 @@ const PLANTAS_REAIS := {
 var _alt_real := {}
 var rb2_beiral: Array = []
 var _kit2 := false               # casa em construção usa o kit 2 (sacadas de ferro, guilhotina, grades, porta com bandeira...)
+var _vaos_atual: Array = []     # vãos (janelas/portas) da fachada em construção: {z, peitoril, topo, w, porta} — usados pelos detalhes de parede
 var _jan_atual: Array = []      # painéis de vidro da casa em construção: {pos, size, lit} (locais da casa)
 var _pl_atual: Array = []       # plantas de janela da casa em construção: {pos, tipo, esc}
 const ESPECIE_REAL := {"arvore_0": "arvore_a", "arvore_1": "arvore_b", "arvore_2": "arvore_c"}
@@ -1269,6 +1270,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	_kit2 = _rng_f.randf() < 0.65
 	rb2_beiral = []
 	_jan_atual = []
+	_vaos_atual = []
 	_pl_atual = []
 	var fh := 4.0
 	var up := 3.4
@@ -1353,6 +1355,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		dz = 0.0                      # a porta da casa é o vão da parede da frente da sala (no meio)
 	c.set_meta("door_z", dz)
 	c.set_meta("altura", height)
+	c.set_meta("vaos", _vaos_atual)
 	# embasamento de pedra em dois trechos: o vão da porta fica livre (antes o muro de 1,1 m tapava a parte de baixo da porta)
 	var vao := 1.15
 	var z_ini := -w / 2.0 - 0.05
@@ -1496,7 +1499,47 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			b.box("muro", Vector3(0.025, ph, pw), Vector3(-0.015, cy, cz))
 			b.box("muro", Vector3(0.025, ph * 0.55, pw * 0.7), Vector3(-0.02, cy + ph * 0.4, cz + pw * 0.28), Vector3(0, 0, 0.0))
 			b.box("muro", Vector3(0.025, ph * 0.5, pw * 0.5), Vector3(-0.02, cy - ph * 0.38, cz - pw * 0.30))
+	var nz := 99.0
 	if not simple:
+		# número da casa em azulejo português (branco com barra azul), ao lado da porta
+		nz = dz + (1.0 if dz < w * 0.5 - 1.4 else -1.0) * 0.95
+		for v in _vaos_atual:                                                   # não pode cair em cima de uma janela
+			if absf(float(v["z"]) - nz) < float(v["w"]) * 0.5 + 0.15 and 2.45 > float(v["peitoril"]) - 0.15 and 2.45 < float(v["topo"]) + 0.15:
+				nz = 99.0
+		if absf(nz) > w * 0.5 - 0.3:
+			nz = 99.0
+	if not simple and nz < 50.0:
+		b.box("listra_branca", Vector3(0.016, 0.21, 0.21), Vector3(-0.012, 2.45, nz))
+		for ax: Array in [[0.0, 0.1], [0.0, -0.1]]:
+			b.box("listra_azul", Vector3(0.02, 0.018, 0.21), Vector3(-0.014, 2.45 + float(ax[1]), nz))
+			b.box("listra_azul", Vector3(0.02, 0.21, 0.018), Vector3(-0.014, 2.45, nz + float(ax[1])))
+		var num := Label3D.new()
+		num.name = "Numero"
+		num.text = str(_rng.randi_range(3, 219))
+		num.font_size = 64
+		num.pixel_size = 0.0022
+		num.modulate = Color(0.12, 0.2, 0.55)
+		num.outline_size = 0
+		num.shaded = true
+		num.position = Vector3(-0.022, 2.45, nz)
+		num.rotation.y = -PI / 2.0
+		c.add_child(num)
+	if not simple:
+		# fiação de 1961 correndo pela fachada em isoladores de porcelana (só onde não cruza janela)
+		if _rng.randf() < 0.6:
+			var yf := fh - 0.32 if floors >= 2 else height - 0.55
+			var livre := true
+			for v in _vaos_atual:
+				if yf > float(v["peitoril"]) - 0.08 and yf < float(v["topo"]) + 0.08:
+					livre = false
+			if livre:
+				var iz := -w / 2.0 + 0.45
+				while iz <= w / 2.0 - 0.4:
+					b.box("ferro", Vector3(0.09, 0.02, 0.02), Vector3(-0.045, yf, iz))                                   # suporte
+					b.cylinder("listra_branca", 0.028, 0.034, 0.07, Vector3(-0.1, yf + 0.03, iz), Vector3.ZERO, 8)         # isolador
+					iz += 1.7
+				b.box("ferro", Vector3(0.012, 0.012, w - 0.8), Vector3(-0.1, yf + 0.055, 0.0))                          # fio
+				b.box("ferro", Vector3(0.012, 0.012, w - 0.8), Vector3(-0.1, yf + 0.025, 0.0))
 		b.box("ferro", Vector3(0.12, 0.09, w + 0.4), Vector3(-0.92, height + 0.09, 0))               # calha do beiral
 		if _rng.randf() < 0.55:
 			var dz2 := (w / 2.0 - 0.05) * (1.0 if _rng.randf() < 0.5 else -1.0)
@@ -1590,6 +1633,55 @@ func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
 		d.lower_fade = 0.05
 		d.cull_mask = 1
 		casa.add_child(d)
+	_detalhes_parede(casa, w, altura, basis)
+
+
+## Detalhes de parede realistas (decalques): lágrimas de chuva sob cada peitoril e sob o beiral, trincas saindo dos cantos das janelas,
+## limo e salitre no pé da parede. Cada casa sorteia os seus, então nenhuma fachada fica igual à outra.
+func _detalhes_parede(casa: Node3D, w: float, altura: float, basis: Basis) -> void:
+	var vaos: Array = casa.get_meta("vaos", [])
+	var tex_e := load("res://assets/textures/escorrido.png") as Texture2D
+	var tex_r := load("res://assets/textures/rachadura.png") as Texture2D
+	var tex_l := load("res://assets/textures/limo.png") as Texture2D
+	var novo := func(nome: String, tex: Texture2D, tam: Vector3, pos: Vector3, giro := 0.0) -> void:
+		var d := Decal.new()
+		d.name = nome
+		d.texture_albedo = tex
+		d.size = tam
+		d.transform = Transform3D(basis * Basis(Vector3.UP, giro), pos)
+		d.distance_fade_enabled = true
+		d.distance_fade_begin = 38.0
+		d.distance_fade_length = 12.0
+		d.upper_fade = 0.1
+		d.lower_fade = 0.1
+		d.normal_fade = 0.5                 # não escorre para os lados de molduras e peitoris
+		d.cull_mask = 1
+		casa.add_child(d)
+	var n := 0
+	for v in vaos:
+		if bool(v["porta"]) or float(v["peitoril"]) < 0.6:
+			continue
+		if _rng.randf() < 0.65:
+			var hh := minf(float(v["peitoril"]) - 0.15, _rng.randf_range(0.9, 2.1))
+			if hh > 0.4:
+				novo.call("Escorrido_%d" % n, tex_e, Vector3(float(v["w"]) * _rng.randf_range(0.9, 1.25), 0.5, hh), Vector3(0.08, float(v["peitoril"]) - hh * 0.5 - 0.03, float(v["z"])))
+				n += 1
+	if _rng.randf() < 0.5:
+		novo.call("EscorridoBeiral", tex_e, Vector3(w * 0.95, 0.5, _rng.randf_range(0.9, 1.6)), Vector3(0.08, altura - 0.75, _rng.randf_range(-0.3, 0.3)))
+	var trincas := _rng.randi_range(0, 2)
+	for k in trincas:
+		var jan: Array = vaos.filter(func(v: Dictionary) -> bool: return not bool(v["porta"]))
+		if jan.is_empty():
+			break
+		var v: Dictionary = jan[_rng.randi() % jan.size()]
+		var lado := 1.0 if _rng.randf() < 0.5 else -1.0
+		var em_cima := _rng.randf() < 0.5
+		var y := float(v["topo"]) + 0.45 if em_cima else float(v["peitoril"]) - 0.45
+		if y < 0.5 or y > altura - 0.4:
+			continue
+		novo.call("Trinca_%d" % k, tex_r, Vector3(0.8, 0.5, 1.0), Vector3(0.08, y, float(v["z"]) + lado * (float(v["w"]) * 0.5 + 0.25)), _rng.randf_range(-0.7, 0.7) + (PI if em_cima else 0.0))
+	if _rng.randf() < 0.6:
+		novo.call("Limo", tex_l, Vector3(w * 0.98, 0.6, _rng.randf_range(0.7, 1.2)), Vector3(0.08, 0.35, 0.0))
 
 
 const NOME_ENTRADA := {"benedita": "D. BENEDITA", "padaria": "PADARIA", "carpintaria": "CARPINTARIA", "venda": "VENDA", "escola": "ESCOLA",
@@ -1771,6 +1863,7 @@ func _pot(b: MeshBatch, p: Vector3) -> void:
 
 
 func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false, real := false) -> void:
+	_vaos_atual.append({"z": p.z, "peitoril": p.y - hgt * 0.5, "topo": p.y + hgt * 0.5, "w": wid, "porta": door})
 	var glass := "vidro_luz" if lit else "vidro_noite"
 	if real:
 		glass = "vidro_claro"

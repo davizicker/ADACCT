@@ -21,6 +21,7 @@ func _init() -> void:
 	_terra()
 	_ruido()
 	_decals()
+	_decals_parede()
 	_folha_seca()
 	_reboco_caido()
 	_ponto_luz()
@@ -32,6 +33,95 @@ func _init() -> void:
 	_janelas()
 	print("[tex] pronto")
 	quit()
+
+
+# ------------------------------------------------------------------ detalhes de parede (decalques, só Forward+)
+
+## escorrido.png: lágrimas de chuva que descem do peitoril/beiral (v=0 é o topo, escuras em cima e sumindo para baixo).
+## rachadura.png: trinca ramificada no reboco, com sombra e borda clara (lascas).
+## limo.png: faixa de limo verde-escuro e salitre esbranquiçado no pé da parede (umidade que sobe do chão; v=1 é o pé).
+func _decals_parede() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var fino := _noise(FastNoiseLite.TYPE_SIMPLEX, 1.0, 91)
+	var med := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 1.0, 92, 3)
+	# --- escorrido: faixas verticais de largura e comprimento variados
+	var e := Image.create(256, 512, false, Image.FORMAT_RGBA8)
+	var tiras: Array = []
+	for k in 26:
+		tiras.append([rng.randf(), rng.randf_range(0.004, 0.03), rng.randf_range(0.25, 1.0), rng.randf_range(0.35, 1.0)])
+	for y in 512:
+		for x in 256:
+			var u := float(x) / 255.0
+			var v := float(y) / 511.0
+			var a := 0.0
+			for t in tiras:
+				var dx := absf(u - float(t[0]) - sin(v * 9.0 + float(t[0]) * 20.0) * 0.006)
+				if dx < float(t[1]) and v < float(t[2]):
+					var ao := (1.0 - dx / float(t[1])) * (1.0 - v / float(t[2])) * float(t[3])
+					a = maxf(a, ao)
+			var topo := (1.0 - smoothstep(0.0, 0.18, v)) * (0.35 + 0.3 * (med.get_noise_2d(u * 6.0, 0.0) * 0.5 + 0.5))   # mancha larga logo abaixo do peitoril
+			a = clampf(maxf(a * 0.75, topo) * (0.8 + 0.2 * fino.get_noise_2d(u * 90.0, v * 90.0)), 0.0, 0.78)
+			a *= smoothstep(0.0, 0.08, u) * smoothstep(1.0, 0.92, u)
+			var cor := Color(0.09, 0.08, 0.06).lerp(Color(0.13, 0.15, 0.09), clampf(med.get_noise_2d(u * 4.0, v * 4.0) + 0.5, 0.0, 1.0) * 0.6)
+			e.set_pixel(x, y, Color(cor.r, cor.g, cor.b, a))
+	e.save_png(OUT + "escorrido.png")
+	# --- rachadura: passeio aleatório ramificado desenhado numa máscara
+	var mask := PackedFloat32Array()
+	mask.resize(512 * 512)
+	var galhos: Array = [[Vector2(256, 30), deg_to_rad(90.0), 1.0, 520]]
+	while galhos.size() > 0:
+		var gl: Array = galhos.pop_back()
+		var p: Vector2 = gl[0]
+		var ang: float = gl[1]
+		var esp: float = gl[2]
+		for i in int(gl[3]):
+			ang += rng.randf_range(-0.35, 0.35)
+			ang = lerpf(ang, deg_to_rad(90.0), 0.04)
+			p += Vector2(cos(ang), sin(ang)) * 1.0
+			if p.x < 4 or p.x > 507 or p.y < 4 or p.y > 507:
+				break
+			var r := maxi(1, int(round(2.2 * esp)))
+			for oy in range(-r - 2, r + 3):
+				for ox in range(-r - 2, r + 3):
+					var d := Vector2(ox, oy).length()
+					var idx := (int(p.y) + oy) * 512 + int(p.x) + ox
+					if idx < 0 or idx >= mask.size():
+						continue
+					var val := 1.0 if d <= r else clampf(1.0 - (d - r) / 2.5, 0.0, 1.0) * 0.35
+					mask[idx] = maxf(mask[idx], val)
+			if rng.randf() < 0.012 and esp > 0.35:
+				galhos.append([p, ang + rng.randf_range(-1.1, 1.1), esp * 0.6, rng.randi_range(60, 180)])
+			esp = maxf(0.3, esp - 0.0012)
+	var r2 := Image.create(512, 512, false, Image.FORMAT_RGBA8)
+	for y in 512:
+		for x in 512:
+			var m := mask[y * 512 + x]
+			if m >= 0.99:
+				r2.set_pixel(x, y, Color(0.04, 0.035, 0.03, 0.92))
+			elif m > 0.0:
+				r2.set_pixel(x, y, Color(0.20, 0.18, 0.15, m * 0.55))       # sombra/lasca em volta da trinca
+			else:
+				r2.set_pixel(x, y, Color(0, 0, 0, 0))
+	r2.save_png(OUT + "rachadura.png")
+	# --- limo e salitre no pé da parede
+	var l := Image.create(512, 256, false, Image.FORMAT_RGBA8)
+	for y in 256:
+		for x in 512:
+			var u := float(x) / 511.0
+			var v := float(y) / 255.0
+			var borda := 0.45 + 0.35 * (med.get_noise_2d(u * 7.0, 3.0) * 0.5 + 0.5)          # linha irregular até onde a umidade subiu
+			var dentro := smoothstep(borda - 0.08, borda + 0.12, v)
+			var sal := (1.0 - smoothstep(0.0, 0.07, absf(v - borda))) * 0.45                   # franja branca de salitre na borda
+			var verde := clampf(med.get_noise_2d(u * 12.0, v * 12.0) * 0.8 + 0.5, 0.0, 1.0)
+			var cor := Color(0.07, 0.10, 0.05).lerp(Color(0.13, 0.18, 0.07), verde)
+			var a := clampf(dentro * (0.45 + 0.4 * verde) * (0.8 + 0.2 * fino.get_noise_2d(u * 120.0, v * 60.0)), 0.0, 0.8)
+			if sal > a * 0.6:
+				cor = cor.lerp(Color(0.78, 0.76, 0.70), clampf(sal * 1.6, 0.0, 1.0))
+				a = maxf(a, sal)
+			a *= smoothstep(0.0, 0.03, u) * smoothstep(1.0, 0.97, u)
+			l.set_pixel(x, y, Color(cor.r, cor.g, cor.b, a))
+	l.save_png(OUT + "limo.png")
 
 
 # ------------------------------------------------------------------ decalques de sujeira (só Forward+)
