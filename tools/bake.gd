@@ -232,6 +232,14 @@ func _materials() -> void:
 	vn.roughness = 0.1
 	vn.metallic_specular = 0.9
 	ResourceSaver.save(vn, MATS + "vidro_noite.tres")
+	# vidro de verdade das casas visitáveis: quase transparente (a sala aparece por fora e a rua por dentro), só com brilho de reflexo
+	var vc := StandardMaterial3D.new()
+	vc.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	vc.albedo_color = Color(0.72, 0.84, 0.90, 0.10)
+	vc.roughness = 0.04
+	vc.metallic_specular = 1.0
+	vc.cull_mode = BaseMaterial3D.CULL_DISABLED
+	ResourceSaver.save(vc, MATS + "vidro_claro.tres")
 	_surf("madeira_azul", "madeira", Color(0.20, 0.38, 0.62), 0.6)
 	_surf("madeira_vermelha", "madeira", Color(0.62, 0.14, 0.10), 0.6)
 	_surf("madeira_verde", "madeira", Color(0.18, 0.40, 0.28), 0.6)

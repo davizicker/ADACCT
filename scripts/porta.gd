@@ -37,21 +37,23 @@ func abrir_visual() -> void:
 			if m != null and not m.resource_name.contains("cantaria") and mat_folha == null:
 				mat_folha = m
 	mesh.visible = false
+	var real := bool(get_meta("real", false))          # casa da rua: a sala está atrás da porta (sem fundo falso nem teleporte)
 	_aberta = Node3D.new()
 	_aberta.name = "PortaAberta"
 	casa.add_child(_aberta)
 	var dz := position.z
-	var vao := MeshInstance3D.new()                      # o vão: parede de luz quente ao fundo
-	var q := QuadMesh.new()
-	q.size = Vector2(2.0, 2.9)
-	vao.mesh = q
-	var mt := StandardMaterial3D.new()
-	mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mt.albedo_color = Color(0.42, 0.24, 0.10)
-	vao.material_override = mt
-	vao.position = Vector3(0.12, 1.45, dz)
-	vao.rotation.y = -PI / 2.0
-	_aberta.add_child(vao)
+	if not real:
+		var vao := MeshInstance3D.new()                      # o vão: parede de luz quente ao fundo
+		var q := QuadMesh.new()
+		q.size = Vector2(2.0, 2.9)
+		vao.mesh = q
+		var mt := StandardMaterial3D.new()
+		mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mt.albedo_color = Color(0.42, 0.24, 0.10)
+		vao.material_override = mt
+		vao.position = Vector3(0.12, 1.45, dz)
+		vao.rotation.y = -PI / 2.0
+		_aberta.add_child(vao)
 	for sgn: float in [-1.0, 1.0]:
 		var pivot := Node3D.new()
 		pivot.position = Vector3(-0.16, 0.0, dz + sgn * 1.0)
@@ -66,6 +68,15 @@ func abrir_visual() -> void:
 		pivot.add_child(folha)
 		var tw := create_tween()
 		tw.tween_property(pivot, "rotation:y", sgn * PI * 0.46, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if real:
+		# tira o bloqueio do vão (colisão) e deixa a porta aberta de vez: a rua e a sala passam a ser o mesmo lugar
+		var bl := casa.find_child("BloqueioPorta", true, false)
+		if bl != null:
+			for ch in bl.get_children():
+				if ch is CollisionShape3D:
+					(ch as CollisionShape3D).set_deferred("disabled", true)
+		remove_from_group("interagivel")
+		return
 	var luz := OmniLight3D.new()
 	luz.light_color = Color(1.0, 0.7, 0.36)
 	luz.light_energy = 1.6

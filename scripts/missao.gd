@@ -239,7 +239,64 @@ func usar_porta(porta: Node, p: Player) -> void:
 			get_tree().call_group("audio", "play_creak", (porta as Node3D).global_position)
 			await get_tree().create_timer(0.6).timeout
 			_cooldown = 0.0
+		if bool(porta.get_meta("real", false)):
+			if modo_teste:
+				porta.call("abrir_visual")      # nos testes automáticos a porta abre sem a espera
+				var sl := _sala_por_id(destino)
+				if sl != null:
+					player.global_transform.origin = _spawn_sala(sl)
+			return                              # casa da rua: sem teleporte, o jogador entra andando
 		entrar(destino)
+
+
+## Salas das casas da rua (nós "Sala_<id>"): o jogador está dentro quando a posição dele cai na caixa da sala.
+func _sala_por_id(id: String) -> Node3D:
+	for n in get_tree().get_nodes_in_group("sala_rua"):
+		if str(n.get_meta("sala_id", "")) == id:
+			return n as Node3D
+	return null
+
+
+func _spawn_sala(sala: Node3D) -> Vector3:
+	return sala.global_transform * ((sala.get_meta("spawn") as Vector3) / Interiores.ESCALA_SALA)
+
+
+func _detecta_sala() -> void:
+	if player == null or dentro == "igreja" or (dentro != "" and not _em_sala_rua):
+		return                                   # teleportado (igreja, becos sem saída): quem manda é entrar()/sair()
+	var achada := ""
+	for n in get_tree().get_nodes_in_group("sala_rua"):
+		var sl := n as Node3D
+		var dim: Vector3 = sl.get_meta("dim")
+		var q: Vector3 = sl.global_transform.affine_inverse() * player.global_position
+		var s_e := 1.0 / Interiores.ESCALA_SALA
+		if q.x > -0.1 and q.x < dim.x * s_e + 0.1 and q.z > 0.15 and q.z < dim.z * s_e + 0.1 and q.y > -0.6 and q.y < dim.y * s_e + 0.2:
+			achada = str(sl.get_meta("sala_id"))
+			break
+	if achada == dentro:
+		return
+	if achada != "":
+		dentro = achada
+		_em_sala_rua = true
+		if screams != null:
+			screams.hold = true
+		if eventos != null:
+			_eventos_antes = eventos.enabled
+			eventos.enabled = false
+		var sl2 := _sala_por_id(achada)
+		if sl2 != null and hud != null:
+			hud.show_prompt(str(sl2.get_meta("nome")), 3.0)
+	else:
+		dentro = ""
+		_em_sala_rua = false
+		salvar()
+		if screams != null:
+			screams.hold = false
+		if eventos != null:
+			eventos.enabled = _eventos_antes
+
+
+var _em_sala_rua := false
 
 
 func entrar(id: String) -> void:
@@ -302,8 +359,9 @@ func finalizar() -> void:
 
 ## Estado atual como dicionário (posição de RUA: dentro de uma casa, vale onde o jogador entrou).
 func estado() -> Dictionary:
-	var pos := _ret_pos if dentro != "" else player.global_position
-	var rot := _ret_rot if dentro != "" else player.rotation.y
+	var teleportado := dentro != "" and not _em_sala_rua
+	var pos := _ret_pos if teleportado else player.global_position
+	var rot := _ret_rot if teleportado else player.rotation.y
 	return {
 		"itens": ",".join(PackedStringArray(inv.keys())),
 		"terco_usado": terco_usado,
@@ -353,6 +411,7 @@ func _process(delta: float) -> void:
 		_auto_t = 0.0
 		salvar()
 	_cooldown = maxf(0.0, _cooldown - delta)
+	_detecta_sala()
 	if _env == null:
 		return
 	var alvo_amb := 0.14 if dentro != "" else 0.38

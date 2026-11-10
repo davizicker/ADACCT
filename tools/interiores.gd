@@ -23,28 +23,57 @@ var _d0 := 1.0
 const K_SALA := 1.0                    # (remapear cada móvel separado desalinhava mesas e cadeiras; agora a sala inteira é ampliada por escala uniforme em construir())
 const ESCALA_SALA := 1.25              # ampliação uniforme da sala inteira (paredes, móveis, luzes, colisão)
 var _cadeiras: Array[Vector2] = []
+var _parede_mat := ""
 var _n_casca := 0                      # quantas caixas de _bb são da casca da sala (o resto é mobília)
 
 
-func construir(builder: VilaBuilder) -> Node3D:
+## Salas das casas da RUA: nascem dentro da própria casa (lote ajustado às medidas da sala), sem teleporte.
+const SALAS_RUA: Array[String] = ["benedita", "padaria", "venda", "barbearia", "sineiro", "casarao", "carpintaria", "escola"]
+var na_rua := false                    # true enquanto uma sala de rua é montada (parede da frente com vãos reais, colisões justas)
+
+
+## Monta UMA sala de rua (origem no canto da parede da frente, já ampliada). Quem chama a encaixa na casa.
+func sala_rua(builder: VilaBuilder, id: String) -> Node3D:
+	b = builder
+	na_rua = true
+	var g := Node3D.new()
+	g.name = "Sala_" + id
+	_g = g
+	_montar(id, g)
+	na_rua = false
+	g.set_meta("sala_id", id)
+	g.add_to_group("sala_rua", true)
+	return g
+
+
+func _montar(id: String, g: Node3D) -> void:
+	call("_sala_" + id, g)
+	_camada(g)
+	if id != "igreja":
+		for l in g.find_children("*", "OmniLight3D", true, false):
+			(l as OmniLight3D).omni_range *= ESCALA_SALA
+		g.set_meta("spawn", (g.get_meta("spawn") as Vector3) * ESCALA_SALA)
+		g.set_meta("dim", (g.get_meta("dim") as Vector3) * ESCALA_SALA)
+		if not na_rua:
+			g.scale = Vector3.ONE * ESCALA_SALA
+
+
+## `cubos`: monta TODAS as salas no depósito distante (necessário só para fotografar as salas que as janelas das casas fechadas mostram).
+## Sem isso, só ficam lá as salas que ainda usam teleporte (becos sem saída e a igreja).
+func construir(builder: VilaBuilder, cubos := false) -> Node3D:
 	b = builder
 	var root := Node3D.new()
 	root.name = "Interiores"
 	for i in ORDEM.size():
 		var id := ORDEM[i]
+		if SALAS_RUA.has(id) and not cubos:
+			continue
 		var g := Node3D.new()
 		g.name = id
 		g.position = BASE + Vector3(i * PASSO, 0.0, 0.0)
 		root.add_child(g)
 		_g = g
-		call("_sala_" + id, g)
-		_camada(g)
-		if id != "igreja":
-			g.scale = Vector3.ONE * ESCALA_SALA
-			g.set_meta("spawn", (g.get_meta("spawn") as Vector3) * ESCALA_SALA)
-			g.set_meta("dim", (g.get_meta("dim") as Vector3) * ESCALA_SALA)
-			for l in g.find_children("*", "OmniLight3D", true, false):
-				(l as OmniLight3D).omni_range *= ESCALA_SALA
+		_montar(id, g)
 	var rel := FileAccess.open("res://docs/23-medidas-dos-moveis.md", FileAccess.WRITE)
 	if rel != null:
 		rel.store_string("# Medidas dos móveis e objetos de modelo, por sala\n\nGerado pelo bake (tools/interiores.gd). Medidas em metros no desenho da sala (antes da ampliação de %.2fx). `Folga` = distância até a parede mais próxima.\n\n| Sala | Peça | Centro (x, z) | Tamanho (x, y, z) | Giro | Múltiplo de 90° | Folga |\n|---|---|---|---|---|---|---|\n" % ESCALA_SALA)
@@ -57,6 +86,8 @@ func construir(builder: VilaBuilder) -> Node3D:
 func _camada(n: Node) -> void:
 	if n is GeometryInstance3D:
 		(n as GeometryInstance3D).layers = 2
+	elif n is Light3D:
+		(n as Light3D).light_cull_mask = 2          # a luz da sala não vaza para a rua (nem a das lâmpadas da rua para dentro)
 	for c in n.get_children():
 		_camada(c)
 
@@ -101,8 +132,10 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 		x += 1.4
 	_bb.box(parede, Vector3(0.3, h + 0.4, d + 0.6), Vector3(-0.15, h / 2.0, d / 2.0))
 	_bb.box(parede, Vector3(0.3, h + 0.4, d + 0.6), Vector3(w + 0.15, h / 2.0, d / 2.0))
-	_bb.box(parede, Vector3(w + 0.6, h + 0.4, 0.3), Vector3(w / 2.0, h / 2.0, -0.15))
+	if not na_rua:
+		_bb.box(parede, Vector3(w + 0.6, h + 0.4, 0.3), Vector3(w / 2.0, h / 2.0, -0.15))
 	_bb.box(parede, Vector3(w + 0.6, h + 0.4, 0.3), Vector3(w / 2.0, h / 2.0, d + 0.15))
+	_parede_mat = parede
 	# rodapé
 	_bb.box("madeira_escura", Vector3(w, 0.14, 0.04), Vector3(w / 2.0, 0.07, 0.02))
 	_bb.box("madeira_escura", Vector3(w, 0.14, 0.04), Vector3(w / 2.0, 0.07, d - 0.02))
@@ -127,21 +160,27 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 		_bb.box("cantaria", Vector3(w, 0.12, 0.14), Vector3(w / 2.0, h - 0.06, d - 0.07))
 		_bb.box("cantaria", Vector3(w, 0.12, 0.14), Vector3(w / 2.0, h - 0.06, 0.07))
 	# colisões (a sala é uma caixa fechada)
-	b._blocker(_g, "Piso", Vector3(w + 4.0, 0.6, d + 4.0), Vector3(w / 2.0, -0.3, d / 2.0))
-	b._blocker(_g, "Teto", Vector3(w + 4.0, 0.6, d + 4.0), Vector3(w / 2.0, h + 0.3, d / 2.0))
-	b._blocker(_g, "ParedeO", Vector3(0.6, h + 2.0, d + 4.0), Vector3(-0.3, h / 2.0, d / 2.0))
-	b._blocker(_g, "ParedeL", Vector3(0.6, h + 2.0, d + 4.0), Vector3(w + 0.3, h / 2.0, d / 2.0))
-	b._blocker(_g, "ParedeS", Vector3(w + 4.0, h + 2.0, 0.6), Vector3(w / 2.0, h / 2.0, -0.3))
-	b._blocker(_g, "ParedeN", Vector3(w + 4.0, h + 2.0, 0.6), Vector3(w / 2.0, h / 2.0, d + 0.3))
-	# porta de saída (parede sul) e gatilho de interação
-	_bb.box("cantaria", Vector3(1.5, 2.55, 0.12), Vector3(w / 2.0, 1.27, 0.06))
-	_bb.box("madeira_escura", Vector3(1.2, 2.3, 0.1), Vector3(w / 2.0, 1.15, 0.11))
-	_bb.box("ferro", Vector3(0.05, 0.12, 0.06), Vector3(w / 2.0 + 0.42, 1.05, 0.2))
-	_bb.box("pano_cru", Vector3(1.0, 0.02, 0.6), Vector3(w / 2.0, 0.01, 0.55))                          # capacho
-	_bb.box("madeira_escura", Vector3(1.04, 0.015, 0.64), Vector3(w / 2.0, 0.006, 0.55))
-	var a := _area("Saida", Vector3(w / 2.0, 1.2, 0.8), Vector3(1.9, 2.4, 1.5), "res://scripts/porta.gd")
-	a.set("destino", "")
-	a.set("texto_interacao", "Sair para a rua")
+	var ext := 0.6 if na_rua else 4.0
+	var ver := 0.4 if na_rua else 2.0
+	b._blocker(_g, "Piso", Vector3(w + ext, 0.6, d + ext), Vector3(w / 2.0, -0.3, d / 2.0))
+	b._blocker(_g, "Teto", Vector3(w + ext, 0.6, d + ext), Vector3(w / 2.0, h + 0.3, d / 2.0))
+	b._blocker(_g, "ParedeO", Vector3(0.6, h + ver, d + ext), Vector3(-0.3, h / 2.0, d / 2.0))
+	b._blocker(_g, "ParedeL", Vector3(0.6, h + ver, d + ext), Vector3(w + 0.3, h / 2.0, d / 2.0))
+	b._blocker(_g, "ParedeN", Vector3(w + ext, h + ver, 0.6), Vector3(w / 2.0, h / 2.0, d + 0.3))
+	if not na_rua:
+		b._blocker(_g, "ParedeS", Vector3(w + 4.0, h + 2.0, 0.6), Vector3(w / 2.0, h / 2.0, -0.3))
+		# porta de saída (parede sul) e gatilho de interação
+		_bb.box("cantaria", Vector3(1.5, 2.55, 0.12), Vector3(w / 2.0, 1.27, 0.06))
+		_bb.box("madeira_escura", Vector3(1.2, 2.3, 0.1), Vector3(w / 2.0, 1.15, 0.11))
+		_bb.box("ferro", Vector3(0.05, 0.12, 0.06), Vector3(w / 2.0 + 0.42, 1.05, 0.2))
+		_bb.box("pano_cru", Vector3(1.0, 0.02, 0.6), Vector3(w / 2.0, 0.01, 0.55))                          # capacho
+		_bb.box("madeira_escura", Vector3(1.04, 0.015, 0.64), Vector3(w / 2.0, 0.006, 0.55))
+		var a := _area("Saida", Vector3(w / 2.0, 1.2, 0.8), Vector3(1.9, 2.4, 1.5), "res://scripts/porta.gd")
+		a.set("destino", "")
+		a.set("texto_interacao", "Sair para a rua")
+	else:
+		_bb.box("pano_cru", Vector3(1.0, 0.02, 0.6), Vector3(w / 2.0, 0.01, 0.55))                          # capacho
+		_bb.box("madeira_escura", Vector3(1.04, 0.015, 0.64), Vector3(w / 2.0, 0.006, 0.55))
 	_n_casca = _bb._boxes.size()
 	# luz de preenchimento: a sala não é mais um poço escuro. Brilho quente baixo no teto (a lamparina "vaza" pelo ar) e um toque frio junto ao piso (luar)
 	var fill := OmniLight3D.new()
@@ -402,6 +441,8 @@ func _relatorio() -> void:
 
 func _fim() -> void:
 	_relatorio()
+	if na_rua:
+		_parede_frente()
 	_decorar()
 	b._mesh_node(_g, "Mobilia", _bb.commit())
 
@@ -433,7 +474,8 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 			pos = Vector3(_w - 0.02, y, p)
 		_:
 			pos = Vector3(p, y, _d - 0.02)
-	_bb.quad("vista_noite", Vector2(w, h), pos, yaw)
+	# nas casas da rua só a parede da frente dá para a rua de verdade; as janelas laterais e dos fundos ficam com as folhas fechadas
+	_bb.quad("madeira_verde" if na_rua else "vista_noite", Vector2(w, h), pos, yaw)
 	var dir := Vector3(sin(yaw), 0, cos(yaw))
 	var side := Vector3(dir.z, 0, -dir.x)
 	var verde := "madeira_verde"
@@ -471,6 +513,80 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 	l.light_energy = 0.55
 	l.omni_range = 6.0
 	_g.add_child(l)
+
+const PORTA_MEIA := 0.75               # meia largura do vão da porta (medidas de sala, antes da ampliação)
+const PORTA_ALTA := 2.45
+const JAN_W := 0.9                     # janela da frente (a mesma medida é usada na fachada da casa)
+const JAN_H := 1.3
+
+
+## Parede da frente das salas de rua: vão da porta e janelas VAZADAS de verdade (o vidro fica na fachada da casa, a rua aparece do lado de dentro
+## e a sala aparece do lado de fora). As janelas só entram onde não há móvel encostado.
+func _parede_frente() -> void:
+	var w := _w
+	var h := _h
+	var vaos: Array = [[w / 2.0 - PORTA_MEIA, w / 2.0 + PORTA_MEIA, 0.0, PORTA_ALTA]]
+	var jans: Array = []
+	var yc := minf(1.6, h - 1.15)
+	for lado in 2:
+		var x0 := 0.9 if lado == 0 else w / 2.0 + PORTA_MEIA + 0.75
+		var x1 := w / 2.0 - PORTA_MEIA - 0.75 if lado == 0 else w - 0.9
+		if x1 - x0 < JAN_W + 0.4:
+			continue
+		var n := maxi(1, int(round((x1 - x0) / 2.3)))
+		for k in n:
+			var xc := x0 + (k + 0.5) * (x1 - x0) / n
+			if _ocupado(AABB(Vector3(xc - 0.8, 0.0, 0.0), Vector3(1.6, 3.0, 0.9))):
+				continue
+			jans.append({"x": xc, "y": yc, "w": JAN_W, "h": JAN_H})
+			vaos.append([xc - JAN_W * 0.43, xc + JAN_W * 0.43, yc - JAN_H * 0.44, yc + JAN_H * 0.44])
+	# paredes em faixas: para cada intervalo entre bordas de vão, as partes maciças acima/abaixo dos vãos
+	var xs: Array[float] = [-0.3, w + 0.3]
+	for v in vaos:
+		xs.append(float(v[0]))
+		xs.append(float(v[1]))
+	xs.sort()
+	for i in xs.size() - 1:
+		var xa: float = xs[i]
+		var xb: float = xs[i + 1]
+		if xb - xa < 0.002:
+			continue
+		var cortes: Array = []
+		for v in vaos:
+			if float(v[0]) <= xa + 0.001 and float(v[1]) >= xb - 0.001:
+				cortes.append([float(v[2]), float(v[3])])
+		cortes.sort_custom(func(m: Array, n2: Array) -> bool: return float(m[0]) < float(n2[0]))
+		var y := -0.2
+		for c in cortes:
+			if float(c[0]) - y > 0.01:
+				_bb.box(_parede_mat, Vector3(xb - xa, float(c[0]) - y, 0.3), Vector3((xa + xb) / 2.0, (y + float(c[0])) / 2.0, -0.15))
+			y = maxf(y, float(c[1]))
+		if h + 0.2 - y > 0.01:
+			_bb.box(_parede_mat, Vector3(xb - xa, h + 0.2 - y, 0.3), Vector3((xa + xb) / 2.0, (y + h + 0.2) / 2.0, -0.15))
+	# colisão: a parede toda, menos o vão da porta (que tem um bloqueio próprio, tirado quando a porta abre)
+	var xp0 := w / 2.0 - PORTA_MEIA
+	var xp1 := w / 2.0 + PORTA_MEIA
+	b._blocker(_g, "ParedeS_E", Vector3(xp0 + 0.3, h + 0.4, 0.4), Vector3((xp0 - 0.3) / 2.0, h / 2.0, -0.2))
+	b._blocker(_g, "ParedeS_D", Vector3(w + 0.3 - xp1, h + 0.4, 0.4), Vector3((xp1 + w + 0.3) / 2.0, h / 2.0, -0.2))
+	b._blocker(_g, "ParedeS_Verga", Vector3(PORTA_MEIA * 2.0, h + 0.2 - PORTA_ALTA, 0.4), Vector3(w / 2.0, (PORTA_ALTA + h + 0.2) / 2.0, -0.2))
+	b._blocker(_g, "BloqueioPorta", Vector3(PORTA_MEIA * 2.0, PORTA_ALTA, 0.4), Vector3(w / 2.0, PORTA_ALTA / 2.0, -0.2))
+	# batente da porta, por dentro
+	for sg: float in [-1.0, 1.0]:
+		_bb.box("cantaria", Vector3(0.12, PORTA_ALTA + 0.1, 0.34), Vector3(w / 2.0 + sg * (PORTA_MEIA + 0.06), (PORTA_ALTA + 0.1) / 2.0 - 0.05, -0.15))
+	_bb.box("cantaria", Vector3(PORTA_MEIA * 2.0 + 0.24, 0.12, 0.34), Vector3(w / 2.0, PORTA_ALTA + 0.06, -0.15))
+	# guarnições das janelas, por dentro
+	for j in jans:
+		var xc: float = j["x"]
+		var yj: float = j["y"]
+		var hw := JAN_W * 0.43
+		var hh := JAN_H * 0.44
+		for sg: float in [-1.0, 1.0]:
+			_bb.box("madeira_verde", Vector3(0.06, hh * 2.0 + 0.12, 0.34), Vector3(xc + sg * (hw + 0.03), yj, -0.15))
+		_bb.box("madeira_verde", Vector3(hw * 2.0 + 0.12, 0.06, 0.34), Vector3(xc, yj + hh + 0.03, -0.15))
+		_bb.box("madeira_verde", Vector3(hw * 2.0 + 0.12, 0.06, 0.34), Vector3(xc, yj - hh - 0.03, -0.15))
+		_bb.box("cantaria", Vector3(hw * 2.0 + 0.3, 0.05, 0.2), Vector3(xc, yj - hh - 0.08, 0.06))               # peitoril por dentro
+	_g.set_meta("aberturas", jans)
+	_g.set_meta("porta_x", w / 2.0)
 
 
 func _lamparina(x: float, y: float, z: float, energia := 0.85) -> void:

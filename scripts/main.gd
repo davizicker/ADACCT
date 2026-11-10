@@ -535,7 +535,10 @@ func _test_casas() -> void:
 		if missao.dentro != pid:
 			print("[casas]   DEBUG %s: alvo=%s dentro=%s frozen=%s pos=%s cd=%.2f hidden=%s" % [pid, str(player._target), missao.dentro, str(player.frozen), str(player.global_position), missao._cooldown, str(player.hidden)])
 		var dentro_ok := missao.dentro == pid
-		var sala := get_node("Vila/Interiores/" + pid) as Node3D
+		var sala := get_node_or_null("Vila/Interiores/" + pid) as Node3D
+		var sala_rua := sala == null
+		if sala_rua:
+			sala = missao._sala_por_id(pid)
 		var q := PhysicsRayQueryParameters3D.create(player.global_position + Vector3(0, 0.5, 0), player.global_position - Vector3(0, 2.0, 0))
 		q.exclude = [player.get_rid()]
 		var hit := space.intersect_ray(q)
@@ -563,7 +566,11 @@ func _test_casas() -> void:
 			falhas += 1
 		vistos[pid] = true
 		player.frozen = false
-		missao.sair()
+		if sala_rua:
+			player.global_position = pe              # casa da rua: sai andando pela porta (volta para a calçada)
+			player.velocity = Vector3.ZERO
+		else:
+			missao.sair()
 		await _aguarda_quadros(13)
 		if missao.dentro != "":
 			falhas += 1
@@ -711,7 +718,7 @@ func _press_interact() -> void:
 
 func _test_itens(delta: float) -> void:
 	if _test_state == 0:
-		_test_items = get_tree().get_nodes_in_group("interagivel").filter(func(n: Node) -> bool: return n is Coletavel and not str(n.get_path()).contains("Interiores"))
+		_test_items = get_tree().get_nodes_in_group("interagivel").filter(func(n: Node) -> bool: return n is Coletavel and not str(n.get_path()).contains("Interiores") and not str(n.get_path()).contains("/Sala_"))
 		player.oil = 60.0
 		player.interact_hint.connect(func(t: String) -> void: _hint = t)
 		_test_state = 1

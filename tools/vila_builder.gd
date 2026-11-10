@@ -61,6 +61,9 @@ var _n := 0
 var _cego_n := 0
 var _cego_atual := ""
 var _entrada_atual: Dictionary = {}
+var _interiores: Interiores
+var _salas_rua: Dictionary = {}              # id -> sala pronta (Node3D solto) que vira filha da casa certa
+const SHELL := 0.06                          # espessura da casca externa da casa (por fora da parede da sala)
 var _entradas_feitas: Dictionary = {}
 var _ocupados: Array = []     # [Vector3, raio]: lugares já usados por portas/barris/bancos (nada se sobrepõe)
 var _beco_vizinho: Dictionary = {}          # caixa do beco que vem logo depois da casa em construção
@@ -608,6 +611,12 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_moon())
 	root.add_child(_terrain())
 	root.add_child(_road())
+	# salas das casas da rua: montadas ANTES do casario (a casa é feita sob medida para a sala); o sorteio da rua não muda
+	var rng_antes := _rng.state
+	_interiores = Interiores.new()
+	for sid in Interiores.SALAS_RUA:
+		_salas_rua[sid] = _interiores.sala_rua(self, sid)
+	_rng.state = rng_antes
 	_frontage(root)
 	_tira_plantas_dentro_das_casas(root)
 	root.add_child(Realismo.new().vidros_e_plantas(self, root))
@@ -625,12 +634,16 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(Realismo.new().construir(self))
 	root.add_child(_serra())
 	root.add_child(_route_path())
-	root.add_child(Interiores.new().construir(self))
+	root.add_child(_interiores.construir(self, OS.get_environment("BRADADOR_CUBOS") != ""))
 	var det := Detalhes.new()
 	root.add_child(det.construir(self))
 	print("[vila] detalhes: ", det.contagem)
 	print("[vila] entradas: ", _entradas_feitas)
 	_separa_lampioes(root)
+	# luzes da rua só iluminam a rua (camada 1); as das salas (camada 2, ver Interiores._camada) só iluminam a própria sala
+	for l in root.find_children("*", "Light3D", true, false):
+		if not (l is DirectionalLight3D) and not _em_sala(l):
+			(l as Light3D).light_cull_mask = 1
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
 	# a neblina (densidade 0,03) já apaga tudo a ~100 m: não desenhar além disso economiza centenas de chamadas
 	for name in ["Casas", "MurosEQuintais", "FundoDaRua", "Ponte"]:
@@ -657,6 +670,15 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	for f in _flutuando.slice(0, 40):
 		print("[vila]   ", f)
 	return root
+
+
+func _em_sala(n: Node) -> bool:
+	var p := n
+	while p != null:
+		if String(p.name).begins_with("Sala_") or p.name == "Interiores":
+			return true
+		p = p.get_parent()
+	return false
 
 
 func _route_path() -> Path3D:
@@ -739,6 +761,8 @@ func _frontage(root: Node3D) -> void:
 					if float(e["sigma"]) == sigma and not _entradas_feitas.has(e["id"]) and s >= float(e["s"]) - 3.0 and w_street >= 3.6:
 						kind = "casa"
 						w = maxf(w, 7.2)
+						if _salas_rua.has(e["id"]):
+							w = float((_salas_rua[e["id"]] as Node3D).get_meta("dim").x) + SHELL * 2.0 + 0.75 - 0.24 + 0.05      # lote sob medida da sala
 						_entrada_atual = e
 						_entradas_feitas[e["id"]] = s
 						break
@@ -830,19 +854,32 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 			if ahead_p > -3.0 and ahead_p < 9.0:
 				near_alley = true
 	var depth := _rng.randf_range(5.6, 6.8) if near_alley else _rng.randf_range(10.0, 13.0)
+	var sala: Node3D = null
+	if not _entrada_atual.is_empty() and _salas_rua.has(_entrada_atual["id"]):
+		sala = _salas_rua[_entrada_atual["id"]]
+		floors = 1
+		haunted = false
+		depth = float(sala.get_meta("dim").z) + SHELL * 2.0 + 0.75      # a casa tem exatamente o tamanho da sala
 	_porta_central = near_alley
 	# nas curvas, casas vizinhas giram uma em relação à outra e as caixas se atravessam por trás: encurta a profundidade até não haver choque
 	var xf0: Transform3D = f["xf"]
 	xf0.origin += xf0.basis.x * 0.05
 	if not _beco_vizinho.is_empty():
 		_casas_postas.append(_beco_vizinho)
-	while depth > 2.6 and _casa_atravessa(xf0, depth, float(f["w"]) + 0.24):
-		depth -= 0.3
+	if sala != null:
+		if _casa_atravessa(xf0, depth, float(sala.get_meta("dim").x) + SHELL * 2.0 + 0.75):
+			push_warning("[vila] casa visitável %s encosta numa vizinha (curva): conferir" % _entrada_atual["id"])
+	else:
+		while depth > 2.6 and _casa_atravessa(xf0, depth, float(f["w"]) + 0.24):
+			depth -= 0.3
 	if not _beco_vizinho.is_empty():
 		_casas_postas.pop_back()
-	_casas_postas.append({"xf": xf0, "depth": depth, "w": float(f["w"]) + 0.24})
-	var casa := make_casa(f["w"] + 0.24, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
-		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted, _entrada_atual)
+	var w_casa: float = float(f["w"]) + 0.24
+	if sala != null:
+		w_casa = float(sala.get_meta("dim").x) + SHELL * 2.0 + 0.75
+	_casas_postas.append({"xf": xf0, "depth": depth, "w": w_casa})
+	var casa := make_casa(w_casa, floors, _pick_wall(), WOODS[_rng.randi() % WOODS.size()], depth,
+		floors >= 2 and _rng.randf() < 0.55, 0.28, false, haunted, _entrada_atual, sala)
 	_porta_central = false
 	casa.name = "Casa_%02d" % _n
 	# cada casa recua um pouco diferente da vizinha (como no real) e dispensa o z-fighting entre fachadas
@@ -858,7 +895,7 @@ func _lot_casa(parent: Node3D, f: Dictionary, sigma: float, w_street: float) -> 
 	parent.add_child(casa)
 	_reservar(xf * Vector3(-1.0, 0.0, float(casa.get_meta("door_z"))), 1.7)
 	_portas.append(xf * Vector3(-0.9, 0.0, float(casa.get_meta("door_z"))))
-	_decalques_fachada(casa, float(f["w"]) + 0.24, float(casa.get_meta("altura")))
+	_decalques_fachada(casa, w_casa, float(casa.get_meta("altura")))
 	var porta_a := casa.get_node_or_null("Entrada_%s" % _entrada_atual.get("id", "")) as Node3D
 	if porta_a != null:
 		# em ladeira o chão na porta fica acima/abaixo da origem do lote: o gatilho acompanha o chão real
@@ -922,7 +959,7 @@ func _casa_atravessa(xf: Transform3D, depth: float, w: float) -> bool:
 # ------------------------------------------------------------------ casa colonial
 
 ## `w` largura da fachada; `floors` 1–3; `depth` profundidade; `lit_p` chance de janela acesa.
-func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false, entrada := {}) -> Node3D:
+func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, balcony: bool, lit_p: float, simple: bool, haunted := false, entrada := {}, sala: Node3D = null) -> Node3D:
 	var c := Node3D.new()
 	c.name = "Casa"
 	_jan_atual = []
@@ -930,20 +967,33 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var fh := 4.0
 	var up := 3.4
 	var height := fh + (floors - 1) * up
-	if floors >= 2 and _rng_f.randf() < 0.65:
+	var aber: Array = []
+	if sala != null:
+		var sd: Vector3 = sala.get_meta("dim")
+		height = maxf(4.0, sd.y + 0.4)
+		fh = height
+		aber = sala.get_meta("aberturas", [])
+		_casca_sala(c, w, depth, height, wall, aber)
+		var xs := Interiores.ESCALA_SALA
+		# a sala (origem no canto da parede da frente) gira 90°: o "fundo" dela vira o +x da casa e a largura dela vira o z
+		sala.transform = Transform3D(Basis(Vector3.UP, PI / 2.0).scaled(Vector3.ONE * xs), Vector3(0.3 * xs + SHELL, 0.0, sd.x * 0.5))
+		c.add_child(sala)
+		c.set_meta("sala_id", entrada["id"])
+	elif floors >= 2 and _rng_f.randf() < 0.65:
 		# sobrado ouro-pretano: térreo de pedra rústica e andar de cima caiado (corpo dividido em dois blocos, sem faces sobrepostas)
 		_box(c, "CorpoPedra", Vector3(depth, fh + 4.0, w), Vector3(depth / 2.0, (fh - 4.0) / 2.0, 0), "muro", true)
 		_box(c, "Corpo", Vector3(depth, height - fh, w), Vector3(depth / 2.0, (height + fh) / 2.0, 0), wall, true)
 	else:
 		_box(c, "Corpo", Vector3(depth, height + 4.0, w), Vector3(depth / 2.0, height / 2.0 - 2.0, 0), wall, true)
 	# oclusão: o corpo da casa esconde o que está atrás (só Forward+/Mobile; ligado em project.godot)
-	var occ := OccluderInstance3D.new()
-	occ.name = "Oclusor"
-	var bo := BoxOccluder3D.new()
-	bo.size = Vector3(maxf(depth - 0.6, 0.5), height + 2.0, maxf(w - 0.6, 0.5))
-	occ.occluder = bo
-	occ.position = Vector3(depth / 2.0, height / 2.0 - 1.0, 0)
-	c.add_child(occ)
+	if sala == null:
+		var occ := OccluderInstance3D.new()
+		occ.name = "Oclusor"
+		var bo := BoxOccluder3D.new()
+		bo.size = Vector3(maxf(depth - 0.6, 0.5), height + 2.0, maxf(w - 0.6, 0.5))
+		occ.occluder = bo
+		occ.position = Vector3(depth / 2.0, height / 2.0 - 1.0, 0)
+		c.add_child(occ)
 	# telhado com UV (telhas no sentido do caimento), cumeeira de capa e tábuas de beiral; inclinação varia por casa
 	var rise := (depth + 1.4) * _rng.randf_range(0.24, 0.33)
 	var rcx := depth / 2.0 - 0.2
@@ -993,6 +1043,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if _porta_central:
 		door_i = (cols - 1) / 2         # casa colada num beco: a porta no meio, longe da parede da escada
 	var dz := col_z[door_i]
+	if sala != null:
+		dz = 0.0                      # a porta da casa é o vão da parede da frente da sala (no meio)
 	c.set_meta("door_z", dz)
 	c.set_meta("altura", height)
 	# embasamento de pedra em dois trechos: o vão da porta fica livre (antes o muro de 1,1 m tapava a parte de baixo da porta)
@@ -1061,7 +1113,15 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 				bal_cols.append(i)
 		if bal_cols.is_empty():
 			bal_cols.append(door_i)
+	if sala != null:
+		# janelas da fachada = os vãos da parede da sala (mesma posição e tamanho): vidro de verdade, sem foto
+		var xs2 := Interiores.ESCALA_SALA
+		var sdw: float = float(sala.get_meta("dim").x)
+		for j in aber:
+			_window(b, Vector3(0, float(j["y"]) * xs2, sdw * 0.5 - float(j["x"]) * xs2), float(j["w"]) * xs2, float(j["h"]) * xs2, wood, false, false, false, false, true)
 	for i in cols:
+		if sala != null:
+			break
 		if i != door_i:
 			_window(b, Vector3(0, 2.0, col_z[i]), 1.0, 1.5, wood, _rng.randf() < lit_p * 0.6, not simple and _rng.randf() < 0.4)
 		for k in range(1, floors):
@@ -1111,7 +1171,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			var dz2 := (w / 2.0 - 0.05) * (1.0 if _rng.randf() < 0.5 else -1.0)
 			b.box("ferro", Vector3(0.8, 0.09, 0.09), Vector3(-0.52, height + 0.05, dz2))
 			b.box("ferro", Vector3(0.09, height + 0.3, 0.09), Vector3(-0.12, height / 2.0 - 0.1, dz2))   # tubo de queda
-		if _rng.randf() < 0.22:
+		if sala == null and _rng.randf() < 0.22:
 			_sign(c, b, col_z[(door_i + 1) % cols])
 	var solidos := [AABB(Vector3(0.0, -2.0, -w / 2.0), Vector3(depth, height + 4.0, w)),
 		AABB(Vector3(rcx - (depth + 1.4) / 2.0, ry - 0.05, -(w + 0.5) / 2.0), Vector3(depth + 1.4, rise + 0.1, w + 0.5))]
@@ -1122,6 +1182,46 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	c.set_meta("janelas", _jan_atual)
 	c.set_meta("plantas_janela", _pl_atual)
 	return c
+
+
+## Casca externa de uma casa visitável: lâminas finas por FORA das paredes da sala (a parede interna é a da sala). A frente tem o vão da porta
+## e os vãos das janelas (mesmos da parede interna), então a rua enxerga a sala e a sala enxerga a rua.
+func _casca_sala(c: Node3D, w: float, depth: float, height: float, wall: String, aber: Array) -> void:
+	var t := SHELL
+	var xs := Interiores.ESCALA_SALA
+	_box(c, "CascaFundos", Vector3(t, height + 4.0, w), Vector3(depth - t / 2.0, height / 2.0 - 2.0, 0.0), wall, false)
+	for sg: float in [-1.0, 1.0]:
+		_box(c, "CascaLado", Vector3(depth, height + 4.0, t), Vector3(depth / 2.0, height / 2.0 - 2.0, sg * (w / 2.0 - t / 2.0)), wall, false)
+	var sdw := w - SHELL * 0.0 - 0.75 - 2.0 * t          # largura da sala ampliada
+	var vaos: Array = [[-0.94, 0.94, -2.0, 3.06]]       # porta (vão de 1,5 m da sala x 1,25)
+	for j in aber:
+		var zc := sdw * 0.5 - float(j["x"]) * xs
+		var yc := float(j["y"]) * xs
+		vaos.append([zc - float(j["w"]) * xs * 0.43, zc + float(j["w"]) * xs * 0.43, yc - float(j["h"]) * xs * 0.44, yc + float(j["h"]) * xs * 0.44])
+	var zs: Array[float] = [-w / 2.0, w / 2.0]
+	for v in vaos:
+		zs.append(float(v[0]))
+		zs.append(float(v[1]))
+	zs.sort()
+	var fb := _batch()
+	for i in zs.size() - 1:
+		var za: float = zs[i]
+		var zb: float = zs[i + 1]
+		if zb - za < 0.002:
+			continue
+		var cortes: Array = []
+		for v in vaos:
+			if float(v[0]) <= za + 0.001 and float(v[1]) >= zb - 0.001:
+				cortes.append([float(v[2]), float(v[3])])
+		cortes.sort_custom(func(m: Array, n2: Array) -> bool: return float(m[0]) < float(n2[0]))
+		var y := -2.0
+		for cr in cortes:
+			if float(cr[0]) - y > 0.01:
+				fb.box(wall, Vector3(t, float(cr[0]) - y, zb - za), Vector3(t / 2.0, (y + float(cr[0])) / 2.0, (za + zb) / 2.0))
+			y = maxf(y, float(cr[1]))
+		if height + 0.2 - y > 0.01:
+			fb.box(wall, Vector3(t, height + 0.2 - y, zb - za), Vector3(t / 2.0, (y + height + 0.2) / 2.0, (za + zb) / 2.0))
+	_mesh_node(c, "CascaFrente", fb.commit())
 
 
 ## Sujeira e umidade projetadas na fachada (Decal: só Forward+; em Compatibilidade são ignorados).
@@ -1204,6 +1304,8 @@ func _porta_entrada(c: Node3D, entrada: Dictionary, dz: float, w_casa: float) ->
 	a.set("requer", entrada.get("requer", ""))
 	a.set("texto_trancada", entrada.get("trancada", "Está trancada."))
 	a.set_meta("fora_local", Vector3(-1, 0, 0))
+	if c.has_meta("sala_id"):
+		a.set_meta("real", true)         # sem teleporte: a porta abre e a sala está ali mesmo
 	var cs := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
 	bs.size = Vector3(1.6, 2.6, 1.8)
@@ -1335,8 +1437,10 @@ func _pot(b: MeshBatch, p: Vector3) -> void:
 	_pl_atual.append({"pos": p + Vector3(0, 0.19, 0), "tipo": _rng.randi() % 5, "esc": _rng.randf_range(0.8, 1.2)})
 
 
-func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false) -> void:
+func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit: bool, grate: bool, door := false, arch := false, real := false) -> void:
 	var glass := "vidro_luz" if lit else "vidro_noite"
+	if real:
+		glass = "vidro_claro"
 	if arch:
 		# vão com verga em arco (como nos sobrados de Ouro Preto): parte reta + meio disco
 		var r := wid * 0.5
@@ -1359,7 +1463,8 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.4, hgt / 2.5, 0.6)), {"madeira": wood, "vidro": glass})
 	else:
 		b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
-		_jan_atual.append({"pos": Vector3(-0.012, p.y, p.z), "size": Vector2(wid * 0.9, hgt * 0.933), "lit": lit})
+		if not real:          # janela de verdade (sala atrás do vidro): sem foto de sala no painel
+			_jan_atual.append({"pos": Vector3(-0.012, p.y, p.z), "size": Vector2(wid * 0.9, hgt * 0.933), "lit": lit})
 		if p.y > 3.6 and _rng_f.randf() < 0.32:                                       # pano roxo pendurado no peitoril, como na Semana Santa
 			b.box("pano_roxo", Vector3(0.02, 1.15, wid * 0.62), Vector3(-0.2, base_y - 0.55, p.z), Vector3(0.0, 0.0, 0.07))
 			b.box("pano_cru", Vector3(0.022, 0.5, wid * 0.5), Vector3(-0.215, base_y - 0.3, p.z), Vector3(0.0, 0.0, 0.07))
