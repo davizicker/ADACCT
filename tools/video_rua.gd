@@ -19,7 +19,11 @@ func _init() -> void:
 	(main.get_node("Gritos") as Node).set("enabled", false)
 	(main.get_node("Eventos") as Node).set("enabled", false)
 	main.get_node("Interface").call("hide_note")
-	(main.get_node("Interface") as CanvasItem).visible = false if main.get_node("Interface") is CanvasItem else true
+	var hud_n := main.get_node("Interface")
+	if hud_n is CanvasLayer:
+		(hud_n as CanvasLayer).visible = false
+	elif hud_n is CanvasItem:
+		(hud_n as CanvasItem).visible = false
 	root.get_viewport().scaling_3d_scale = float(a[2]) if a.size() > 2 else 0.5
 	var luz := float(a[3]) if a.size() > 3 else 1.0
 	var amb := main.get_node("Vila").get_node_or_null("Ambiente") as WorldEnvironment
