@@ -309,6 +309,18 @@ func _materials() -> void:
 			if dm is StandardMaterial3D:
 				(dm as StandardMaterial3D).albedo_color = pj[2]
 			ResourceSaver.save(dm, MATS + String(pj[0]) + ".tres")
+	var pt := StandardMaterial3D.new()                                                    # piso de tacos (tabuado): projeção no espaço da sala (alinha com as paredes)
+	pt.albedo_texture = _tex("piso_taco_albedo.png")
+	pt.normal_enabled = true
+	pt.normal_texture = _tex("piso_taco_normal.png")
+	pt.normal_scale = 1.0
+	pt.roughness = 0.5
+	pt.metallic_specular = 0.6
+	pt.uv1_triplanar = true
+	pt.uv1_world_triplanar = false
+	pt.uv1_scale = Vector3.ONE / 0.48
+	pt.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	ResourceSaver.save(pt, MATS + "piso_taco.tres")
 	_flat("vitral_vermelho", Color(0.85, 0.10, 0.12), 0.3, 0.0, 1.6)
 	_flat("vitral_azul", Color(0.12, 0.25, 0.85), 0.3, 0.0, 1.5)
 	_flat("vitral_ambar", Color(1.0, 0.65, 0.12), 0.3, 0.0, 1.8)

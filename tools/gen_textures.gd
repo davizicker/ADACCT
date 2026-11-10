@@ -26,6 +26,7 @@ func _init() -> void:
 	_ponto_luz()
 	_retratos()
 	_pinturas()
+	_piso_taco()
 	_vista_noturna()
 	_silhueta()
 	_janelas()
@@ -786,6 +787,44 @@ func _retratos() -> void:
 
 
 ## Pinturas sem rostos (paisagens a óleo e foto antiga desbotada), tapetes persas, forro estrelado e piso de mármore xadrez.
+## Piso de tacos de madeira em "tabuado" (quadrados de 4 tacos, alternando o sentido), cada taco com tom e veio próprios e frestas escuras.
+## 512 px = 2 x 2 quadrados. Sai piso_taco_albedo.png e piso_taco_normal.png.
+func _piso_taco() -> void:
+	var N := 512
+	var Q := 256
+	var T := 64
+	var alb := Image.create(N, N, false, Image.FORMAT_RGB8)
+	var hgt := Image.create(N, N, false, Image.FORMAT_L8)
+	var veio := _noise(FastNoiseLite.TYPE_SIMPLEX_SMOOTH, 1.0, 905, 3)
+	var fino := _noise(FastNoiseLite.TYPE_SIMPLEX, 1.0, 906, 2)
+	for y in N:
+		for x in N:
+			var qx := x / Q
+			var qy := y / Q
+			var horiz := (qx + qy) % 2 == 0
+			var lx := x % Q
+			var ly := y % Q
+			var tira := (ly / T) if horiz else (lx / T)
+			var ao_longo := lx if horiz else ly
+			var atravessado := (ly % T) if horiz else (lx % T)
+			var id := qx * 977 + qy * 331 + tira * 53
+			var r := fposmod(sin(float(id) * 12.9898) * 43758.5453, 1.0)
+			var tom := 0.72 + 0.56 * r
+			var gv := veio.get_noise_2d(float(ao_longo) * 0.012 + r * 40.0, float(atravessado) * 0.45 + float(id) * 3.1) * 0.5 + 0.5
+			var gf := fino.get_noise_2d(float(ao_longo) * 0.06, float(atravessado) * 1.4 + float(id)) * 0.5 + 0.5
+			var c := Color(0.60, 0.37, 0.18) * tom * (0.82 + 0.30 * gv) * (0.94 + 0.10 * gf)
+			var h := 0.85 + 0.1 * gv
+			if atravessado < 2 or atravessado > T - 3 or ao_longo < 2 or ao_longo > Q - 3:
+				c = Color(0.07, 0.045, 0.03)
+				h = 0.0
+			elif atravessado < 5 or ao_longo < 5:
+				c = c * 1.10                                   # quina clara (bisel)
+				h = 0.7
+			alb.set_pixel(x, y, Color(c.r, c.g, c.b))
+			hgt.set_pixel(x, y, Color(h, h, h))
+	_save("piso_taco", alb, hgt, 3.0)
+
+
 func _pinturas() -> void:
 	# --- paisagens a óleo: céu em degradê, sol, três camadas de morros e primeiro plano escuro; craquelê do verniz por cima
 	for v in 2:

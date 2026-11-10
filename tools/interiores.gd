@@ -1171,7 +1171,7 @@ func _prop(key: String, x: float, z: float, yaw := 0.0, escala := 1.0, y := 0.0)
 # ------------------------------------------------------------------ salas
 
 func _sala_benedita(g: Node3D) -> void:
-	_casca("Casa de Dona Benedita", 7.0, 6.0, 3.0, "reboco_creme", "piso_mel", "forro_tabuas")
+	_casca("Casa de Dona Benedita", 7.0, 6.0, 3.0, "reboco_creme", "piso_taco", "forro_tabuas")
 	_cama_enc("N", 1.2)
 	_armario(0.55 * 0.5 + 0.02, 2.2, 1.3, 2.0, 0.55, PI / 2.0)                       # rente à parede oeste (folga de 2 cm)
 	_fogao(_mx(6.0), _mz(5.4), PI)
@@ -1206,7 +1206,7 @@ func _sala_benedita(g: Node3D) -> void:
 
 
 func _sala_padaria(g: Node3D) -> void:
-	_casca("Padaria da esquina", 6.0, 5.0, 3.0, "reboco_amarelo", "piso_mel", "forro_tabuas")
+	_casca("Padaria da esquina", 6.0, 5.0, 3.0, "reboco_amarelo", "piso_taco", "forro_tabuas")
 	# forno de lenha na parede leste: arco de pedra, boca em brasa e luz de fogo
 	_bb.box("cantaria", Vector3(1.4, 1.7, 2.0), Vector3(_mx(5.3), 0.85, _mz(3.4)))
 	_bb.box("cantaria", Vector3(0.9, 1.7, 0.9), Vector3(_mx(5.4), 2.0, _mz(3.4)))
@@ -1237,7 +1237,7 @@ func _sala_padaria(g: Node3D) -> void:
 
 
 func _sala_venda(g: Node3D) -> void:
-	_casca("Venda do Seu Zé", 8.0, 6.0, 3.1, "reboco_ocre", "piso_mel", "forro_tabuas")
+	_casca("Venda do Seu Zé", 8.0, 6.0, 3.1, "reboco_ocre", "piso_taco", "forro_tabuas")
 	_balcao(_mx(4.0), _mz(4.7), 4.4)
 	_prateleira(_mx(4.0), 1.55, _mz(5.82), 3.6, 0.0, 9)
 	_prateleira(_mx(4.0), 2.05, _mz(5.82), 3.6, 0.0, 8)
@@ -1273,7 +1273,7 @@ func _sala_venda(g: Node3D) -> void:
 
 
 func _sala_barbearia(g: Node3D) -> void:
-	_casca("Barbearia", 5.0, 5.0, 3.0, "reboco_azul", "piso_mel", "forro_tabuas")
+	_casca("Barbearia", 5.0, 5.0, 3.0, "reboco_azul", "piso_taco", "forro_tabuas")
 	# cadeira de barbeiro: assento, encosto, apoio e pé de ferro
 	_bb.box("couro", Vector3(0.6, 0.12, 0.6), Vector3(_mx(2.5), 0.62, _mz(2.8)))
 	_bb.box("couro", Vector3(0.6, 0.8, 0.12), Vector3(_mx(2.5), 1.1, _mz(3.15)))
@@ -1298,7 +1298,7 @@ func _sala_barbearia(g: Node3D) -> void:
 
 
 func _sala_sineiro(g: Node3D) -> void:
-	_casca("Casa do sineiro", 6.0, 5.0, 2.9, "reboco_branco", "piso_mel", "forro_tabuas")
+	_casca("Casa do sineiro", 6.0, 5.0, 2.9, "reboco_branco", "piso_taco", "forro_tabuas")
 	_cama_enc("N", 0.9, "pano_cru")
 	# caixa de madeira embaixo da cama (onde está a chave)
 	_bb.box("madeira_natural", Vector3(0.5, 0.26, 0.4), Vector3(_mx(1.0), 0.13, _mz(2.45)))
@@ -1326,7 +1326,7 @@ func _sala_sineiro(g: Node3D) -> void:
 
 func _sala_casarao(g: Node3D) -> void:
 	var up := 3.75                                   # altura do piso do andar de cima
-	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_branco", "piso_mel", "forro_tabuas")       # pé-direito duplo: salão embaixo, galeria em cima
+	_casca("Casarão dos Vaz", 10.0, 8.0, 7.6, "reboco_branco", "piso_taco", "forro_tabuas")       # pé-direito duplo: salão embaixo, galeria em cima
 	# ---------------- térreo: salão de jantar
 	_tapete(5.0, 3.8, 3.4, 2.3, 0)
 	_examinar(7.4, 0.5, 3.8, "Examinar a cadeira caída", "A cadeira tombou quando o Dr. Anselmo se levantou da ceia para nunca mais voltar. O prato dele ainda tem a sopa, seca, rachada como a terra.", "creak", 0.1)
@@ -1654,7 +1654,7 @@ func _presbiterio(g: Node3D) -> void:
 
 
 func _sala_carpintaria(g: Node3D) -> void:
-	_casca("Carpintaria do Seu Mateus", 8.0, 6.0, 3.2, "reboco_branco", "piso_mel", "forro_tabuas")
+	_casca("Carpintaria do Seu Mateus", 8.0, 6.0, 3.2, "reboco_branco", "piso_taco", "forro_tabuas")
 	# bancada comprida com plaina, serrote e tábuas; ferramentas na prateleira de metal
 	_mesa(_mx(4.0), _mz(4.6), 3.2, 0.9, 0.9, "madeira_natural")
 	_prop("hand_plane_no4", _mx(3.3), _mz(4.5), 0.4, 1.0, 0.94)
@@ -1679,7 +1679,7 @@ func _sala_carpintaria(g: Node3D) -> void:
 
 
 func _sala_escola(g: Node3D) -> void:
-	_casca("Escola Rural", 7.0, 6.0, 3.2, "reboco_creme", "piso_mel", "forro_tabuas")
+	_casca("Escola Rural", 7.0, 6.0, 3.2, "reboco_creme", "piso_taco", "forro_tabuas")
 	_encostar_auto("standing_chalkboard_01", _mx(3.5), _mz(5.3), 1.5)
 	_quadro(_mx(6.96), 1.8, _mz(3.0), "L", 1.4, 0.9, "placa_verde")
 	for fila in 2:
@@ -1745,7 +1745,7 @@ func _sala_casa_vazia(g: Node3D) -> void:
 
 
 func _sala_pensao(g: Node3D) -> void:
-	_casca("Pensão da Dona Elvira", 7.0, 6.0, 3.0, "reboco_verde", "piso_mel", "forro_tabuas")
+	_casca("Pensão da Dona Elvira", 7.0, 6.0, 3.0, "reboco_verde", "piso_taco", "forro_tabuas")
 	_encostar_auto("old_bed_frame", _mx(1.0), _mz(4.6), 1.0)
 	_encostar_auto("old_bed_frame", _mx(6.0), _mz(4.6), 1.0)
 	_encostar_auto("vintage_day_bed", _mx(3.5), _mz(0.9), 1.0)
@@ -1770,7 +1770,7 @@ func _sala_pensao(g: Node3D) -> void:
 
 
 func _sala_costureira(g: Node3D) -> void:
-	_casca("Casa da costureira", 6.0, 5.0, 2.9, "reboco_azul", "piso_mel", "forro_tabuas")
+	_casca("Casa da costureira", 6.0, 5.0, 2.9, "reboco_azul", "piso_taco", "forro_tabuas")
 	_mesa(_mx(3.0), _mz(3.6), 1.8, 0.9, 0.8, "madeira_natural")                           # mesa de corte
 	_bb.box("pano_rosa", Vector3(1.4, 0.03, 0.8), Vector3(_mx(3.0), 0.83, _mz(3.6)))
 	_papelaria(_mx(3.4), _mz(3.4), 0.84, 0.6)
