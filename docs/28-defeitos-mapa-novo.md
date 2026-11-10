@@ -13,3 +13,5 @@ Status: **corrigido** (no código, entra no próximo bake) · **aberto** · **vi
 | 6 | Casarão/escola/padaria/carpintaria (interiores) | Ainda não fotografados no mapa novo | aberto |
 | 7 | Curvas do zigue-zague | Lado de fora terminava no nada | corrigido: muro de arrimo com lampiões e árvores; mureta por dentro |
 | 8 | Fachadas em geral | Falta relevo (janelas simples, cunhal liso, beiral reto) | corrigido: kit 2 (guilhotina, sacada de ferro em todo sobrado, grades, porta com bandeira, cunhais, embasamento, beiral de telhas) |
+| 9 | 1ª curva de 90° (s ≈ 21) | Lado de fora da curva aberto: caixotes soltos e um vazio escuro até o morro | corrigido: muro de arrimo com lampiões e árvores em TODAS as curvas (90° e 180°) |
+| 10 | 1ª curva, ao fundo à esquerda | Grande placa clara e lisa (encosta/terreno iluminado pela lua, sem textura de perto) | aberto: conferir de perto |
