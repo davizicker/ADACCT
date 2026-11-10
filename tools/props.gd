@@ -33,9 +33,17 @@ static func bounds(n: Node, xf := Transform3D.IDENTITY) -> AABB:
 	return out
 
 
+## Malhas auxiliares do Blender (planos "wdg_*" de 0,00001 m de altura, invisíveis) esticavam a caixa do modelo (o relógio de lareira "media" 0,9 m).
+static func _tira_auxiliares(inst: Node) -> void:
+	for mi in inst.find_children("wdg_*", "MeshInstance3D", true, false):
+		mi.get_parent().remove_child(mi)
+		mi.free()
+
+
 ## Instancia o modelo `key`, escalado por `scale`. Retorna um Node3D pronto para add_child.
 static func make(key: String, scale := 1.0, align := "chao") -> Node3D:
 	var inst := scene(key).instantiate() as Node3D
+	_tira_auxiliares(inst)
 	var holder := Node3D.new()
 	holder.name = key
 	var wrap := Node3D.new()
@@ -58,6 +66,7 @@ static func make(key: String, scale := 1.0, align := "chao") -> Node3D:
 ## (lápis empilhados, 4 latas lado a lado, 2 malas juntas...): aqui cada peça pode ser usada sozinha, no lugar certo.
 static func make_filtrado(key: String, manter: Array, scale := 1.0, align := "chao") -> Node3D:
 	var inst := scene(key).instantiate() as Node3D
+	_tira_auxiliares(inst)
 	for mi in inst.find_children("*", "MeshInstance3D", true, false):
 		var ok := false
 		for pre in manter:

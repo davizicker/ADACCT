@@ -79,6 +79,12 @@ func construir(builder: VilaBuilder, cubos := false) -> Node3D:
 		rel.store_string("# Medidas dos móveis e objetos de modelo, por sala\n\nGerado pelo bake (tools/interiores.gd). Medidas em metros no desenho da sala (antes da ampliação de %.2fx). `Folga` = distância até a parede mais próxima.\n\n| Sala | Peça | Centro (x, z) | Tamanho (x, y, z) | Giro | Múltiplo de 90° | Folga |\n|---|---|---|---|---|---|---|\n" % ESCALA_SALA)
 		rel.store_string("\n".join(_relatorio_linhas) + "\n")
 		rel.close()
+	var aud := FileAccess.open("res://docs/26-auditoria-salas.md", FileAccess.WRITE)
+	if aud != null:
+		aud.store_string("# Auditoria de arrumação das salas\n\nGerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (antes da ampliação). Cada linha é algo que NÃO está em seu devido lugar (ou uma informação).\n\n| Sala | Problema | Detalhe |\n|---|---|---|\n")
+		aud.store_string("\n".join(_auditoria_linhas) + "\n")
+		aud.close()
+	print("[salas] auditoria: %d avisos" % _auditoria_linhas.size())
 	return root
 
 
@@ -107,6 +113,7 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	_w0 = w
 	_d0 = d
 	_cadeiras = []
+	_janelas_lat = []
 	_tem_tapete = false
 	if nome != "Igreja Matriz":                      # a igreja já é grande
 		w = snappedf(w * K_SALA, 0.1)
@@ -264,7 +271,8 @@ func _ocupado(a: AABB) -> bool:
 			if AABB(c - Vector3(r, bb.size.y * 0.5, r), Vector3(r * 2.0, bb.size.y, r * 2.0)).intersects(a):
 				return true
 		elif n is Area3D:
-			if a.grow(0.25).has_point((n as Node3D).position):
+			var ap := (n as Node3D).position
+			if Rect2(a.position.x, a.position.z, a.size.x, a.size.z).grow(0.3).has_point(Vector2(ap.x, ap.z)):
 				return true
 	# entrada: corredor livre do portal até o centro da sala
 	if AABB(Vector3(_w * 0.5 - 1.1, 0.0, 0.0), Vector3(2.2, 3.0, 2.2)).intersects(a):
@@ -363,7 +371,7 @@ func _lencol(x: float, z: float) -> void:
 func _vida(rng: RandomNumberGenerator) -> void:
 	# uma cadeira tombada no meio da sala, como se alguém tivesse se levantado às pressas
 	for t in [Vector2(_w * 0.5, _d * 0.55), Vector2(_w * 0.35, _d * 0.5), Vector2(_w * 0.62, _d * 0.45)]:
-		if not _ocupado(AABB(Vector3(t.x - 0.5, 0.0, t.y - 0.5), Vector3(1.0, 0.8, 1.0))):
+		if not _ocupado(AABB(Vector3(t.x - 0.5, 0.0, t.y - 0.5), Vector3(1.0, 0.8, 1.9))):      # deitada ela ocupa ~1,3 m para +z
 			var ch := _prop("painted_wooden_chair_02", t.x, t.y, rng.randf() * TAU, 1.0, 0.24)
 			ch.rotation.x = PI * 0.5
 			break
@@ -419,6 +427,192 @@ func _galeria(lado: String, centro: float, cols: int, rows: int, y0 := 1.35) -> 
 
 
 var _relatorio_linhas: PackedStringArray = []
+var _auditoria_linhas: PackedStringArray = []
+var _janelas_lat: Array = []           # janelas laterais/fundos da sala em construção: [lado, p, y, w, h]
+
+
+## Pegada (retângulo no chão + altura) de cada coisa sólida da sala: móveis (colisões "Col*") e modelos (props com "bb").
+func _pegadas() -> Array:
+	var out: Array = []
+	for n in _g.get_children():
+		if n is StaticBody3D and String(n.name).begins_with("Col"):
+			var cs: CollisionShape3D = n.get_child(0)
+			var sz: Vector3 = (cs.shape as BoxShape3D).size
+			var c: Vector3 = (n as Node3D).position
+			out.append({"nome": String(n.name), "tipo": "mov", "c": c, "sz": sz, "ymin": c.y - sz.y / 2.0, "ymax": c.y + sz.y / 2.0, "no": n})
+		elif n is Node3D and n.has_meta("bb"):
+			var bb: AABB = n.get_meta("bb")
+			var t := n as Node3D
+			var esc := t.transform.basis.get_scale()
+			var sz2 := Vector3(bb.size.x * esc.x, bb.size.y * esc.y, bb.size.z * esc.z)
+			var ctr := t.position + t.transform.basis * bb.get_center()
+			var yaw := t.rotation.y
+			var ex := absf(cos(yaw)) * sz2.x + absf(sin(yaw)) * sz2.z
+			var ez := absf(sin(yaw)) * sz2.x + absf(cos(yaw)) * sz2.z
+			var base := t.position.y + bb.position.y * esc.y
+			out.append({"nome": String(n.name), "tipo": "prop", "c": ctr, "sz": Vector3(ex, sz2.y, ez), "ymin": base, "ymax": base + sz2.y, "no": n, "yaw": yaw, "caido": absf(t.rotation.x) > 0.1})
+	return out
+
+
+## Auditoria de arrumação da sala (tudo no lugar?). Vai para docs/26-auditoria-salas.md. Mede: fora da sala, atravessando, flutuando,
+## cadeiras (de frente para a mesa, ao alcance), móveis de frente para a parede, janelas tapadas, luz dentro de móvel e itens sem apoio.
+func _auditar() -> void:
+	var sala := String(_g.name)
+	var itens := _pegadas()
+	var aviso := func(tipo: String, texto: String) -> void:
+		_auditoria_linhas.append("| %s | %s | %s |" % [sala, tipo, texto])
+	var rect := func(e: Dictionary) -> Rect2:
+		var c: Vector3 = e["c"]
+		var sz: Vector3 = e["sz"]
+		return Rect2(c.x - sz.x / 2.0, c.z - sz.z / 2.0, sz.x, sz.z)
+	var mesas: Array = itens.filter(func(e: Dictionary) -> bool: return String(e["nome"]).begins_with("ColMesa") or String(e["nome"]).to_lower().contains("table"))
+	for e in itens:
+		var r: Rect2 = rect.call(e)
+		var nome: String = e["nome"]
+		if r.position.x < -0.02 or r.end.x > _w + 0.02 or r.position.y < -0.02 or r.end.y > _d + 0.02:
+			aviso.call("FORA DA SALA", "%s (%.2f, %.2f) tamanho %.2f x %.2f" % [nome, (e["c"] as Vector3).x, (e["c"] as Vector3).z, r.size.x, r.size.y])
+		if float(e["ymax"]) > _h + 0.02:
+			aviso.call("ALTO DEMAIS", "%s topo %.2f m, pé-direito %.2f m" % [nome, float(e["ymax"]), _h])
+	# atravessando
+	for i in itens.size():
+		for j in range(i + 1, itens.size()):
+			var a: Dictionary = itens[i]
+			var c2: Dictionary = itens[j]
+			if bool(a.get("caido", false)) or bool(c2.get("caido", false)):
+				continue                                               # cadeira/quadro caído de propósito
+			if float(a["ymin"]) >= float(c2["ymax"]) - 0.08 or float(c2["ymin"]) >= float(a["ymax"]) - 0.08:
+				continue                                               # um em cima do outro
+			var chair_a := String(a["nome"]).to_lower().contains("chair")
+			var chair_b := String(c2["nome"]).to_lower().contains("chair")
+			if (chair_a and float(c2["ymin"]) >= 0.55) or (chair_b and float(a["ymin"]) >= 0.55):
+				continue                                               # objeto em cima da mesa, na altura do encosto da cadeira que está sob ela
+			var ra: Rect2 = rect.call(a)
+			var rb: Rect2 = rect.call(c2)
+			var inter := ra.intersection(rb)
+			if inter.size.x <= 0.08 or inter.size.y <= 0.08:
+				continue
+			var na := String(a["nome"]).to_lower()
+			var nb2 := String(c2["nome"]).to_lower()
+			var cad_mesa := (na.contains("chair") and (nb2.begins_with("colmesa") or nb2.contains("table"))) or (nb2.contains("chair") and (na.begins_with("colmesa") or na.contains("table")))
+			if cad_mesa and minf(inter.size.x, inter.size.y) < 0.55:
+				continue                                               # cadeira enfiada sob a mesa
+			if (na.begins_with("colsaco") and nb2.begins_with("sack")) or (nb2.begins_with("colsaco") and na.begins_with("sack")):
+				continue                                               # o saco e a colisão dele são a mesma coisa
+			aviso.call("ATRAVESSA", "%s (%.2f, %.2f, y %.2f-%.2f) com %s (%.2f, %.2f, y %.2f-%.2f): %.0f x %.0f cm" % [a["nome"], (a["c"] as Vector3).x, (a["c"] as Vector3).z, float(a["ymin"]), float(a["ymax"]), c2["nome"], (c2["c"] as Vector3).x, (c2["c"] as Vector3).z, float(c2["ymin"]), float(c2["ymax"]), inter.size.x * 100.0, inter.size.y * 100.0])
+	# flutuando: base acima do chão e nada embaixo (prateleiras e tampos feitos de caixas também apoiam)
+	var apoios: Array = []
+	for bi in range(_n_casca, _bb._boxes.size()):
+		var ab: AABB = _bb._boxes[bi][1]
+		if ab.size.x > 0.15 and ab.size.z > 0.1:
+			apoios.append(ab)
+	for e in itens:
+		if float(e["ymin"]) < 0.04 or bool(e.get("caido", false)) or float(e["ymax"]) > _h - 0.45 or float(e["ymin"]) > 3.3 or String(e["nome"]).begins_with("lightbulb") or String(e["nome"]).begins_with("brass_diya_lantern"):
+			continue                                                   # no chão, caído, pendurado no teto ou no 2º andar
+		var c: Vector3 = e["c"]
+		var apoiado := false
+		for o in itens:
+			if o == e:
+				continue
+			var ro: Rect2 = rect.call(o)
+			if ro.has_point(Vector2(c.x, c.z)) and absf(float(o["ymax"]) - float(e["ymin"])) < 0.12:
+				apoiado = true
+		for ab2: AABB in apoios:
+			if Rect2(ab2.position.x, ab2.position.z, ab2.size.x, ab2.size.z).has_point(Vector2(c.x, c.z)) and absf(ab2.end.y - float(e["ymin"])) < 0.1:
+				apoiado = true
+		if not apoiado and not String(e["nome"]).begins_with("Col"):
+			aviso.call("FLUTUA", "%s a %.0f cm do chão sem apoio embaixo" % [e["nome"], float(e["ymin"]) * 100.0])
+	# cadeiras
+	for e in itens:
+		var nm := String(e["nome"]).to_lower()
+		if e["tipo"] != "prop" or not nm.contains("chair") or bool(e.get("caido", false)):
+			continue
+		var t: Node3D = e["no"]
+		var frente := Vector3(1, 0, 0) if nm.contains("painted_wooden_chair") else Vector3(0, 0, 1)
+		var fw: Vector3 = t.transform.basis * frente
+		var f2 := Vector2(fw.x, fw.z).normalized()
+		var c: Vector3 = e["c"]
+		var melhor := 99.0
+		var ponto := Vector2.ZERO
+		for m in mesas:
+			var rm: Rect2 = rect.call(m)
+			var q := Vector2(clampf(c.x, rm.position.x, rm.end.x), clampf(c.z, rm.position.y, rm.end.y))
+			var d := q.distance_to(Vector2(c.x, c.z))
+			if d < melhor:
+				melhor = d
+				ponto = q
+		if melhor > 1.0:
+			aviso.call("INFO", "%s solta (a %.1f m da mesa mais próxima)" % [e["nome"], melhor])
+			continue
+		var para := (ponto - Vector2(c.x, c.z))
+		if para.length() > 0.05:
+			var ang := rad_to_deg(f2.angle_to(para.normalized()))
+			if absf(ang) > 25.0:
+				aviso.call("CADEIRA TORTA", "%s em (%.2f, %.2f) olha %.0f° fora da mesa" % [e["nome"], c.x, c.z, absf(ang)])
+		if melhor > 0.5:
+			aviso.call("CADEIRA LONGE", "%s a %.0f cm da borda da mesa (deveria estar sob ela)" % [e["nome"], melhor * 100.0])
+	# móveis de frente para a parede (armários, estantes, camas)
+	for e in itens:
+		var nm2 := String(e["nome"]).to_lower()
+		if e["tipo"] != "prop" or not (nm2.contains("cabinet") or nm2.contains("bookshelf") or nm2.contains("rack")):
+			continue
+		var t2: Node3D = e["no"]
+		var fw2: Vector3 = t2.transform.basis * Vector3(0, 0, 1)
+		var c3: Vector3 = e["c"]
+		var r3: Rect2 = rect.call(e)
+		var gaps := {"O": r3.position.x, "L": _w - r3.end.x, "S": r3.position.y, "N": _d - r3.end.y}
+		var mais := "O"
+		for k in gaps:
+			if float(gaps[k]) < float(gaps[mais]):
+				mais = k
+		var into := {"O": Vector3(1, 0, 0), "L": Vector3(-1, 0, 0), "S": Vector3(0, 0, 1), "N": Vector3(0, 0, -1)}[mais] as Vector3
+		if float(gaps[mais]) < 0.6 and fw2.normalized().dot(into) < 0.7:
+			aviso.call("DE COSTAS PARA A SALA", "%s (parede %s a %.0f cm) com a frente virada para a parede" % [e["nome"], mais, float(gaps[mais]) * 100.0])
+		if float(gaps[mais]) > 0.03 and float(gaps[mais]) < 0.16:
+			aviso.call("QUASE ENCOSTADO", "%s a %.0f cm da parede %s (nem colado, nem solto)" % [e["nome"], float(gaps[mais]) * 100.0, mais])
+	# janelas laterais tapadas por móvel alto
+	for jn in _janelas_lat:
+		var lado: String = jn[0]
+		var pj: float = jn[1]
+		var wj: float = jn[3]
+		for e in itens:
+			if float(e["ymax"]) < float(jn[2]) - float(jn[4]) / 2.0:
+				continue
+			var r4: Rect2 = rect.call(e)
+			var perto := false
+			match lado:
+				"O":
+					perto = r4.position.x < 0.5 and r4.position.y < pj + wj / 2.0 and r4.end.y > pj - wj / 2.0
+				"L":
+					perto = r4.end.x > _w - 0.5 and r4.position.y < pj + wj / 2.0 and r4.end.y > pj - wj / 2.0
+				_:
+					perto = r4.end.y > _d - 0.5 and r4.position.x < pj + wj / 2.0 and r4.end.x > pj - wj / 2.0
+			if perto:
+				aviso.call("TAPA A JANELA", "%s na janela %s (posição %.2f)" % [e["nome"], lado, pj])
+	# luzes dentro de móvel
+	for n in _g.get_children():
+		if n is OmniLight3D and (n as OmniLight3D).light_energy > 0.3:
+			var lp := (n as Node3D).position
+			for e in itens:
+				var c5: Vector3 = e["c"]
+				var sz5: Vector3 = e["sz"]
+				if absf(lp.x - c5.x) < sz5.x / 2.0 - 0.03 and absf(lp.z - c5.z) < sz5.z / 2.0 - 0.03 and lp.y > float(e["ymin"]) + 0.03 and lp.y < float(e["ymax"]) - 0.03:
+					aviso.call("LUZ DENTRO DE MÓVEL", "%s em (%.2f, %.2f, %.2f) dentro de %s" % [n.name, lp.x, lp.y, lp.z, e["nome"]])
+					break
+	# itens (coletáveis/examináveis) dentro de móvel
+	for n in _g.get_children():
+		if n is Area3D and String(n.name) != "Saida" and not String(n.name).begins_with("Examinar"):
+			var ap0 := (n as Node3D).position
+			if ap0.y < 0.02:
+				continue
+			var ap := (n as Node3D).position
+			for e in itens:
+				if bool(e.get("caido", false)):
+					continue
+				var c6: Vector3 = e["c"]
+				var sz6: Vector3 = e["sz"]
+				if absf(ap.x - c6.x) < sz6.x / 2.0 - 0.02 and absf(ap.z - c6.z) < sz6.z / 2.0 - 0.02 and ap.y > float(e["ymin"]) + 0.05 and ap.y < float(e["ymax"]) - 0.05:
+					aviso.call("ITEM DENTRO DE MÓVEL", "%s em (%.2f, %.2f, %.2f) dentro de %s" % [n.name, ap.x, ap.y, ap.z, e["nome"]])
+					break
 
 
 ## Medida de cada móvel/objeto de modelo da sala: centro, dimensões, giro e distância (em mm) até a parede mais próxima. Sai no log do bake.
@@ -444,6 +638,7 @@ func _fim() -> void:
 	if na_rua:
 		_parede_frente()
 	_decorar()
+	_auditar()
 	b._mesh_node(_g, "Mobilia", _bb.commit())
 
 
@@ -451,6 +646,7 @@ func _fim() -> void:
 ## Estilo colonial mineiro: portas-balcão altas em arco com folhas de madeira verde abertas, caixilhos e, atrás do vidro, a vista noturna do
 ## vale com a igreja e o guarda-corpo de ferro forjado.
 func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
+	_janelas_lat.append([lado, p, y, w, h])
 	var pos := Vector3.ZERO
 	var yaw := 0.0
 	var inw := 1.0                                   # sentido "para dentro da sala"
@@ -677,15 +873,16 @@ func _encostar_auto(key: String, x: float, z: float, escala := 1.0, y := 0.0, co
 ## Cama de caixas (1,0 x 2,0 m) com a cabeceira rente à parede `parede` e o lado maior perpendicular a ela.
 func _cama_enc(parede: String, ao_longo: float, colcha := "pano_azul") -> void:
 	var folga := 0.02
+	var meia := 1.06                       # meio comprimento da cama (colisão 2,1 m): a cabeceira encosta na parede sem entrar nela
 	match parede:
 		"N":
-			_cama(ao_longo, _d - folga - 1.0, 0.0, colcha)
+			_cama(ao_longo, _d - folga - meia, 0.0, colcha)
 		"S":
-			_cama(ao_longo, folga + 1.0, PI, colcha)
+			_cama(ao_longo, folga + meia, PI, colcha)
 		"O":
-			_cama(folga + 1.0, ao_longo, -PI / 2.0, colcha)
+			_cama(folga + meia, ao_longo, -PI / 2.0, colcha)
 		_:
-			_cama(_w - folga - 1.0, ao_longo, PI / 2.0, colcha)
+			_cama(_w - folga - meia, ao_longo, PI / 2.0, colcha)
 
 
 # ------------------------------------------------------------------ móveis (todos giram em torno de `yaw`)
@@ -833,7 +1030,23 @@ func _item(id: String, pos: Vector3, label: String) -> Area3D:
 
 
 ## Há uma caixa de móvel (mesa, balcão, prateleira) logo abaixo do ponto? Então o objeto já está apoiado.
+## Topos (altura) de móveis e modelos que têm (x, z) sobre a pegada deles (mesas de modelo, criados-mudos, bancos...).
+func _topos_em(x: float, z: float) -> Array[float]:
+	var r: Array[float] = []
+	for e in _pegadas():
+		if bool(e.get("caido", false)):
+			continue
+		var c: Vector3 = e["c"]
+		var sz: Vector3 = e["sz"]
+		if sz.x >= 0.25 and sz.z >= 0.25 and absf(x - c.x) <= sz.x / 2.0 and absf(z - c.z) <= sz.z / 2.0 and float(e["ymin"]) < 0.1 and float(e["ymax"]) < 1.3:
+			r.append(float(e["ymax"]))
+	return r
+
+
 func _tem_apoio(x: float, y: float, z: float) -> bool:
+	for tp in _topos_em(x, z):
+		if absf(tp - (y - 0.05)) < 0.15:
+			return true
 	for e in _bb._boxes:
 		var bb: AABB = e[1]
 		if bb.size.x < 0.3 or bb.size.z < 0.3:
@@ -847,6 +1060,10 @@ func _tem_apoio(x: float, y: float, z: float) -> bool:
 func _topo(x: float, y: float, z: float) -> float:
 	var melhor := y
 	var achou := false
+	for tp in _topos_em(x, z):
+		if tp <= y + 0.03 and tp >= y - 0.30 and (not achou or tp > melhor):
+			melhor = tp
+			achou = true
 	for e in _bb._boxes:
 		var bb: AABB = e[1]
 		if bb.size.x < 0.3 or bb.size.z < 0.3:
@@ -864,8 +1081,25 @@ func _oleo(x: float, y: float, z: float) -> void:
 	# o frasco de querosene nunca fica no ar: se há móvel embaixo (mesa, balcão), ele fica lá; se não há, vai sobre um banquinho
 	y = _topo(x, y, z) if y > 0.15 else y
 	if y > 0.15 and not _tem_apoio(x, y, z):
-		_prop("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)
-		y = 0.47
+		# sem móvel embaixo: banquinho, mas num lugar LIVRE perto (antes caía em cima de cama, barril...)
+		var achou_l := false
+		for rr: float in [0.0, 0.5, 0.8, 1.1]:
+			for ang in 8:
+				var q := Vector2(x, z) + Vector2.from_angle(float(ang) * TAU / 8.0) * rr
+				if q.x < 0.4 or q.x > _w - 0.4 or q.y < 0.4 or q.y > _d - 0.4:
+					continue
+				if not _ocupado(AABB(Vector3(q.x - 0.4, 0.0, q.y - 0.4), Vector3(0.8, 0.6, 0.8))):
+					x = q.x
+					z = q.y
+					achou_l = true
+					break
+			if achou_l:
+				break
+		if achou_l:
+			_prop("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)
+			y = 0.47
+		else:
+			y = 0.05                      # sem lugar livre para banquinho: o frasco fica no chão
 	b._coletavel(_g, "Oleo_%d" % _g.get_child_count(), Vector3(x, y, z), "oleo", 0, "Pegar querosene")
 
 
@@ -953,8 +1187,8 @@ func _sala_benedita(g: Node3D) -> void:
 	_nota(_mx(4.3), 0.85, _mz(2.7), 1, "Ler a carta de Dona Benedita")
 	_nota(_mx(5.0), 0.86, _mz(3.15), 25, "Ler o papel atrás do retrato")
 	_encostar_auto("painted_wooden_nightstand", 1.7 + 0.02 + _dim("painted_wooden_nightstand").x * 0.5, 5.9, 1.0)
-	_prop("planter_pot_clay", _mx(6.5), _mz(0.7), 0.0, 1.3, 0.0)
-	_parte("anthurium_botany_01", ["anthurium_botany_01_a"], _mx(6.5), _mz(0.7), 0.3, 0.2, 0.28)
+	_prop("planter_pot_clay", _mx(6.5), _mz(0.5), 0.0, 1.3, 0.0)
+	_parte("anthurium_botany_01", ["anthurium_botany_01_a"], _mx(6.5), _mz(0.5), 0.3, 0.2, 0.28)
 	_item("terco", Vector3(_mx(3.2), 1.07, _mz(5.55)), "Pegar o terço de Dona Benedita")
 	_oleo(_mx(6.3), 0.95, _mz(3.3))
 	_oleo(_mx(0.6), 1.4, _mz(4.2))
@@ -962,11 +1196,11 @@ func _sala_benedita(g: Node3D) -> void:
 	_examinar(_mx(3.6), 1.2, _mz(5.6), "Examinar o oratório", "O oratório tem quarenta e duas fitinhas amarradas. Quarenta e duas famílias, e nenhuma resposta.", "clink")
 	_examinar(_mx(6.0), 1.0, _mz(5.2), "Examinar o fogão", "As cinzas ainda estão mornas. Não foi Dona Benedita que acendeu o fogo. | Há uma panela com café coado, intocada. A xícara tem batom, mas a casa nunca recebeu visita.", "creak", 0.12)
 	_examinar(_mx(0.5), 1.0, _mz(2.2), "Abrir o armário", "Vestidos de luto, todos do mesmo tamanho, todos com uma flor de papel presa na gola. Dona Benedita ensaiava os velórios antes que acontecessem.", "creak")
-	_prop("wooden_bucket_01", _mx(6.4), _mz(1.2), 0.5)
+	_prop("wooden_bucket_01", _mx(5.7), _mz(0.5), 0.5)
 	_prop("wooden_stool_01", _mx(5.4), _mz(4.2), 0.3)
 	_prop_c("round_wooden_table_02", _mx(1.5), _mz(1.2), 0.0, 1.0)
 	_comida(4.95, 3.2, 0.82, "feijao", "Comer a lata de feijão")
-	_prop("watering_can_metal_01", _mx(6.4), _mz(0.9), 2.5, 1.0)
+	_prop("watering_can_metal_01", _mx(6.4), _mz(1.3), 2.5, 1.0)
 	_papelaria(_mx(1.5), _mz(1.2), 0.75, 0.3)
 	_fim()
 
@@ -990,7 +1224,7 @@ func _sala_padaria(g: Node3D) -> void:
 	_mesa(_mx(3.5), _mz(1.7), 1.4, 0.9, 0.9)
 	_saco(_mx(5.3), _mz(0.7))
 	_saco(_mx(5.6), _mz(1.2), 0.5)
-	_saco(_mx(5.2), _mz(1.7))
+	_saco(_mx(5.1), _mz(2.05))
 	_lamparina(_mx(2.0), 1.06, _mz(3.6))
 	_janela("N", _mx(3.0))
 	_nota(_mx(2.0), 1.15, _mz(2.9), 4, "Ler o recado")
@@ -1427,7 +1661,7 @@ func _sala_carpintaria(g: Node3D) -> void:
 	_prop("handsaw_wood", _mx(4.6), _mz(4.7), 1.2, 1.0, 0.94)
 	_encostar_auto("worn_metal_rack", _mx(0.5), _mz(4.2), 1.0)
 	_prop("wooden_axe_02", _mx(1.3), _mz(4.2), 0.0, 1.0, 0.0).rotation.z = 0.25
-	_prop_c("wooden_ladder", _mx(7.45), _mz(3.0), -PI / 2.0, 1.5).rotation.x = -0.18
+	_prop_c("wooden_ladder", _mx(7.45), _mz(4.5), -PI / 2.0, 1.5).rotation.x = -0.18
 	for k in 5:
 		_bb.box("madeira_natural", Vector3(2.2, 0.06, 0.28), Vector3(_mx(6.4), 0.05 + k * 0.07, _mz(5.4)))      # pilha de tábuas
 	_bb.box("madeira_natural", Vector3(0.8, 0.5, 0.8), Vector3(_mx(1.2), 0.25, _mz(1.2)))                         # cepos
@@ -1437,7 +1671,7 @@ func _sala_carpintaria(g: Node3D) -> void:
 	_nota(_mx(2.6), 0.95, _mz(4.6), 12, "Ler o bilhete do Seu Mateus")
 	_nota(_mx(4.0), 0.93, _mz(4.2), 27, "Ler a encomenda da Companhia")
 	_prop("rusted_spade_01", _mx(0.45), _mz(5.6), 0.0, 1.0, 0.0).rotation.z = 0.10
-	_prop("trowel_01", _mx(4.95), _mz(4.5), 0.7, 1.0, 0.94)
+	_prop("trowel_01", _mx(5.3), _mz(4.3), 0.7, 1.0, 0.94)
 	_oleo(_mx(6.9), 0.95, _mz(0.9))
 	_prop("watering_can_metal_01", _mx(7.2), _mz(5.2), 0.3, 1.0)
 	_comida(2.9, 4.6, 0.94, "cafe", "Beber o café")
@@ -1522,8 +1756,8 @@ func _sala_pensao(g: Node3D) -> void:
 	_mesa(_mx(3.5), _mz(5.3), 1.2, 0.7, 0.8, "madeira_escura")
 	_papelaria(_mx(3.2), _mz(5.3), 0.84, 0.4)
 	_lamparina(_mx(3.9), 0.84, _mz(5.3))
-	_janela("L", _mz(4.0))
-	_janela("O", _mz(4.0))
+	_janela("L", _mz(1.7))
+	_janela("O", _mz(1.7))
 	_nota(_mx(3.6), 0.88, _mz(5.0), 16, "Ler o livro de hóspedes")
 	_encostar_auto("painted_wooden_nightstand", _mx(2.0), _mz(5.55), 1.0)
 	_prop("vintage_lighter", _mx(3.55), _mz(5.5), 0.5, 1.0, 0.8)
@@ -1539,11 +1773,11 @@ func _sala_costureira(g: Node3D) -> void:
 	_casca("Casa da costureira", 6.0, 5.0, 2.9, "reboco_azul", "piso_mel", "forro_tabuas")
 	_mesa(_mx(3.0), _mz(3.6), 1.8, 0.9, 0.8, "madeira_natural")                           # mesa de corte
 	_bb.box("pano_rosa", Vector3(1.4, 0.03, 0.8), Vector3(_mx(3.0), 0.83, _mz(3.6)))
-	_papelaria(_mx(3.8), _mz(3.4), 0.84, 0.6)
+	_papelaria(_mx(3.4), _mz(3.4), 0.84, 0.6)
 	for k in 4:
 		_bb.cylinder(["pano_azul", "pano_rosa", "pano_cru", "listra_vermelha"][k], 0.1, 0.1, 0.8, Vector3(_mx(0.5), 0.1 + k * 0.2, _mz(1.4 + k * 0.01)), Vector3(PI / 2.0, 0, 0), 8)
 	_encostar_auto("GothicCabinet_01", _mx(1.25), _mz(4.35), 0.9)
-	_lamparina(_mx(3.0), 0.83, _mz(3.1))
+	_lamparina(_mx(3.0), 0.83, _mz(3.4))
 	_janela("L", _mz(2.0))
 	_nota(_mx(2.5), 0.88, _mz(3.5), 17, "Ler a encomenda do vestido")
 	_oleo(_mx(5.5), 0.95, _mz(1.0))
@@ -1571,7 +1805,7 @@ func _sala_deposito(g: Node3D) -> void:
 	_cont("Basket1", _mx(4.7), _mz(0.6), 0.4)
 	_cont("Jug1", _mx(4.3), _mz(1.5), 1.0)
 	_cont("Jug2", _mx(4.7), _mz(1.8), 2.0)
-	_cont("Crate2", _mx(1.5), _mz(4.4), PI / 2.0)
+	_cont("Crate2", _mx(1.5), _mz(4.15), PI / 2.0)
 	_prop_c("wooden_ladder", _mx(3.5), _mz(4.55), PI, 1.5).rotation.x = 0.18
 	_prop("watering_can_metal_01", _mx(2.5), _mz(3.8), 0.3, 1.0)
 	_lamparina(_mx(3.5), 0.01, _mz(1.2), 0.7)

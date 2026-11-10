@@ -148,7 +148,7 @@ func _blocker(parent: Node, node_name: String, size: Vector3, pos: Vector3) -> v
 	bs.size = size
 	cs.shape = bs
 	body.add_child(cs)
-	parent.add_child(body)
+	parent.add_child(body, true)            # nome legível e único (ColMesa, ColMesa2...): a auditoria das salas precisa deles
 
 
 ## Plantas de cartão (texturas geradas) que foram trocadas por modelos reais: chave antiga -> [modelos, altura-alvo em m].
