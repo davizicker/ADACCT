@@ -4442,7 +4442,11 @@ func _props_rua() -> Node3D:
 	var bar: Dictionary = _bar_spot
 	var barril := _prop(root, "wine_barrel_01", bar["pos"], 0.0, 1.0)
 	_prop_collision(barril, "cil", Vector3(0.72, 0.85, 0.72), Vector3(0, 0.43, 0))
-	_tv(root, bar["pos"] + Vector3(0, 0.86, 0), _yaw_to(bar["out"]))
+	var topo_barril := 0.86
+	if barril.has_meta("bb"):
+		var bbb: AABB = barril.get_meta("bb")
+		topo_barril = bbb.position.y + bbb.size.y            # a TV fica EM CIMA do tampo (antes afundava 34 cm no barril)
+	_tv(root, bar["pos"] + Vector3(0, topo_barril, 0), _yaw_to(bar["out"]))
 	for k in 2:
 		var sb := _spot(-1.0, 147.0 + Route.SHIFT + k * 3.0, 0.9)
 		if not _livre(sb["pos"], 0.45, true):
