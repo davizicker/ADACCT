@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/piso_taco_albedo.png" id="1_mqt1m"]
+[ext_resource type="Texture2D" path="res://assets/textures/piso_taco_normal.png" id="2_470j0"]
+
+[resource]
+albedo_texture = ExtResource("1_mqt1m")
+metallic_specular = 0.6
+roughness = 0.5
+normal_enabled = true
+normal_texture = ExtResource("2_470j0")
+uv1_scale = Vector3(2.0833335, 2.0833335, 2.0833335)
+uv1_triplanar = true
+texture_filter = 5
