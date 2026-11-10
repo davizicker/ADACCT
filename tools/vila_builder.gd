@@ -668,10 +668,11 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 			(l as Light3D).light_cull_mask = 1
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
 	# a neblina (densidade 0,03) já apaga tudo a ~100 m: não desenhar além disso economiza centenas de chamadas
-	for name in ["Casas", "MurosEQuintais", "FundoDaRua", "Ponte"]:
+	# mapa em zigue-zague: as pernas de cima ficam a 34-100 m; a neblina já apaga quase tudo a ~90 m
+	for name in ["Casas", "MurosEQuintais", "FundoDaRua", "Ponte", "MurosDasCurvas"]:
 		var n := root.get_node_or_null(name)
 		if n:
-			_set_range(n, 125.0)
+			_set_range(n, 95.0)
 	var nb := root.get_node_or_null("Becos")
 	if nb:
 		_set_range(nb, 100.0)
@@ -682,7 +683,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 			_set_range(n, 85.0)
 	var npe := root.get_node_or_null("PropsEncosta")
 	if npe:
-		_set_range(npe, 130.0)
+		_set_range(npe, 95.0)
 	_set_label_range(root, 55.0)
 	for halo in root.find_children("Halo", "MeshInstance3D", true, false):
 		(halo as GeometryInstance3D).visibility_range_end = 75.0

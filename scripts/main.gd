@@ -72,6 +72,9 @@ func _ready() -> void:
 	elif "--selftest-pulo" in args:
 		mode = "pulo"
 	var mula_case := ""
+	if mode != "" and mode != "selftest" and not "--com-imagem" in args:
+		# testes automáticos medem física e regras: sem desenhar o 3D o computador de teste (sem placa de vídeo) roda dezenas de vezes mais rápido
+		get_viewport().disable_3d = true
 	for a in args:
 		if a.begins_with("--selftest-mula="):
 			mode = "mula"
@@ -109,6 +112,8 @@ func _ready() -> void:
 			shot_stage = int(a.substr(13))
 	if mode == "shot" or mode == "escape":
 		_place_player(shot_s, shot_yaw, shot_pitch)
+	else:
+		_place_player(1.5, 0.0, 0.0)     # começo da rua no mapa atual (a posição salva na cena é de um mapa antigo)
 		if shot_lift > 0.0:
 			player.global_position.y += shot_lift
 			player.set_physics_process(false)
@@ -633,7 +638,11 @@ var _esc_leaks: Array[String] = []
 
 ## Para cada ponto da rua, anda para a esquerda e para a direita; não pode sair do corredor.
 func _escape_test(delta: float) -> void:
-	var points: Array[float] = [12.0, 30.0, 50.0, 70.0, 95.0, 120.0, 150.0, 165.0, 200.0, 232.0, 270.0, 305.0, 335.0, 360.0, 380.0]
+	var points: Array[float] = []
+	var sp := 4.0
+	while sp < Route.CHURCH_S - 2.0:      # a rua inteira, de 6 em 6 m (retas, curvas, grampos, ponte e adro)
+		points.append(sp)
+		sp += 6.0
 	var total := points.size() * 2
 	if _esc_i >= total:
 		print("[escape] pior distancia=%.1f m | vazamentos=%d %s" % [_esc_worst, _esc_leaks.size(), str(_esc_leaks)])
@@ -653,8 +662,9 @@ func _escape_test(delta: float) -> void:
 	if _esc_t > 5.0:
 		var dist := Route.dist_to_center(player.global_position)
 		_esc_worst = maxf(_esc_worst, dist)
-		if dist > 23.0:
-			_esc_leaks.append("s=%.0f lado=%d dist=%.1f" % [s, int(sigma), dist])
+		var queda := Route.height(Route.nearest_s(player.global_position)) - player.global_position.y
+		if dist > 23.0 or queda > 2.5:    # saiu da vila ou caiu de um muro/barranco (vazio)
+			_esc_leaks.append("s=%.0f lado=%d dist=%.1f queda=%.1f pos=%s" % [s, int(sigma), dist, queda, str(player.global_position.snapped(Vector3.ONE * 0.1))])
 		Input.action_release("move_forward")
 		_esc_t = 0.0
 		_esc_i += 1
