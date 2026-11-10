@@ -20,8 +20,6 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | Sala_padaria | PISCA (faces coplanares) | madeira_natural x madeira_natural eixo y (0.06 x 0.06 m) perto de (0.03, 0.97, 3.20) |
 | Sala_padaria | PISCA (faces coplanares) | madeira_natural x madeira_natural eixo y (0.06 x 0.06 m) perto de (7.97, 0.97, 3.20) |
 | Sala_padaria | PISCA (faces coplanares) | madeira_natural x madeira_verde eixo y (0.02 x 0.03 m) perto de (4.00, 0.97, 6.37) |
-| Sala_venda | ATRAVESSA | Sack1_1_049 (7.20, 4.90, y 0.00-0.65) com cardboard_box_01_057 (6.70, 5.45, y 0.00-0.34): 5 x 7 cm |
-| Sala_venda | ATRAVESSA | Sack1_1_049 (7.20, 4.90, y 0.00-0.65) com cardboard_box_01_059 (6.72, 5.45, y 0.34-0.68): 12 x 9 cm |
 | Sala_venda | PISCA (faces coplanares) | piso_taco x i_reboco_ocre eixo y (0.30 x 1.50 m) perto de (4.00, -0.10, 3.00) |
 | Sala_venda | PISCA (faces coplanares) | madeira_escura x madeira_escura eixo y (0.03 x 0.03 m) perto de (0.01, 0.50, 3.00) |
 | Sala_venda | PISCA (faces coplanares) | madeira_escura x madeira_escura eixo y (0.03 x 0.03 m) perto de (0.01, 0.50, 3.00) |
@@ -51,10 +49,6 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | Sala_casarao | ATRAVESSA | ColDivisoria10 (2.15, 3.05, y 3.75-7.60) com ColDivisoria11 (2.25, 6.10, y 3.75-7.60): 7 x 7 cm |
 | Sala_casarao | ATRAVESSA | ColDivisoria13 (5.60, 6.10, y 3.75-7.60) com ColDivisoria16 (6.50, 3.05, y 3.75-7.60): 14 x 7 cm |
 | Sala_casarao | INFO | chinese_armchair_093 solta (a 1.2 m da mesa mais próxima) |
-| Sala_casarao | CADEIRA TORTA | chinese_armchair_119 em (5.20, 1.75) olha 167° fora da mesa |
-| Sala_casarao | CADEIRA LONGE | chinese_armchair_119 a 88 cm da borda da mesa (deveria estar sob ela) |
-| Sala_casarao | CADEIRA TORTA | WoodenChair_01_131 em (7.20, 1.20) olha 52° fora da mesa |
-| Sala_casarao | QUASE ENCOSTADO | GothicCabinet_01_110 a 5 cm da parede L (nem colado, nem solto) |
 | Sala_casarao | PISCA (faces coplanares) | piso_taco x i_reboco_branco eixo y (0.30 x 0.54 m) perto de (5.00, -0.10, 4.00) |
 | Sala_casarao | PISCA (faces coplanares) | piso_taco x i_reboco_branco eixo y (0.30 x 0.96 m) perto de (5.00, -0.10, 4.00) |
 | Sala_casarao | PISCA (faces coplanares) | i_reboco_branco x piso_taco eixo y (1.75 x 0.14 m) perto de (6.50, 1.88, 0.88) |
@@ -86,18 +80,10 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | igreja | FORA DA SALA | gothic_statue_910 (9.62, 7.75) tamanho 2.35 x 2.22 |
 | igreja | FORA DA SALA | gothic_statue_912 (0.38, 13.25) tamanho 2.35 x 2.22 |
 | igreja | FORA DA SALA | gothic_statue_914 (9.62, 13.25) tamanho 2.35 x 2.22 |
-| igreja | ATRAVESSA | ColBanco_5 (2.50, 11.50, y 0.00-0.90) com ColPulpito (0.90, 12.00, y 0.00-2.90): 30 x 30 cm |
 | igreja | ATRAVESSA | anthurium_botany_04_d_909 (0.60, 7.75, y 1.10-1.15) com ColAltarLat_-1_7 (0.50, 7.75, y 0.00-1.20): 8 x 6 cm |
 | igreja | ATRAVESSA | anthurium_botany_04_d_911 (9.40, 7.75, y 1.10-1.15) com ColAltarLat_1_7 (9.50, 7.75, y 0.00-1.20): 8 x 6 cm |
-| igreja | ATRAVESSA | gothic_statue_912 (0.38, 13.25, y 1.62-4.23) com ColPulpito (0.90, 12.00, y 0.00-2.90): 110 x 41 cm |
 | igreja | ATRAVESSA | anthurium_botany_04_d_913 (0.60, 13.25, y 1.10-1.15) com ColAltarLat_-1_13 (0.50, 13.25, y 0.00-1.20): 8 x 6 cm |
-| igreja | ATRAVESSA | ColAltarLat_-1_13 (0.50, 13.25, y 0.00-1.20) com ColPulpito (0.90, 12.00, y 0.00-2.90): 65 x 35 cm |
 | igreja | ATRAVESSA | anthurium_botany_04_d_915 (9.40, 13.25, y 1.10-1.15) com ColAltarLat_1_13 (9.50, 13.25, y 0.00-1.20): 8 x 6 cm |
-| igreja | FLUTUA | gothic_statue_904 a 230 cm do chão sem apoio embaixo |
-| igreja | FLUTUA | gothic_statue_908 a 162 cm do chão sem apoio embaixo |
-| igreja | FLUTUA | gothic_statue_910 a 162 cm do chão sem apoio embaixo |
-| igreja | FLUTUA | gothic_statue_912 a 162 cm do chão sem apoio embaixo |
-| igreja | FLUTUA | gothic_statue_914 a 162 cm do chão sem apoio embaixo |
 | igreja | LUZ DENTRO DE MÓVEL | Luz em (4.38, 2.51, 20.35) dentro de gothic_statue_904 |
 | igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1267 em (5.62, 2.51, 20.35) dentro de gothic_statue_904 |
 | igreja | PISCA (faces coplanares) | pano_cru x ouro_velho eixo x (0.02 x 0.02 m) perto de (5.00, 1.73, 20.20) |
@@ -107,7 +93,7 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | igreja | PISCA (faces coplanares) | ouro_velho x ouro_velho eixo z (0.18 x 0.09 m) perto de (5.00, 2.20, 21.62) |
 | igreja | PISCA (faces coplanares) | cantaria x ouro_velho eixo z (8.60 x 0.02 m) perto de (5.00, 6.88, 21.30) |
 | igreja | PISCA (faces coplanares) | ferro x ferro eixo z (0.14 x 0.14 m) perto de (5.00, 7.30, 21.50) |
-| igreja | PISCA (faces coplanares) | madeira_verde x madeira_verde eixo x (0.06 x 0.10 m) perto de (0.06, 5.00, 5.54) |
+| igreja | PISCA (faces coplanares) | madeira_escura x cantaria eixo x (0.05 x 0.15 m) perto de (0.08, 3.30, 15.00) |
 | ferraria | PISCA (faces coplanares) | madeira_escura x madeira_escura eixo y (0.03 x 0.03 m) perto de (0.01, 0.50, 2.50) |
 | ferraria | PISCA (faces coplanares) | madeira_escura x madeira_escura eixo y (0.03 x 0.03 m) perto de (0.01, 0.50, 2.50) |
 | ferraria | PISCA (faces coplanares) | madeira_escura x madeira_escura eixo y (0.03 x 0.03 m) perto de (6.99, 0.50, 2.50) |

@@ -40,7 +40,7 @@ Gerado pelo bake (tools/interiores.gd). Medidas em metros no desenho da sala (an
 | Sala_venda | wooden | (2.700, 3.550) | 0.425 x 0.437 x 0.442 | 0.0° | sim | 2228 mm |
 | Sala_venda | wooden | (3.900, 3.550) | 0.425 x 0.437 x 0.442 | 40.1° | NÃO | 2228 mm |
 | Sala_venda | wooden | (5.100, 3.550) | 0.425 x 0.437 x 0.442 | 80.2° | NÃO | 2237 mm |
-| Sala_venda | Sack1 | (7.200, 4.900) | 0.432 x 0.654 x 0.538 | 17.2° | NÃO | 583 mm |
+| Sala_venda | Sack2 | (7.380, 4.750) | 0.344 x 0.413 x 0.299 | 17.2° | NÃO | 447 mm |
 | Sala_venda | Sack2 | (7.500, 5.400) | 0.344 x 0.413 x 0.299 | 0.0° | sim | 327 mm |
 | Sala_venda | Crate3 | (1.500, 0.650) | 0.640 x 0.640 x 0.640 | 11.5° | NÃO | 329 mm |
 | Sala_venda | Basket1 | (2.600, 0.600) | 0.510 x 0.473 x 0.510 | 0.0° | sim | 345 mm |
@@ -82,7 +82,7 @@ Gerado pelo bake (tools/interiores.gd). Medidas em metros no desenho da sala (an
 | Sala_casarao | brass | (8.300, 4.600) | 0.144 x 0.220 x 0.053 | 0.0° | sim | 1627 mm |
 | Sala_casarao | brass | (8.300, 5.300) | 0.224 x 0.459 x 0.201 | 0.0° | sim | 1588 mm |
 | Sala_casarao | brass | (8.300, 4.600) | 0.197 x 0.609 x 0.197 | 0.0° | sim | 1601 mm |
-| Sala_casarao | GothicCabinet | (9.470, 1.250) | 1.461 x 2.007 x 0.959 | -90.0° | sim | 50 mm |
+| Sala_casarao | GothicCabinet | (9.520, 1.250) | 1.461 x 2.007 x 0.959 | -90.0° | sim | 0 mm |
 | Sala_casarao | painted | (4.000, 5.500) | 0.639 x 1.264 x 0.662 | -90.0° | sim | 2180 mm |
 | Sala_casarao | painted | (3.250, 6.000) | 0.639 x 1.264 x 0.662 | 0.0° | sim | 1668 mm |
 | Sala_casarao | Sack2 | (6.100, 7.600) | 0.326 x 0.421 x 0.277 | 11.5° | NÃO | 261 mm |
@@ -102,7 +102,7 @@ Gerado pelo bake (tools/interiores.gd). Medidas em metros no desenho da sala (an
 | Sala_casarao | painted | (9.550, 5.700) | 0.505 x 0.616 x 0.509 | 180.0° | sim | 197 mm |
 | Sala_casarao | vintage | (9.500, 2.200) | 0.520 x 0.426 x 0.178 | 90.0° | sim | 410 mm |
 | Sala_casarao | vintage | (9.500, 2.950) | 0.520 x 0.426 x 0.178 | 90.0° | sim | 410 mm |
-| Sala_casarao | WoodenChair | (7.200, 1.200) | 0.344 x 1.137 x 0.330 | 45.0° | NÃO | 1028 mm |
+| Sala_casarao | WoodenChair | (7.220, 1.000) | 0.344 x 1.137 x 0.330 | 90.0° | sim | 828 mm |
 | Sala_casarao | WoodenTable | (7.750, 1.000) | 0.301 x 0.418 x 0.301 | 0.0° | sim | 849 mm |
 | Sala_casarao | wooden | (6.900, 3.600) | 1.374 x 2.063 x 0.581 | 90.0° | sim | 2809 mm |
 | Sala_casarao | painted | (9.500, 7.550) | 0.505 x 0.616 x 0.509 | 180.0° | sim | 195 mm |
