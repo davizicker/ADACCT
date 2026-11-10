@@ -187,7 +187,7 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 	fill.name = "Preenchimento"
 	fill.position = Vector3(w * 0.5, h - 0.5, d * 0.5)
 	fill.light_color = Color(1.0, 0.78, 0.55)
-	fill.light_energy = 0.75
+	fill.light_energy = 1.15
 	fill.omni_range = maxf(w, d) * 1.1
 	fill.light_specular = 0.2
 	_g.add_child(fill)
@@ -536,7 +536,7 @@ func _parede_frente() -> void:
 		var n := maxi(1, int(round((x1 - x0) / 2.3)))
 		for k in n:
 			var xc := x0 + (k + 0.5) * (x1 - x0) / n
-			if _ocupado(AABB(Vector3(xc - 0.8, 0.0, 0.0), Vector3(1.6, 3.0, 0.9))):
+			if _ocupado(AABB(Vector3(xc - 0.6, yc - 0.65, 0.0), Vector3(1.2, 1.3, 0.5))):      # só conta o que bloqueia a janela (móvel baixo embaixo dela não)
 				continue
 			jans.append({"x": xc, "y": yc, "w": JAN_W, "h": JAN_H})
 			vaos.append([xc - JAN_W * 0.43, xc + JAN_W * 0.43, yc - JAN_H * 0.44, yc + JAN_H * 0.44])
@@ -594,6 +594,7 @@ func _lamparina(x: float, y: float, z: float, energia := 0.85) -> void:
 	_prop("vintage_oil_lamp", x, z, float(int(x * 10.0 + z * 7.0) % 6) * 1.05, 0.40, y)      # lamparina de óleo de verdade (Poly Haven, CC0)
 	var l := b._lamp_light(_g, Vector3(x, y + 0.36, z), energia * 1.5)
 	l.omni_range = 8.0
+	l.shadow_blur = 2.5
 	l.shadow_enabled = true            # a lamparina projeta sombras dos móveis: o cômodo ganha volume
 	b._halo(_g, Vector3(x, y + 0.24, z), 0.9, "halo_vela")
 
