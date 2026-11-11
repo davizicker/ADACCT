@@ -90,7 +90,7 @@ func _portas() -> void:
 		var xf := c.global_transform
 		var dz := float(c.get_meta("door_z"))
 		var soleira := xf * Vector3(0.0, 0.0, dz)
-		var frente := xf * Vector3(-0.9, 0.0, dz)
+		var frente := xf * Vector3(-0.35, 0.0, dz)          # na calçada (70 cm), logo em frente da porta
 		var s := Route.nearest_s(frente)
 		# 1) degrau/buraco: chão na frente da porta x altura da soleira
 		var q := PhysicsRayQueryParameters3D.create(frente + Vector3(0, 2.0, 0), frente - Vector3(0, 3.0, 0))
