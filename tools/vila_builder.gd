@@ -910,6 +910,8 @@ func _frontage_plano(root: Node3D) -> void:
 		match String(c["tipo"]):
 			"casa", "visitavel":
 				var f := _quadro_plano(pl, c)
+				if c["tipo"] == "casa" and float(f["sm"]) > CHURCH_S - 5.0:
+					continue                     # ao lado das torres da igreja não cabe casa (a porta dava na parede da torre)
 				_entrada_atual = {}
 				if c["tipo"] == "visitavel":
 					for e in ENTRADAS:
@@ -4415,7 +4417,13 @@ func _coletaveis() -> Node3D:
 	var ri := 0
 	for rs: float in [38.0, 96.0, 130.0, 178.0, 214.0, 252.0, 286.0, 316.0, 338.0, 362.0, 386.0, 404.0]:
 		var rsig := 1.0 if ri % 2 == 0 else -1.0
-		var rp := facade(rsig, rs) - Route.right(rs) * rsig * 0.55 + Vector3(0, SW_H - 0.4, 0)      # a medalha repousa no chão (antes pairava a 52 cm)
+		var rs2 := rs
+		for off: float in [0.0, 1.2, -1.2, 2.4, -2.4, 3.6]:                 # vaga livre (antes uma caiu dentro de um banquinho)
+			if _livre(facade(rsig, rs + off) - Route.right(rs + off) * rsig * 0.35 + Vector3(0, SW_H, 0), 0.45, true):
+				rs2 = rs + off
+				break
+		var rp := facade(rsig, rs2) - Route.right(rs2) * rsig * 0.35 + Vector3(0, SW_H - 0.4, 0)      # deitada na calçada (antes ficava na beira, 12 cm acima da sarjeta)
+		_reservar(rp + Vector3(0, 0.4, 0), 0.45)
 		_coletavel(root, "Reliquia_%02d" % ri, rp, "reliquia", 0, "Pegar a medalha")
 		ri += 1
 	var notes := NOTE_PTS
