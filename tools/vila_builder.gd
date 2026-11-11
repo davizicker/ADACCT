@@ -134,7 +134,7 @@ func _add_box_collision(parent: Node, size: Vector3) -> void:
 
 
 ## Só colisão (sem malha), em posição local.
-func _blocker(parent: Node, node_name: String, size: Vector3, pos: Vector3) -> void:
+func _blocker(parent: Node, node_name: String, size: Vector3, pos: Vector3) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = node_name
 	body.position = pos
@@ -144,6 +144,7 @@ func _blocker(parent: Node, node_name: String, size: Vector3, pos: Vector3) -> v
 	cs.shape = bs
 	body.add_child(cs)
 	parent.add_child(body, true)            # nome legível e único (ColMesa, ColMesa2...): a auditoria das salas precisa deles
+	return body
 
 
 ## Plantas de cartão (texturas geradas) que foram trocadas por modelos reais: chave antiga -> [modelos, altura-alvo em m].
@@ -4025,31 +4026,39 @@ func _adornos() -> Node3D:
 		_reservar(p, 0.95)
 		_recipientes(root, p, atan2(out.x, out.z))
 		count += 1
-	# bancos no largo
-	for bs: float in [146.0 + Route.SHIFT, 156.0 + Route.SHIFT, 170.0 + Route.SHIFT]:
-		var sg := -1.0
-		var bp := facade(sg, bs) - Route.right(bs) * sg * 0.0 + Route.right(bs) * sg * 0.0
-		var out := -Route.right(bs) * sg
-		var pos := bp + out * 0.5 + Vector3(0, SW_H, 0)
+	# bancos de madeira junto às paredes (lado oposto ao bar e ao carro coberto), em vagas LIVRES da calçada e com colisão
+	for bs: float in [150.0 + Route.SHIFT, 161.0 + Route.SHIFT, 171.0 + Route.SHIFT]:
+		var spb := _spot_livre(1.0, bs, 0.5, 1.05)
+		if spb.is_empty():
+			continue
+		_reservar(spb["pos"], 1.05)
+		var out: Vector3 = spb["out"]
+		var pos: Vector3 = spb["pos"]
 		var yaw := atan2(-out.z, out.x) + PI / 2.0
 		var basis := Basis(Vector3.UP, yaw)
 		b.box("madeira_natural", Vector3(1.7, 0.07, 0.45), pos + basis * Vector3(0, 0.46, 0), Vector3(0, yaw, 0))
 		b.box("madeira_natural", Vector3(1.7, 0.4, 0.06), pos + basis * Vector3(0, 0.72, 0.2), Vector3(0, yaw, 0))
 		for lx: float in [-0.7, 0.7]:
 			b.box("cantaria", Vector3(0.12, 0.44, 0.4), pos + basis * Vector3(lx, 0.22, 0), Vector3(0, yaw, 0))
-	# carroça de mão
-	var cs := 174.0
-	var cp := facade(-1.0, cs) + Route.right(cs) * 0.9 + Vector3(0, SW_H, 0)
-	var ct := Route.tangent(cs)
-	var cyaw := atan2(-ct.z, ct.x)
-	var cb := Basis(Vector3.UP, cyaw)
-	b.box("madeira_natural", Vector3(1.6, 0.08, 0.95), cp + cb * Vector3(0, 0.62, 0), Vector3(0, cyaw, 0))
-	for sz: float in [-1.0, 1.0]:
-		b.box("madeira_natural", Vector3(1.6, 0.3, 0.05), cp + cb * Vector3(0, 0.8, sz * 0.47), Vector3(0, cyaw, 0))
-		b.cylinder("madeira_natural", 0.38, 0.38, 0.07, cp + cb * Vector3(0, 0.38, sz * 0.52), Vector3(PI / 2.0, cyaw, 0), 12)
-		b.cylinder("ferro", 0.39, 0.39, 0.05, cp + cb * Vector3(0, 0.38, sz * 0.52), Vector3(PI / 2.0, cyaw, 0), 12)
-	b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, 0.3), Vector3(0, cyaw, 0))
-	b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, -0.3), Vector3(0, cyaw, 0))
+		var colb := _blocker(root, "ColBanco_%d" % int(bs), Vector3(1.75, 0.95, 0.5), pos + Vector3(0, 0.47, 0))
+		colb.rotation.y = yaw
+	# carroça de mão estacionada numa vaga livre
+	var spc := _spot_livre(1.0, 178.0, 0.9, 1.5)
+	if not spc.is_empty():
+		_reservar(spc["pos"], 1.5)
+		var cp: Vector3 = spc["pos"]
+		var ct: Vector3 = spc["tan"]
+		var cyaw := atan2(-ct.z, ct.x)
+		var cb := Basis(Vector3.UP, cyaw)
+		b.box("madeira_natural", Vector3(1.6, 0.08, 0.95), cp + cb * Vector3(0, 0.62, 0), Vector3(0, cyaw, 0))
+		for sz: float in [-1.0, 1.0]:
+			b.box("madeira_natural", Vector3(1.6, 0.3, 0.05), cp + cb * Vector3(0, 0.8, sz * 0.47), Vector3(0, cyaw, 0))
+			b.cylinder("madeira_natural", 0.38, 0.38, 0.07, cp + cb * Vector3(0, 0.38, sz * 0.52), Vector3(PI / 2.0, cyaw, 0), 12)
+			b.cylinder("ferro", 0.39, 0.39, 0.05, cp + cb * Vector3(0, 0.38, sz * 0.52), Vector3(PI / 2.0, cyaw, 0), 12)
+		b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, 0.3), Vector3(0, cyaw, 0))
+		b.box("madeira_natural", Vector3(1.2, 0.05, 0.05), cp + cb * Vector3(-1.3, 0.55, -0.3), Vector3(0, cyaw, 0))
+		var colc := _blocker(root, "ColCarroca", Vector3(1.7, 1.0, 1.1), cp + Vector3(0, 0.5, 0))
+		colc.rotation.y = cyaw
 	_mesh_node(root, "Pecas", b.commit())
 	return root
 

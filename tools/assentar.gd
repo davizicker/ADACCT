@@ -5,6 +5,7 @@ extends RefCounted
 ## Vale para: matos, musgos, flores, folhas, seixos, cogumelos e galhos (MultiMesh), arbustos e toras das encostas,
 ## árvores das curvas, plantas da ponte e do adro, e caixotes/barris (estes só descem até o chão, nunca são removidos).
 
+const CAMADA_TERRENO := 1 << 19        # camada só do chão provisório: acha a superfície do terreno vinda de cima, mesmo com a peça enterrada
 var sp: PhysicsDirectSpaceState3D
 var _tmp: Array[Node] = []
 var rel := {"mm_assentados": 0, "mm_removidos": 0, "nos_assentados": 0, "nos_removidos": 0}
@@ -51,6 +52,7 @@ func _chao_temporario(vila: Node3D) -> void:
 				continue
 			var body := StaticBody3D.new()
 			body.name = "ChaoTmp"
+			body.collision_layer = 1 | CAMADA_TERRENO
 			var cs := CollisionShape3D.new()
 			cs.shape = m.mesh.create_trimesh_shape()
 			body.add_child(cs)
@@ -77,9 +79,15 @@ func _e_agua(col: Object) -> bool:
 	return false
 
 
-## Primeiro chão debaixo de `p` (procura de 0,8 m acima até 8 m abaixo). Retorna {} se não há nada (vazio).
+## Primeiro chão debaixo de `p`. Duas etapas: (1) a superfície do terreno vinda de 6 m acima (só a camada do terreno: acha o chão mesmo
+## se a peça estiver enterrada); (2) dali para baixo, qualquer coisa (casa, muro, rua...). Retorna {} se não há nada (vazio).
 func _chao(p: Vector3, excluir: Array[RID] = []) -> Dictionary:
-	var q := PhysicsRayQueryParameters3D.create(p + Vector3(0, 0.8, 0), p - Vector3(0, 8.0, 0))
+	var topo := p.y
+	var qt := PhysicsRayQueryParameters3D.create(p + Vector3(0, 6.0, 0), p - Vector3(0, 8.0, 0), CAMADA_TERRENO)
+	var ht := sp.intersect_ray(qt)
+	if not ht.is_empty():
+		topo = maxf(topo, (ht.position as Vector3).y)
+	var q := PhysicsRayQueryParameters3D.create(Vector3(p.x, topo + 0.8, p.z), p - Vector3(0, 8.0, 0))
 	q.hit_from_inside = true
 	q.exclude = excluir
 	return sp.intersect_ray(q)
