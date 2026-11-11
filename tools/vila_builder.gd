@@ -2779,9 +2779,9 @@ func _church_plaza() -> Node3D:
 			var ini := Route.width(sm) * 0.5 + SW + 0.45
 			var fim := PlanoVila.ADRO_RECUO + 0.2
 			if fim - ini > 0.5:
-				var t := Route.tangent(sm)
-				var c := Route.pos(sm) + Route.right(sm) * sigma * (ini + fim) * 0.5
-				var g := _group(root, "Ruela_%02d" % _n, Transform3D(Basis(t, Vector3.UP, t.cross(Vector3.UP)), Vector3(c.x, Route.height(sm) + SW_H - 0.25, c.z)))
+				var tr := Route.tangent(sm)
+				var cr := Route.pos(sm) + Route.right(sm) * sigma * (ini + fim) * 0.5
+				var g := _group(root, "Ruela_%02d" % _n, Transform3D(Basis(tr, Vector3.UP, tr.cross(Vector3.UP)), Vector3(cr.x, Route.height(sm) + SW_H - 0.25, cr.z)))
 				_n += 1
 				_box(g, "Piso", Vector3(s2r - sr + 0.05, 0.5, fim - ini), Vector3.ZERO, "pedra_chao", true)
 			sr = s2r
