@@ -45,7 +45,7 @@ func _aabb(n: Node3D) -> AABB:
 	var out := AABB()
 	var ok := false
 	for vi in n.find_children("*", "VisualInstance3D", true, false):
-		if vi is Light3D or vi is Decal or vi is GPUParticles3D or vi is Label3D:
+		if vi is Light3D or vi is Decal or vi is GPUParticles3D or vi is Label3D or String(vi.name).begins_with("Halo"):
 			continue
 		var g := vi as VisualInstance3D
 		var bb := g.global_transform * g.get_aabb()
@@ -73,7 +73,7 @@ func _anota(cat: String) -> void:
 
 func _checar_no(n: Node3D, grupo: String) -> void:
 	var nm := String(n.name)
-	if nm.begins_with("@") or nm.begins_with("Muro") or nm.begins_with("Laje") or nm.begins_with("Riacho") or nm.begins_with("Cachoeira") or nm.begins_with("Igreja") or nm.begins_with("Fios") or nm.begins_with("Quintal") or nm.begins_with("Beco") or nm.begins_with("Parapeito") or nm.begins_with("Mureta") or nm.begins_with("AdroDetalhes") or nm.begins_with("PedrasDoLeito") or nm.begins_with("Chafariz") or nm.begins_with("Varais"):
+	if nm.begins_with("@") or nm.begins_with("Muro") or nm.begins_with("Laje") or nm.begins_with("Riacho") or nm.begins_with("Cachoeira") or nm.begins_with("Igreja") or nm.begins_with("Fios") or nm.begins_with("Quintal") or nm.begins_with("Beco") or nm.begins_with("Parapeito") or nm.begins_with("Mureta") or nm.begins_with("AdroDetalhes") or nm.begins_with("PedrasDoLeito") or nm.begins_with("Chafariz") or nm.begins_with("Varais") or nm.begins_with("Ruela"):
 		return
 	if nm.begins_with("LampiaoParede") or nm.begins_with("LampiaoCurva"):
 		return            # preso na parede de propósito

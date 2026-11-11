@@ -2754,7 +2754,7 @@ func _church_plaza() -> Node3D:
 		for ss2: float in [S_END + 15.0, S_END + 36.0]:
 			var bp := Route.pos(ss2) + Route.right(ss2) * sigma2 * (Route.width(ss2) * 0.5 - 0.9)       # dentro do adro, longe da mureta
 			var bt := Route.tangent(ss2)
-			var bg := _group(root, "Banco_%d_%d" % [int(ss2), int(sigma2)], Transform3D(Basis(bt, Vector3.UP, bt.cross(Vector3.UP)), Vector3(bp.x, bp.y + SW_H, bp.z)))
+			var bg := _group(root, "Banco_%d_%d" % [int(ss2), int(sigma2)], Transform3D(Basis(bt, Vector3.UP, bt.cross(Vector3.UP)), Vector3(bp.x, bp.y, bp.z)))   # no piso do adro (não na altura da calçada)
 			var bb := _batch()
 			bb.box("cantaria", Vector3(1.9, 0.14, 0.55), Vector3(0, 0.5, 0))
 			for lx: float in [-0.75, 0.75]:
@@ -2773,17 +2773,17 @@ func _church_plaza() -> Node3D:
 	# ruelas atrás das muretas do adro: calçamento até a porta das casas que cercam a praça (antes as portas davam para o vazio)
 	for sigma: float in [-1.0, 1.0]:
 		var sr := S_END + 1.0
-		while sr < CHURCH_S + 8.0:
-			var s2r := minf(sr + 3.0, CHURCH_S + 8.0)
+		while sr < CHURCH_S - 4.0:                                # termina antes das torres da igreja
+			var s2r := minf(sr + 3.0, CHURCH_S - 4.0)
 			var sm := (sr + s2r) * 0.5
 			var ini := Route.width(sm) * 0.5 + SW + 0.45
 			var fim := PlanoVila.ADRO_RECUO + 0.2
 			if fim - ini > 0.5:
 				var tr := Route.tangent(sm)
 				var cr := Route.pos(sm) + Route.right(sm) * sigma * (ini + fim) * 0.5
-				var g := _group(root, "Ruela_%02d" % _n, Transform3D(Basis(tr, Vector3.UP, tr.cross(Vector3.UP)), Vector3(cr.x, Route.height(sm) + SW_H - 0.25, cr.z)))
+				var g := _group(root, "Ruela_%02d" % _n, Transform3D(Basis(tr, Vector3.UP, tr.cross(Vector3.UP)), Vector3(cr.x, Route.height(sm) + SW_H - 1.5, cr.z)))
 				_n += 1
-				_box(g, "Piso", Vector3(s2r - sr + 0.05, 0.5, fim - ini), Vector3.ZERO, "pedra_chao", true)
+				_box(g, "Piso", Vector3(s2r - sr + 0.05, 3.0, fim - ini), Vector3.ZERO, "pedra_chao", true)   # 3 m de espessura: vai até o terreno, sem vão embaixo
 			sr = s2r
 	return root
 

@@ -74,7 +74,7 @@ func _cruza(bb: AABB, excluir: Array[RID]) -> Array[String]:
 	for h in sp.intersect_shape(q, 16):
 		var c := h["collider"] as Node
 		var p := _caminho(c)
-		if p.begins_with("Rua/") or p.begins_with("Terreno/") or p.contains("Barreiras") or c.name == "Colisao" and p.begins_with("Rua"):
+		if p.begins_with("Rua/") or p.begins_with("Terreno/") or p.contains("/Ruela_") or p.contains("Barreiras") or c.name == "Colisao" and p.begins_with("Rua"):
 			continue
 		out.append(p)
 	return out
@@ -142,7 +142,7 @@ func _objetos() -> void:
 			if not (c is Node3D):
 				continue
 			var nm := String(c.name)
-			if nm.begins_with("@") or nm.begins_with("Mur") or nm.begins_with("Laje") or nm.begins_with("Riacho") or nm.begins_with("Igreja") or nm.begins_with("Fios") or nm.begins_with("Pedras") or nm.begins_with("AdroDetalhes") or nm.begins_with("Cachoeira") or nm.begins_with("Pecas") or nm.begins_with("Lampiao") or nm.begins_with("Col"):
+			if nm.begins_with("@") or nm.begins_with("Mur") or nm.begins_with("Laje") or nm.begins_with("Riacho") or nm.begins_with("Igreja") or nm.begins_with("Fios") or nm.begins_with("Pedras") or nm.begins_with("AdroDetalhes") or nm.begins_with("Cachoeira") or nm.begins_with("Pecas") or nm.begins_with("Lampiao") or nm.begins_with("Col") or nm.begins_with("Ruela"):
 				continue
 			var bb := _aabb(c as Node3D)
 			if bb.size == Vector3.ZERO or bb.size.x > 12.0 or bb.size.z > 12.0:
