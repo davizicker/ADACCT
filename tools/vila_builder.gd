@@ -4429,6 +4429,18 @@ func _coletaveis() -> Node3D:
 					break
 			if achou:
 				break
+		if not achou:                                                       # 2ª busca: qualquer vaga livre da calçada até 14 m dali
+			for lado2: float in [rsig, -rsig]:
+				for k in range(1, 24):
+					var off2 := (k / 2) * 1.2 * (1.0 if k % 2 == 0 else -1.0)
+					var cand2 := facade(lado2, rs + off2) - Route.right(rs + off2) * lado2 * 0.35 + Vector3(0, SW_H, 0)
+					if _livre(cand2, 0.7, true) and not _perto_de_porta(cand2, 1.2) and not _em_curva(rs + off2):
+						rs2 = rs + off2
+						rsig = lado2
+						achou = true
+						break
+				if achou:
+					break
 		var rp := facade(rsig, rs2) - Route.right(rs2) * rsig * 0.35 + Vector3(0, SW_H - 0.4, 0)      # deitada na calçada (antes ficava na beira, 12 cm acima da sarjeta)
 		_reservar(rp + Vector3(0, 0.4, 0), 0.7)
 		_coletavel(root, "Reliquia_%02d" % ri, rp, "reliquia", 0, "Pegar a medalha")
