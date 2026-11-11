@@ -4188,6 +4188,7 @@ func _nichos() -> Node3D:
 			origin.y = lxf.origin.y
 			nbasis = lxf.basis
 		var g := _group(root, "Nicho_%03d" % int(s), Transform3D(nbasis, origin))
+		_reservar(origin, 1.6)                     # frente do oratório livre (a interação "acender vela" pegava a medalha posta ali)
 		var b := _batch()
 		var variante := picked % 3
 		match variante:
@@ -4434,7 +4435,7 @@ func _coletaveis() -> Node3D:
 				for k in range(1, 24):
 					var off2 := (k / 2) * 1.2 * (1.0 if k % 2 == 0 else -1.0)
 					var cand2 := facade(lado2, rs + off2) - Route.right(rs + off2) * lado2 * 0.35 + Vector3(0, SW_H, 0)
-					if _livre(cand2, 0.7, true) and not _perto_de_porta(cand2, 1.2) and not _em_curva(rs + off2):
+					if _livre(cand2, 0.5, true) and not _perto_de_porta(cand2, 1.0):
 						rs2 = rs + off2
 						rsig = lado2
 						achou = true

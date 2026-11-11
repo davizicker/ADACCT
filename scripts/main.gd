@@ -800,6 +800,12 @@ func _test_itens(delta: float) -> void:
 					_test_state = 1
 				elif it.get("tipo") == "reliquia":
 					ok = _test_seen and (not it.visible) and missao.reliquias == _test_rel0 + 1
+					if not _test_seen:
+						var rq := PhysicsRayQueryParameters3D.create(player.cam.global_position, it.global_position + Vector3(0, 0.5, 0))
+						rq.collide_with_areas = true
+						rq.exclude = [player.get_rid()]
+						var rh := get_viewport().world_3d.direct_space_state.intersect_ray(rq)
+						print("[itens]   (raio até a medalha bate em %s; jogador em %s)" % [str((rh["collider"] as Node).get_path()) if not rh.is_empty() else "nada", str(player.global_position.snapped(Vector3.ONE * 0.1))])
 					print("[itens] %s: aviso=%s medalhas %d -> %d visivel=%s -> %s" % [it.name, str(_test_seen), _test_rel0, missao.reliquias, str(it.visible), "OK" if ok else "FALHOU"])
 					if not ok:
 						_test_fail += 1
