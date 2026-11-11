@@ -210,6 +210,12 @@ static func _apply_high_end(main: Node) -> void:
 	if pc != null:
 		pc.roughness = 0.62 if hi else 1.0
 		pc.albedo_color = Color(0.80, 0.78, 0.74) if hi else Color(0.88, 0.85, 0.8)
+	var gx := main.get_node_or_null("GraficosExtra")
+	if hi and gx == null:
+		gx = (load("res://scripts/graficos_extra.gd") as GDScript).new() as Node
+		gx.name = "GraficosExtra"
+		main.add_child(gx)
+		gx.call_deferred("configurar", cine)
 	var sd := main.get_node_or_null("SombrasDinamicas")
 	if hi:
 		if sd == null:
