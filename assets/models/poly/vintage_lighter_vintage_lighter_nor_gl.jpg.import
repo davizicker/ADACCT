@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cqyr5pk7dk2q5"
-path="res://.godot/imported/vintage_lighter_vintage_lighter_nor_gl.jpg-ab7cec420fd54d43f3835cc172c49e6a.ctex"
+path.s3tc="res://.godot/imported/vintage_lighter_vintage_lighter_nor_gl.jpg-ab7cec420fd54d43f3835cc172c49e6a.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "752646cd2c6fee3349583638dbad7f58"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/vintage_lighter_vintage_lighter_nor_gl.jpg"
-dest_files=["res://.godot/imported/vintage_lighter_vintage_lighter_nor_gl.jpg-ab7cec420fd54d43f3835cc172c49e6a.ctex"]
+dest_files=["res://.godot/imported/vintage_lighter_vintage_lighter_nor_gl.jpg-ab7cec420fd54d43f3835cc172c49e6a.s3tc.ctex"]
 
 [params]
 

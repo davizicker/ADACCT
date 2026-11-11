@@ -85,7 +85,7 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | igreja | ATRAVESSA | anthurium_botany_04_d_894 (0.60, 13.25, y 1.10-1.15) com ColAltarLat_-1_13 (0.50, 13.25, y 0.00-1.20): 8 x 6 cm |
 | igreja | ATRAVESSA | anthurium_botany_04_d_896 (9.40, 13.25, y 1.10-1.15) com ColAltarLat_1_13 (9.50, 13.25, y 0.00-1.20): 8 x 6 cm |
 | igreja | LUZ DENTRO DE MÓVEL | Luz em (4.38, 2.51, 20.35) dentro de gothic_statue_885 |
-| igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1234 em (5.62, 2.51, 20.35) dentro de gothic_statue_885 |
+| igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1240 em (5.62, 2.51, 20.35) dentro de gothic_statue_885 |
 | igreja | PISCA (faces coplanares) | pano_cru x ouro_velho eixo x (0.02 x 0.02 m) perto de (5.00, 1.73, 20.20) |
 | igreja | PISCA (faces coplanares) | ouro_velho x ouro_velho eixo z (0.04 x 0.04 m) perto de (5.00, 2.78, 20.55) |
 | igreja | PISCA (faces coplanares) | madeira_escura x madeira_escura eixo x (0.40 x 0.12 m) perto de (5.00, 3.90, 21.66) |

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://phx5x3tjl476"
-path="res://.godot/imported/dining_table_dining_table_nor_gl.jpg-451c8ac7e202ab15533f4b128868e042.ctex"
+path.s3tc="res://.godot/imported/dining_table_dining_table_nor_gl.jpg-451c8ac7e202ab15533f4b128868e042.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "0800986c47ca2819703d236119dd6a07"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/dining_table_dining_table_nor_gl.jpg"
-dest_files=["res://.godot/imported/dining_table_dining_table_nor_gl.jpg-451c8ac7e202ab15533f4b128868e042.ctex"]
+dest_files=["res://.godot/imported/dining_table_dining_table_nor_gl.jpg-451c8ac7e202ab15533f4b128868e042.s3tc.ctex"]
 
 [params]
 

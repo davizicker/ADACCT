@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnfl6vr7juq5d"
-path="res://.godot/imported/mantel_clock_01_mantel_clock_01_nor_gl.jpg-680c493754927782c400c586f553efe0.ctex"
+path.s3tc="res://.godot/imported/mantel_clock_01_mantel_clock_01_nor_gl.jpg-680c493754927782c400c586f553efe0.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "f370389349fa95c67153f033cd99e701"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/mantel_clock_01_mantel_clock_01_nor_gl.jpg"
-dest_files=["res://.godot/imported/mantel_clock_01_mantel_clock_01_nor_gl.jpg-680c493754927782c400c586f553efe0.ctex"]
+dest_files=["res://.godot/imported/mantel_clock_01_mantel_clock_01_nor_gl.jpg-680c493754927782c400c586f553efe0.s3tc.ctex"]
 
 [params]
 

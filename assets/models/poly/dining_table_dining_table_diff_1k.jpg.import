@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dirf6xyaing2o"
-path="res://.godot/imported/dining_table_dining_table_diff_1k.jpg-6081716218de2296f3f408d0c7089b41.ctex"
+path.s3tc="res://.godot/imported/dining_table_dining_table_diff_1k.jpg-6081716218de2296f3f408d0c7089b41.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "34dc0b66d8552d4eb188565c3ca5c488"
@@ -14,7 +15,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/poly/dining_table_dining_table_diff_1k.jpg"
-dest_files=["res://.godot/imported/dining_table_dining_table_diff_1k.jpg-6081716218de2296f3f408d0c7089b41.ctex"]
+dest_files=["res://.godot/imported/dining_table_dining_table_diff_1k.jpg-6081716218de2296f3f408d0c7089b41.s3tc.ctex"]
 
 [params]
 
