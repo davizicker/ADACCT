@@ -4418,12 +4418,19 @@ func _coletaveis() -> Node3D:
 	for rs: float in [38.0, 96.0, 130.0, 178.0, 214.0, 252.0, 286.0, 316.0, 338.0, 362.0, 386.0, 404.0]:
 		var rsig := 1.0 if ri % 2 == 0 else -1.0
 		var rs2 := rs
-		for off: float in [0.0, 1.2, -1.2, 2.4, -2.4, 3.6]:                 # vaga livre (antes uma caiu dentro de um banquinho)
-			if _livre(facade(rsig, rs + off) - Route.right(rs + off) * rsig * 0.35 + Vector3(0, SW_H, 0), 0.45, true):
-				rs2 = rs + off
+		var achou := false
+		for lado: float in [rsig, -rsig]:                                   # vaga livre, junto a parede de casa e longe de porta
+			for off: float in [0.0, 1.2, -1.2, 2.4, -2.4, 3.6, -3.6, 4.8, -4.8, 6.0, -6.0, 7.2, -7.2]:
+				var cand := facade(lado, rs + off) - Route.right(rs + off) * lado * 0.35 + Vector3(0, SW_H, 0)
+				if _livre(cand, 0.7, true) and _parede_de_casa(facade(lado, rs + off), 0.7) and not _perto_de_porta(cand, 1.4):
+					rs2 = rs + off
+					rsig = lado
+					achou = true
+					break
+			if achou:
 				break
 		var rp := facade(rsig, rs2) - Route.right(rs2) * rsig * 0.35 + Vector3(0, SW_H - 0.4, 0)      # deitada na calçada (antes ficava na beira, 12 cm acima da sarjeta)
-		_reservar(rp + Vector3(0, 0.4, 0), 0.45)
+		_reservar(rp + Vector3(0, 0.4, 0), 0.7)
 		_coletavel(root, "Reliquia_%02d" % ri, rp, "reliquia", 0, "Pegar a medalha")
 		ri += 1
 	var notes := NOTE_PTS
@@ -4674,8 +4681,8 @@ func _props_rua() -> Node3D:
 		_prop_collision(esc, "caixa", (esc.get_meta("bb") as AABB).size, (esc.get_meta("bb") as AABB).get_center())
 	for cfg in [[36.0, 1.0], [101.0, 1.0], [186.0, -1.0], [276.0, 1.0]]:
 		var sa2 := _spot(cfg[1], cfg[0], 0.3)
-		if not _livre(sa2["pos"], 0.4, true):
-			continue
+		if not _livre(sa2["pos"], 0.4, true) or _perto_de_sala(float(cfg[0])) or _em_curva(float(cfg[0])):
+			continue                         # machado encostado: nunca em casa visitável (atravessava a parede da sala) nem no muro da curva
 		_reservar(sa2["pos"], 0.4)
 		var machado := _prop(root, "wooden_axe_02", sa2["pos"], _yaw_to(sa2["out"]) + _rng.randf_range(-0.4, 0.4), 1.0)
 		machado.rotation.x = -0.28
