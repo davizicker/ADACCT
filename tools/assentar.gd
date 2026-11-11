@@ -156,7 +156,10 @@ func _pedras(mmi: MultiMeshInstance3D) -> void:
 		var bb := (mmi.global_transform * xl) * ab
 		var c := bb.get_center()
 		var s := Route.nearest_s(c)
-		if Route.dist_to_center(c) < Route.width(s) * 0.5 + 0.1 or _dentro_de_solido(c + Vector3(0, bb.size.y * 0.15, 0), bb.size * 0.7):
+		var bbp := bb.grow(-0.05)
+		bbp.position.y += 0.1
+		bbp.size.y = maxf(bbp.size.y - 0.1, 0.05)
+		if Route.dist_to_center(c) < Route.width(s) * 0.5 + 0.1 or (bbp.size.x > 0.02 and bbp.size.z > 0.02 and _dentro_de_solido(bbp.get_center(), bbp.size)):
 			rel["pedras_removidas"] = int(rel.get("pedras_removidas", 0)) + 1     # pedra no meio da rua ou atravessando casa/muro
 			continue
 		manter.append(xl)
@@ -175,6 +178,20 @@ func _rids(n: Node) -> Array[RID]:
 	for c in n.find_children("*", "CollisionObject3D", true, false):
 		r.append((c as CollisionObject3D).get_rid())
 	return r
+
+
+func _aabb_no(n: Node3D) -> AABB:
+	var out := AABB(n.global_position, Vector3.ZERO)
+	var ok := false
+	for vi in n.find_children("*", "VisualInstance3D", true, false):
+		if vi is Light3D or vi is Decal or vi is GPUParticles3D or vi is Label3D:
+			continue
+		var bb := (vi as VisualInstance3D).global_transform * (vi as VisualInstance3D).get_aabb()
+		if bb.size.length() > 40.0:
+			continue
+		out = bb if not ok else out.merge(bb)
+		ok = true
+	return out
 
 
 func _base(n: Node3D) -> float:
@@ -214,7 +231,11 @@ func _no(n: Node3D, grupo: String) -> void:
 		return
 	var gy: float = (h.position as Vector3).y
 	var chao_ok := _e_chao(h.collider) and not _e_agua(h.collider) and (h.normal as Vector3) != Vector3.ZERO
-	if planta and (not chao_ok or _dentro_de_solido(Vector3(p.x, gy + 0.6, p.z), Vector3(0.5, 1.0, 0.5), _rids(n))):
+	var bb_no := _aabb_no(n)
+	var deitado := nm.contains("Tora") or nm.contains("Arbusto")          # tora deitada e arbusto: vale o tamanho inteiro, não só o centro
+	var caixa_c := Vector3(bb_no.get_center().x, gy + 0.6, bb_no.get_center().z) if deitado else Vector3(p.x, gy + 0.6, p.z)
+	var caixa_t := Vector3(maxf(bb_no.size.x - 0.1, 0.3), 1.0, maxf(bb_no.size.z - 0.1, 0.3)) if deitado else Vector3(0.5, 1.0, 0.5)
+	if planta and (not chao_ok or _dentro_de_solido(caixa_c, caixa_t, _rids(n))):
 		n.get_parent().remove_child(n)
 		n.free()
 		rel["nos_removidos"] += 1          # sem chão de verdade, ou o tronco/base atravessa casa, muro ou sala

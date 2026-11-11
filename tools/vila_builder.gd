@@ -2752,7 +2752,7 @@ func _church_plaza() -> Node3D:
 	# bancos de pedra no adro (dois de cada lado) e neblina baixa em frente à igreja
 	for sigma2: float in [-1.0, 1.0]:
 		for ss2: float in [S_END + 15.0, S_END + 36.0]:
-			var bp := Route.pos(ss2) + Route.right(ss2) * sigma2 * (Route.width(ss2) * 0.5 + SW * 0.5)
+			var bp := Route.pos(ss2) + Route.right(ss2) * sigma2 * (Route.width(ss2) * 0.5 - 0.9)       # dentro do adro, longe da mureta
 			var bt := Route.tangent(ss2)
 			var bg := _group(root, "Banco_%d_%d" % [int(ss2), int(sigma2)], Transform3D(Basis(bt, Vector3.UP, bt.cross(Vector3.UP)), Vector3(bp.x, bp.y + SW_H, bp.z)))
 			var bb := _batch()
@@ -2770,11 +2770,21 @@ func _church_plaza() -> Node3D:
 		vaso.name = "VasoDaIgreja_%d" % int(sz2)
 		_plant(root, "arbusto", vp + Vector3(0, 0.45, 0), 0.0, 1.0)
 	_adro_detalhes(root, igt)
-	# palmeiras do adro
+	# ruelas atrás das muretas do adro: calçamento até a porta das casas que cercam a praça (antes as portas davam para o vazio)
 	for sigma: float in [-1.0, 1.0]:
-		for ss: float in [S_END + 8.0, S_END + 28.0]:
-			var p := Route.pos(ss) + Route.right(ss) * sigma * (Route.width(ss) * 0.5 + SW + 2.6)
-			_plant(root, "palmeira", Vector3(p.x, p.y - 0.4, p.z), _rng.randf() * TAU, _rng.randf_range(0.95, 1.2))
+		var sr := S_END + 1.0
+		while sr < CHURCH_S + 8.0:
+			var s2r := minf(sr + 3.0, CHURCH_S + 8.0)
+			var sm := (sr + s2r) * 0.5
+			var ini := Route.width(sm) * 0.5 + SW + 0.45
+			var fim := PlanoVila.ADRO_RECUO + 0.2
+			if fim - ini > 0.5:
+				var t := Route.tangent(sm)
+				var c := Route.pos(sm) + Route.right(sm) * sigma * (ini + fim) * 0.5
+				var g := _group(root, "Ruela_%02d" % _n, Transform3D(Basis(t, Vector3.UP, t.cross(Vector3.UP)), Vector3(c.x, Route.height(sm) + SW_H - 0.25, c.z)))
+				_n += 1
+				_box(g, "Piso", Vector3(s2r - sr + 0.05, 0.5, fim - ini), Vector3.ZERO, "pedra_chao", true)
+			sr = s2r
 	return root
 
 
@@ -4040,8 +4050,8 @@ func _adornos() -> Node3D:
 	while count < 80 and tries < 700:
 		tries += 1
 		var s := _rng.randf_range(10.0, S_END - 8.0)
-		if absf(s - Route.BRIDGE_S) < 8.0 or Route.width(s) < 4.4:
-			continue
+		if absf(s - Route.BRIDGE_S) < 8.0 or Route.width(s) < 4.4 or _em_curva(s):
+			continue                     # nas curvas a beira é o muro de arrimo e as árvores: caixote ali atravessava os dois
 		var sigma := -1.0 if _rng.randf() < 0.5 else 1.0
 		var base := facade(sigma, s) - Route.right(s) * sigma * 0.4 + Vector3(0, SW_H, 0)
 		var out := -Route.right(s) * sigma
@@ -4533,6 +4543,19 @@ func no_rio(p: Vector3, folga: float) -> bool:
 	return dw < 4.6 + folga and tl < 96.0 and p.y < _rio_c.y - 2.0 + RIO_DECLIVE * maxf(tl - 8.0, 0.0) + (RIO_QUEDA_H if d.x * _rio_r.x + d.y * _rio_r.z > RIO_QUEDA_T else 0.0)
 
 
+## Trecho em curva (a "fachada" ali é o muro de arrimo, não parede de casa).
+func _em_curva(s: float) -> bool:
+	return Route.tangent(s - 1.5).angle_to(Route.tangent(s + 1.5)) > 0.03
+
+
+## Perto de casa visitável (a parede da frente é a parede da sala por dentro: nada pode encostar nela por fora).
+func _perto_de_sala(s: float, r := 7.5) -> bool:
+	for sid in _entradas_feitas:
+		if absf(float(_entradas_feitas[sid]) - s) < r:
+			return true
+	return false
+
+
 func _spot_livre(sigma: float, s: float, d: float, r: float) -> Dictionary:
 	for off: float in [0.0, 1.1, -1.1, 2.2, -2.2, 3.3, -3.3, 4.4, -4.4, 5.5, -5.5, 6.6, -6.6, 7.7, -7.7]:
 		var sp := _spot(sigma, s + off, d)
@@ -4635,7 +4658,7 @@ func _props_rua() -> Node3D:
 		if Route.width(cfg[0]) < 4.6:        # rua estreita: a escada (0,8 m de fundo) invadiria o corredor de passagem
 			continue
 		var sl := _spot(cfg[1], cfg[0], 0.55)
-		if not _livre(sl["pos"], 0.7, true) or not _parede_de_casa(facade(float(cfg[1]), float(cfg[0])), 0.7):
+		if not _livre(sl["pos"], 0.7, true) or not _parede_de_casa(facade(float(cfg[1]), float(cfg[0])), 0.7) or _perto_de_sala(float(cfg[0])):
 			continue                         # escada só encostada em parede de casa (na curva ela atravessava o muro de arrimo)
 		_reservar(sl["pos"], 0.7)
 		var esc := _prop(root, "wooden_ladder", sl["pos"], _yaw_to(sl["out"]), 1.6)
