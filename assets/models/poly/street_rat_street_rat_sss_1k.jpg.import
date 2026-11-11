@@ -18,7 +18,7 @@ dest_files=["res://.godot/imported/street_rat_street_rat_sss_1k.jpg-b88711ee74f6
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

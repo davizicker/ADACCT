@@ -18,7 +18,7 @@ dest_files=["res://.godot/imported/vintage_lighter_vintage_lighter_diff-vintage_
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

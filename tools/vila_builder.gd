@@ -3669,7 +3669,7 @@ func _lot_ponte(parent: Node3D, f: Dictionary, sigma: float) -> void:
 	_mesh_node(g, "Pilares", pb.commit())
 	for end: float in [-1.0, 1.0]:                                           # lampião aceso em cada pilar: a água embaixo aparece
 		var dy2: float = tan(ang) * end * (w / 2.0 - 0.1)
-		var lan := _prop(g, "Lantern_01", Vector3(0.2, 1.78 + dy2, end * (w / 2.0 - 0.1)), _rng.randf() * TAU, 1.0)
+		var lan := _prop(g, "Lantern_01", Vector3(0.2, 1.84 + dy2, end * (w / 2.0 - 0.1)), _rng.randf() * TAU, 1.0)     # pousado no topo da bola do pilar
 		_lamp_light(lan, Vector3(0, 0.13, 0), 0.9).omni_range = 9.0
 		_halo(lan, Vector3(0, 0.13, 0), 1.0, "halo_vela")
 

@@ -1207,7 +1207,7 @@ func _oleo(x: float, y: float, z: float) -> void:
 			if achou_l:
 				break
 		if achou_l:
-			_prop("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)
+			_prop_c("WoodenTable_02", x, z, float(int(x * 13.0 + z * 7.0) % 6), 1.0, 0.0)      # com colisão: o jogador não atravessa a mesinha
 			y = 0.47
 		else:
 			y = 0.05                      # sem lugar livre para banquinho: o frasco fica no chão
