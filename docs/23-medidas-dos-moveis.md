@@ -211,11 +211,11 @@ Gerado pelo bake (tools/interiores.gd). Medidas em metros no desenho da sala (an
 | deposito | Sack1 | (6.400, 3.700) | 0.432 x 0.654 x 0.538 | 0.0° | sim | 383 mm |
 | deposito | can | (3.000, 4.500) | 0.174 x 0.212 x 0.174 | 17.2° | NÃO | 412 mm |
 | deposito | Crate3 | (2.400, 0.600) | 0.603 x 0.662 x 0.603 | 5.7° | NÃO | 298 mm |
-| deposito | Crate3 | (2.400, 0.600) | 0.543 x 0.596 x 0.543 | 28.6° | NÃO | 328 mm |
+| deposito | Crate3 | (2.400, 0.600) | 0.576 x 0.576 x 0.576 | 28.6° | NÃO | 311 mm |
 | deposito | Crate1 | (3.600, 0.650) | 0.655 x 0.282 x 0.430 | 0.0° | sim | 434 mm |
 | deposito | Basket1 | (4.700, 0.600) | 0.517 x 0.320 x 0.517 | 22.9° | NÃO | 341 mm |
 | deposito | Jug1 | (4.300, 1.500) | 0.334 x 0.411 x 0.273 | 57.3° | NÃO | 1332 mm |
-| deposito | Jug2 | (4.700, 1.800) | 0.313 x 0.401 x 0.200 | 114.6° | NÃO | 1643 mm |
+| deposito | Jug2 | (4.700, 1.800) | 0.256 x 0.385 x 0.200 | 114.6° | NÃO | 1671 mm |
 | deposito | Crate2 | (1.500, 4.150) | 1.251 x 0.497 x 0.603 | 90.0° | sim | 224 mm |
 | deposito | wooden | (3.500, 4.550) | 1.439 x 2.002 x 0.750 | 180.0° | sim | 74 mm |
 | deposito | watering | (2.500, 3.800) | 0.191 x 0.197 x 0.452 | 17.2° | NÃO | 973 mm |

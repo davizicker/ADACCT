@@ -4383,13 +4383,13 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 		b.cylinder("madeira_natural", 0.04, 0.036, 0.05, Vector3(0, 0.38, 0), Vector3.ZERO, 8)    # rolha
 		_halo(a, Vector3(0, 0.22, 0), 0.7, "halo_vela")
 	elif tipo == "reliquia":
-		# medalha da Irmandade: disco de latão com borda e cruz em relevo, de pé, com um brilho quente
-		b.cylinder("ouro_velho", 0.10, 0.10, 0.025, Vector3(0, 0.62, 0), Vector3(PI / 2.0, 0, 0), 24)
-		b.cylinder("cantaria_ocre", 0.075, 0.075, 0.03, Vector3(0, 0.62, 0), Vector3(PI / 2.0, 0, 0), 24)
-		b.box("ouro_velho", Vector3(0.018, 0.10, 0.034), Vector3(0, 0.62, 0))
-		b.box("ouro_velho", Vector3(0.060, 0.018, 0.034), Vector3(0, 0.64, 0))
-		b.cylinder("ouro_velho", 0.012, 0.012, 0.04, Vector3(0, 0.74, 0), Vector3(PI / 2.0, 0, 0), 12)
-		_halo(a, Vector3(0, 0.62, 0), 0.9, "halo_vela")
+		# medalha da Irmandade: disco de latão com borda e cruz em relevo, de pé APOIADA na calçada (antes 12 cm no ar), com um brilho quente
+		b.cylinder("ouro_velho", 0.10, 0.10, 0.025, Vector3(0, 0.505, 0), Vector3(PI / 2.0, 0, 0), 24)
+		b.cylinder("cantaria_ocre", 0.075, 0.075, 0.03, Vector3(0, 0.505, 0), Vector3(PI / 2.0, 0, 0), 24)
+		b.box("ouro_velho", Vector3(0.018, 0.10, 0.034), Vector3(0, 0.505, 0))
+		b.box("ouro_velho", Vector3(0.060, 0.018, 0.034), Vector3(0, 0.525, 0))
+		b.cylinder("ouro_velho", 0.012, 0.012, 0.04, Vector3(0, 0.625, 0), Vector3(PI / 2.0, 0, 0), 12)
+		_halo(a, Vector3(0, 0.505, 0), 0.9, "halo_vela")
 	else:
 		var dia := _prop(a, "binder_notebook", Vector3.ZERO, _rng.randf_range(-0.8, 0.8), 0.85)
 		dia.name = "Diario"

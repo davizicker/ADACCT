@@ -772,7 +772,7 @@ func _test_itens(delta: float) -> void:
 			player.global_position = Vector3(from.x, base_y, from.z)
 			player.velocity = Vector3.ZERO
 			player.cam.position.y = Player.STAND_H     # câmera já na altura de pé (a suavização leva um tempo)
-			var d := it.global_position + Vector3(0, 0.3, 0) - player.cam.global_position
+			var d := it.global_position + Vector3(0, 0.5 if it.get("tipo") == "reliquia" else 0.3, 0) - player.cam.global_position     # mira no centro da medalha
 			player.rotation.y = atan2(-d.x, -d.z)
 			player.cam.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
 			_hint = ""
