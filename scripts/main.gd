@@ -77,7 +77,7 @@ func _ready() -> void:
 		if a.begins_with("--selftest-mula="):
 			mode = "mula"
 			mula_case = a.substr(16)
-	if mode != "" and mode != "selftest" and not "--com-imagem" in args:
+	if mode != "" and not "--com-imagem" in args:
 		# testes automáticos medem física e regras: sem desenhar o 3D o computador de teste (sem placa de vídeo) roda dezenas de vezes mais rápido
 		get_viewport().disable_3d = true
 	for a in args:
