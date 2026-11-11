@@ -641,6 +641,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 		_salas_rua[sid] = _interiores.sala_rua(self, sid)
 	_rng.state = rng_antes
 	_frontage_plano(root)
+	_numerar_portas(root)
 	_tira_plantas_dentro_das_casas(root)
 	_aterra_plantas(root)
 	root.add_child(Realismo.new().vidros_e_plantas(self, root))
@@ -863,6 +864,29 @@ func _quadro_plano(pl: PlanoVila, c: Dictionary) -> Dictionary:
 	var x_axis := Vector3(n.x, 0.0, n.y)
 	var basis := Basis(x_axis, Vector3.UP, x_axis.cross(Vector3.UP))
 	return {"xf": Transform3D(basis, Vector3(m.x, Route.height(sm) + SW_H, m.y)), "w": float(c["w"]), "sm": sm}
+
+
+## Números das portas como numa rua de verdade: ímpares do lado esquerdo e pares do direito, crescendo da entrada até a igreja.
+func _numerar_portas(root: Node3D) -> void:
+	var casas := root.get_node_or_null("Casas")
+	if casas == null:
+		return
+	var lados := {-1.0: [], 1.0: []}
+	for c in casas.get_children():
+		var lab := (c as Node3D).get_node_or_null("Numero") as Label3D
+		if lab == null or not c.has_meta("door_z"):
+			continue
+		var porta: Vector3 = (c as Node3D).transform * Vector3(-0.9, 0.0, float(c.get_meta("door_z")))
+		var s := Route.nearest_s(porta)
+		var lado := -1.0 if Route.right(s).dot(porta - Route.pos(s)) < 0.0 else 1.0
+		lados[lado].append([s, lab])
+	for ld in lados:
+		var arr: Array = lados[ld]
+		arr.sort_custom(func(a: Array, b: Array) -> bool: return float(a[0]) < float(b[0]))
+		var n := 1 if ld < 0.0 else 2
+		for e in arr:
+			(e[1] as Label3D).text = str(n)
+			n += 2
 
 
 func _frontage_plano(root: Node3D) -> void:

@@ -117,6 +117,8 @@ func _mm(mmi: MultiMeshInstance3D) -> void:
 		if usa_cor:
 			cores.append(mm.get_instance_color(i))
 	if manter.size() == mm.instance_count:
+		for i in manter.size():                    # nada removido: só grava as alturas corrigidas
+			mm.set_instance_transform(i, manter[i])
 		return
 	mm.instance_count = 0
 	mm.instance_count = manter.size()
