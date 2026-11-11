@@ -13,6 +13,7 @@ const FUNDO_MIN := 5.0
 const BECO_L := 3.4            # largura útil dos becos-escada
 const BECO_PAREDE := 0.45
 const X_PONTE := 37.5           # ponte sobre o córrego, no meio da 1ª perna
+const ADRO_RECUO := 14.5         # distância do eixo até a frente das casas que cercam o adro (largura 20 + calçada + palmeiras)
 const FINAL_L := 60.0           # reta final: fim do casario e o adro da igreja
 
 ## Pernas: [x0, x1, z] (andam ao longo de x). A entrada e o fim andam ao longo de z.
@@ -179,7 +180,10 @@ func _quadro_lote(pc: Dictionary, lado: float) -> Dictionary:
 	var b: Vector2 = pc["b"]
 	var t := (b - a).normalized()
 	var n := Vector2(-t.y, t.x) * lado              # normal para o lado do lote
-	return {"a": a, "b": b, "t": t, "n": n, "frente": LARG_RUA * 0.5 + CALCADA}
+	var frente := LARG_RUA * 0.5 + CALCADA
+	if pc == pecas[pecas.size() - 1]:
+		frente = ADRO_RECUO               # reta final = adro da igreja (20 m de largura, muretas e palmeiras): as casas ficam atrás dele
+	return {"a": a, "b": b, "t": t, "n": n, "frente": frente}
 
 
 ## Retângulo (alinhado) de um lote: começa em `u` ao longo da reta, largura `w`, profundidade `d`.

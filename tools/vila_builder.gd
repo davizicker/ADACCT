@@ -1102,6 +1102,7 @@ func _curvas_plano(root: Node3D) -> void:
 				if lado > 0.0 and k % 5 == 1:                                                     # árvore além do muro
 					var pa := c + Vector2(cos(tm), sin(tm)) * (rr + 2.5)
 					_plant(g, "arvore_%d" % (k % 3), Vector3(pa.x, terrain_h(pa.x, pa.y) - 0.1, pa.y), _rng.randf() * TAU, 1.0)
+					_reservar(Vector3(pa.x, terrain_h(pa.x, pa.y), pa.y), 1.2)        # tronco reservado: barril e jarro não vão para dentro dele
 	_mesh_node(g, "Muros", b.commit())
 
 
@@ -4029,9 +4030,9 @@ func _adornos() -> Node3D:
 		var sn: float = n[0]
 		_reservar(facade(float(n[1]), sn) - Route.right(sn) * float(n[1]) * 0.4 + Vector3(0, SW_H, 0), 1.5)
 	# lugar do bar da TV (barril + TV + banquinhos): reservado antes dos barris e caixotes, para nada ficar dentro dele
-	_bar_spot = _spot_livre(-1.0, 148.5 + Route.SHIFT, 0.55, 1.4)
+	_bar_spot = _spot_livre(-1.0, 144.0 + Route.SHIFT, 0.55, 1.4)      # longe do poste de luz de s=150 (antes a TV e o barril atravessavam o poste)
 	if _bar_spot.is_empty():
-		_bar_spot = _spot(-1.0, 148.5 + Route.SHIFT, 0.55)
+		_bar_spot = _spot(-1.0, 144.0 + Route.SHIFT, 0.55)
 	_reservar(_bar_spot["pos"], 1.4)
 	# barris e caixotes junto às paredes
 	var count := 0
@@ -4157,6 +4158,12 @@ func _nichos() -> Node3D:
 		if s < 20.0 or s > S_END - 10.0 or s - last_s < 38.0:
 			continue
 		if absf(s - Route.BRIDGE_S) < 12.0:
+			continue
+		var junto_de_sala := false                 # casa visitável ao lado: o oratório atravessaria a parede da sala por dentro
+		for sid in _entradas_feitas:
+			if absf(float(_entradas_feitas[sid]) - s) < 7.5:
+				junto_de_sala = true
+		if junto_de_sala:
 			continue
 		var sigma: float = j["sigma"]
 		var x_axis := Route.right(s) * sigma
@@ -4628,8 +4635,8 @@ func _props_rua() -> Node3D:
 		if Route.width(cfg[0]) < 4.6:        # rua estreita: a escada (0,8 m de fundo) invadiria o corredor de passagem
 			continue
 		var sl := _spot(cfg[1], cfg[0], 0.55)
-		if not _livre(sl["pos"], 0.7, true):
-			continue
+		if not _livre(sl["pos"], 0.7, true) or not _parede_de_casa(facade(float(cfg[1]), float(cfg[0])), 0.7):
+			continue                         # escada só encostada em parede de casa (na curva ela atravessava o muro de arrimo)
 		_reservar(sl["pos"], 0.7)
 		var esc := _prop(root, "wooden_ladder", sl["pos"], _yaw_to(sl["out"]), 1.6)
 		esc.rotation.x = -0.2

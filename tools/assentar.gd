@@ -21,8 +21,11 @@ func rodar(vila: Node3D, tree: SceneTree) -> Dictionary:
 		var d := vila.get_node_or_null(dn)
 		if d:
 			for mmi in d.find_children("*", "MultiMeshInstance3D", true, false):
-				if String(mmi.name).begins_with("Rochas") or String(mmi.name).begins_with("Pocas"):
-					continue                       # pedras ficam meio enterradas de propósito; poças são decalque da rua
+				if String(mmi.name).begins_with("Pocas"):
+					continue                       # poças são decalque da rua
+				if String(mmi.name).begins_with("Rochas"):
+					_pedras(mmi as MultiMeshInstance3D)   # pedras ficam meio enterradas de propósito: só saem as que atravessam casa/muro
+					continue
 				_mm(mmi as MultiMeshInstance3D)
 	for gn in ["PropsEncosta", "MurosDasCurvas", "Ponte", "Adro", "Adornos", "Props"]:
 		var g := vila.get_node_or_null(gn)
@@ -128,6 +131,43 @@ func _mm(mmi: MultiMeshInstance3D) -> void:
 			mm.set_instance_color(i, cores[i])
 
 
+## Algum corpo sólido (casa, muro, sala, poste...) dentro da caixa? O chão (terreno, rua, rampa) não conta.
+func _dentro_de_solido(centro: Vector3, tam: Vector3, excluir: Array[RID] = []) -> bool:
+	var box := BoxShape3D.new()
+	box.size = tam
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = box
+	q.transform = Transform3D(Basis.IDENTITY, centro)
+	q.exclude = excluir
+	for h in sp.intersect_shape(q, 8):
+		if not _e_chao(h["collider"]):
+			return true
+	return false
+
+
+func _pedras(mmi: MultiMeshInstance3D) -> void:
+	var mm := mmi.multimesh
+	if mm == null or mm.instance_count == 0 or mm.mesh == null:
+		return
+	var ab := mm.mesh.get_aabb()
+	var manter: Array[Transform3D] = []
+	for i in mm.instance_count:
+		var xl := mm.get_instance_transform(i)
+		var bb := (mmi.global_transform * xl) * ab
+		var c := bb.get_center()
+		var s := Route.nearest_s(c)
+		if Route.dist_to_center(c) < Route.width(s) * 0.5 + 0.1 or _dentro_de_solido(c + Vector3(0, bb.size.y * 0.15, 0), bb.size * 0.7):
+			rel["pedras_removidas"] = int(rel.get("pedras_removidas", 0)) + 1     # pedra no meio da rua ou atravessando casa/muro
+			continue
+		manter.append(xl)
+	if manter.size() == mm.instance_count:
+		return
+	mm.instance_count = 0
+	mm.instance_count = manter.size()
+	for i in manter.size():
+		mm.set_instance_transform(i, manter[i])
+
+
 func _rids(n: Node) -> Array[RID]:
 	var r: Array[RID] = []
 	if n is CollisionObject3D:
@@ -174,10 +214,10 @@ func _no(n: Node3D, grupo: String) -> void:
 		return
 	var gy: float = (h.position as Vector3).y
 	var chao_ok := _e_chao(h.collider) and not _e_agua(h.collider) and (h.normal as Vector3) != Vector3.ZERO
-	if planta and not chao_ok:
+	if planta and (not chao_ok or _dentro_de_solido(Vector3(p.x, gy + 0.6, p.z), Vector3(0.5, 1.0, 0.5), _rids(n))):
 		n.get_parent().remove_child(n)
 		n.free()
-		rel["nos_removidos"] += 1
+		rel["nos_removidos"] += 1          # sem chão de verdade, ou o tronco/base atravessa casa, muro ou sala
 		return
 	if solto and not chao_ok:
 		return                                   # caixote em cima de outro caixote/mureta: fica
