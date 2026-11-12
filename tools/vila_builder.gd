@@ -159,6 +159,7 @@ var _alt_real := {}
 var rb2_beiral: Array = []
 var _kit2 := false               # casa em construção usa o kit 2 (sacadas de ferro, guilhotina, grades, porta com bandeira...)
 var _pisca_fachada: Array[String] = []   # faces coplanares (piscam) achadas nas fachadas durante o bake
+var _mod_atual: Array = []      # módulos do kit postos na casa em construção: [nome, Transform3D local] (vão para a planta)
 var _vaos_atual: Array = []     # vãos (janelas/portas) da fachada em construção: {z, peitoril, topo, w, porta} — usados pelos detalhes de parede
 var _jan_atual: Array = []      # painéis de vidro da casa em construção: {pos, size, lit} (locais da casa)
 var _pl_atual: Array = []       # plantas de janela da casa em construção: {pos, tipo, esc}
@@ -1315,6 +1316,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	rb2_beiral = []
 	_jan_atual = []
 	_vaos_atual = []
+	_mod_atual = []
 	_pl_atual = []
 	var fh := 4.0
 	var up := 3.4
@@ -1376,10 +1378,10 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var ncor := maxi(1, int(ceil(w)))
 	for k in ncor:
 		var zc := -w / 2.0 + (k + 0.5) * w / ncor
-		b.malha(Kit.mesh("cornija_1m"), Kit.fachada(Vector3(0.0, height - 0.2, zc), Vector3(w / ncor, 1.0, 1.0)))      # cornija com dentículos
+		_modulo(b, "cornija_1m", Kit.fachada(Vector3(0.0, height - 0.2, zc), Vector3(w / ncor, 1.0, 1.0)))      # cornija com dentículos
 	for k in int(w / 0.9):
 		var z := -w / 2.0 + 0.5 + k * 0.9
-		b.malha(Kit.mesh("cachorro_beiral"), Kit.fachada(Vector3(0.0, height - 0.04, z)), {"madeira": "madeira_natural"})   # cachorros do beiral
+		_modulo(b, "cachorro_beiral", Kit.fachada(Vector3(0.0, height - 0.04, z)), {"madeira": "madeira_natural"})   # cachorros do beiral
 	if floors >= 2 and _rng.randf() < 0.5:
 		b.box("cantaria", Vector3(0.18, 0.16, w + 0.1), Vector3(-0.07, fh - 0.2, 0))           # cordão
 	if _rng.randf() < 0.55:
@@ -1400,6 +1402,9 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	c.set_meta("door_z", dz)
 	c.set_meta("altura", height)
 	c.set_meta("vaos", _vaos_atual)
+	c.set_meta("modulos", _mod_atual)
+	c.set_meta("largura", w)
+	c.set_meta("andares", floors)
 	# embasamento de pedra em dois trechos: o vão da porta fica livre (antes o muro de 1,1 m tapava a parte de baixo da porta)
 	var vao := 1.15
 	var z_ini := -w / 2.0 - 0.05
@@ -1440,9 +1445,9 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
 	else:
 		if _kit2 and sala == null and _rng_f.randf() < 0.5:
-			pb.malha(Kit.mesh("porta_bandeira"), Kit.fachada(Vector3(0.0, 0.0, dz)), {"madeira": wood_porta})          # porta de uma folha com bandeira em arco
+			_modulo(pb, "porta_bandeira", Kit.fachada(Vector3(0.0, 0.0, dz)), {"madeira": wood_porta})          # porta de uma folha com bandeira em arco
 		else:
-			pb.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
+			_modulo(pb, "porta_dupla", Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
 	if arched:
 		pb.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
 	var dn := 1.25 if not arched else 1.15
@@ -1490,12 +1495,12 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if not bal_cols.is_empty() and not simple:
 		if _kit2:
 			for bi in bal_cols:                                                       # uma sacada de ferro forjado em cada porta-balcão
-				b.malha(Kit.mesh("sacada_ferro"), Kit.fachada(Vector3(0.0, fh, col_z[bi])))
+				_modulo(b, "sacada_ferro", Kit.fachada(Vector3(0.0, fh, col_z[bi])))
 		else:
 			_balcony(b, col_z[bal_cols[0]] - 0.95, col_z[bal_cols[bal_cols.size() - 1]] + 0.95, fh, wood)
 	if not simple and _rng.randf() < 0.4:
 		var chz := _rng.randf_range(-w * 0.3, w * 0.3)
-		b.malha(Kit.mesh("chamine"), Transform3D(Basis.IDENTITY, Vector3(depth / 2.0 - 0.2, height + rise - 0.55, chz)))      # chaminé de pedra do kit (embute no telhado)
+		_modulo(b, "chamine", Transform3D(Basis.IDENTITY, Vector3(depth / 2.0 - 0.2, height + rise - 0.55, chz)))      # chaminé de pedra do kit (embute no telhado)
 		if _rng.randf() < 0.4:
 			c.add_child(Realismo.fumaca(Vector3(depth / 2.0 - 0.2, height + rise + 1.15, chz)))
 	if haunted and floors >= 2:
@@ -1507,7 +1512,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		if _kit2:                                                                     # cunhal do kit 2: blocos com bisel e desgaste
 			var ky := 0.0
 			while ky < height - 0.9:
-				b.malha(Kit.mesh("cunhal_1m"), Kit.fachada(Vector3(0.0, ky, qz * (w / 2.0 - 0.26))))
+				_modulo(b, "cunhal_1m", Kit.fachada(Vector3(0.0, ky, qz * (w / 2.0 - 0.26))))
 				ky += 1.0
 			continue
 		var qy := 0.25
@@ -1522,7 +1527,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		var ez := -w / 2.0 + 0.5
 		while ez <= w / 2.0 - 0.5:
 			if absf(ez - dz) > 1.3:
-				b.malha(Kit.mesh("embasamento_1m"), Kit.fachada(Vector3(-0.26, 0.12, ez)))
+				_modulo(b, "embasamento_1m", Kit.fachada(Vector3(-0.26, 0.12, ez)))
 			ez += 1.0
 		var tz := -w / 2.0 + 0.5
 		while tz <= w / 2.0 - 0.45:
@@ -1608,7 +1613,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	for fl in b.floating(solidos):
 		_flutuando.append("casa w=%.1f: %s" % [w, fl])
 	for tz2 in rb2_beiral:                                                            # beiral de telhas na beira da frente
-		b.malha(Kit.mesh("beiral_telhas"), Kit.fachada(Vector3(-0.5, height + 0.17, float(tz2))))
+		_modulo(b, "beiral_telhas", Kit.fachada(Vector3(-0.5, height + 0.17, float(tz2))))
 	if not simple:
 		_fundos_e_laterais(c, w, depth, height, floors, fh, wood, sala != null)
 	c.set_meta("fundo", depth)
@@ -1706,6 +1711,12 @@ func _parede_detalhes(b: MeshBatch, largura: float, height: float, fundos: bool)
 		b.box("ferro", Vector3(0.10, 0.08, largura + 0.2), Vector3(-0.45, height + 0.06, 0.0))         # calha
 		var dz := (largura * 0.5 - 0.12) * (1.0 if _rng.randf() < 0.5 else -1.0)
 		b.box("ferro", Vector3(0.08, height + 0.2, 0.08), Vector3(-0.17, height * 0.5 - 0.05, dz))       # condutor até o chão (na frente do cunhal)
+
+
+## Põe um módulo do kit no lote E registra (nome + posição exata) na ficha da casa, para a planta e a conferência dos módulos.
+func _modulo(lote: MeshBatch, nome: String, xf: Transform3D, mapa := {}) -> void:
+	lote.malha(Kit.mesh(nome), xf, mapa)
+	_mod_atual.append([nome, xf])
 
 
 ## Casca externa de uma casa visitável: lâminas finas por FORA das paredes da sala (a parede interna é a da sala). A frente tem o vão da porta
@@ -2082,19 +2093,19 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 	var base_y := p.y - hgt / 2.0
 	if door and _kit2:
 		# porta-balcão do kit 2: almofadas embaixo, vidro em cima (o vidro com a sala atrás entra como painel)
-		b.malha(Kit.mesh("porta_balcao"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.1, hgt / 2.4, 1.0)), {"madeira": wood})
+		_modulo(b, "porta_balcao", Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.1, hgt / 2.4, 1.0)), {"madeira": wood})
 		if not real:
 			_jan_atual.append({"pos": Vector3(-0.012, base_y + hgt * (0.85 + 1.55 * 0.5) / 2.4, p.z), "size": Vector2(wid * 0.85, hgt * 1.5 / 2.4), "lit": lit})
 	elif door:
 		# porta-balcão: porta de duas folhas do kit, menos funda
-		b.malha(Kit.mesh("porta_dupla"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.4, hgt / 2.5, 0.6)), {"madeira": wood, "vidro": glass})
+		_modulo(b, "porta_dupla", Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid / 1.4, hgt / 2.5, 0.6)), {"madeira": wood, "vidro": glass})
 	else:
 		if _kit2:
-			b.malha(Kit.mesh("janela_guilhotina"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.6, 1.0)), {"madeira": wood})
+			_modulo(b, "janela_guilhotina", Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.6, 1.0)), {"madeira": wood})
 			if real:
 				b.quad("vidro_claro", Vector2(wid * 0.92, hgt * 0.95), Vector3(-0.01, p.y, p.z), -PI / 2.0)       # vidro de verdade (a sala aparece atrás)
 		else:
-			b.malha(Kit.mesh("janela_colonial"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
+			_modulo(b, "janela_colonial", Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)), {"madeira": wood, "vidro": glass})
 		if not real:          # janela de verdade (sala atrás do vidro): sem foto de sala no painel
 			_jan_atual.append({"pos": Vector3(-0.012, p.y, p.z), "size": Vector2(wid * 0.9, hgt * 0.933), "lit": lit})
 		if p.y > 3.6 and _rng_f.randf() < 0.32:                                       # pano roxo pendurado no peitoril, como na Semana Santa
@@ -2109,7 +2120,7 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 		if _rng.randf() < 0.55:
 			_venezianas(b, p, wid, hgt, wood)
 	if grate and _kit2:
-		b.malha(Kit.mesh("grade_janela"), Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)))
+		_modulo(b, "grade_janela", Kit.fachada(Vector3(0.0, base_y, p.z), Vector3(wid, hgt / 1.5, 1.0)))
 	elif grate:
 		for k in 5:
 			b.box("ferro", Vector3(0.03, hgt, 0.03), Vector3(-0.26, p.y, p.z - wid / 2.0 + wid * k / 4.0))
@@ -2145,7 +2156,7 @@ func _balcony(b: MeshBatch, z0: float, z1: float, floor_y: float, wood: String) 
 	if iron:
 		var nm := maxi(1, int(ceil(bw)))
 		for k in nm:
-			b.malha(Kit.mesh("sacada_1m"), Kit.fachada(Vector3(0.0, floor_y, z0 + (k + 0.5) * bw / nm), Vector3(bw / nm, 1.0, 1.0)))     # laje, mísulas, balaústres torneados
+			_modulo(b, "sacada_1m", Kit.fachada(Vector3(0.0, floor_y, z0 + (k + 0.5) * bw / nm), Vector3(bw / nm, 1.0, 1.0)))     # laje, mísulas, balaústres torneados
 	else:
 		b.box("cantaria", Vector3(1.25, 0.18, bw), Vector3(-0.62, floor_y - 0.09, bz))
 		for z in [z0 + 0.3, z1 - 0.3, bz]:
