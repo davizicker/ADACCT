@@ -793,6 +793,12 @@ func _test_itens(delta: float) -> void:
 				if it.get("tipo") == "oleo":
 					ok = _test_seen and (not it.visible) and player.oil > _test_oil0 + 20.0
 					print("[itens] %s: aviso=%s oleo %.0f -> %.0f visivel=%s -> %s" % [it.name, str(_test_seen), _test_oil0, player.oil, str(it.visible), "OK" if ok else "FALHOU"])
+					if not _test_seen:
+						var rq2 := PhysicsRayQueryParameters3D.create(player.cam.global_position, it.global_position + Vector3(0, 0.3, 0))
+						rq2.collide_with_areas = true
+						rq2.exclude = [player.get_rid()]
+						var rh2 := get_viewport().world_3d.direct_space_state.intersect_ray(rq2)
+						print("[itens]   (raio até o frasco bate em %s; jogador em %s)" % [str((rh2["collider"] as Node).get_path()) if not rh2.is_empty() else "nada", str(player.global_position.snapped(Vector3.ONE * 0.1))])
 					player.oil = 40.0
 					if not ok:
 						_test_fail += 1

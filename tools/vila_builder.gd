@@ -4381,6 +4381,12 @@ func _nichos() -> Node3D:
 				junto_de_sala = true
 		if junto_de_sala:
 			continue
+		var perto_item := false                    # oratório na frente de frasco/bilhete: a interação "acender vela" roubava o clique
+		for o in OIL_PTS + NOTE_PTS:
+			if absf(float(o[0]) - s) < 3.0 and float(o[1]) == float(j["sigma"]):
+				perto_item = true
+		if perto_item:
+			continue
 		var sigma: float = j["sigma"]
 		var x_axis := Route.right(s) * sigma
 		var origin := facade(sigma, s) + Vector3(0, SW_H, 0)
