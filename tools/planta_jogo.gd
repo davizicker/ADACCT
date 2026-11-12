@@ -112,7 +112,7 @@ func _ficha(c: Node3D, cat: Dictionary) -> Dictionary:
 			var ab: AABB = e[1]
 			var tem := false
 			for vv in vaos:                         # vão de porta (com ou sem peça do kit: a porta em arco é feita à mão) logo atrás da sacada
-				if bool(vv["porta"]) and absf(float(vv["z"]) - ab.get_center().z) < 0.4 and absf(float(vv["peitoril"]) - ab.position.y) < 0.7:
+				if bool(vv["porta"]) and absf(float(vv["z"]) - ab.get_center().z) < 0.4 and absf(float(vv["peitoril"]) - (ab.position.y + 0.59)) < 0.45:
 					tem = true
 			if not tem:
 				problemas.append("%s: sacada de ferro sem porta-balcão atrás (z=%.2f)" % [id, ab.get_center().z])

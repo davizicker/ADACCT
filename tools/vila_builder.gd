@@ -1445,10 +1445,12 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz - 0.34))
 		pb.box("madeira_natural", Vector3(0.03, 0.9, 0.5), Vector3(-0.235, 1.9, dz + 0.34))
 	else:
-		if _kit2 and sala == null and _rng_f.randf() < 0.5:
-			_modulo(pb, "porta_bandeira", Kit.fachada(Vector3(0.0, 0.0, dz)), {"madeira": wood_porta})          # porta de uma folha com bandeira em arco
+		var cabe_dupla := absf(dz) + 1.17 <= w / 2.0 - 0.55          # a porta dupla (2,3 m com o batente) não pode tocar o cunhal da quina
+		if (_kit2 and sala == null and _rng_f.randf() < 0.5) or (not cabe_dupla and sala == null):
+			_modulo(pb, "porta_bandeira", Kit.fachada(Vector3(0.0, 0.0, dz)), {"madeira": wood_porta})          # porta de uma folha com bandeira em arco (1,6 m)
 		else:
 			_modulo(pb, "porta_dupla", Kit.fachada(Vector3(0.0, 0.0, dz), Vector3(1.0, 1.06, 1.0)), {"madeira": wood_porta})
+		_vaos_atual.append({"z": dz, "peitoril": 0.0, "topo": 3.0, "w": 2.3 if cabe_dupla else 1.6, "porta": true})   # a porta principal também é um vão (barra de pedra e cunhal a respeitam)
 	if arched:
 		pb.box("cantaria", Vector3(0.5, 0.15, 2.0), Vector3(-0.25, -0.03, dz))                     # soleira da porta em arco
 	var dn := 1.25 if not arched else 1.15
@@ -1572,9 +1574,15 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		# número da casa em azulejo português (branco com barra azul), ao lado da porta
 		nz = 99.0
 		for lado_n: float in [1.0, -1.0]:                                       # dos dois lados da porta, o primeiro que couber
-			var cand := dz + lado_n * 0.95
+			var meia_porta := 0.8
+			for v in _vaos_atual:
+				if bool(v["porta"]) and absf(float(v["z"]) - dz) < 0.01 and float(v["peitoril"]) < 0.1:
+					meia_porta = float(v["w"]) * 0.5
+			var cand := dz + lado_n * (meia_porta + 0.25)                       # logo depois do batente da porta principal
 			var ok_n := absf(cand) < w * 0.5 - 0.75                            # longe do cunhal de pedra da quina
-			for v in _vaos_atual:                                               # e de qualquer janela
+			for v in _vaos_atual:                                               # e de qualquer outra janela/porta
+				if absf(float(v["z"]) - dz) < 0.01 and float(v["peitoril"]) < 0.1:
+					continue
 				if absf(float(v["z"]) - cand) < float(v["w"]) * 0.5 + 0.15 and 2.45 > float(v["peitoril"]) - 0.15 and 2.45 < float(v["topo"]) + 0.15:
 					ok_n = false
 			if ok_n:
@@ -1637,6 +1645,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	det.layers = CAMADA_DETALHE                 # molduras, portas e janelas: sem mancha/reboco caído projetado por cima
 	det.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # molduras e grades não precisam de sombra (menos uma passada por casa)
 	c.set_meta("janelas", _jan_atual)
+	_vaos_atual = []          # listas novas: janelas feitas depois (igreja, capelas) não entram na ficha desta casa
+	_mod_atual = []
 	c.set_meta("plantas_janela", _pl_atual)
 	return c
 

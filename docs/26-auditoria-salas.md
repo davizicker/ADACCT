@@ -30,19 +30,19 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | Sala_escola | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (0.06, 1.35, 3.66) |
 | Sala_escola | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (9.94, 1.35, 3.66) |
 | Sala_escola | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (9.94, 1.35, 4.74) |
-| igreja | FORA DA SALA | gothic_statue_890 (5.00, 21.40) tamanho 3.25 x 3.44 |
-| igreja | FORA DA SALA | gothic_statue_892 (1.00, 20.60) tamanho 3.07 x 3.12 |
-| igreja | FORA DA SALA | gothic_statue_893 (9.00, 20.60) tamanho 3.07 x 3.12 |
-| igreja | FORA DA SALA | gothic_statue_894 (0.38, 7.75) tamanho 2.35 x 2.22 |
-| igreja | FORA DA SALA | gothic_statue_896 (9.62, 7.75) tamanho 2.35 x 2.22 |
-| igreja | FORA DA SALA | gothic_statue_898 (0.38, 13.25) tamanho 2.35 x 2.22 |
-| igreja | FORA DA SALA | gothic_statue_900 (9.62, 13.25) tamanho 2.35 x 2.22 |
-| igreja | ATRAVESSA | anthurium_botany_04_d_895 (0.60, 7.75, y 1.10-1.15) com ColAltarLat_-1_7 (0.50, 7.75, y 0.00-1.20): 8 x 6 cm |
-| igreja | ATRAVESSA | anthurium_botany_04_d_897 (9.40, 7.75, y 1.10-1.15) com ColAltarLat_1_7 (9.50, 7.75, y 0.00-1.20): 8 x 6 cm |
-| igreja | ATRAVESSA | anthurium_botany_04_d_899 (0.60, 13.25, y 1.10-1.15) com ColAltarLat_-1_13 (0.50, 13.25, y 0.00-1.20): 8 x 6 cm |
-| igreja | ATRAVESSA | anthurium_botany_04_d_901 (9.40, 13.25, y 1.10-1.15) com ColAltarLat_1_13 (9.50, 13.25, y 0.00-1.20): 8 x 6 cm |
-| igreja | LUZ DENTRO DE MÓVEL | Luz em (4.38, 2.51, 20.35) dentro de gothic_statue_890 |
-| igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1240 em (5.62, 2.51, 20.35) dentro de gothic_statue_890 |
+| igreja | FORA DA SALA | gothic_statue_891 (5.00, 21.40) tamanho 3.25 x 3.44 |
+| igreja | FORA DA SALA | gothic_statue_893 (1.00, 20.60) tamanho 3.07 x 3.12 |
+| igreja | FORA DA SALA | gothic_statue_894 (9.00, 20.60) tamanho 3.07 x 3.12 |
+| igreja | FORA DA SALA | gothic_statue_895 (0.38, 7.75) tamanho 2.35 x 2.22 |
+| igreja | FORA DA SALA | gothic_statue_897 (9.62, 7.75) tamanho 2.35 x 2.22 |
+| igreja | FORA DA SALA | gothic_statue_899 (0.38, 13.25) tamanho 2.35 x 2.22 |
+| igreja | FORA DA SALA | gothic_statue_901 (9.62, 13.25) tamanho 2.35 x 2.22 |
+| igreja | ATRAVESSA | anthurium_botany_04_d_896 (0.60, 7.75, y 1.10-1.15) com ColAltarLat_-1_7 (0.50, 7.75, y 0.00-1.20): 8 x 6 cm |
+| igreja | ATRAVESSA | anthurium_botany_04_d_898 (9.40, 7.75, y 1.10-1.15) com ColAltarLat_1_7 (9.50, 7.75, y 0.00-1.20): 8 x 6 cm |
+| igreja | ATRAVESSA | anthurium_botany_04_d_900 (0.60, 13.25, y 1.10-1.15) com ColAltarLat_-1_13 (0.50, 13.25, y 0.00-1.20): 8 x 6 cm |
+| igreja | ATRAVESSA | anthurium_botany_04_d_902 (9.40, 13.25, y 1.10-1.15) com ColAltarLat_1_13 (9.50, 13.25, y 0.00-1.20): 8 x 6 cm |
+| igreja | LUZ DENTRO DE MÓVEL | Luz em (4.38, 2.51, 20.35) dentro de gothic_statue_891 |
+| igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1245 em (5.62, 2.51, 20.35) dentro de gothic_statue_891 |
 | igreja | PISCA (faces coplanares) | ouro_velho x madeira_escura eixo z (0.61 x 0.71 m) perto de (4.18, 1.10, 19.72) |
 | igreja | PISCA (faces coplanares) | ouro_velho x madeira_escura eixo z (0.61 x 0.71 m) perto de (5.00, 1.10, 19.72) |
 | igreja | PISCA (faces coplanares) | ouro_velho x madeira_escura eixo z (0.61 x 0.71 m) perto de (5.82, 1.10, 19.72) |
@@ -53,7 +53,7 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | igreja | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (9.94, 5.00, 4.46) |
 | ferraria | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (6.94, 1.35, 1.46) |
 | ferraria | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (6.94, 1.35, 2.54) |
-| casa_vazia | INFO | painted_wooden_chair_02_920 solta (a 1.0 m da mesa mais próxima) |
+| casa_vazia | INFO | painted_wooden_chair_02_921 solta (a 1.0 m da mesa mais próxima) |
 | casa_vazia | PISCA (faces coplanares) | madeira_natural x madeira_verde eixo y (0.04 x 0.03 m) perto de (5.97, 0.97, 2.50) |
 | casa_vazia | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (5.94, 1.60, 1.96) |
 | casa_vazia | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (5.94, 1.60, 3.04) |
@@ -66,11 +66,11 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | costureira | PISCA (faces coplanares) | madeira_natural x madeira_verde eixo y (0.04 x 0.03 m) perto de (5.97, 0.97, 2.50) |
 | costureira | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (5.94, 1.60, 1.46) |
 | costureira | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (5.94, 1.60, 2.54) |
-| deposito | ATRAVESSA | worn_metal_rack_966 (0.32, 1.60, y 0.00-1.90) com long_life_food_milk_969 (0.45, 1.50, y 1.45-1.69): 7 x 10 cm |
-| deposito | ATRAVESSA | worn_metal_rack_966 (0.32, 1.60, y 0.00-1.90) com long_life_food_sardines_970 (0.45, 2.00, y 0.95-0.98): 8 x 12 cm |
-| deposito | FLUTUA | long_life_food_milk_968 a 95 cm do chão sem apoio embaixo |
-| deposito | FLUTUA | long_life_food_milk_969 a 145 cm do chão sem apoio embaixo |
-| deposito | FLUTUA | long_life_food_sardines_970 a 95 cm do chão sem apoio embaixo |
-| deposito | FLUTUA | long_life_food_sardines_971 a 145 cm do chão sem apoio embaixo |
+| deposito | ATRAVESSA | worn_metal_rack_967 (0.32, 1.60, y 0.00-1.90) com long_life_food_milk_970 (0.45, 1.50, y 1.45-1.69): 7 x 10 cm |
+| deposito | ATRAVESSA | worn_metal_rack_967 (0.32, 1.60, y 0.00-1.90) com long_life_food_sardines_971 (0.45, 2.00, y 0.95-0.98): 8 x 12 cm |
+| deposito | FLUTUA | long_life_food_milk_969 a 95 cm do chão sem apoio embaixo |
+| deposito | FLUTUA | long_life_food_milk_970 a 145 cm do chão sem apoio embaixo |
+| deposito | FLUTUA | long_life_food_sardines_971 a 95 cm do chão sem apoio embaixo |
+| deposito | FLUTUA | long_life_food_sardines_972 a 145 cm do chão sem apoio embaixo |
 | deposito | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (6.94, 1.35, 1.46) |
 | deposito | PISCA (faces coplanares) | madeira_verde x cantaria eixo y (0.11 x 0.08 m) perto de (6.94, 1.35, 2.54) |
