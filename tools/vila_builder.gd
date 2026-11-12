@@ -1391,8 +1391,9 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 
 	var cols := maxi(2, int(round(w / 2.7)))
 	var col_z: Array[float] = []
+	var util := w - 2.0 * 0.62                 # largura entre os cunhais (pedra da quina 0,52 m + folga): nenhuma janela/porta sobre o cunhal
 	for i in cols:
-		col_z.append(-w / 2.0 + (i + 0.5) * w / cols)
+		col_z.append(-util / 2.0 + (i + 0.5) * util / cols)
 	var door_i := _rng.randi_range(0, cols - 1)
 	if _porta_central:
 		door_i = (cols - 1) / 2         # casa colada num beco: a porta no meio, longe da parede da escada
@@ -1489,7 +1490,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		for k in range(1, floors):
 			var y0 := fh + (k - 1) * up
 			if k == 1 and bal_cols.has(i):
-				_window(b, Vector3(0, y0 + 1.25, col_z[i]), 1.1, 2.2, wood, _rng.randf() < lit_p, false, true, arched)
+				_window(b, Vector3(0, y0 + 1.33, col_z[i]), 1.1, 2.2, wood, _rng.randf() < lit_p, false, true, arched)   # porta-balcão acima da laje da sacada
 			else:
 				_window(b, Vector3(0, y0 + 1.65, col_z[i]), 1.0, 1.7, wood, _rng.randf() < lit_p, false, false, arched)
 	if not bal_cols.is_empty() and not simple:
@@ -1512,7 +1513,13 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		if _kit2:                                                                     # cunhal do kit 2: blocos com bisel e desgaste
 			var ky := 0.0
 			while ky < height - 0.9:
-				_modulo(b, "cunhal_1m", Kit.fachada(Vector3(0.0, ky, qz * (w / 2.0 - 0.26))))
+				var zq := qz * (w / 2.0 - 0.26)
+				var cobre := false                          # trecho do cunhal que cairia sobre uma janela/porta (salas visitáveis): pula
+				for v in _vaos_atual:
+					if absf(zq - float(v["z"])) < float(v["w"]) * 0.5 + 0.28 and ky + 1.0 > float(v["peitoril"]) and ky < float(v["topo"]):
+						cobre = true
+				if not cobre:
+					_modulo(b, "cunhal_1m", Kit.fachada(Vector3(0.0, ky, zq)))
 				ky += 1.0
 			continue
 		var qy := 0.25
@@ -1526,7 +1533,11 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		# embasamento de pedra rústica na frente do soco (pula o vão da porta) e beiral de telhas capa-e-canal na beira do telhado
 		var ez := -w / 2.0 + 0.5
 		while ez <= w / 2.0 - 0.5:
-			if absf(ez - dz) > 1.3:
+			var livre_e := absf(ez - dz) > 1.3
+			for v in _vaos_atual:                              # pula TODO vão que desce até o chão (portas de loja, não só a porta principal)
+				if float(v["peitoril"]) < 0.6 and absf(ez - float(v["z"])) < float(v["w"]) * 0.5 + 0.55:
+					livre_e = false
+			if livre_e:
 				_modulo(b, "embasamento_1m", Kit.fachada(Vector3(-0.26, 0.12, ez)))
 			ez += 1.0
 		var tz := -w / 2.0 + 0.5
