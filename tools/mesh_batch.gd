@@ -7,6 +7,33 @@ extends RefCounted
 var _st := {}                 # nome do material -> SurfaceTool
 var _loader: Callable         # nome -> Material
 var _boxes: Array = []        # [material, AABB] de cada box() (para a auditoria de peças soltas)
+## Afastamento anti-z-fighting: cada material recebe um "degrau" de 1,2 mm (0 a 6 mm) somado à meia-medida das caixas dele.
+## Duas peças de materiais diferentes nunca ficam com a face no MESMO plano (era o que fazia moldura, veneziana, ferragem e
+## remendo de tijolo piscarem e "entrarem" uns nos outros). Invisível a olho nu.
+static var _ordem_mat := {}
+
+
+static func _eps(mat: String) -> float:
+	if not _ordem_mat.has(mat):
+		var degrau := 0
+		if mat.begins_with("cantaria") or mat == "pedra_sabao" or mat == "pedra_chao":
+			degrau = 0                   # molduras e pedras: o plano de base
+		elif mat == "muro" or mat.begins_with("reboco") or mat.begins_with("i_reboco"):
+			degrau = 1
+		elif mat.begins_with("janela") or mat.begins_with("vidro"):
+			degrau = 2
+		elif mat.begins_with("madeira") or mat.begins_with("piso"):
+			degrau = 3
+		elif mat == "listra_azul":
+			degrau = 6
+		elif mat.begins_with("listra") or mat.begins_with("pano") or mat.begins_with("tapete") or mat.begins_with("placa"):
+			degrau = 4
+		elif mat.begins_with("ferro") or mat == "ouro_velho":
+			degrau = 5
+		else:
+			degrau = 7 + (_ordem_mat.size() % 3)
+		_ordem_mat[mat] = degrau
+	return 0.0012 * float(_ordem_mat[mat])
 
 
 func _init(material_loader: Callable) -> void:
@@ -74,6 +101,8 @@ func coplanares(limite := 20, dentro := AABB(Vector3(-1e6, -1e6, -1e6), Vector3(
 		for j in range(i + 1, n):
 			if bool(_boxes[j][2]) if _boxes[j].size() > 2 else false:
 				continue
+			if String(_boxes[i][0]) == String(_boxes[j][0]):
+				continue                                           # mesmo material no mesmo plano: mesma cor, não pisca
 			var b: AABB = _boxes[j][1]
 			if not a.grow(0.004).intersects(b.grow(0.004)):
 				continue
@@ -101,8 +130,8 @@ func coplanares(limite := 20, dentro := AABB(Vector3(-1e6, -1e6, -1e6), Vector3(
 func box(mat: String, size: Vector3, pos: Vector3, rot := Vector3.ZERO) -> void:
 	var xf := Transform3D(Basis.from_euler(rot), pos)
 	var st := _tool(mat)
-	var h := size * 0.5
-	_boxes.append([mat, xf * AABB(-h, size), rot != Vector3.ZERO])
+	var h := size * 0.5 + Vector3.ONE * _eps(mat)
+	_boxes.append([mat, xf * AABB(-h, h * 2.0), rot != Vector3.ZERO])
 	for axis in 3:
 		for sign in [-1.0, 1.0]:
 			var n := Vector3.ZERO
@@ -346,9 +375,11 @@ func malha(mesh: Mesh, xf: Transform3D, mapa := {}) -> void:
 		var m := mesh.surface_get_material(i)
 		var nome: String = m.resource_name if m != null else "cantaria"
 		nome = mapa.get(nome, nome)
-		_tool(nome).append_from(mesh, i, xf)
-		var bb: AABB = xf * mesh.surface_get_aabb(i) if mesh.has_method("surface_get_aabb") else xf * mesh.get_aabb()
-		_boxes.append([nome, bb])
+		var xf2 := xf
+		xf2.origin.x -= _eps(nome)                     # cada material uns milímetros para fora da fachada (-X): batente, folha e ferragem sem piscar
+		_tool(nome).append_from(mesh, i, xf2)
+		var bb: AABB = xf2 * mesh.surface_get_aabb(i) if mesh.has_method("surface_get_aabb") else xf2 * mesh.get_aabb()
+		_boxes.append([nome, bb, true])          # malha pronta: a caixa envolvente não é a geometria (fica fora da auditoria de planos)
 
 
 ## Auditoria: caixas que não encostam em nenhuma outra caixa do lote nem nos sólidos dados (flutuando).

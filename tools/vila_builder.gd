@@ -1552,12 +1552,16 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	var nz := 99.0
 	if not simple:
 		# número da casa em azulejo português (branco com barra azul), ao lado da porta
-		nz = dz + (1.0 if dz < w * 0.5 - 1.4 else -1.0) * 0.95
-		for v in _vaos_atual:                                                   # não pode cair em cima de uma janela
-			if absf(float(v["z"]) - nz) < float(v["w"]) * 0.5 + 0.15 and 2.45 > float(v["peitoril"]) - 0.15 and 2.45 < float(v["topo"]) + 0.15:
-				nz = 99.0
-		if absf(nz) > w * 0.5 - 0.3:
-			nz = 99.0
+		nz = 99.0
+		for lado_n: float in [1.0, -1.0]:                                       # dos dois lados da porta, o primeiro que couber
+			var cand := dz + lado_n * 0.95
+			var ok_n := absf(cand) < w * 0.5 - 0.75                            # longe do cunhal de pedra da quina
+			for v in _vaos_atual:                                               # e de qualquer janela
+				if absf(float(v["z"]) - cand) < float(v["w"]) * 0.5 + 0.15 and 2.45 > float(v["peitoril"]) - 0.15 and 2.45 < float(v["topo"]) + 0.15:
+					ok_n = false
+			if ok_n:
+				nz = cand
+				break
 	if not simple and nz < 50.0:
 		b.box("listra_branca", Vector3(0.016, 0.21, 0.21), Vector3(-0.012, 2.45, nz))
 		for ax: Array in [[0.0, 0.1], [0.0, -0.1]]:
@@ -1594,7 +1598,7 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		if _rng.randf() < 0.55:
 			var dz2 := (w / 2.0 - 0.05) * (1.0 if _rng.randf() < 0.5 else -1.0)
 			b.box("ferro", Vector3(0.8, 0.09, 0.09), Vector3(-0.52, height + 0.05, dz2))
-			b.box("ferro", Vector3(0.09, height + 0.3, 0.09), Vector3(-0.12, height / 2.0 - 0.1, dz2))   # tubo de queda
+			b.box("ferro", Vector3(0.09, height + 0.3, 0.09), Vector3(-0.21, height / 2.0 - 0.1, dz2 - signf(dz2) * 0.08))   # tubo de queda (na frente do cunhal, não através dele)
 		if sala == null and _rng.randf() < 0.22:
 			_sign(c, b, col_z[(door_i + 1) % cols])
 	var solidos := [AABB(Vector3(0.0, -2.0, -w / 2.0), Vector3(depth, height + 4.0, w)),
@@ -1699,7 +1703,7 @@ func _parede_detalhes(b: MeshBatch, largura: float, height: float, fundos: bool)
 			zc += 0.55
 		b.box("ferro", Vector3(0.10, 0.08, largura + 0.2), Vector3(-0.45, height + 0.06, 0.0))         # calha
 		var dz := (largura * 0.5 - 0.12) * (1.0 if _rng.randf() < 0.5 else -1.0)
-		b.box("ferro", Vector3(0.08, height + 0.2, 0.08), Vector3(-0.09, height * 0.5 - 0.05, dz))       # condutor até o chão
+		b.box("ferro", Vector3(0.08, height + 0.2, 0.08), Vector3(-0.17, height * 0.5 - 0.05, dz))       # condutor até o chão (na frente do cunhal)
 
 
 ## Casca externa de uma casa visitável: lâminas finas por FORA das paredes da sala (a parede interna é a da sala). A frente tem o vão da porta
