@@ -4262,9 +4262,15 @@ func _adornos() -> Node3D:
 		_recipientes(root, p, atan2(out.x, out.z))
 		count += 1
 	# bancos de madeira junto às paredes (lado oposto ao bar e ao carro coberto), em vagas LIVRES da calçada e com colisão
-	for bs: float in [150.0 + Route.SHIFT, 161.0 + Route.SHIFT, 171.0 + Route.SHIFT]:
+	for bs: float in [155.0 + Route.SHIFT, 164.0 + Route.SHIFT, 180.0 + Route.SHIFT]:      # longe dos pontos de querosene (s=150 e 171)
 		var spb := _spot_livre(1.0, bs, 0.5, 1.05)
 		if spb.is_empty():
+			continue
+		var perto_de_item := false
+		for o in OIL_PTS:                                         # o banco não pode ficar na frente de um frasco de querosene
+			if absf(float(o[0]) - Route.nearest_s(spb["pos"])) < 3.0 and float(o[1]) > 0.0:
+				perto_de_item = true
+		if perto_de_item:
 			continue
 		_reservar(spb["pos"], 1.05)
 		var out: Vector3 = spb["out"]
