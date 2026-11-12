@@ -13,6 +13,7 @@ const RIO_QUEDA_T := 30.0          # distância da ponte (ao longo do riacho, la
 const RIO_QUEDA_H := 3.2           # altura da queda
 const RIO_DECLIVE := 0.12         # quanto o leito do riacho sobe por metro de distância da rua
 const SW_H := 0.12
+const CAMADA_DETALHE := 4      # camada visual 3: detalhes de fachada que os decalques de sujeira não atingem
 const MATS := "res://assets/materials/"
 const S_END := Route.S_END     # a partir daqui começa o adro da igreja
 const CHURCH_S := Route.CHURCH_S
@@ -157,6 +158,7 @@ const PLANTAS_REAIS := {
 var _alt_real := {}
 var rb2_beiral: Array = []
 var _kit2 := false               # casa em construção usa o kit 2 (sacadas de ferro, guilhotina, grades, porta com bandeira...)
+var _pisca_fachada: Array[String] = []   # faces coplanares (piscam) achadas nas fachadas durante o bake
 var _vaos_atual: Array = []     # vãos (janelas/portas) da fachada em construção: {z, peitoril, topo, w, porta} — usados pelos detalhes de parede
 var _jan_atual: Array = []      # painéis de vidro da casa em construção: {pos, size, lit} (locais da casa)
 var _pl_atual: Array = []       # plantas de janela da casa em construção: {pos, tipo, esc}
@@ -606,7 +608,7 @@ func _moon() -> DirectionalLight3D:
 	l.name = "Lua"
 	l.light_color = Color(0.55, 0.65, 0.95)
 	l.light_energy = 0.30
-	l.light_cull_mask = 1             # os interiores (camada 2) não recebem luar
+	l.light_cull_mask = 1 | CAMADA_DETALHE     # os interiores (camada 2) não recebem luar; molduras/portas/vidros (camada 3) sim
 	# a lua fica no céu à frente e à direita de quem começa a subir a rua; a luz viaja no sentido oposto
 	var moon_dir := Vector3(0.50, 0.46, -0.74).normalized()
 	l.transform = Transform3D(Basis.looking_at(-moon_dir, Vector3.UP), Vector3.ZERO)
@@ -668,7 +670,12 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	# luzes da rua só iluminam a rua (camada 1); as das salas (camada 2, ver Interiores._camada) só iluminam a própria sala
 	for l in root.find_children("*", "Light3D", true, false):
 		if not (l is DirectionalLight3D) and not _em_sala(l):
-			(l as Light3D).light_cull_mask = 1
+			(l as Light3D).light_cull_mask = 1 | CAMADA_DETALHE
+	# molduras, portas, janelas, vidros e plantas de janela na camada 3: as manchas projetadas (decalques, camada 1) não as pintam
+	var vp := root.get_node_or_null("VidrosEPlantas")
+	if vp:
+		for gi in vp.find_children("*", "GeometryInstance3D", true, false):
+			(gi as GeometryInstance3D).layers = CAMADA_DETALHE
 	# Desempenho: a neblina esconde o que está longe, então nem desenhamos.
 	# a neblina (densidade 0,03) já apaga tudo a ~100 m: não desenhar além disso economiza centenas de chamadas
 	# mapa em zigue-zague: as pernas de cima ficam a 34-100 m; a neblina já apaga quase tudo a ~90 m
@@ -693,6 +700,13 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	_set_range(root.get_node("Morros/CasasDoMorro"), 280.0)
 	_set_range(root.get_node("Morros/Arvores"), 220.0)
 	print("[vila] pecas soltas (flutuando): %d" % _flutuando.size())
+	print("[vila] fachadas: faces no mesmo plano (piscam): %d" % _pisca_fachada.size())
+	var tipos := {}
+	for f in _pisca_fachada:
+		var k := String(f).get_slice(": ", 1).get_slice(" eixo", 0)
+		tipos[k] = int(tipos.get(k, 0)) + 1
+	for k in tipos:
+		print("[vila]   pisca: %s  (%d)" % [k, tipos[k]])
 	for f in _flutuando.slice(0, 40):
 		print("[vila]   ", f)
 	return root
@@ -1526,6 +1540,12 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			var cy := _rng.randf_range(0.9, maxf(1.2, height - 1.4))
 			var pw := _rng.randf_range(0.55, 1.05)
 			var ph := _rng.randf_range(0.45, 0.95)
+			var invade := false                                       # o remendo (com as lascas, ~1,3x) não pode encostar em janela/porta
+			for v in _vaos_atual:
+				if absf(cz - float(v["z"])) < pw * 0.65 + float(v["w"]) * 0.5 + 0.2 and cy + ph * 0.65 > float(v["peitoril"]) - 0.2 and cy - ph * 0.65 < float(v["topo"]) + 0.2:
+					invade = true
+			if invade:
+				continue
 			b.box("muro", Vector3(0.025, ph, pw), Vector3(-0.015, cy, cz))
 			b.box("muro", Vector3(0.025, ph * 0.55, pw * 0.7), Vector3(-0.02, cy + ph * 0.4, cz + pw * 0.28), Vector3(0, 0, 0.0))
 			b.box("muro", Vector3(0.025, ph * 0.5, pw * 0.5), Vector3(-0.02, cy - ph * 0.38, cz - pw * 0.30))
@@ -1586,7 +1606,13 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	if not simple:
 		_fundos_e_laterais(c, w, depth, height, floors, fh, wood, sala != null)
 	c.set_meta("fundo", depth)
+	# auditoria de z-fighting da fachada: peças no mesmo plano (inclui a face do corpo da casa) piscam
+	b._boxes.append(["corpo_da_casa", AABB(Vector3(0.0, -2.0, -w / 2.0), Vector3(depth, height + 2.0, w)), false])
+	for pc in b.coplanares(6):
+		_pisca_fachada.append("w=%.1f: %s" % [w, pc])
+	b._boxes.pop_back()
 	var det := _mesh_node(c, "Detalhes", b.commit())
+	det.layers = CAMADA_DETALHE                 # molduras, portas e janelas: sem mancha/reboco caído projetado por cima
 	det.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # molduras e grades não precisam de sombra (menos uma passada por casa)
 	c.set_meta("janelas", _jan_atual)
 	c.set_meta("plantas_janela", _pl_atual)
@@ -1615,6 +1641,7 @@ func _fundos_e_laterais(c: Node3D, w: float, depth: float, height: float, floors
 	var nf := _mesh_node(c, "Fundos", fb.commit())
 	nf.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(depth, 0.0, 0.0))
 	nf.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	nf.layers = CAMADA_DETALHE
 	# ---- laterais
 	for lado: float in [1.0, -1.0]:
 		var lb := _batch()
@@ -1624,6 +1651,7 @@ func _fundos_e_laterais(c: Node3D, w: float, depth: float, height: float, floors
 		var nl := _mesh_node(c, "Lateral_%d" % int(lado), lb.commit())
 		nl.transform = Transform3D(Basis(Vector3.UP, lado * PI / 2.0), Vector3(depth / 2.0, 0.0, lado * w / 2.0))
 		nl.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		nl.layers = CAMADA_DETALHE
 
 
 ## Janela de fundos (parede em x=0, fora = -X): moldura de cantaria, peitoril, vão escuro e venezianas de madeira fechadas.
@@ -1724,8 +1752,12 @@ func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
 		dc.texture_albedo = load("res://assets/textures/reboco_caido.png")
 		var cw := _rng.randf_range(1.0, 2.4)
 		var ch := _rng.randf_range(0.9, 1.8)
+		var lugar := _lugar_livre_na_fachada(casa, w, altura, cw, ch)       # nunca em cima de janela ou porta
+		if lugar == Vector2.INF:
+			dc.free()
+			continue
 		dc.size = Vector3(cw, 0.8, ch)
-		dc.transform = Transform3D(basis, Vector3(0.1, _rng.randf_range(0.6, maxf(0.7, altura - 1.6)), _rng.randf_range(-w * 0.4, w * 0.4)))
+		dc.transform = Transform3D(basis, Vector3(0.1, lugar.y, lugar.x))
 		dc.distance_fade_enabled = true
 		dc.distance_fade_begin = 40.0
 		dc.distance_fade_length = 12.0
@@ -1748,6 +1780,26 @@ func _decalques_fachada(casa: Node3D, w: float, altura: float) -> void:
 		d.cull_mask = 1
 		casa.add_child(d)
 	_detalhes_parede(casa, w, altura, basis)
+
+
+## Retângulo livre (cw x ch) na fachada, longe 25 cm de qualquer janela/porta. Devolve (z, y) do centro, ou Vector2.INF se não houver.
+func _lugar_livre_na_fachada(casa: Node3D, w: float, altura: float, cw: float, ch: float) -> Vector2:
+	var vaos: Array = casa.get_meta("vaos", [])
+	for t in 14:
+		var z := _rng.randf_range(-w * 0.5 + cw * 0.5 + 0.3, w * 0.5 - cw * 0.5 - 0.3)
+		var y := _rng.randf_range(0.6 + ch * 0.5, maxf(0.7 + ch * 0.5, altura - 0.5 - ch * 0.5))
+		if cw > w - 0.7:
+			return Vector2.INF
+		var ok := true
+		for v in vaos:
+			var vz := float(v["z"])
+			var vw := float(v["w"]) * 0.5 + 0.25
+			if absf(z - vz) < cw * 0.5 + vw and y + ch * 0.5 > float(v["peitoril"]) - 0.25 and y - ch * 0.5 < float(v["topo"]) + 0.25:
+				ok = false
+				break
+		if ok:
+			return Vector2(z, y)
+	return Vector2.INF
 
 
 ## Detalhes de parede realistas (decalques): lágrimas de chuva sob cada peitoril e sob o beiral, trincas saindo dos cantos das janelas,
