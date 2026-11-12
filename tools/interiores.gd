@@ -171,13 +171,14 @@ func _casca(nome: String, w: float, d: float, h: float, parede: String, piso: St
 		_bb.box("cantaria", Vector3(w, 0.12, 0.14), Vector3(w / 2.0, h - 0.06, d - 0.07))
 		_bb.box("cantaria", Vector3(w, 0.12, 0.14), Vector3(w / 2.0, h - 0.06, 0.07))
 	# colisões (a sala é uma caixa fechada)
-	var ext := 0.6 if na_rua else 4.0
+	var ext := 0.4 if na_rua else 4.0
 	var ver := 0.4 if na_rua else 2.0
 	b._blocker(_g, "Piso", Vector3(w + ext, 0.6, d + ext), Vector3(w / 2.0, -0.3, d / 2.0))
 	b._blocker(_g, "Teto", Vector3(w + ext, 0.6, d + ext), Vector3(w / 2.0, h + 0.3, d / 2.0))
-	b._blocker(_g, "ParedeO", Vector3(0.6, h + ver, d + ext), Vector3(-0.3, h / 2.0, d / 2.0))
-	b._blocker(_g, "ParedeL", Vector3(0.6, h + ver, d + ext), Vector3(w + 0.3, h / 2.0, d / 2.0))
-	b._blocker(_g, "ParedeN", Vector3(w + ext, h + ver, 0.6), Vector3(w / 2.0, h / 2.0, d + 0.3))
+	var esp := 0.3 if na_rua else 0.6         # sala dentro de casa da rua: parede de colisão fina, cabe na casca (antes 0,75 m invadia a casa vizinha e o quintal)
+	b._blocker(_g, "ParedeO", Vector3(esp, h + ver, d + ext), Vector3(-esp * 0.5, h / 2.0, d / 2.0))
+	b._blocker(_g, "ParedeL", Vector3(esp, h + ver, d + ext), Vector3(w + esp * 0.5, h / 2.0, d / 2.0))
+	b._blocker(_g, "ParedeN", Vector3(w + ext, h + ver, esp), Vector3(w / 2.0, h / 2.0, d + esp * 0.5))
 	if not na_rua:
 		b._blocker(_g, "ParedeS", Vector3(w + 4.0, h + 2.0, 0.6), Vector3(w / 2.0, h / 2.0, -0.3))
 		# porta de saída (parede sul) e gatilho de interação

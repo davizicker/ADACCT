@@ -1583,11 +1583,95 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 		_flutuando.append("casa w=%.1f: %s" % [w, fl])
 	for tz2 in rb2_beiral:                                                            # beiral de telhas na beira da frente
 		b.malha(Kit.mesh("beiral_telhas"), Kit.fachada(Vector3(-0.5, height + 0.17, float(tz2))))
+	if not simple:
+		_fundos_e_laterais(c, w, depth, height, floors, fh, wood, sala != null)
+	c.set_meta("fundo", depth)
 	var det := _mesh_node(c, "Detalhes", b.commit())
 	det.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF      # molduras e grades não precisam de sombra (menos uma passada por casa)
 	c.set_meta("janelas", _jan_atual)
 	c.set_meta("plantas_janela", _pl_atual)
 	return c
+
+
+## FUNDOS E LATERAIS (antes eram a parede lisa do bloco): no zigue-zague a rua de cima enxerga os fundos das casas da rua de baixo.
+## Fundos: janelas de cantaria com venezianas fechadas, porta de quintal, cunhais, barra de pedra, caibros do beiral, calha e condutor.
+## Laterais: barra de pedra, cunhal na quina de trás e janelinha no andar de cima. Tudo em nós girados (o -X local aponta para fora da parede).
+func _fundos_e_laterais(c: Node3D, w: float, depth: float, height: float, floors: int, fh: float, wood: String, visitavel: bool) -> void:
+	var fb := _batch()
+	# ---- fundos: plano da parede em x=0 do nó girado 180° (fica em x=depth da casa)
+	var n := maxi(1, int((w - 1.0) / 2.7))
+	var zs: Array[float] = []
+	for i in n:
+		zs.append(-w / 2.0 + w * (float(i) + 0.5) / float(n))
+	var porta_i := -1          # porta de quintal desligada: o terreno atrás varia muito no zigue-zague e a porta podia ficar no ar
+	for andar in floors:
+		var base_y := 0.0 if andar == 0 else fh + (andar - 1) * 3.4
+		for i in n:
+			if andar == 0 and i == porta_i:
+				_porta_fundos(fb, zs[i], wood)
+			elif andar > 0 or height > 3.4:
+				_janela_fundos(fb, zs[i], base_y + (1.7 if andar == 0 else 1.6), 0.85, 1.25, wood)
+	_parede_detalhes(fb, w, height, true)
+	var nf := _mesh_node(c, "Fundos", fb.commit())
+	nf.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(depth, 0.0, 0.0))
+	nf.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# ---- laterais
+	for lado: float in [1.0, -1.0]:
+		var lb := _batch()
+		if floors >= 2 and depth > 4.5:
+			_janela_fundos(lb, 0.0, fh + 1.6, 0.7, 1.05, wood)
+		_parede_detalhes(lb, depth, height, false)
+		var nl := _mesh_node(c, "Lateral_%d" % int(lado), lb.commit())
+		nl.transform = Transform3D(Basis(Vector3.UP, lado * PI / 2.0), Vector3(depth / 2.0, 0.0, lado * w / 2.0))
+		nl.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Janela de fundos (parede em x=0, fora = -X): moldura de cantaria, peitoril, vão escuro e venezianas de madeira fechadas.
+func _janela_fundos(b: MeshBatch, z: float, y: float, jw: float, jh: float, wood: String) -> void:
+	b.box("cantaria", Vector3(0.12, 0.09, jw + 0.30), Vector3(-0.06, y - jh * 0.5 - 0.045, z))          # peitoril
+	b.box("cantaria", Vector3(0.09, 0.12, jw + 0.22), Vector3(-0.045, y + jh * 0.5 + 0.06, z))          # verga
+	for sz: float in [-1.0, 1.0]:
+		b.box("cantaria", Vector3(0.09, jh, 0.10), Vector3(-0.045, y, z + sz * (jw * 0.5 + 0.05)))      # ombreiras
+	b.box("janela_escura", Vector3(0.02, jh, jw), Vector3(-0.012, y, z))
+	for sz: float in [-1.0, 1.0]:                                                                        # duas folhas fechadas, com travessas
+		b.box(wood, Vector3(0.035, jh - 0.06, jw * 0.5 - 0.03), Vector3(-0.04, y, z + sz * jw * 0.25))
+		for ty: float in [-0.3, 0.3]:
+			b.box(wood, Vector3(0.02, 0.06, jw * 0.5 - 0.06), Vector3(-0.065, y + ty * jh, z + sz * jw * 0.25))
+	b.box("ferro", Vector3(0.03, 0.03, 0.12), Vector3(-0.07, y, z))                                    # tranca
+
+
+## Porta de quintal nos fundos: batentes de cantaria, porta de tábuas com ferragens e degrau.
+func _porta_fundos(b: MeshBatch, z: float, wood: String) -> void:
+	b.box("cantaria", Vector3(0.10, 0.12, 1.25), Vector3(-0.05, 2.21, z))
+	for sz: float in [-1.0, 1.0]:
+		b.box("cantaria", Vector3(0.10, 2.15, 0.12), Vector3(-0.05, 1.08, z + sz * 0.56))
+	b.box(wood, Vector3(0.05, 2.1, 1.0), Vector3(-0.03, 1.05, z))
+	for ty: float in [0.35, 1.05, 1.75]:
+		b.box("ferro", Vector3(0.02, 0.05, 0.55), Vector3(-0.065, ty, z - 0.18))                         # dobradiças compridas
+	b.box("ferro", Vector3(0.03, 0.12, 0.04), Vector3(-0.07, 1.0, z + 0.38))
+	b.box("cantaria", Vector3(0.45, 0.16, 1.3), Vector3(-0.22, 0.06, z))                                # degrau
+
+
+## Barra de pedra no pé, cunhais nas quinas e (nos fundos) caibros, calha e condutor. `largura` = comprimento da parede.
+func _parede_detalhes(b: MeshBatch, largura: float, height: float, fundos: bool) -> void:
+	b.box("muro", Vector3(0.07, 1.9, largura + 0.02), Vector3(-0.035, -0.15, 0.0))                     # barra de pedra (desce para dentro do terreno)
+	b.box("cantaria", Vector3(0.10, 0.07, largura + 0.04), Vector3(-0.05, 0.82, 0.0))
+	for qz: float in ([-1.0, 1.0] if fundos else [1.0]):
+		var qy := 0.9
+		var qi := 0
+		while qy < height - 0.4:
+			var longo := qi % 2 == 0
+			b.box("cantaria", Vector3(0.12, 0.36, 0.50 if longo else 0.30), Vector3(-0.06, qy + 0.18, qz * (largura * 0.5 - (0.25 if longo else 0.15))))
+			qy += 0.5
+			qi += 1
+	if fundos:
+		var zc := -largura / 2.0 + 0.35
+		while zc < largura / 2.0 - 0.2:
+			b.box("madeira_escura", Vector3(0.42, 0.07, 0.08), Vector3(-0.22, height + 0.075, zc))       # caibros do beiral de trás
+			zc += 0.55
+		b.box("ferro", Vector3(0.10, 0.08, largura + 0.2), Vector3(-0.45, height + 0.06, 0.0))         # calha
+		var dz := (largura * 0.5 - 0.12) * (1.0 if _rng.randf() < 0.5 else -1.0)
+		b.box("ferro", Vector3(0.08, height + 0.2, 0.08), Vector3(-0.09, height * 0.5 - 0.05, dz))       # condutor até o chão
 
 
 ## Casca externa de uma casa visitável: lâminas finas por FORA das paredes da sala (a parede interna é a da sala). A frente tem o vão da porta
@@ -1712,6 +1796,30 @@ func _detalhes_parede(casa: Node3D, w: float, altura: float, basis: Basis) -> vo
 		novo.call("Trinca_%d" % k, tex_r, Vector3(0.8, 0.5, 1.0), Vector3(0.08, y, float(v["z"]) + lado * (float(v["w"]) * 0.5 + 0.25)), _rng.randf_range(-0.7, 0.7) + (PI if em_cima else 0.0))
 	if _rng.randf() < 0.6:
 		novo.call("Limo", tex_l, Vector3(w * 0.98, 0.6, _rng.randf_range(0.7, 1.2)), Vector3(0.08, 0.35, 0.0))
+	# fundos: limo e escorridos também (a rua de cima enxerga)
+	var fundo := float(casa.get_meta("fundo", 0.0))
+	if fundo > 1.0:
+		var giro := Basis(Vector3.UP, PI)
+		var dl := Decal.new()
+		dl.name = "LimoFundos"
+		dl.texture_albedo = tex_l
+		dl.size = Vector3(w * 0.98, 0.6, _rng.randf_range(0.9, 1.4))
+		dl.transform = Transform3D(giro * basis, Vector3(fundo - 0.08, 0.35, 0.0))
+		dl.distance_fade_enabled = true
+		dl.distance_fade_begin = 38.0
+		dl.distance_fade_length = 12.0
+		dl.cull_mask = 1
+		casa.add_child(dl)
+		var de := Decal.new()
+		de.name = "EscorridoFundos"
+		de.texture_albedo = tex_e
+		de.size = Vector3(w * 0.95, 0.6, _rng.randf_range(1.0, 1.8))
+		de.transform = Transform3D(giro * basis, Vector3(fundo - 0.08, altura - 0.8, 0.0))
+		de.distance_fade_enabled = true
+		de.distance_fade_begin = 38.0
+		de.distance_fade_length = 12.0
+		de.cull_mask = 1
+		casa.add_child(de)
 
 
 const NOME_ENTRADA := {"benedita": "D. BENEDITA", "padaria": "PADARIA", "carpintaria": "CARPINTARIA", "venda": "VENDA", "escola": "ESCOLA",
