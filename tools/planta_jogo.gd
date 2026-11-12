@@ -6,7 +6,7 @@ extends SceneTree
 ##  - conferência dos módulos (fora da parede, cobrindo janela/porta, um em cima do outro, sacada sem porta-balcão).
 ## Uso: xvfb-run godot --path . --rendering-driver opengl3 --script res://tools/planta_jogo.gd   (depois: python3 tools/planta_jogo.py)
 const GRUPOS_OBJ := ["Adornos", "Props", "Coletaveis", "Iluminacao", "Nichos", "PropsEncosta", "MurosDasCurvas", "Adro", "Ponte", "Ratos", "Becos", "MurosEQuintais", "Interiores"]
-const VAO_TIPOS := ["janela_guilhotina", "janela_colonial", "porta_balcao", "porta_dupla", "porta_bandeira", "grade_janela", "veneziana", "veneziana_e"]
+const VAO_TIPOS := ["janela_guilhotina", "janela_colonial", "porta_balcao", "porta_dupla", "porta_bandeira", "grade_janela"]
 const PAREDE_TIPOS := ["cunhal_1m", "embasamento_1m", "cornija_1m", "cachorro_beiral"]
 var problemas: Array = []
 
@@ -102,6 +102,8 @@ func _ficha(c: Node3D, cat: Dictionary) -> Dictionary:
 			var b: String = caixas[j][0]
 			if a == b or (a in VAO_TIPOS and b in VAO_TIPOS) or a in ["chamine", "beiral_telhas", "cornija_1m", "cachorro_beiral"] or b in ["chamine", "beiral_telhas", "cornija_1m", "cachorro_beiral"]:
 				continue
+			if (a.begins_with("veneziana") and b in VAO_TIPOS) or (b.begins_with("veneziana") and a in VAO_TIPOS):
+				continue                                           # folha presa na dobradiça da própria janela
 			if (a in ["sacada_ferro", "sacada_1m"] and b in VAO_TIPOS) or (b in ["sacada_ferro", "sacada_1m"] and a in VAO_TIPOS):       # porta-balcão de pé atrás do parapeito: as caixas se sobrepõem de propósito
 				continue
 			var ia := (caixas[i][1] as AABB).grow(-0.03)

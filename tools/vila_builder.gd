@@ -159,7 +159,9 @@ var _alt_real := {}
 var rb2_beiral: Array = []
 var _kit2 := false               # casa em construção usa o kit 2 (sacadas de ferro, guilhotina, grades, porta com bandeira...)
 var _pisca_fachada: Array[String] = []   # faces coplanares (piscam) achadas nas fachadas durante o bake
-var _mod_atual: Array = []      # módulos do kit postos na casa em construção: [nome, Transform3D local] (vão para a planta)
+var _mod_atual: Array = []
+var _venez_ocupado: Array = []  # caixas das venezianas abertas já postas na casa em construção
+var _w_atual := 10.0            # largura da casa em construção (limite dos cunhais para as venezianas)      # módulos do kit postos na casa em construção: [nome, Transform3D local] (vão para a planta)
 var _vaos_atual: Array = []     # vãos (janelas/portas) da fachada em construção: {z, peitoril, topo, w, porta} — usados pelos detalhes de parede
 var _jan_atual: Array = []      # painéis de vidro da casa em construção: {pos, size, lit} (locais da casa)
 var _pl_atual: Array = []       # plantas de janela da casa em construção: {pos, tipo, esc}
@@ -1317,6 +1319,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 	_jan_atual = []
 	_vaos_atual = []
 	_mod_atual = []
+	_venez_ocupado = []
+	_w_atual = w
 	_pl_atual = []
 	var fh := 4.0
 	var up := 3.4
@@ -2149,14 +2153,50 @@ func _window(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String, lit
 
 ## Venezianas de madeira abertas em ângulo (cada folha gira na dobradiça, na lateral do vão).
 func _venezianas(b: MeshBatch, p: Vector3, wid: float, hgt: float, wood: String) -> void:
-	var theta := _rng.randf_range(0.8, 1.35)
+	# cada folha aberta ocupa um trecho da parede: antes de pôr, confere que não bate em outra janela/porta, na veneziana da janela
+	# vizinha nem no cunhal da quina; tenta outros ângulos e, se nenhum couber, a janela fica sem veneziana (nada atravessa nada)
+	var escolha: Array = []
 	for side: float in [-1.0, 1.0]:
-		var th := theta * _rng.randf_range(0.85, 1.1)
 		var hinge := Vector3(-0.12, p.y - hgt / 2.0 - 0.03, p.z + side * (wid * 0.5 + 0.2))
-		# folha do kit (a da direita é espelhada); gira na dobradiça: a esquerda abre para -theta, a direita para +theta
-		var mesh := Kit.mesh("veneziana" if side < 0.0 else "veneziana_e")
-		var bas := Basis(Vector3.UP, -side * th) * Basis(Vector3.UP, -PI / 2.0)
-		b.malha(mesh, Transform3D(bas.scaled_local(Vector3((wid * 0.5 + 0.02) / 0.52, (hgt + 0.1) / 1.56, 1.0)), hinge), {"madeira": wood})
+		var nome := "veneziana" if side < 0.0 else "veneziana_e"
+		var mesh := Kit.mesh(nome)
+		var ok_xf := Transform3D()
+		var achou := false
+		for th: float in [_rng.randf_range(0.8, 1.35), 1.45, 1.1, 0.7]:
+			var bas := Basis(Vector3.UP, -side * th) * Basis(Vector3.UP, -PI / 2.0)
+			var xf := Transform3D(bas.scaled_local(Vector3((wid * 0.5 + 0.02) / 0.52, (hgt + 0.1) / 1.56, 1.0)), hinge)
+			var ab := xf * mesh.get_aabb()
+			if _folha_cabe(ab, p.z):
+				ok_xf = xf
+				achou = true
+				break
+		if not achou:
+			return
+		escolha.append([nome, ok_xf, xf_aabb(mesh, ok_xf)])
+	for e in escolha:
+		_modulo(b, e[0], e[1], {"madeira": wood})
+		_venez_ocupado.append(e[2])
+
+
+func xf_aabb(mesh: Mesh, xf: Transform3D) -> AABB:
+	return xf * mesh.get_aabb()
+
+
+## A folha aberta (caixa `ab`, coordenadas da casa) cabe na fachada sem bater em nada? `zc` = centro da própria janela.
+func _folha_cabe(ab: AABB, zc: float) -> bool:
+	if absf(ab.position.z) > _w_atual * 0.5 - 0.55 or absf(ab.end.z) > _w_atual * 0.5 - 0.55:
+		return false                                          # cunhal de pedra da quina
+	for v in _vaos_atual:
+		if absf(float(v["z"]) - zc) < 0.05:
+			continue                                          # a própria janela
+		var vz0 := float(v["z"]) - float(v["w"]) * 0.5 - 0.08
+		var vz1 := float(v["z"]) + float(v["w"]) * 0.5 + 0.08
+		if ab.end.z > vz0 and ab.position.z < vz1 and ab.end.y > float(v["peitoril"]) and ab.position.y < float(v["topo"]):
+			return false                                          # outra janela ou porta
+	for o: AABB in _venez_ocupado:
+		if ab.grow(0.02).intersects(o):
+			return false                                          # veneziana da janela vizinha
+	return true
 
 
 ## Jardineira de madeira sob a janela, com folhagem e flores.
