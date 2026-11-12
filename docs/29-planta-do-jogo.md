@@ -93,7 +93,7 @@ Regras de encaixe: cunhal e embasamento em módulos de 1 m; cunhal a 0,26 m da q
 | Interiores | 6 |
 | MurosDasCurvas | 282 |
 | MurosEQuintais | 17 |
-| Nichos | 7 |
+| Nichos | 6 |
 | Ponte | 66 |
 | Props | 22 |
 | PropsEncosta | 155 |
