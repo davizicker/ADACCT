@@ -1544,6 +1544,8 @@ func make_casa(w: float, floors: int, wall: String, wood: String, depth: float, 
 			for v in _vaos_atual:
 				if absf(cz - float(v["z"])) < pw * 0.65 + float(v["w"]) * 0.5 + 0.2 and cy + ph * 0.65 > float(v["peitoril"]) - 0.2 and cy - ph * 0.65 < float(v["topo"]) + 0.2:
 					invade = true
+			if absf(cz - dz) < 1.7 and cy + ph * 0.65 > 2.1 and cy - ph * 0.65 < 2.85:
+				invade = true                                          # lugar do azulejo com o número, ao lado da porta
 			if invade:
 				continue
 			b.box("muro", Vector3(0.025, ph, pw), Vector3(-0.015, cy, cz))

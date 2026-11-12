@@ -33,7 +33,7 @@ static func _eps(mat: String) -> float:
 		else:
 			degrau = 7 + (_ordem_mat.size() % 3)
 		_ordem_mat[mat] = degrau
-	return 0.0017 * float(_ordem_mat[mat])
+	return 0.0012 * float(_ordem_mat[mat])
 
 
 func _init(material_loader: Callable) -> void:
