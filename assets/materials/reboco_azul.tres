@@ -22,5 +22,5 @@ shader_parameter/escala_ruido = 0.09
 shader_parameter/mistura = 0.3
 shader_parameter/contraste = 3.2
 shader_parameter/sujeira = 0.22
-shader_parameter/normal_forca = 1.0
+shader_parameter/normal_forca = 0.42
 shader_parameter/rough = 0.93
