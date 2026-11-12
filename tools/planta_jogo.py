@@ -64,13 +64,14 @@ for o in d["objetos"]:
     g = o["grupo"]
     cont[g] = cont.get(g, 0) + 1
     cor = CORES.get(g)
-    if cor is None:
-        continue
+    if cor is None or o["nome"].split("_")[0] in ("Pecas", "FiosDeLuz", "Varais", "Lampadas", "Detalhes", "Muros", "MuroCurva"):
+        continue                       # peças agrupadas (bancos, fios, varais) têm caixa do tamanho da rua: ficam fora do desenho
     a, b = P(o["caixa_xz"][0], o["caixa_xz"][1]), P(o["caixa_xz"][2], o["caixa_xz"][3])
     if abs(b[0] - a[0]) < 3 and abs(b[1] - a[1]) < 3:
         dr.ellipse([a[0] - 3, a[1] - 3, a[0] + 3, a[1] + 3], fill=cor)
     else:
-        grande = g in ("Becos", "MurosEQuintais", "MurosDasCurvas", "Adro", "Ponte") and (b[0] - a[0]) * (b[1] - a[1]) > 400
+        area_m2 = abs(o["caixa_xz"][2] - o["caixa_xz"][0]) * abs(o["caixa_xz"][3] - o["caixa_xz"][1])
+        grande = area_m2 > 12.0
         dr.rectangle([min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])], outline=cor, width=2, fill=None if grande else cor)
 
 # casas

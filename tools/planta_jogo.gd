@@ -102,7 +102,7 @@ func _ficha(c: Node3D, cat: Dictionary) -> Dictionary:
 			var b: String = caixas[j][0]
 			if a == b or (a in VAO_TIPOS and b in VAO_TIPOS) or a in ["chamine", "beiral_telhas", "cornija_1m", "cachorro_beiral"] or b in ["chamine", "beiral_telhas", "cornija_1m", "cachorro_beiral"]:
 				continue
-			if (a == "sacada_ferro" and b in VAO_TIPOS) or (b == "sacada_ferro" and a in VAO_TIPOS):
+			if (a in ["sacada_ferro", "sacada_1m"] and b in VAO_TIPOS) or (b in ["sacada_ferro", "sacada_1m"] and a in VAO_TIPOS):       # porta-balcão de pé atrás do parapeito: as caixas se sobrepõem de propósito
 				continue
 			var ia := (caixas[i][1] as AABB).grow(-0.03)
 			if ia.intersects((caixas[j][1] as AABB).grow(-0.03)):
