@@ -113,11 +113,11 @@ func _ready() -> void:
 			shot_stage = int(a.substr(13))
 	if mode == "shot" or mode == "escape":
 		_place_player(shot_s, shot_yaw, shot_pitch)
-	else:
-		_place_player(1.5, 0.0, 0.0)     # começo da rua no mapa atual (a posição salva na cena é de um mapa antigo)
-		if shot_lift > 0.0:
+		if shot_lift > 0.0:                # foto aérea: sobe a câmera e congela o jogador (sem cair)
 			player.global_position.y += shot_lift
 			player.set_physics_process(false)
+	else:
+		_place_player(1.5, 0.0, 0.0)     # começo da rua no mapa atual (a posição salva na cena é de um mapa antigo)
 
 	if shot_day:   # só para inspecionar a geometria de dia
 		var env := ($Vila/Ambiente as WorldEnvironment).environment

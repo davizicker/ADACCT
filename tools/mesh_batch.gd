@@ -15,7 +15,7 @@ static var _ordem_mat := {}
 
 static func _eps(mat: String) -> float:
 	if not _ordem_mat.has(mat):
-		var degrau := 0
+		var degrau := 0.0
 		if mat.begins_with("cantaria") or mat == "pedra_sabao" or mat == "pedra_chao":
 			degrau = 0                   # molduras e pedras: o plano de base
 		elif mat == "muro" or mat.begins_with("reboco") or mat.begins_with("i_reboco"):
@@ -24,6 +24,10 @@ static func _eps(mat: String) -> float:
 			degrau = 2
 		elif mat.begins_with("madeira") or mat.begins_with("piso"):
 			degrau = 3
+			if mat == "madeira_verde" or mat == "madeira_azul":
+				degrau = 3.6          # meio degrau: duas madeiras diferentes no mesmo plano também se separam (friso do lambri x batente)
+			elif mat == "madeira_escura" or mat == "madeira_branca":
+				degrau = 2.6
 		elif mat == "listra_azul":
 			degrau = 6
 		elif mat.begins_with("listra") or mat.begins_with("pano") or mat.begins_with("tapete") or mat.begins_with("placa"):
@@ -31,7 +35,7 @@ static func _eps(mat: String) -> float:
 		elif mat.begins_with("ferro") or mat == "ouro_velho":
 			degrau = 5
 		else:
-			degrau = 7 + (_ordem_mat.size() % 3)
+			degrau = 7.0 + float(_ordem_mat.size() % 3)
 		_ordem_mat[mat] = degrau
 	return 0.0012 * float(_ordem_mat[mat])
 
@@ -113,8 +117,8 @@ func coplanares(limite := 20, dentro := AABB(Vector3(-1e6, -1e6, -1e6), Vector3(
 				var ov2 := minf(a.end[o2], b.end[o2]) - maxf(a.position[o2], b.position[o2])
 				if ov1 < 0.02 or ov2 < 0.02:
 					continue
-				var mesmo_fim := absf(a.end[ax] - b.end[ax]) < 0.0015
-				if mesmo_fim or absf(a.position[ax] - b.position[ax]) < 0.0015:
+				var mesmo_fim := absf(a.end[ax] - b.end[ax]) < 0.0005          # 0,5 mm: abaixo disso a placa não separa as faces a 20 m (pisca)
+				if mesmo_fim or absf(a.position[ax] - b.position[ax]) < 0.0005:
 					var plano: float = a.end[ax] if mesmo_fim else a.position[ax]
 					if plano < dentro.position[ax] - 0.01 or plano > dentro.end[ax] + 0.01:
 						continue                                       # face por fora da sala: ninguém vê

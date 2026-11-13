@@ -711,7 +711,7 @@ func _janela(lado: String, p: float, y := 1.6, w := 1.0, h := 1.3) -> void:
 			_bb.box(verde, Vector3(w * 0.5, h, 0.04), hinge + side * k * (w * 0.25) * 1.0 + dir * 0.02)
 	# peitoril de pedra
 	var sill := Vector3(0.16, 0.05, w + 0.3) if lado != "N" else Vector3(w + 0.3, 0.05, 0.16)
-	_bb.box("cantaria", sill, pos + dir * 0.09 + Vector3(0, -h / 2.0 - 0.03, 0))
+	_bb.box("cantaria", sill, pos + dir * 0.09 + Vector3(0, -h / 2.0 - 0.04, 0))       # peitoril 1 cm abaixo da base dos batentes (antes as faces de baixo coincidiam)
 	# luar frio entrando (sem sombra): pequena luz azul
 	var l := OmniLight3D.new()
 	l.position = pos + dir * 0.8
@@ -1470,7 +1470,7 @@ func _sala_barbearia(g: Node3D) -> void:
 	# toalhas penduradas num varão (parede leste) e cabideiro com chapéus
 	_bb.cylinder("madeira_natural", 0.015, 0.015, 1.4, Vector3(5.92, 1.5, 2.6), Vector3(PI / 2.0, 0, 0), 6)
 	for k in 3:
-		_bb.box("pano_cru", Vector3(0.02, 0.55, 0.35), Vector3(5.9, 1.25, 2.1 + k * 0.5))
+		_bb.box("pano_cru", Vector3(0.02, 0.55, 0.35), Vector3(5.87, 1.25, 2.1 + k * 0.5))     # toalhas 3 cm longe do batente
 	_bb.cylinder("madeira_escura", 0.025, 0.03, 1.75, Vector3(5.6, 0.88, 0.5), Vector3.ZERO, 8)
 	_bb.cylinder("madeira_escura", 0.18, 0.2, 0.03, Vector3(5.6, 0.02, 0.5), Vector3.ZERO, 10)
 	_bb.cylinder("pano_azul", 0.16, 0.16, 0.08, Vector3(5.6, 1.78, 0.5), Vector3.ZERO, 12)          # chapéu
@@ -1822,7 +1822,7 @@ func _presbiterio(g: Node3D) -> void:
 	for k in 3:
 		var px := 5.0 + (k - 1) * 0.82
 		_bb.box("ouro_velho", Vector3(0.7, 0.8, 0.03), Vector3(px, 1.1, 19.715))
-		_bb.box("madeira_escura", Vector3(0.6, 0.7, 0.04), Vector3(px, 1.1, 19.712))
+		_bb.box("madeira_escura", Vector3(0.6, 0.7, 0.04), Vector3(px, 1.1, 19.704))      # almofada 1 cm à frente da moldura dourada (antes no mesmo plano: piscava)
 		_bb.sphere("ouro_velho", 0.09, Vector3(px, 1.1, 19.69), 6, 4)
 	_bb.box("cantaria", Vector3(2.9, 0.08, 1.1), Vector3(5.0, 1.68, 20.2))
 	_bb.box("pano_cru", Vector3(3.3, 0.04, 1.2), Vector3(5.0, 1.73, 20.2))
