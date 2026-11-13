@@ -72,6 +72,8 @@ func _ready() -> void:
 		mode = "esconder"
 	elif "--selftest-pulo" in args:
 		mode = "pulo"
+	elif "--selftest-errante" in args:
+		mode = "errante"
 	var mula_case := ""
 	for a in args:
 		if a.begins_with("--selftest-mula="):
@@ -186,9 +188,10 @@ func _ready() -> void:
 		Engine.time_scale = 8.0
 		screams.enabled = false
 		Input.action_press("move_forward")
-	elif mode == "escape":
+	elif mode == "escape" or mode == "errante":
 		Engine.time_scale = 8.0
 		screams.enabled = false
+		eventos.enabled = false
 	elif mode == "mula":
 		Engine.time_scale = 8.0
 		_setup_mula_test(mula_case)
@@ -241,6 +244,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _on_options() -> void:
 	Config.apply(self)
+	if mode == "" and RenderingServer.get_rendering_device() != null:
+		var qa := (load("res://scripts/qualidade_auto.gd") as GDScript).new() as Node
+		qa.name = "QualidadeAuto"
+		add_child(qa)
+		qa.call("iniciar", self)
 	hud.apply_config()
 	screams.mic_threshold = Config.mic_threshold
 
@@ -344,6 +352,8 @@ func _process(delta: float) -> void:
 		_walk_bot()
 	elif mode == "escape":
 		_escape_test(delta)
+	elif mode == "errante":
+		_errante(delta)
 	elif mode == "auto":
 		if _t > 420.0 or finished:
 			print("[auto] fim: t=%.0f morreu=%s stage=%d" % [_t, str(finished), screams.stage])
@@ -630,6 +640,86 @@ func _walk_bot() -> void:
 			why += " [%s/%s em %s n=%s]" % [cn.get_parent().name if cn else "?", cn.name if cn else "?", str((cn as Node3D).global_position) if cn is Node3D else "", str(col.get_normal())]
 		print("[walk] TIMEOUT s=%.1f pos=%s%s" % [s_p, str(player.global_position), why])
 		get_tree().quit()
+
+
+# ---- teste ERRANTE: centenas de pontos (rua, becos, largos, salas); em cada um tenta andar em 8 direções.
+# Acha lugar onde o jogador fica PRESO (não sai em nenhuma direção), CAI (buraco/vazio) ou nasce dentro de objeto (EMPURRADO).
+var _err_pts: Array = []
+var _err_i := 0
+var _err_dir := 0
+var _err_t := 0.0
+var _err_melhor := 0.0
+var _err_bloq := 0
+var _err_ruins: Array[String] = []
+
+func _errante_pontos() -> void:
+	var s := 2.0
+	while s < Route.CHURCH_S - 12.0:           # longe da porta da igreja (ela encerra a partida e congela o jogador)
+		var w := Route.width(s)
+		for lat: float in [-w * 0.5 + 0.6, 0.0, w * 0.5 - 0.6, w * 0.5 + Route.SIDEWALK * 0.5]:
+			_err_pts.append(["rua s=%.0f lat=%.1f" % [s, lat], Route.pos(s) + Route.right(s) * lat])
+		s += 6.0
+	for b in get_tree().get_nodes_in_group("refugio"):
+		var beco := (b as Node3D).get_parent() as Node3D
+		var L: float = float(beco.get_meta("comprimento", 6.0))
+		var r: float = float(beco.get_meta("subida", 2.0))
+		var k := 1.5
+		while k < maxf(L, 6.0) - 1.0:
+			var p := beco.global_transform * Vector3(k, r * k / maxf(L, 0.1) if beco.has_meta("passagem") else 0.0, 0.0)
+			if not beco.has_meta("passagem"):
+				p = b.global_position - Vector3(0, 1.4, 0) + beco.global_transform.basis.x.normalized() * (k - 3.0)
+			_err_pts.append(["beco %s k=%.0f" % [beco.name, k], p])
+			k += 3.0
+	for n in get_tree().get_nodes_in_group("sala_rua"):
+		var sl := n as Node3D
+		var dim: Vector3 = (sl.get_meta("dim") as Vector3) / Interiores.ESCALA_SALA
+		for f in [Vector2(0.5, 0.5), Vector2(0.3, 0.3), Vector2(0.7, 0.3), Vector2(0.3, 0.7), Vector2(0.7, 0.7)]:
+			_err_pts.append(["sala %s (%.1f,%.1f)" % [sl.get_meta("sala_id"), f.x, f.y], sl.global_transform * Vector3(dim.x * f.x, 0.05, dim.z * f.y)])
+
+
+func _errante(delta: float) -> void:
+	if _err_pts.is_empty():
+		_errante_pontos()
+		print("[errante] pontos: %d" % _err_pts.size())
+	if _err_i >= _err_pts.size():
+		print("[errante] RESULTADO: pontos=%d ruins=%d" % [_err_pts.size(), _err_ruins.size()])
+		for r in _err_ruins:
+			print("[errante]   ", r)
+		get_tree().quit()
+		return
+	var pt: Array = _err_pts[_err_i]
+	var alvo: Vector3 = pt[1]
+	if _err_t == 0.0:
+		player.frozen = false
+		player.hidden = false
+		player.global_position = alvo + Vector3(0, 0.25, 0)
+		player.velocity = Vector3.ZERO
+		player.rotation.y = TAU * float(_err_dir) / 8.0
+		player.cam.rotation.x = 0.0
+		if _err_dir == 0:
+			_err_melhor = 0.0
+			_err_bloq = 0
+		Input.action_press("move_forward")
+	_err_t += delta
+	if _err_t > 0.7:
+		Input.action_release("move_forward")
+		var pp := player.global_position
+		var desl := Vector2(pp.x - alvo.x, pp.z - alvo.z).length()
+		_err_melhor = maxf(_err_melhor, desl)
+		if desl < 0.3:
+			_err_bloq += 1
+		if alvo.y - pp.y > 2.5:
+			_err_ruins.append("QUEDA %s: caiu %.1f m (em %s)" % [pt[0], alvo.y - pp.y, str(pp.snapped(Vector3.ONE * 0.1))])
+			_err_dir = 8
+		_err_t = 0.0
+		_err_dir += 1
+		if _err_dir >= 8:
+			if _err_melhor < 0.3:
+				_err_ruins.append("PRESO %s em %s: não anda em nenhuma direção (máx %.2f m)" % [pt[0], str(alvo.snapped(Vector3.ONE * 0.1)), _err_melhor])
+			elif _err_bloq >= 6:
+				_err_ruins.append("APERTADO %s em %s: %d de 8 direções bloqueadas" % [pt[0], str(alvo.snapped(Vector3.ONE * 0.1)), _err_bloq])
+			_err_dir = 0
+			_err_i += 1
 
 
 var _esc_i := 0

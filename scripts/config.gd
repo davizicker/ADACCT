@@ -15,6 +15,8 @@ static var grito_ativo := false # opção antiga: responder gritando (microfone 
 static var camera_fx := true    # vinheta, granulado, aberração
 static var head_bob := true
 static var chuva := false
+static var qualidade_auto := true   # mede o FPS e alivia os gráficos sozinho se a placa não aguentar (scripts/qualidade_auto.gd)
+static var qualidade_passo := 0     # quanto já foi aliviado (0 = tudo no máximo); salvo para a próxima vez
 static var modo_teste := false   # MODO DE TESTE: imortal (Bradador e Mula não te matam; o jogo só avisa). Normal = padrão
 static var loaded := false
 
@@ -40,6 +42,8 @@ static func load_all() -> void:
 	grito_ativo = cf.get_value("controles", "grito_ativo", grito_ativo)
 	chuva = cf.get_value("video", "chuva", chuva)
 	modo_teste = cf.get_value("jogo", "modo_teste", modo_teste)
+	qualidade_auto = cf.get_value("video", "qualidade_auto", qualidade_auto)
+	qualidade_passo = cf.get_value("video", "qualidade_passo", qualidade_passo)
 
 
 static func save_all() -> void:
@@ -57,6 +61,8 @@ static func save_all() -> void:
 	cf.set_value("controles", "grito_ativo", grito_ativo)
 	cf.set_value("video", "chuva", chuva)
 	cf.set_value("jogo", "modo_teste", modo_teste)
+	cf.set_value("video", "qualidade_auto", qualidade_auto)
+	cf.set_value("video", "qualidade_passo", qualidade_passo)
 	cf.save(PATH)
 
 

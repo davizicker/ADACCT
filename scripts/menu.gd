@@ -127,9 +127,19 @@ func _build_options() -> void:
 	ob.select(Config.quality)
 	ob.item_selected.connect(func(i: int) -> void:
 		Config.quality = i
+		Config.qualidade_passo = 0          # escolha do jogador: a qualidade automática recomeça a partir dela
 		options_changed.emit())
 	row.add_child(ob)
 	_opts_box.add_child(row)
+	var qa := CheckBox.new()
+	qa.text = "Qualidade automática (alivia os gráficos sozinha se o FPS cair)"
+	qa.button_pressed = Config.qualidade_auto
+	qa.toggled.connect(func(on: bool) -> void:
+		Config.qualidade_auto = on
+		if not on:
+			Config.qualidade_passo = 0
+		options_changed.emit())
+	_opts_box.add_child(qa)
 	var cr := CheckBox.new()
 	cr.text = "Chuva"
 	cr.button_pressed = Config.chuva
