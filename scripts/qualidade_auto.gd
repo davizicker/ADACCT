@@ -8,11 +8,19 @@ const ALVO := 50.0              # FPS mínimo desejado (média de 4 s)
 const MAX_PASSO := 6
 var main: Node
 var _amostras: Array[float] = []
+var _tempo := 0.0
+var _quadros := 0
+var _fps_falso := -1.0        # só teste: --fps-falso=N finge essa medição
 var _espera := 6.0              # depois de cada ajuste: shaders compilando, ignora o começo
 
 
 func iniciar(m: Node) -> void:
 	main = m
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--fps-falso="):
+			_fps_falso = float(a.get_slice("=", 1))
+	print("[qualidade] automática ligada (nível salvo %d)" % Config.qualidade_passo)
 	if Config.qualidade_passo > 0:
 		_aplicar(Config.qualidade_passo, false)
 
@@ -21,19 +29,21 @@ func _process(delta: float) -> void:
 	if main == null or not Config.qualidade_auto or Config.qualidade_passo >= MAX_PASSO:
 		return
 	if get_tree().paused or (main.get("menu") != null and (main.get("menu") as Node).visible) or main.get("finished") == true:
-		_amostras.clear()
+		_tempo = 0.0
+		_quadros = 0
 		return
 	_espera -= delta
 	if _espera > 0.0:
 		return
-	_amostras.append(Engine.get_frames_per_second())
-	if _amostras.size() < 240:            # ~4 s de quadros
+	_tempo += delta
+	_quadros += 1
+	if _tempo < 4.0:                       # média de 4 s de relógio (não de quadros: com FPS baixo isso levaria minutos)
 		return
-	var soma := 0.0
-	for f in _amostras:
-		soma += f
-	var media := soma / float(_amostras.size())
-	_amostras.clear()
+	var media := float(_quadros) / _tempo
+	if _fps_falso >= 0.0:
+		media = _fps_falso
+	_tempo = 0.0
+	_quadros = 0
 	if media < ALVO:
 		_aplicar(Config.qualidade_passo + 1, true)
 		print("[qualidade] FPS médio %.0f < %.0f: passo %d" % [media, ALVO, Config.qualidade_passo])

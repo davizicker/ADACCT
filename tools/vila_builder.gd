@@ -653,6 +653,7 @@ func build_vila(veg_scenes: Dictionary) -> Node3D:
 	root.add_child(_lamps())
 	root.add_child(_adornos())
 	root.add_child(_nichos())
+	_tira_adornos_dos_nichos(root)
 	root.add_child(_props_rua())
 	root.add_child(_ratos())
 	_tira_props_dentro_das_casas(root)
@@ -4168,6 +4169,26 @@ func _recipientes(parent: Node, p: Vector3, yaw: float) -> void:
 	else:
 		_cont(parent, "Sack1" if _rng.randf() < 0.5 else "Sack2", p, _rng.randf() * TAU)
 		_cont(parent, "Bucket1", p + Basis(Vector3.UP, yaw) * Vector3(0.9, 0, 0), _rng.randf() * TAU)
+
+
+## Caixote/barril posto antes do oratório que ficou dentro dele (o oratório vem depois na montagem e não pode mudar de sorteio).
+func _tira_adornos_dos_nichos(root: Node3D) -> void:
+	var ad := root.get_node_or_null("Adornos") as Node3D
+	var ni := root.get_node_or_null("Nichos") as Node3D
+	if ad == null or ni == null:
+		return
+	var tirados := 0
+	for g in ni.get_children():
+		var xf: Transform3D = ni.transform * (g as Node3D).transform
+		for a in ad.get_children().duplicate():
+			if not (a is Node3D) or String(a.name).begins_with("Lampiao"):
+				continue
+			var q: Vector3 = xf.affine_inverse() * (ad.transform * (a as Node3D).position)
+			if q.x > -1.0 and q.x < 0.4 and absf(q.z) < 1.0 and absf(q.y) < 2.5:
+				ad.remove_child(a)
+				a.free()
+				tirados += 1
+	print("[vila] adornos tirados da frente dos oratórios: ", tirados)
 
 
 ## Bueiros, barris, caixotes, bancos, carroça, varais e bandeirinhas.

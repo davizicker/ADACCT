@@ -179,6 +179,16 @@ func _ready() -> void:
 		if SaveGame.carregar_ao_iniciar:
 			menu.call_deferred("close")
 
+	if mode == "" and RenderingServer.get_rendering_device() != null:
+		var qa := (load("res://scripts/qualidade_auto.gd") as GDScript).new() as Node
+		qa.name = "QualidadeAuto"
+		add_child(qa)
+		qa.call("iniciar", self)
+		if "--testar-qualidade" in OS.get_cmdline_user_args() and menu != null:
+			get_viewport().disable_3d = true   # só no teste (computador sem placa não desenha a vila em tempo real)
+			menu.call_deferred("close")
+			hud.call_deferred("hide_note")
+			player.set_deferred("frozen", false)
 	if mode == "selftest":
 		Engine.time_scale = 8.0
 		screams.forced_results = [true, true, false, false, false, false]
@@ -244,11 +254,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _on_options() -> void:
 	Config.apply(self)
-	if mode == "" and RenderingServer.get_rendering_device() != null:
-		var qa := (load("res://scripts/qualidade_auto.gd") as GDScript).new() as Node
-		qa.name = "QualidadeAuto"
-		add_child(qa)
-		qa.call("iniciar", self)
 	hud.apply_config()
 	screams.mic_threshold = Config.mic_threshold
 

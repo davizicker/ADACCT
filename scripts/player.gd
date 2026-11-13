@@ -11,6 +11,10 @@ const WALK_SPEED := 2.8
 const SPRINT_SPEED := 4.8
 const CROUCH_SPEED := 1.4
 const GRAVITY := 20.0
+const ACEL_CHAO := 18.0      # m/s²: chega na velocidade de andar em ~0,15 s (antes era instantâneo, parecia robô)
+const FREIO_CHAO := 24.0
+const ACEL_AR := 4.0         # no ar quase não dá para mudar de direção
+const PASSO_MAX := 0.22      # sobe sozinho meio-fio, soleira e degrau até 22 cm (a cápsula sozinha só subia ~12 cm e enroscava)
 const JUMP_V := 3.3          # pulinho: ~27 cm de altura (v² / 2g)
 const OIL_MAX := 180.0
 const STAND_H := 1.6
@@ -120,6 +124,35 @@ func is_lantern_lit() -> bool:
 	return lantern_on and oil > 0.0 and _blackout_t <= 0.0
 
 
+## Degrau: se o caminho à frente está fechado embaixo mas livre 22 cm acima, e lá tem chão plano, sobe o corpo
+## (a câmera sobe suave). Paredes, muretas contra o vazio e móveis altos continuam bloqueando.
+func _subir_degrau(delta: float) -> void:
+	var mov := Vector3(velocity.x, 0.0, velocity.z) * delta
+	if mov.length() < 0.002:
+		return
+	var xf := global_transform
+	if not test_move(xf, mov):
+		return
+	var cima := Vector3(0.0, PASSO_MAX, 0.0)
+	if test_move(xf, cima):
+		return
+	var adiante := mov.normalized() * maxf(mov.length(), 0.10)
+	var xf2 := xf.translated(cima)
+	if test_move(xf2, adiante):
+		return
+	xf2 = xf2.translated(adiante)
+	var col := KinematicCollision3D.new()
+	if not test_move(xf2, Vector3(0.0, -PASSO_MAX - 0.05, 0.0), col):
+		return
+	if col.get_normal().y < 0.75:
+		return
+	var subida := PASSO_MAX - col.get_travel().length()
+	if subida < 0.03 or subida > PASSO_MAX:
+		return
+	global_position.y += subida + 0.004
+	cam.position.y -= subida            # o corpo subiu de uma vez; a câmera acompanha suave
+
+
 func _physics_process(delta: float) -> void:
 	var input := Vector2.ZERO if frozen else Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	crouching = (Input.is_action_pressed("crouch") and not frozen)
@@ -129,9 +162,13 @@ func _physics_process(delta: float) -> void:
 	sprinting = wants_sprint and stamina > 0.0 and not exhausted
 	var speed := CROUCH_SPEED if crouching else (SPRINT_SPEED if sprinting else WALK_SPEED)
 	var dir := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
-	velocity.x = dir.x * speed
-	velocity.z = dir.z * speed
 	var no_chao := is_on_floor()
+	var horiz := Vector2(velocity.x, velocity.z)
+	var alvo := Vector2(dir.x, dir.z) * speed
+	var taxa := (ACEL_CHAO if alvo.length() > 0.01 else FREIO_CHAO) if no_chao else ACEL_AR
+	horiz = horiz.move_toward(alvo, taxa * delta)
+	velocity.x = horiz.x
+	velocity.z = horiz.y
 	if no_chao:
 		velocity.y = 0.0
 		if Input.is_action_just_pressed("jump") and not frozen and not crouching and not hidden:
@@ -139,6 +176,8 @@ func _physics_process(delta: float) -> void:
 			footstep.emit(0.9)                # o salto faz barulho no chão de pedra
 	else:
 		velocity.y -= GRAVITY * delta
+	if no_chao and not hidden and velocity.y <= 0.0:
+		_subir_degrau(delta)
 	move_and_slide()
 	if is_on_floor() and not _estava_no_chao and _t_ar > 0.18:
 		footstep.emit(1.0)                    # aterrissagem
@@ -210,7 +249,7 @@ func _update_camera(delta: float) -> void:
 		_corpo_sombra.position.y = 0.81 * k
 		_corpo_sombra.visible = not hidden
 	cam.position.x = lerpf(cam.position.x, bob_x, clampf(delta * 8.0, 0.0, 1.0))
-	cam.fov = lerpf(cam.fov, BASE_FOV + (7.0 if sprinting else 0.0) + fear * 3.0, clampf(delta * 6.0, 0.0, 1.0))
+	cam.fov = lerpf(cam.fov, Config.campo_visao + (7.0 if sprinting else 0.0) + fear * 3.0, clampf(delta * 6.0, 0.0, 1.0))
 	if body_shape.shape is CapsuleShape3D:
 		var cap := body_shape.shape as CapsuleShape3D
 		var h := 1.1 if crouching else 1.7

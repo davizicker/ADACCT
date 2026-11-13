@@ -153,6 +153,8 @@ func _objetos() -> void:
 			if planta:                      # copa de árvore pode passar por cima de muro: só o tronco/base conta
 				bbc = AABB(Vector3(bb.get_center().x - 0.25, bb.position.y, bb.get_center().z - 0.25), Vector3(0.5, minf(bb.size.y, 1.2), 0.5))
 			for b in _cruza(bbc, _rids(c)):
+				if gn == "Nichos" and b.begins_with("Casas/") and b.ends_with("/Colisao"):
+					continue                # o oratório é embutido 8-12 cm na parede de propósito (sem fresta)
 				print("[rua] ATRAVESSA %s/%s (s=%.0f) com %s" % [gn, nm, Route.nearest_s(bb.get_center()), b])
 				_conta("atravessa_solido")
 	# objeto x objeto (pelas caixas visuais)

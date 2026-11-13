@@ -65,9 +65,14 @@ func _ready() -> void:
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_main_box.add_child(help)
 
+	var rolagem := ScrollContainer.new()        # opções numa lista com rolagem: cabe em qualquer resolução
+	rolagem.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rolagem.custom_minimum_size = Vector2(620, minf(560.0, get_viewport().get_visible_rect().size.y * 0.62))
+	rolagem.visible = false
+	stack.add_child(rolagem)
 	_opts_box = VBoxContainer.new()
-	_opts_box.visible = false
-	stack.add_child(_opts_box)
+	_opts_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rolagem.add_child(_opts_box)
 	_build_options()
 	open(true)
 
@@ -92,7 +97,7 @@ func _btn(text: String, cb: Callable) -> Button:
 func _slider(label: String, value: float, lo: float, hi: float, on_change: Callable) -> void:
 	var row := HBoxContainer.new()
 	var l := _lbl(label, 18, Color(0.85, 0.85, 0.9))
-	l.custom_minimum_size = Vector2(230, 0)
+	l.custom_minimum_size = Vector2(300, 0)
 	row.add_child(l)
 	var s := HSlider.new()
 	s.min_value = lo
@@ -114,10 +119,11 @@ func _build_options() -> void:
 	_slider("Efeitos e ambiente", Config.effects, 0.0, 1.0, func(v: float) -> void: Config.effects = v)
 	_slider("Sensibilidade do mouse", Config.mouse_sens, 0.0008, 0.006, func(v: float) -> void: Config.mouse_sens = v)
 	_slider("Limiar do microfone", Config.mic_threshold, 0.01, 0.3, func(v: float) -> void: Config.mic_threshold = v)
+	_slider("Campo de visão (FOV)", Config.campo_visao, 60.0, 100.0, func(v: float) -> void: Config.campo_visao = v)
 	_slider("Resolução de renderização (FSR)", Config.escala_3d, 0.5, 1.0, func(v: float) -> void: Config.escala_3d = v)
 	var row := HBoxContainer.new()
 	var l := _lbl("Qualidade gráfica", 18, Color(0.85, 0.85, 0.9))
-	l.custom_minimum_size = Vector2(230, 0)
+	l.custom_minimum_size = Vector2(300, 0)
 	row.add_child(l)
 	var ob := OptionButton.new()
 	ob.add_item("Baixa (PC fraco)")
@@ -140,6 +146,27 @@ func _build_options() -> void:
 			Config.qualidade_passo = 0
 		options_changed.emit())
 	_opts_box.add_child(qa)
+	var cv := CheckBox.new()
+	cv.text = "VSync (imagem sem rasgos; desligue para FPS livre)"
+	cv.button_pressed = Config.vsync
+	cv.toggled.connect(func(on: bool) -> void:
+		Config.vsync = on
+		options_changed.emit())
+	_opts_box.add_child(cv)
+	var rf := HBoxContainer.new()
+	var lf := _lbl("Limite de FPS", 18, Color(0.85, 0.85, 0.9))
+	lf.custom_minimum_size = Vector2(300, 0)
+	rf.add_child(lf)
+	var of := OptionButton.new()
+	var limites := [0, 60, 120, 144]
+	for v in limites:
+		of.add_item("Sem limite" if v == 0 else str(v))
+	of.select(maxi(limites.find(Config.limite_fps), 0))
+	of.item_selected.connect(func(i: int) -> void:
+		Config.limite_fps = limites[i]
+		options_changed.emit())
+	rf.add_child(of)
+	_opts_box.add_child(rf)
 	var cr := CheckBox.new()
 	cr.text = "Chuva"
 	cr.button_pressed = Config.chuva
@@ -180,11 +207,11 @@ func _build_options() -> void:
 
 func _show_options() -> void:
 	_main_box.visible = false
-	_opts_box.visible = true
+	_opts_box.get_parent().visible = true
 
 
 func _show_main() -> void:
-	_opts_box.visible = false
+	_opts_box.get_parent().visible = false
 	_main_box.visible = true
 	Config.save_all()
 

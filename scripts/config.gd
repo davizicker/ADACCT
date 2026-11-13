@@ -14,6 +14,9 @@ static var escala_3d := 1.0     # resolução de renderização (0.5 a 1.0); aba
 static var grito_ativo := false # opção antiga: responder gritando (microfone ou R). Padrão: ficar parado e agachado
 static var camera_fx := true    # vinheta, granulado, aberração
 static var head_bob := true
+static var campo_visao := 75.0   # FOV da câmera (graus)
+static var vsync := true         # sincronia vertical (sem rasgos na imagem); desligada = FPS livre
+static var limite_fps := 0       # 0 = sem limite; 60/120/144 seguram o FPS (menos calor e ruído na placa)
 static var chuva := false
 static var qualidade_auto := true   # mede o FPS e alivia os gráficos sozinho se a placa não aguentar (scripts/qualidade_auto.gd)
 static var qualidade_passo := 0     # quanto já foi aliviado (0 = tudo no máximo); salvo para a próxima vez
@@ -39,6 +42,9 @@ static func load_all() -> void:
 	escala_3d = cf.get_value("video", "escala_3d", escala_3d)
 	camera_fx = cf.get_value("video", "camera_fx", camera_fx)
 	head_bob = cf.get_value("video", "head_bob", head_bob)
+	campo_visao = cf.get_value("video", "campo_visao", campo_visao)
+	vsync = cf.get_value("video", "vsync", vsync)
+	limite_fps = cf.get_value("video", "limite_fps", limite_fps)
 	grito_ativo = cf.get_value("controles", "grito_ativo", grito_ativo)
 	chuva = cf.get_value("video", "chuva", chuva)
 	modo_teste = cf.get_value("jogo", "modo_teste", modo_teste)
@@ -58,6 +64,9 @@ static func save_all() -> void:
 	cf.set_value("video", "escala_3d", escala_3d)
 	cf.set_value("video", "camera_fx", camera_fx)
 	cf.set_value("video", "head_bob", head_bob)
+	cf.set_value("video", "campo_visao", campo_visao)
+	cf.set_value("video", "vsync", vsync)
+	cf.set_value("video", "limite_fps", limite_fps)
 	cf.set_value("controles", "grito_ativo", grito_ativo)
 	cf.set_value("video", "chuva", chuva)
 	cf.set_value("jogo", "modo_teste", modo_teste)
@@ -69,6 +78,9 @@ static func save_all() -> void:
 ## Aplica as opções de vídeo/áudio à cena do jogo. `main` = nó raiz (scenes/main.tscn).
 static func apply(main: Node) -> void:
 	var vp := main.get_viewport()
+	Engine.max_fps = limite_fps
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
 	var forward := RenderingServer.get_rendering_device() != null and str(ProjectSettings.get_setting("rendering/renderer/rendering_method")) == "forward_plus"
 	var scale: float = clampf(escala_3d * [0.8, 1.0, 1.0, 1.0][clampi(quality, 0, 3)], 0.4, 1.0)
 	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR2 if (forward and scale < 0.99) else Viewport.SCALING_3D_MODE_BILINEAR
