@@ -42,6 +42,8 @@ var _frames := 0
 func _ready() -> void:
 	Config.load_all()
 	_setup_input()
+	var alc := Alcances.aplicar($Vila)       # peças de modelos importados perdem o alcance salvo no bake: aplica de novo ao abrir
+	print("[alcances] ", alc)
 	add_child((load("res://scripts/vagalumes.gd") as GDScript).new() as Node3D)
 	add_child((load("res://scripts/barreiras.gd") as GDScript).new() as Node3D)     # muretas onde a beira da rua dá para o vazio
 	add_child((load("res://scripts/morcegos.gd") as GDScript).new() as Node3D)
@@ -350,6 +352,12 @@ func _process(delta: float) -> void:
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME),
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)])
+			var vpi := get_viewport()
+			print("[perf] visivel: objetos=%d chamadas=%d | sombras: objetos=%d chamadas=%d" % [
+				vpi.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_OBJECTS_IN_FRAME),
+				vpi.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME),
+				vpi.get_render_info(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_OBJECTS_IN_FRAME),
+				vpi.get_render_info(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME)])
 			get_viewport().get_texture().get_image().save_png(shot_path)
 			print("[shot] saved ", shot_path)
 			get_tree().quit()

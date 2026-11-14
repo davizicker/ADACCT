@@ -31,6 +31,7 @@ func _init() -> void:
 	var ass := Assentar.new()
 	var rel: Dictionary = await ass.rodar(vila, self)
 	print("[vila] assentar no chão: ", rel)
+	print("[vila] alcances de visibilidade: ", Alcances.aplicar(vila))
 	root.remove_child(vila)
 	_save(vila, "vila.scn")
 	_save(_player(), "jogador.tscn")

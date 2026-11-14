@@ -35,3 +35,11 @@
 ## Cenário
 - Caixote que ficava dentro de um oratório de rua (Nicho_310): agora a montagem tira o adorno da frente do oratório.
 - Os oratórios entram 8–12 cm na parede de propósito (sem fresta); a auditoria da rua não conta mais isso como erro.
+
+## Desempenho: alcance de visibilidade (`scripts/alcances.gd`)
+- ~1300 peças não tinham alcance e eram desenhadas da vila inteira. Isso incluía o interior da igreja a 400 m e as salas do outro lado do mapa.
+- Agora todas têm alcance: interiores 45 m (igreja 80 m), objetos pequenos 70 m, corpo das casas 260 m, o resto 160 m.
+  Torres da igreja, capela do morro, serra e fundo da rua continuam vistos de longe.
+- A passada roda no bake e de novo ao abrir o jogo, porque peças de modelos .glb perdem o ajuste salvo.
+- Medição (`tools/perf_vila.gd`), em s=60: 3806 → 3098 objetos ao alcance (−19%), 5,5 → 4,5 milhões de triângulos.
+- Não verificado: o ganho real de FPS na GTX 1080. O renderizador do contêiner (sem placa) não roda o Forward+ da vila inteira.
