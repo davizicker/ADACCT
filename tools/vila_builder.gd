@@ -1010,6 +1010,7 @@ func _beco_escada(parent: Node3D, c: Dictionary) -> void:
 	var g := _group(parent, "BecoEscada_%02d" % _n, Transform3D(Basis(xa, Vector3.UP, xa.cross(Vector3.UP)), Vector3(x, hb, zb)))
 	_n += 1
 	g.set_meta("passagem", true)
+	g.set_meta("largura", wb)
 	g.set_meta("comprimento", L)
 	g.set_meta("subida", rise)
 	_casas_postas.append({"xf": g.transform, "depth": L, "w": wb + 1.0, "corr": true})
@@ -2334,6 +2335,7 @@ func _lot_talude(parent: Node3D, f: Dictionary) -> void:
 func _lot_beco(parent: Node3D, f: Dictionary, cego_id := "") -> void:
 	var wb: float = f["w"]
 	var g := _group(parent, "Beco_%02d" % _n, f["xf"])
+	g.set_meta("largura", wb)                  # planta mestra: boca do beco livre
 	_n += 1
 	for off in [-0.5, 0.0, 1.0, 2.0]:
 		_reservar((f["xf"] as Transform3D) * Vector3(-1.0 - off * 0.0, 0.0, 0.0) + (f["xf"] as Transform3D).basis.x * (-1.4 + off), wb * 0.5 + 0.9)
@@ -4671,7 +4673,7 @@ func _coletavel(parent: Node3D, node_name: String, pos: Vector3, tipo: String, n
 
 
 const OIL_PTS := [[26.0, 1.0], [70.0, -1.0], [108.0, 1.0], [150.0, 1.0], [171.0, -1.0], [205.0, 1.0], [240.0, -1.0], [262.0, -1.0], [290.0, 1.0], [320.0, 1.0], [345.0, -1.0]]
-const NOTE_PTS := [[3.0, 1.0, 11], [101.0, -1.0, 0], [166.0, -1.0, 18], [252.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
+const NOTE_PTS := [[3.0, 1.0, 11], [101.0, -1.0, 0], [161.0, -1.0, 18], [252.0, 1.0, 19], [293.0, -1.0, 20], [365.0, 1.0, 5]]      # na rua: o diário de Tomé em capítulos (11, 18, 19, 20) e dois bilhetes de regras (0, 5)
 
 
 func _coletaveis() -> Node3D:
@@ -4950,7 +4952,7 @@ func _props_rua() -> Node3D:
 		_reservar(sp["pos"], 0.55)
 		var aro := _prop(root, "rusted_wheel_rim_02", sp["pos"], _yaw_to(sp["out"]) + _rng.randf_range(-0.25, 0.25), 1.0)
 		aro.rotation.x = -0.20      # inclinado, encostado na parede
-	var bola := _prop(root, "football", _spot(1.0, 157.0 + Route.SHIFT, 2.6)["pos"], _rng.randf() * TAU, 1.0)
+	var bola := _prop(root, "football", _spot(1.0, 157.0 + Route.SHIFT, 0.9)["pos"], _rng.randf() * TAU, 1.0)
 	bola.name = "BolaEsquecida"
 	# --- ferramentas e utilidades de 1961 encostadas nas paredes: escadas, machados, regadores, lousas de cardápio
 	for cfg in [[48.0, 1.0], [110.0, -1.0], [190.0, 1.0], [240.0, 1.0], [298.0, -1.0], [348.0, 1.0]]:

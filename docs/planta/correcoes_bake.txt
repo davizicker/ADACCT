@@ -1,0 +1,2 @@
+MOVIDO wooden_stool_01_515 (banquinho): -0.25 m ao longo da parede, de s=96.0 (dentro da zona 'volta_de_item' de Reliquia_01)
+MOVIDO watering_can_metal_01_526 (regador): 0.25 m ao longo da parede, de s=131.0 (dentro da zona 'volta_de_item' de Reliquia_02)

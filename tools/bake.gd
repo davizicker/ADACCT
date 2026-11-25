@@ -28,10 +28,23 @@ func _init() -> void:
 	var vila := b.build_vila({})
 	# encosta tudo no chão de verdade (precisa da física: a vila entra na árvore só durante esta passada)
 	root.add_child(vila)
+	# PLANTA MESTRA: cada objeto da rua na sua faixa, fora das zonas proibidas e sem encostar em outro (docs/31)
+	await process_frame
+	var pm := PlantaMestra.new()
+	print("[planta-mestra] correção: ", pm.fiscalizar(vila, true))
+	for c in pm.correcoes:
+		print("[planta-mestra] ", c)
+	var fc := FileAccess.open("res://docs/planta/correcoes_bake.txt", FileAccess.WRITE)
+	fc.store_string("\n".join(pm.correcoes) + "\n")
+	fc.close()
 	var ass := Assentar.new()
 	var rel: Dictionary = await ass.rodar(vila, self)
 	print("[vila] assentar no chão: ", rel)
 	print("[vila] alcances de visibilidade: ", Alcances.aplicar(vila))
+	var pm2 := PlantaMestra.new()
+	print("[planta-mestra] conferência final: ", pm2.fiscalizar(vila, false))
+	for vi in pm2.violacoes:
+		print("[planta-mestra] VIOLA ", vi)
 	root.remove_child(vila)
 	_save(vila, "vila.scn")
 	_save(_player(), "jogador.tscn")
