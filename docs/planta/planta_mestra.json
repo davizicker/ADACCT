@@ -1519,6 +1519,21 @@
       "tipo": "item_oleo"
     },
     {
+      "altura": 0.41,
+      "caixa_xz": [
+        66.34,
+        -120.93,
+        66.51,
+        -120.76
+      ],
+      "d": 2.85,
+      "faixa": "livre",
+      "nome": "Oleo_11",
+      "ok": true,
+      "s": 372.0,
+      "tipo": "item_oleo"
+    },
+    {
       "altura": 0.23,
       "caixa_xz": [
         12.96,
@@ -3709,6 +3724,28 @@
         ]
       ],
       "nome": "Oleo_10",
+      "tipo": "volta_de_item"
+    },
+    {
+      "cantos": [
+        [
+          65.68,
+          -121.6
+        ],
+        [
+          67.18,
+          -121.6
+        ],
+        [
+          67.18,
+          -120.1
+        ],
+        [
+          65.68,
+          -120.1
+        ]
+      ],
+      "nome": "Oleo_11",
       "tipo": "volta_de_item"
     },
     {

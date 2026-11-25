@@ -88,7 +88,7 @@ Regras de encaixe: cunhal e embasamento em módulos de 1 m; cunhal a 0,26 m da q
 | Adornos | 44 |
 | Adro | 67 |
 | Becos | 11 |
-| Coletaveis | 29 |
+| Coletaveis | 30 |
 | Iluminacao | 19 |
 | Interiores | 6 |
 | MurosDasCurvas | 282 |

@@ -21,7 +21,7 @@ Gerada pelo bake (tools/interiores.gd, `_auditar`). Medidas no desenho da sala (
 | igreja | ATRAVESSA | anthurium_botany_04_d_895 (0.60, 13.25, y 1.10-1.15) com ColAltarLat_-1_13 (0.50, 13.25, y 0.00-1.20): 8 x 6 cm |
 | igreja | ATRAVESSA | anthurium_botany_04_d_897 (9.40, 13.25, y 1.10-1.15) com ColAltarLat_1_13 (9.50, 13.25, y 0.00-1.20): 8 x 6 cm |
 | igreja | LUZ DENTRO DE MÓVEL | Luz em (4.38, 2.51, 20.35) dentro de gothic_statue_886 |
-| igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1243 em (5.62, 2.51, 20.35) dentro de gothic_statue_886 |
+| igreja | LUZ DENTRO DE MÓVEL | @OmniLight3D@1244 em (5.62, 2.51, 20.35) dentro de gothic_statue_886 |
 | casa_vazia | INFO | painted_wooden_chair_02_916 solta (a 1.0 m da mesa mais próxima) |
 | deposito | ATRAVESSA | worn_metal_rack_962 (0.32, 1.60, y 0.00-1.90) com long_life_food_milk_965 (0.45, 1.50, y 1.45-1.69): 7 x 10 cm |
 | deposito | ATRAVESSA | worn_metal_rack_962 (0.32, 1.60, y 0.00-1.90) com long_life_food_sardines_966 (0.45, 2.00, y 0.95-0.98): 8 x 12 cm |

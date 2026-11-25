@@ -71,7 +71,7 @@ Objeto de rua sem tipo no catálogo conta como erro: nada entra no mapa sem enve
 | 200–250 | 2 | 1 | 0 | 0 | 1 |  |
 | 250–300 | 2 | 2 | 2 | 3 | 1 | escola |
 | 300–350 | 2 | 2 | 0 | 1 | 1 |  |
-| 350–400 | 0 | 2 | 1 | 0 | 3 | casarao, sineiro |
+| 350–400 | 1 | 2 | 1 | 0 | 3 | casarao, sineiro |
 | 400–450 | 0 | 1 | 0 | 0 | 3 |  |
 | 450–500 | 0 | 0 | 0 | 0 | 4 |  |
 
@@ -79,8 +79,8 @@ Trechos sem beco, sem casa visitável **e** sem querosene (a tensão sobe sem ne
 
 ## Resultado da conferência
 
-- Objetos conferidos: 116
-- Zonas proibidas: 93
+- Objetos conferidos: 117
+- Zonas proibidas: 94
 - Fora da planta agora: **0**
 - Correções feitas na montagem (bake): 2
   - MOVIDO wooden_stool_01_515 (banquinho): -0.25 m ao longo da parede, de s=96.0 (dentro da zona 'volta_de_item' de Reliquia_01)
